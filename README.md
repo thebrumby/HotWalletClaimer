@@ -85,3 +85,21 @@ Each seed phrase should be 12 words, each separated by a space.
 As mentioned earlier, you may enter more than one seed phrase, with each one on a separate line.
 
 Inspired by https://github.com/vannszs/HotWalletBot.git
+
+⚠️ Warning: While this Python script is openly available on GitHub, transparent in its code, and devoid of any malicious intent, it's crucial to understand its potential risks. The debugging function of this script generates screenshots of your login stages directly on your local machine and stores your seed phrases, unencrypted, in a text file named seeds.txt.
+
+⚠️ Risk Assessment:
+
+Local Machine Usage: Given that the script operates locally, there's minimal risk associated with its usage on a personal machine not accessible by others.
+Seed Phrase Storage: Storing sensitive information, such as seed phrases, in an unencrypted text file poses a significant security concern.
+Account Vulnerability: Accounts with high monetary value should not be used with this script due to the inherent security risks involved.
+💡 Recommendations:
+
+Privacy Concerns: Avoid installing this script on a machine accessible by others, especially in shared or public environments.
+Sensitive Information: Refrain from entering seed phrases associated with accounts holding significant monetary value.
+Usage Context: This script is primarily intended for use in scenarios where security is less critical, such as experimenting with the "Claim Hot" game.
+⚠️ Disclaimer: The developers of this script do not assume responsibility for any misuse or unauthorized access to sensitive information. Users are advised to exercise caution and discretion when utilizing this tool.
+
+By understanding the risks and exercising appropriate caution, users can maximize the benefits of this script while minimizing potential security vulnerabilities. Remember, your security is paramount. Stay vigilant and informed!
+
+
