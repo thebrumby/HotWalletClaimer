@@ -154,11 +154,16 @@ def claim(iseed, total_seeds):
                     print("Failed to initiate claim.")
                     return 60
 
-            else:
-                print("Wallet not ready for claim. Calculating wait time...")
-                # Add dynamic wait calculation logic here, similar to the example
-
-                return calculated_wait_time
+                else:
+                    # If not forcing a claim and not "Filled", process the waiting time
+                    matches = re.findall(r'(\d+)([hm])', waktu_text)
+                    if matches:
+                        total_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                        print("Not Time to Claim Yet. Wait for %s Minutes." % total_time)
+                        return total_time
+                    else:
+                        print("No time data found. Check the page or xpath.")
+                return 60
 
         except Exception as e:
             print("An error occurred: {}".format(e))
