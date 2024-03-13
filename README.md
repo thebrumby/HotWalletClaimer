@@ -68,7 +68,7 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 
 If you want the script to run continuously, even after disconnecting from the server, use screen:
 
-- Install screen if required: ```sudo apt install screen```
+- Install screen if required: ```sudo apt install -y screen```
 - Create session: ```screen -S hot_wallet```
 - Check you are in the HotWalletBot directory or ```cd HotWalletBot```
 - Start the script: ```python3 claim.py``` or ```python claim.py```
