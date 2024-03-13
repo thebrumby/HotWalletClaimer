@@ -6,9 +6,7 @@ Note: This game/app has already caused various overloads to both Near Protocol a
 If the system throws a lot of errors, you may need to leave it sometime before retrying.
 I will attempt to keep this repository updated should the game creators update their code.
 
-The game can be found here: 
-t.me/herewalletbot/app?startapp=3441967
-https://t.me/herewalletbot/app?startapp=3441967
+The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 
 ## 🚀 How To Use
 
