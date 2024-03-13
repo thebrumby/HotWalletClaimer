@@ -103,7 +103,7 @@ def Login(iseed, iseed_index, total_seeds):
             enter_seed_button.click()
             driver.save_screenshot(os.path.join(screenshots_path, "07_move_to_claim_page.png"))
 
-            wait_time = claim(iseed, total_seeds)
+            wait_time = claim(iseed, total_seeds, iseed_index)
             return wait_time
 
         except TimeoutException as e:
@@ -117,7 +117,7 @@ def Login(iseed, iseed_index, total_seeds):
             if err > 2:
                 return 60  # Leave it an hour, there seems to be some rate throttling if too many requests
 
-def claim(iseed, total_seeds):
+def claim(iseed, total_seeds, iseed_index):
     print("Log in successful. Starting Claim Logic!")
     driver.save_screenshot(os.path.join(screenshots_path, "08_confirm_still_same_page.png"))  # Take screenshot
     
@@ -163,7 +163,7 @@ def claim(iseed, total_seeds):
             matches = re.findall(r'(\d+)([hm])', waktu_text)
             if matches:
                 total_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
-                print("Not Time to Claim Yet. Wait for %s Minutes." % total_time)
+                print("Not Time to Claim seed [{}] Yet. Wait for {} Minutes.".format(iseed_index + 1, total_time))
                 return total_time
             else:
                 print("No time data found. Check the page or xpath.")
@@ -275,7 +275,6 @@ def cycle_seeds(seeds):
     while True:
         if iseed_index < len(seeds):
             try:
-                clear_screen()
                 iseed = seeds[iseed_index]
                 print("Starting login attempts on seed {} of {}. Max 2 attempts per seed.".format(iseed_index + 1, len(seeds)))
                 wait_time = Login(iseed, iseed_index + 1, len(seeds))
