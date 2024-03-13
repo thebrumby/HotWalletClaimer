@@ -24,7 +24,7 @@ I will attempt to keep this repository updated should the game creators update t
 2. **Download the Chrome `.deb` package:**
 
    ```bash
-   wget --no-verbose -O /tmp/chrome.deb [https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb](https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb)
+   wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb
    sudo apt install -y /tmp/chrome.deb
    rm /tmp/chrome.deb
    ```
