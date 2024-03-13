@@ -38,11 +38,12 @@ git clone https://github.com/thebrumby/HotWalletBot.git
 cd HotWalletBot
 
 # Install dependencies
-pip install selenium
-pip install Pillow
+pip install selenium Pillow
 
-# Run the script (comman line option)
+
+# Run the script on Python v2
 python claim.py
+# Run the script on Python v3
 python3 claim.py
 
 
@@ -50,12 +51,12 @@ python3 claim.py
 
 If you want the script to run continuously, even after disconnecting from the server, use screen:
 
-sudo apt install screen
-Create session: screen -S hot_wallet
-Check you are in the HotWalletBot directory or cd HotWalletBot
-Start the script: python claim.py or python3 claim.py
-Exit session and leave it running in the background CTRL+A+D
-Resume session: screen -r
+- Install screen if required: sudo apt install screen
+- Create session: screen -S hot_wallet
+- Check you are in the HotWalletBot directory or cd HotWalletBot
+- Start the script: python claim.py or python3 claim.py
+- Exit session and leave it running in the background CTRL+A+D
+- To later resume session: screen -r
 
 If you find this script useful, please consider buying me a coffee to show your support.
 https://www.buymeacoffee.com/HotWallletBot
