@@ -50,7 +50,7 @@ To install Google Chrome on Ubuntu using the command line, follow these steps:
 3. **Clone this repository:**
 
    ```bash
-	git clone https://github.com/thebrumby/HotWalletBot.git
+   git clone https://github.com/thebrumby/HotWalletBot.git
 ```
 
 4. **Go into the repository directory**
