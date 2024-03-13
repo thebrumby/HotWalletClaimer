@@ -19,7 +19,8 @@ Ubuntu users:
 
 #### Verify Installation
 
-- Open a new command prompt or PowerShell window. VPS users should make an SSH connection via PuTTy or similar.
+- Open a new command prompt or PowerShell window. 
+- VPS users should make an SSH connection via PuTTy or similar.
 - Type `python --version` or `python3 --version` and press Enter to verify the installation.
 
 ### Linux Users
