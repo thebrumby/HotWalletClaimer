@@ -11,7 +11,7 @@ I will attempt to keep this repository updated should the game creators update t
 
 ### 1. Install Python & PIP
 
-If Python and Python Package Installer are not installed on your Windows machine, search for the instuctions to install via the internet:
+If Python and Python Package Installer are not installed on your machine, install as before search for the instuctions to install to install on your platform:
 
 Ubuntu users: 
 sudo apt update && sudo apt install -y python3 python3-pip
