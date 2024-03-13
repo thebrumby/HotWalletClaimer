@@ -14,8 +14,8 @@ I will attempt to keep this repository updated should the game creators update t
 If Python and Python Package Installer are not installed on your machine, install as before search for the instuctions to install to install on your platform:
 
 Ubuntu users: 
-```sudo apt update```
-```sudo apt install -y python3 python3-pip```
+- ```sudo apt update```
+- ```sudo apt install -y python3 python3-pip```
 
 #### Verify Installation
 
@@ -28,16 +28,16 @@ Ubuntu users:
 
 The commands below are tested Ubuntu-based distributions. Adjust accordingly if you're using a different distribution.
 
-```wget --no-verbose -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb```
-```sudo apt install -y /tmp/chrome.deb```
-```rm /tmp/chrome.deb```
+- ```wget --no-verbose -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb```
+- ```sudo apt install -y /tmp/chrome.deb```
+- ```rm /tmp/chrome.deb```
 
-```sudo apt install unzip```
-```wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip```
-```unzip chromedriver_linux64.zip```
-```sudo mv chromedriver /usr/local/bin/```
-```sudo chmod +x /usr/local/bin/chromedriver```
-```chromedriver --version```
+- ```sudo apt install unzip```
+- ```wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip```
+- ```unzip chromedriver_linux64.zip```
+- ```sudo mv chromedriver /usr/local/bin/```
+- ```sudo chmod +x /usr/local/bin/chromedriver```
+- ```chromedriver --version```
 
 # Clone this repository
 ```git clone https://github.com/thebrumby/HotWalletBot.git```
