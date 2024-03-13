@@ -254,7 +254,6 @@ def cycle_seeds(seeds):
     while True:
         if iseed_index < len(seeds):
             try:
-                clear_screen()
                 iseed = seeds[iseed_index]
                 print("Starting login attempts on seed {} of {}. Max 2 attempts per seed.".format(iseed_index + 1, len(seeds)))
                 wait_time = Login(iseed, iseed_index + 1, len(seeds))
