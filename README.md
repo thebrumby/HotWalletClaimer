@@ -24,20 +24,27 @@ Ubuntu users:
 
 ### Linux Users
 
-#### 1. Install Google Chrome
+### Install Chrome for Ubuntu CLI
 
-The commands below are tested Ubuntu-based distributions. Adjust accordingly if you're using a different distribution.
+To install Google Chrome on Ubuntu using the command line, follow these steps:
 
-- ```wget --no-verbose -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb```
-- ```sudo apt install -y /tmp/chrome.deb```
-- ```rm /tmp/chrome.deb```
+1. Download the Chrome `.deb` package:
 
-- ```sudo apt install unzip```
-- ```wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip```
-- ```unzip chromedriver_linux64.zip```
-- ```sudo mv chromedriver /usr/local/bin/```
-- ```sudo chmod +x /usr/local/bin/chromedriver```
-- ```chromedriver --version```
+   ```bash
+   wget --no-verbose -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb
+	- sudo apt install -y /tmp/chrome.deb
+	- rm /tmp/chrome.deb
+```
+2. Download Chromedriver:
+
+   ```bash
+	- sudo apt install unzip
+	- wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
+	- unzip chromedriver_linux64.zip
+	- sudo mv chromedriver /usr/local/bin/
+	- sudo chmod +x /usr/local/bin/chromedriver
+	- chromedriver --version
+```
 
 # Clone this repository
 ```git clone https://github.com/thebrumby/HotWalletBot.git```
