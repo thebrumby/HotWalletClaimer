@@ -55,7 +55,7 @@ I will attempt to keep this repository updated should the game creators update t
    pip install selenium Pillow
    ```
 
-7. **Run the Python script**
+7. **Run the Python script or use the unattended method below**
    ```bash
    python3 claim.py
    ```
@@ -81,3 +81,5 @@ Note: You have two options to integrate your accounts:
 
 Each seed phrase should be 12 words, each separated by a space.
 As mentioned earlier, you may enter more than one seed phrase, with each one on a separate line.
+
+Inspired by https://github.com/vannszs/HotWalletBot.git
