@@ -2,8 +2,8 @@
 
 This Python script automates the process of claiming HOT tokens from the Herewallet app, which operates on the Near Protocol. It allows users to mine HOT tokens that are stored on the Near Blockchain. Users are required to log in every few hours to mine or claim tokens. This script simplifies the task, especially for those with multiple accounts, by cycling through 12-word seed phrases, logging into each wallet, and claiming tokens when the wallet is full. If a wallet is not ready for claiming, the script retrieves the time until it is filled and waits before trying again, reducing unnecessary network traffic.
 
-Note: This game/app has already caused various overloads to both Near Protocol and the provider's CDN.
-If the system throws a lot of errors, you may need to leave it sometime before retrying.
+Note: The Claim HOT game has already caused various overloads to both Near Protocol and strain on their Content Distribution Network (CDN).
+If the system throws a lot of errors, you may need to leave it some time for the Claim HOT developers to resolve their issues before trying again.
 I will attempt to keep this repository updated should the game creators update their code.
 
 The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
