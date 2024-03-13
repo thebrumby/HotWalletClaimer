@@ -8,35 +8,27 @@ I will attempt to keep this repository updated should the game creators update t
 
 ## 🚀 How To Use
 
+### Linux Users - This guide is based on installation on an Ubuntu VPS server
 
-### 1. Install Python & PIP
+1. **If required, install Python & PIP:**
 
-If Python and Python Package Installer are not installed on your machine, install as before search for the instuctions to install to install on your platform:
-
-Ubuntu users: 
-- ```sudo apt update```
-- ```sudo apt install -y python3 python3-pip```
-
-#### Verify Installation
-
-- Open a new command prompt or PowerShell window. 
+- Open a new command prompt window. 
 - VPS users should make an SSH connection via PuTTy or similar.
-- Type `python --version` or `python3 --version` and press Enter to verify the installation.
 
-### Linux Users
+   ```bash
+   sudo apt update
+   sudo apt install -y python3 python3-pip
+   python3 --version
+   ```
 
-### Install Chrome for Ubuntu CLI
-
-To install Google Chrome on Ubuntu using the command line, follow these steps:
-
-1. **Download the Chrome `.deb` package:**
+2. **Download the Chrome `.deb` package:**
 
    ```bash
    wget --no-verbose -O /tmp/chrome.deb [https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb](https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb)
    sudo apt install -y /tmp/chrome.deb
    rm /tmp/chrome.deb
    ```
-2. **Download Chromedriver:**
+3. **Download Chromedriver:**
 
    ```bash
 	sudo apt install unzip
@@ -47,32 +39,29 @@ To install Google Chrome on Ubuntu using the command line, follow these steps:
 	chromedriver --version
 	```
 
-3. **Clone this repository**
+4. **Clone this repository**
 
    ```bash
    git clone https://github.com/thebrumby/HotWalletBot.git
    ```
 
-4. **Go into the repository directory**
+5. **Switch to the repository directory**
    ```bash
    cd HotWalletBot
    ```
 
-5. **Install dependencies**
+6. **Install dependencies the dependencies**
    ```bash
    pip install selenium Pillow
    ```
 
-6. **Run the Python script**
+7. **Run the Python script**
    ```bash
-# Run the script on Python v2
-   python claim.py
-# Run the script on Python v3
-	python3 claim.py
+   python3 claim.py
    ```
 
 
-# Run the script (Use screen for a Persistent Session)
+# How to leave the script running for unattended claims
 
 If you want the script to run continuously, even after disconnecting from the server, use screen:
 
@@ -80,15 +69,15 @@ If you want the script to run continuously, even after disconnecting from the se
 - Create session: ```screen -S hot_wallet```
 - Check you are in the HotWalletBot directory or ```cd HotWalletBot```
 - Start the script: ```python claim.py``` or ```python3 claim.py```
-- Exit session and leave it running in the background CTRL+A+D
+- To exit session and leave it running in the background CTRL+A+D
 - To later resume session: ```screen -r```
 
 If you find this script useful, please consider buying me a coffee to show your support.
-https://www.buymeacoffee.com/HotWallletBot
+- https://www.buymeacoffee.com/HotWallletBot
 
 Note: You have two options to integrate your accounts:
 1) Create a seed.txt file in the same directory as claim.py
 2) Run claim.py and you will be prompted to enter the seed phrase. It will check you entered 12 words and create seeds.txt
 
-Each seed phrase should be the 12 words, each separated by a space.
-As mentioned earlier, you may enter more than one seed phrase, with each on a separate line.
+Each seed phrase should be 12 words, each separated by a space.
+As mentioned earlier, you may enter more than one seed phrase, with each one on a separate line.
