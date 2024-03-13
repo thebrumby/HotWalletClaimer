@@ -46,7 +46,7 @@ def Login(iseed, iseed_index, total_seeds):
     err = 0
     while True:
         try:
-            print(f'Login attempt {err+1} out of 2 on seed number {iseed_index} of {total_seeds}.')
+            print('Login attempt {} out of 2 on seed number {} of {}.'.format(err+1, iseed_index, total_seeds))
             driver.get(url)
 
             # Use WebDriverWait to wait for elements up to 60 seconds
@@ -70,9 +70,9 @@ def Login(iseed, iseed_index, total_seeds):
               driver.save_screenshot(os.path.join(screenshots_path, "04_importing_account.png"))
               print("Seed phrase submission attempted. Waiting for account import confirmation...")
             except TimeoutException as e:
-              print(f"Failed to perform an action due to timeout: {e}")
+              print("Failed to perform an action due to timeout: {}".format(e))
             except Exception as e:
-              print(f"An error occurred during seed phrase entry or submission: {e}")
+              print("An error occurred during seed phrase entry or submission: {}".format(e))
 
             try:
               print("Attempting to select the account...")
@@ -85,10 +85,10 @@ def Login(iseed, iseed_index, total_seeds):
               driver.save_screenshot(os.path.join(screenshots_path, "06_initial_logged_in_screen.png"))
               print("Account successfully logged in. Proceeding with the next steps.")
             except TimeoutException as e:
-              print(f"Timeout waiting for the account selection button: {e}")
+              print("Timeout waiting for the account selection button: {}".format(e))
               # Handle the timeout scenario, perhaps by retrying or logging the failure
             except Exception as e:
-              print(f"An error occurred during account selection or login confirmation: {e}")
+              print("An error occurred during account selection or login confirmation: {}".format(e))
 
             try:
               # Replace 'xpath1' and 'xpath2' with your actual XPaths
@@ -108,12 +108,12 @@ def Login(iseed, iseed_index, total_seeds):
             return wait_time
 
         except TimeoutException as e:
-            print(f"Timeout waiting for an element: {e}")
+            print("Timeout waiting for an element: {}".format(e))
             err += 1
             if err > 2:
                 return 60  # Example default wait time in minutes
         except Exception as e:
-            print(f"An error occurred, most possibly trying to proceed to the next step too early OR VPN error: {e}")
+            print("An error occurred, most possibly trying to proceed to the next step too early OR VPN error: {}".format(e))
             err += 1
             if err > 2:
                 return 60  # Leave it an hour, there seems to be some rate throttling if too many requests
@@ -170,7 +170,7 @@ def claim(iseed, total_seeds):
                 print("No time data found. Check the page or xpath.")
                 return None
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print("An unexpected error occurred: {}".format(e))
         return 60  # Let's give them an hour in case of too many errors and potential rate throttling. 
         
 # Define your base path for screenshots
@@ -191,7 +191,7 @@ def try_interact_with_elements(driver, xpath1, xpath2, max_wait=30, interval=10,
             print("Successfully interacted with the first element.")
             success = True
         except TimeoutException:
-            print(f"Cycle {cycle_count}: Failed to interact with the first element, trying the second one.")
+            print("Cycle {}: Failed to interact with the first element, trying the second one.".format(cycle_count))
             driver.save_screenshot(f"{screenshot_base}_cycle_{cycle_count}_1.png")
 
             try:
@@ -206,7 +206,7 @@ def try_interact_with_elements(driver, xpath1, xpath2, max_wait=30, interval=10,
                 print("Successfully retried and interacted with the first element after the second.")
                 success = True
             except TimeoutException:
-                print(f"Cycle {cycle_count}: Failed to interact with both elements.")
+                print("Cycle {}: Failed to interact with both elements.".format(cycle_count))
                 driver.save_screenshot(f"{screenshot_base}_cycle_{cycle_count}_retry.png")
 
         if not success:
@@ -262,11 +262,11 @@ def cycle_seeds(seeds):
             try:
                 clear_screen()
                 iseed = seeds[iseed_index]
-                print(f"Starting login attempts on seed {iseed_index + 1} of {len(seeds)}. Max 2 attempts per seed.")
+                print("Starting login attempts on seed {} of {}. Max 2 attempts per seed.".format(iseed_index + 1, len(seeds)))
                 wait_time = Login(iseed, iseed_index + 1, len(seeds))
                 wait_times.append(wait_time)
             except Exception as e:
-                print(f"Error with seed {iseed}: {e}")
+                print("Error with seed {}: {}".format(iseed, e))
             finally:
                 iseed_index += 1
         else:
@@ -274,11 +274,11 @@ def cycle_seeds(seeds):
             min_wait = min([time for time in wait_times if time is not None]) if wait_times else 1
             while min_wait > 0:
                 this_wait = min(min_wait, 15)
-                print(f"Waiting for {this_wait} more minutes before refreshing timer out of {min_wait} minutes...")
+                print("Waiting for {} more minutes before refreshing timer out of {} minutes...".format(this_wait, min_wait))
                 time.sleep(this_wait * 60)
                 min_wait -= this_wait
                 if min_wait > 0:
-                    print(f"Waiting for another {min_wait} minutes.")
+                    print("Waiting for another {} minutes.".format(min_wait))
             iseed_index = 0
             wait_times.clear()
 
