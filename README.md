@@ -3,7 +3,7 @@
 This Python script automates the process of claiming HOT tokens from the Herewallet app, which operates on the Near Protocol. It allows users to mine HOT tokens that are stored on the Near Blockchain. Users are required to log in every few hours to mine or claim tokens. This script simplifies the task, especially for those with multiple accounts, by cycling through 12-word seed phrases, logging into each wallet, and claiming tokens when the wallet is full. If a wallet is not ready for claiming, the script retrieves the time until it is filled and waits before trying again, reducing unnecessary network traffic.
 
 Note: This game/app has already caused various overloads to both Near Protocol and the provider's CDN.
-If the system throws a lot of errors, you may need to leave it some time before retrying.
+If the system throws a lot of errors, you may need to leave it sometime before retrying.
 I will attempt to keep this repository updated should the game creators update their code.
 
 ## 🚀 How To Use
@@ -39,23 +39,23 @@ I will attempt to keep this repository updated should the game creators update t
 	chromedriver --version
 	```
 
-4. **Clone this repository**
+4. **Clone this repository:**
 
    ```bash
    git clone https://github.com/thebrumby/HotWalletBot.git
    ```
 
-5. **Switch to the repository directory**
+5. **Switch to the repository directory:**
    ```bash
    cd HotWalletBot
    ```
 
-6. **Install dependencies the dependencies**
+6. **Install dependencies the dependencies:**
    ```bash
    pip install selenium Pillow
    ```
 
-7. **Run the Python script or use the unattended method below**
+7. **Run the Python script or use the unattended method below:**
    ```bash
    python3 claim.py
    ```
@@ -69,7 +69,7 @@ If you want the script to run continuously, even after disconnecting from the se
 - Create session: ```screen -S hot_wallet```
 - Check you are in the HotWalletBot directory or ```cd HotWalletBot```
 - Start the script: ```python3 claim.py``` or ```python claim.py```
-- To exit session and leave it running in the background CTRL+A+D
+- To exit the session and leave it running in the background CTRL+A+D
 - To later resume session: ```screen -r```
 
 If you find this script useful, please consider buying me a coffee to show your support.
