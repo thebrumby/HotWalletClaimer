@@ -44,7 +44,7 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 4. **Clone this repository:**
 
    ```bash
-   sudo apt install git
+   sudo apt install -y git
    git clone https://github.com/thebrumby/HotWalletBot.git
    ```
 
