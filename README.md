@@ -65,4 +65,9 @@ Resume session: screen -r
 If you find this script useful, please consider buying me a coffee to show your support.
 https://www.buymeacoffee.com/HotWallletBot
 
-Note: You have two options to 
+Note: You have two options to integrate your accounts:
+1) Create a seed.txt file in the same directory as claim.py
+2) Run claim.py and you will be prompted to enter the seed phrase. It will check you entered 12 words and create seeds.txt
+
+Each seed phrase should be the 12 words, each separated by a space.
+As mentioned earlier, you may enter more than one seed phrase, with each on a separate line.
