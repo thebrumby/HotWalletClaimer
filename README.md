@@ -94,6 +94,7 @@ Inspired by https://github.com/vannszs/HotWalletBot.git
 Local Machine Usage: Given that the script operates locally, there's minimal risk associated with its usage on a personal machine not accessible by others.
 Seed Phrase Storage: Storing sensitive information, such as seed phrases, in an unencrypted text file poses a significant security concern.
 Account Vulnerability: Accounts with high monetary value should not be used with this script due to the inherent security risks involved.
+
 💡 Recommendations:
 
 Privacy Concerns: Avoid installing this script on a machine accessible by others, especially in shared or public environments.
