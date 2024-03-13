@@ -45,13 +45,13 @@ To install Google Chrome on Ubuntu using the command line, follow these steps:
 	sudo mv chromedriver /usr/local/bin/
 	sudo chmod +x /usr/local/bin/chromedriver
 	chromedriver --version
-```
+	```
 
-3. **Clone this repository:**
+3. **Clone this repository**
 
    ```bash
    git clone https://github.com/thebrumby/HotWalletBot.git
-```
+   ```
 
 4. **Go into the repository directory**
    ```bash
@@ -61,7 +61,7 @@ To install Google Chrome on Ubuntu using the command line, follow these steps:
 5. **Install dependencies**
    ```bash
    pip install selenium Pillow
-```
+   ```
 
 6. **Run the Python script**
    ```bash
@@ -69,7 +69,7 @@ To install Google Chrome on Ubuntu using the command line, follow these steps:
    python claim.py
 # Run the script on Python v3
 	python3 claim.py
-```
+   ```
 
 
 # Run the script (Use screen for a Persistent Session)
