@@ -222,34 +222,50 @@ def clear_screen():
     else:
         os.system('clear')
 
-# Load seeds from file or input
-seed_file_path = "seed.txt"
-if os.path.exists(seed_file_path) and os.path.getsize(seed_file_path) > 0:
-    with open(seed_file_path, "r") as file:
-        seeds = [line.strip() for line in file]
-else:
-    clear_screen()
+def load_seeds_from_file(seed_file_path):
+    """Load seed phrases from a file."""
+    try:
+        with open(seed_file_path, "r") as file:
+            seeds = [line.strip() for line in file if line.strip()]
+            if seeds:
+                return seeds
+            else:
+                print("The seeds.txt file is empty.")
+                return None
+    except FileNotFoundError:
+        print("The seeds.txt file does not exist.")
+        return None
+
+def validate_and_collect_seeds():
+    """Collect and validate seed phrases from user input."""
     seeds = []
-    print("Your seeds.txt file is empty, enter you 12 words seed phrase and press enter.\nIf you have multiple accounts, enter each on a new line.\nPress enter without typing anything to leave blank line to finish.\n")
+    print("Please enter your 12-word seed phrases. Press enter on a blank line when done.")
     while True:
-        seed_input = input("Please enter the 12 words or Hit enter if no more seeds: ")
-        if seed_input == "":
-            break  # Exit the loop if the input is blank
-        
-        # Validate the input to ensure it consists of exactly 12 words with only letters
+        seed_input = input("Enter seed phrase or press enter to finish: ").strip()
+        if not seed_input:
+            break
         words = seed_input.split()
-        if len(words) != 12 or not all(word.isalpha() for word in words):
-            print("Invalid seed phrase. Seed phrases must consist of exactly 12 words containing only letters. Please try again.")
-        else:
+        if len(words) == 12 and all(word.isalpha() for word in words):
             seeds.append(seed_input)
-    
-    # Write the validated seed phrases to the seeds.txt file
-    if seeds:  # Check if there are any seeds to write
-        with open(seed_file_path, "w") as file:
-            file.write("\n".join(seeds))
-            
-    else:
-        print("No seed phrases entered.")
+        else:
+            print("Invalid seed phrase. Each phrase must consist of exactly 12 alphabetical words. Please try again.")
+    return seeds
+
+def get_seeds(seed_file_path="seed.txt"):
+    """Main function to load or collect seeds."""
+    seeds = load_seeds_from_file(seed_file_path)
+    if not seeds:
+        clear_screen()
+        seeds = validate_and_collect_seeds()
+        while not seeds:
+            print("No seed phrases entered. Please enter at least one seed phrase.")
+            seeds = validate_and_collect_seeds()
+    return seeds
+
+# Main script execution
+seed_file_path = "seed.txt"
+seeds = get_seeds(seed_file_path)
+
 
 # Function to cycle through seeds and perform actions
 def cycle_seeds(seeds):
