@@ -52,7 +52,7 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
    cd HotWalletBot
    ```
 
-6. **Install dependencies the dependencies:**
+6. **Install the dependencies:**
    ```bash
    pip install selenium Pillow
    ```
