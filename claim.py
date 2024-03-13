@@ -163,7 +163,7 @@ def claim(iseed, total_seeds, iseed_index):
             matches = re.findall(r'(\d+)([hm])', waktu_text)
             if matches:
                 total_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
-                print("Not Time to Claim seed [{}] Yet. Wait for {} Minutes.".format(iseed_index + 1, total_time))
+                print("Not Time to Claim seed [{}] yet. Wait for {} Minutes.".format(iseed_index, total_time))
                 return total_time
             else:
                 print("No time data found. Check the page or xpath.")
