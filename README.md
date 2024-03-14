@@ -6,7 +6,7 @@ This Python script automates claiming HOT tokens from the Herewallet app, which 
 
 The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 
-## 🚀 How To Use (based on installation on an Ubuntu VPS server)
+## 🚀 How To Use (installation based on Ubuntu 20.04 and 22.04)
 
 ### Linux Users - Quick Start
 #### Install GitHub (if necessary), fetch this repository, run the install script
