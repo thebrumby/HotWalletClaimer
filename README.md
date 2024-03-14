@@ -9,10 +9,19 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 
 ### Linux Users - This guide is based on installation on an Ubuntu VPS server
 
-1. **If required, install Python & PIP:**
-
 - Open a new command prompt window. 
 - VPS users should make an SSH connection via PuTTy or similar.
+
+#### The quickest way to start (install GitHub, fetch the repository, run the install script)
+
+   ```bash
+   sudo apt install -y git && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh && ./install.sh
+   ```
+Then start a new screen session with ```screen -S hot_wallet``` and execute the Python script ```python3 claim.py```
+
+#### Manual installation - ensure each command in the code block executes. 
+
+1. **Install Python & PIP:**
 
    ```bash
    sudo apt update
@@ -20,7 +29,6 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
    python3 --version
    
    ```
-
 2. **Download the Chrome `.deb` package:**
 
    ```bash
@@ -40,7 +48,6 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
    chromedriver --version
    
    ```
-
 4. **Clone this repository:**
 
    ```bash
@@ -48,25 +55,28 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
    git clone https://github.com/thebrumby/HotWalletBot.git
    
    ```
-
 5. **Switch to the repository directory:**
    ```bash
    cd HotWalletBot
    
    ```
-
 6. **Install the dependencies:**
    ```bash
    pip install selenium Pillow
    
    ```
-
 7. **Run the Python script or use the unattended method below:**
    ```bash
    python3 claim.py
    
    ```
 
+Note: You have two options to integrate your accounts:
+1) Create a seed.txt file in the same directory as claim.py. This will load when claim.py starts (not recommended on shared computers).
+2) Operate without a seed.txt file. You will be prompted to enter the seed phrases every time you start the script (most secure).
+
+Each seed phrase should be 12 words, each separated by a space.
+As mentioned earlier, you may enter more than one seed phrase, with each one on a separate line.
 
 # How to leave the script running for unattended claims
 
@@ -82,29 +92,31 @@ If you want the script to run continuously, even after disconnecting from the se
 If you find this script useful, please consider buying me a coffee to show your support.
 - https://www.buymeacoffee.com/HotWallletBot
 
-Note: You have two options to integrate your accounts:
-1) Create a seed.txt file in the same directory as claim.py
-2) Run claim.py and you will be prompted to enter the seed phrase. It will check you entered 12 words and create seed.txt
-
-Each seed phrase should be 12 words, each separated by a space.
-As mentioned earlier, you may enter more than one seed phrase, with each one on a separate line.
-
 Inspired by https://github.com/vannszs/HotWalletBot.git
 
-⚠️ Warning: While this Python script is openly available on GitHub, transparent in its code, and devoid of any malicious content, it's important to understand the potential risks. The debugging function of this script generates screenshots at different stages of the login process directly on your local machine. It also stores your seed phrases, unencrypted, in a text file named seed.txt.
+# Security Considerations for this HotWalletBot Usage
 
-⚠️ Risk Assessment:
+The HotWalletBot allows users to automate interactions with the "Claim Hot" game. This tool offers the option to enter your seed phrases each time, or the convenience of storing your seed phrases through a seeds.txt file. 
 
-Given that the script operates locally, there's minimal risk associated with its usage on a personal machine, provided that it is not accessible by others.
-Storing sensitive information, such as seed phrases, on a shared computer, especially in an unencrypted text file poses a significant security concern.
-Accounts with high monetary value should not be used with this script due to the inherent security risks involved.
+⚠️ HTTPS Communication: All interactions with the web server occur over HTTPS, providing a secure channel.
 
-💡 Recommendations:
+⚠️ Debugging and Screenshots: Enabling debug mode captures the login process, including seed phrase entry, in screenshots. These images are stored locally, raising privacy concerns despite not directly exposing data online.
 
-Avoid installing this script on a machine accessible by others, especially in shared or public environments. Refrain from entering seed phrases associated with accounts holding significant monetary value. This script is primarily intended for use in scenarios where security is less critical, such as experimenting with the "Claim Hot" game.
+⚠️ Seed Phrases Storage: For ease of use, seed phrases can be stored in a seeds.txt file. This method, while convenient, is not secure as the information is stored unencrypted. Alternatively, you can enter the seed phrases each time you start the script. 
 
-⚠️ Disclaimer: The developers of this script does not assume responsibility for any misuse or unauthorized access to sensitive information. Users are advised to exercise caution and discretion when utilizing this tool.
+## Security Considerations:
 
-By understanding the risks and exercising appropriate caution, users can maximize the benefits of this script while minimizing potential security vulnerabilities. Remember, your security is paramount. Stay vigilant and informed!
+⚠️ Personal Use: Ideally, use this script on a personal machine that others do not have access to. Shared or public computers significantly increase the risk of sensitive information being compromised.
+⚠️ Value at Risk: We strongly advise against using this script with accounts that hold substantial monetary value due to the security risks involved.
 
+## Recommendations:
+
+💡 Private Devices: Preferably, only use this script on private, secure machines.
+💡 Caution with Seed Phrases: Be very cautious with accounts of significant value. Consider the security implications of storing and using seed phrases with this tool.
+💡 Awareness and Discretion: Understand the security trade-offs involved in using this automation tool. Your vigilance is crucial in safeguarding your information.
+
+## Disclaimer:
+The use of HotWalletBot is at your own risk. The developers are not liable for any potential security breaches or financial losses. Your digital security is your responsibility. Always prioritize the protection of your accounts and sensitive information.
+
+This notice aims to balance the script's benefits with an awareness of its security limitations. User discretion is advised.
 
