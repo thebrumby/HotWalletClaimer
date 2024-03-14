@@ -10,33 +10,47 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
+
+debug_is_on = False
 session_path = "./selenium2"
 os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots"
 os.makedirs(screenshots_path, exist_ok=True)
 
-# Correct the path to your ChromeDriver here
+# Hardcode URL for the Telegram App
+url = 'https://tgapp.herewallet.app/auth/import#tgWebAppData=user%3D%257B%2522id%2522%253A831612161%252C%2522first_name%2522%253A%2522John%2522%252C%2522last_name%2522%253A%2522Doe%2522%252C%2522username%2522%253A%2522j_doe%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%257D&chat_instance%3D-1658397054350349435&chat_type%3Dsender&auth_date%3D1710122886&hash%3Da8ed62de9dc49dad96f3a46d8297046a51ad4587a625bcefcf611d06be2bf499&tgWebAppVersion=7.0&tgWebAppPlatform=web&tgWebAppBotInline=1&tgWebAppThemeParams=%7B%22bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%233390ec%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23707579%22%2C%22link_color%22%3A%22%2300488f%22%2C%22secondary_bg_color%22%3A%22%23f4f4f5%22%2C%22text_color%22%3A%22%23000000%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22accent_text_color%22%3A%22%233390ec%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%233390ec%22%2C%22subtitle_text_color%22%3A%22%23707579%22%2C%22destructive_text_color%22%3A%22%23df3f40%22%7D'
+
+def setup_driver(chromedriver_path):
+    """Configures WebDriver with best practices and handles ChromeDriver compatibility"""
+
+    service = Service(chromedriver_path)
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("user-data-dir={}".format(session_path))
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--log-level=3")  # Set log level to suppress INFO and WARNING messages
+    chrome_options.add_argument("--disable-bluetooth")
+    chrome_options.add_argument("--mute-audio")
+    chrome_options.add_argument("--incognito")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+
+    # Compatibility Handling:
+    try:
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        return driver
+    except Exception as e:
+        print(f"Initial ChromeDriver setup may have failed: {e}")
+        print("Please ensure you have the correct ChromeDriver version for your system.")
+        print("If you copied the GitHub commands, ensure all lines executed.")
+        print("Visit https://chromedriver.chromium.org/downloads to find the right version.")
+        exit(1)
+
+# Enter the correct the path to your ChromeDriver here
 chromedriver_path = "/usr/local/bin/chromedriver"
 
-# Create a Service object
-service = Service(chromedriver_path)
-
-# Set up Chrome options
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("user-data-dir={}".format(session_path))
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--log-level=3")  # Set log level to suppress INFO and WARNING messages
-chrome_options.add_argument("--disable-bluetooth")
-chrome_options.add_argument("--mute-audio")
-chrome_options.add_argument("--incognito")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-
-# Initialize WebDriver, passing the service object
-driver = webdriver.Chrome(service=service, options=chrome_options)
-
-url = 'https://tgapp.herewallet.app/auth/import#tgWebAppData=user%3D%257B%2522id%2522%253A831612161%252C%2522first_name%2522%253A%2522John%2522%252C%2522last_name%2522%253A%2522Doe%2522%252C%2522username%2522%253A%2522j_doe%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%257D&chat_instance%3D-1658397054350349435&chat_type%3Dsender&auth_date%3D1710122886&hash%3Da8ed62de9dc49dad96f3a46d8297046a51ad4587a625bcefcf611d06be2bf499&tgWebAppVersion=7.0&tgWebAppPlatform=web&tgWebAppBotInline=1&tgWebAppThemeParams=%7B%22bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%233390ec%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23707579%22%2C%22link_color%22%3A%22%2300488f%22%2C%22secondary_bg_color%22%3A%22%23f4f4f5%22%2C%22text_color%22%3A%22%23000000%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22accent_text_color%22%3A%22%233390ec%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%233390ec%22%2C%22subtitle_text_color%22%3A%22%23707579%22%2C%22destructive_text_color%22%3A%22%23df3f40%22%7D'
+# Create a separate function for WebDriver setup for flexibility and error handling
+driver = setup_driver(chromedriver_path) 
 
 time.sleep(1)
 wait = WebDriverWait(driver, 10)
@@ -54,19 +68,23 @@ def Login(iseed, iseed_index, total_seeds):
               print("Attempting to find the seed input area...")
               seed_area = '/html/body/div[1]/div/div[1]/label/textarea'
               seed_input = wait.until(EC.element_to_be_clickable((By.XPATH, seed_area)))
-              driver.save_screenshot(os.path.join(screenshots_path, "01_recovery_using_seed_phrase.png"))
+              if debug_is_on:
+                driver.save_screenshot(os.path.join(screenshots_path, "01_recovery_using_seed_phrase.png"))
               print("Seed input area found. Attempting to enter the seed phrase...")
               seed_input.click()
               seed_input.send_keys(iseed)
-              driver.save_screenshot(os.path.join(screenshots_path, "02_enter_seed_phrase.png"))
+              if debug_is_on:
+                driver.save_screenshot(os.path.join(screenshots_path, "02_enter_seed_phrase.png"))
               print("Seed phrase entered successfully.")
 
               print("Looking for the 'Continue' button to proceed with seed phrase submission...")
               enter_seed_xpath = '//*[@id="root"]/div/div[2]/button'
               enter_seed_button = wait.until(EC.element_to_be_clickable((By.XPATH, enter_seed_xpath)))
-              driver.save_screenshot(os.path.join(screenshots_path, "03_before_click_continue.png"))
+              if debug_is_on:
+                driver.save_screenshot(os.path.join(screenshots_path, "03_before_click_continue.png"))
               enter_seed_button.click()
-              driver.save_screenshot(os.path.join(screenshots_path, "04_importing_account.png"))
+              if debug_is_on:
+                driver.save_screenshot(os.path.join(screenshots_path, "04_importing_account.png"))
               print("Seed phrase submission attempted. Waiting for account import confirmation...")
             except TimeoutException as e:
               print("Failed to perform an action due to timeout: {}".format(e))
@@ -78,10 +96,12 @@ def Login(iseed, iseed_index, total_seeds):
               # Wait for the account selection button to be clickable
               account_selection_button_xpath = '//*[@id="root"]/div/button'
               account_selection_button = wait.until(EC.element_to_be_clickable((By.XPATH, account_selection_button_xpath)))
-              driver.save_screenshot(os.path.join(screenshots_path, "05_select_account_byID.png"))
+              if debug_is_on:
+                driver.save_screenshot(os.path.join(screenshots_path, "05_select_account_byID.png"))
               account_selection_button.click()
               print("Account selection attempted. Waiting for the account to log in...")
-              driver.save_screenshot(os.path.join(screenshots_path, "06_initial_logged_in_screen.png"))
+              if debug_is_on:
+                driver.save_screenshot(os.path.join(screenshots_path, "06_initial_logged_in_screen.png"))
               print("Account successfully logged in. Proceeding with the next steps.")
             except TimeoutException as e:
               print("Timeout waiting for the account selection button: {}".format(e))
@@ -101,7 +121,8 @@ def Login(iseed, iseed_index, total_seeds):
             # enter_seed_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="root"]/div/div/div/div[4]/div[2]/div')))
             enter_seed_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="root"]/div/div/div/div[4]/div[1]')))
             enter_seed_button.click()
-            driver.save_screenshot(os.path.join(screenshots_path, "07_move_to_claim_page.png"))
+            if debug_is_on:
+                driver.save_screenshot(os.path.join(screenshots_path, "07_move_to_claim_page.png"))
 
             wait_time = claim(iseed, total_seeds, iseed_index)
             return wait_time
@@ -119,7 +140,8 @@ def Login(iseed, iseed_index, total_seeds):
 
 def claim(iseed, total_seeds, iseed_index):
     print("Log in successful. Starting Claim Logic!")
-    driver.save_screenshot(os.path.join(screenshots_path, "08_confirm_still_same_page.png"))  # Take screenshot
+    if debug_is_on:
+        driver.save_screenshot(os.path.join(screenshots_path, "08_confirm_still_same_page.png"))  # Take screenshot
     
     try:
         waktu_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
@@ -133,12 +155,14 @@ def claim(iseed, total_seeds, iseed_index):
             try:
                 print("Let's wait 25 seconds for the page to catch up and see if there is any news to read.\n")
                 time.sleep(25)
-                driver.save_screenshot(os.path.join(screenshots_path, "09_preparing_to_check_news.png"))
+                if debug_is_on:
+                    driver.save_screenshot(os.path.join(screenshots_path, "09_preparing_to_check_news.png"))
                 check_news_button_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[2]/button[contains(@class, "sc-ktwOSD eZybGy") and contains(@style, "background: rgb(253, 132, 227)") and contains(text(), "Check NEWS")]'
                 check_news_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, check_news_button_xpath)))
                 check_news_button.click()
                 print("Found and clicked 'Check NEWS' button.\n")
-                driver.save_screenshot(os.path.join(screenshots_path, "10_after_checking_news.png"))
+                if debug_is_on:
+                    driver.save_screenshot(os.path.join(screenshots_path, "10_after_checking_news.png"))
             except TimeoutException:
                 print("'Check NEWS' button not found or not clickable.")
             
@@ -150,9 +174,11 @@ def claim(iseed, total_seeds, iseed_index):
                 claim_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, claim_button_xpath)))
                 claim_button.click()
                 print("Attempting to submit a claim now! Another 75 second timer.\n")
-                driver.save_screenshot(os.path.join(screenshots_path, "11_preparing_to_claim.png"))
+                if debug_is_on:
+                    driver.save_screenshot(os.path.join(screenshots_path, "11_preparing_to_claim.png"))
                 time.sleep(75)
-                driver.save_screenshot(os.path.join(screenshots_path, "12_after_the_claim.png"))
+                if debug_is_on:
+                    driver.save_screenshot(os.path.join(screenshots_path, "12_after_the_claim.png"))
                 print("Claim attempt finished. Screenshot 12 will show if the pot has reset or not.\n")
                 return 5
             except TimeoutException:
@@ -191,13 +217,15 @@ def try_interact_with_elements(driver, xpath1, xpath2, max_wait=30, interval=10,
             success = True
         except TimeoutException:
             print("Cycle {}: Failed to interact with the first element, trying the second one.".format(cycle_count))
-            driver.save_screenshot("{}/cycle_{}_1.png".format(screenshot_base, cycle_count))    
+            if debug_is_on:
+                driver.save_screenshot("{}/cycle_{}_1.png".format(screenshot_base, cycle_count))    
 
             try:
                 second_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath2)))
                 second_element.click()
                 print("Successfully interacted with the second element, retrying the first one.")
-                driver.save_screenshot("{}/cycle_{}_2.png".format(screenshot_base, cycle_count))
+                if debug_is_on:
+                    driver.save_screenshot("{}/cycle_{}_2.png".format(screenshot_base, cycle_count))
                 
                 time.sleep(interval)
                 first_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath1)))
@@ -206,7 +234,8 @@ def try_interact_with_elements(driver, xpath1, xpath2, max_wait=30, interval=10,
                 success = True
             except TimeoutException:
                 print("Cycle {}: Failed to interact with both elements.".format(cycle_count))
-                driver.save_screenshot("{}/cycle_{}_retry.png".format(screenshot_base, cycle_count))
+                if debug_is_on:
+                    driver.save_screenshot("{}/cycle_{}_retry.png".format(screenshot_base, cycle_count))
 
         if not success:
             time.sleep(interval)  # Wait before retrying in the next cycle
