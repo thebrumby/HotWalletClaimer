@@ -39,6 +39,7 @@ Then start a new screen session with ```screen -S hot_wallet``` and execute the 
    sudo apt install -y unzip
    wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
    unzip chromedriver_linux64.zip
+   rm chromedriver_linux64.zip
    sudo mv chromedriver /usr/local/bin/
    sudo chmod +x /usr/local/bin/chromedriver
    chromedriver --version   
