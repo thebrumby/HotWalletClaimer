@@ -12,6 +12,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
 # Initiate paths and variables
+forceClaim = False
 debug_is_on = False
 session_path = "./selenium2"
 os.makedirs(session_path, exist_ok=True)
@@ -150,8 +151,7 @@ def claim(iseed, total_seeds, iseed_index):
         wait_time_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
         wait_time_element = wait_time_dynamic.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
         wait_time_text = wait_time_element.text
-        forceClaim = False
-
+        
         if wait_time_text == "Filled" or forceClaim:
             try:
                 # First, try to click "Check NEWS" button if it exists
@@ -165,7 +165,7 @@ def claim(iseed, total_seeds, iseed_index):
             except TimeoutException:
                 print("No news to check or button not found.")
 
-        try:
+            try:
                 # Now try to click "Claim HOT" button
                 print("Attempting to claim...")
                 if debug_is_on:
@@ -182,11 +182,12 @@ def claim(iseed, total_seeds, iseed_index):
                 # Extract time from wait_time_text
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
+                print("Post claim raw wait time: %s & Processed = %s" % (wait_time_text, total_wait_time))
                 if debug_is_on:
                     driver.save_screenshot("{}/11_after_clickig_claim_Seed_{}.png".format(screenshots_path, iseed_index))
                 return max(60, total_wait_time)  # Wait one hour unless it updated
 
-        except TimeoutException:
+            except TimeoutException:
                 print("Unable to claim at this time. Will retry after one hour.")
                 return 60
 
