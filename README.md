@@ -15,7 +15,7 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 #### The quickest way to start (install GitHub, fetch the repository, run the install script)
 
    ```bash
-   sudo apt install -y git && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh && ./install.sh
+   sudo apt install -y git && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh
    ```
 Then start a new screen session with ```screen -S hot_wallet``` and execute the Python script ```python3 claim.py```
 
