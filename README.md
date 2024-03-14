@@ -30,7 +30,7 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 3. **Download Chromedriver:**
 
    ```bash
-   sudo apt install unzip
+   sudo apt install -y unzip
    wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
    unzip chromedriver_linux64.zip
    sudo mv chromedriver /usr/local/bin/
