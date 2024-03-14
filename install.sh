@@ -16,10 +16,6 @@ unzip chromedriver_linux64.zip
 sudo mv chromedriver /usr/local/bin/
 sudo chmod +x /usr/local/bin/chromedriver
 
-# Clone our repository
-sudo apt install -y git || true
-git clone https://github.com/thebrumby/HotWalletBot.git
-
 # Let's step into our folder
 cd HotWalletBot
 
