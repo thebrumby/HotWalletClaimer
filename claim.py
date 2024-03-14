@@ -13,7 +13,7 @@ print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
 # Initiate paths and variables
 forceClaim = False
-debug_is_on = False
+debug_is_on = True
 session_path = "./selenium2"
 os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots"
@@ -196,7 +196,7 @@ def claim(iseed, total_seeds, iseed_index):
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
             if matches:
                 total_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
-                print("Not Time to Claim seed [{}] yet. Wait for {} Minutes.".format(iseed_index + 1, total_time))
+                print("Not Time to Claim seed [{}] yet. Wait for {} Minutes.".format(iseed_index, total_time))
                 return max(1, total_time - 5)  # Reduce 5 minutes as buffer
             else:
                 print("No clear timer found. Check again later.")
