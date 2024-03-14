@@ -13,7 +13,7 @@ print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
 # Initiate paths and variables
 forceClaim = False
-debug_is_on = True
+debug_is_on = False
 session_path = "./selenium2"
 os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots"
