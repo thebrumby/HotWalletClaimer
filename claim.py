@@ -23,7 +23,7 @@ service = Service(chromedriver_path)
 
 # Set up Chrome options
 chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument(f"user-data-dir={session_path}")
+chrome_options.add_argument("user-data-dir={}".format(session_path))
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--log-level=3")  # Set log level to suppress INFO and WARNING messages
 chrome_options.add_argument("--disable-bluetooth")
@@ -191,13 +191,13 @@ def try_interact_with_elements(driver, xpath1, xpath2, max_wait=30, interval=10,
             success = True
         except TimeoutException:
             print("Cycle {}: Failed to interact with the first element, trying the second one.".format(cycle_count))
-            driver.save_screenshot(f"{screenshot_base}_cycle_{cycle_count}_1.png")
+            driver.save_screenshot("{}/cycle_{}_1.png".format(screenshot_base, cycle_count))    
 
             try:
                 second_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath2)))
                 second_element.click()
                 print("Successfully interacted with the second element, retrying the first one.")
-                driver.save_screenshot(f"{screenshot_base}_cycle_{cycle_count}_2.png")
+                driver.save_screenshot("{}/cycle_{}_2.png".format(screenshot_base, cycle_count))
                 
                 time.sleep(interval)
                 first_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath1)))
@@ -206,7 +206,7 @@ def try_interact_with_elements(driver, xpath1, xpath2, max_wait=30, interval=10,
                 success = True
             except TimeoutException:
                 print("Cycle {}: Failed to interact with both elements.".format(cycle_count))
-                driver.save_screenshot(f"{screenshot_base}_cycle_{cycle_count}_retry.png")
+                driver.save_screenshot("{}/cycle_{}_retry.png".format(screenshot_base, cycle_count))
 
         if not success:
             time.sleep(interval)  # Wait before retrying in the next cycle
