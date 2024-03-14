@@ -5,37 +5,33 @@ This Python script automates claiming HOT tokens from the Herewallet app, which 
 Note: The Claim HOT game has previously overloaded both the NEAR Protocol and its Content Distribution Network (CDN). If you encounter frequent errors, it would be best to give the Claim HOT developers time to resolve their issues before retrying the script. I will do my best to update this repository if the game creators release code changes.
 The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 
-## 🚀 How To Use
+## 🚀 How To Use (based on installation on an Ubuntu VPS server)
 
-### Linux Users - This guide is based on installation on an Ubuntu VPS server
+### Linux Users - Quick Start
+#### Install GitHub (if necessary), fetch this repository, run the install script
 
-- Open a new command prompt window. 
-- VPS users should make an SSH connection via PuTTy or similar.
-
-#### The quickest way to start (install GitHub, fetch the repository, run the install script)
+- VPS users should make an SSH connection via PuTTy or open the Command Window on a local machine.
 
    ```bash
    sudo apt install -y git || true && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh && ./install.sh
    ```
 Then start a new screen session with ```screen -S hot_wallet``` and execute the Python script ```python3 claim.py```. You can exit Screen and leave the script running unattended by pressing ```CTRL+A+D``` and resume an already running Screen session with ```screen -r```
 
-#### Manual installation - ensure each command in the code block executes. 
+### Linux Manual installation - Ensure each command in the code block executes. 
 
 1. **Install Python & PIP:**
 
    ```bash
    sudo apt update
    sudo apt install -y python3 python3-pip
-   python3 --version
-   
+   python3 --version   
    ```
 2. **Download the Chrome `.deb` package:**
 
    ```bash
    wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb
    sudo apt install -y /tmp/chrome.deb
-   rm /tmp/chrome.deb
-   
+   rm /tmp/chrome.deb   
    ```
 3. **Download Chromedriver:**
 
@@ -45,30 +41,25 @@ Then start a new screen session with ```screen -S hot_wallet``` and execute the 
    unzip chromedriver_linux64.zip
    sudo mv chromedriver /usr/local/bin/
    sudo chmod +x /usr/local/bin/chromedriver
-   chromedriver --version
-   
+   chromedriver --version   
    ```
 4. **Clone this repository:**
 
    ```bash
    sudo apt install -y git
-   git clone https://github.com/thebrumby/HotWalletBot.git
-   
+   git clone https://github.com/thebrumby/HotWalletBot.git   
    ```
 5. **Switch to the repository directory:**
    ```bash
-   cd HotWalletBot
-   
+   cd HotWalletBot   
    ```
 6. **Install the dependencies:**
    ```bash
-   pip install selenium Pillow
-   
+   pip install selenium Pillow   
    ```
 7. **Run the Python script or use the unattended method below:**
    ```bash
-   python3 claim.py
-   
+   python3 claim.py   
    ```
 
 Note: You have two options to integrate your accounts:
