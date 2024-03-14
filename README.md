@@ -30,34 +30,34 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 3. **Download Chromedriver:**
 
    ```bash
-	sudo apt install unzip
-	wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
-	unzip chromedriver_linux64.zip
-	sudo mv chromedriver /usr/local/bin/
-	sudo chmod +x /usr/local/bin/chromedriver
-	chromedriver --version
-	```
+   sudo apt install unzip
+   wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
+   unzip chromedriver_linux64.zip
+   sudo mv chromedriver /usr/local/bin/
+   sudo chmod +x /usr/local/bin/chromedriver
+   chromedriver --version
+   ```
 
 4. **Clone this repository:**
 
    ```bash
-      sudo apt install -y git
-      git clone https://github.com/thebrumby/HotWalletBot.git
+   sudo apt install -y git
+   git clone https://github.com/thebrumby/HotWalletBot.git
    ```
 
 5. **Switch to the repository directory:**
    ```bash
-      cd HotWalletBot
+   cd HotWalletBot
    ```
 
 6. **Install the dependencies:**
    ```bash
-      pip install selenium Pillow
+   pip install selenium Pillow
    ```
 
 7. **Run the Python script or use the unattended method below:**
    ```bash
-      python3 claim.py
+   python3 claim.py
    ```
 
 
