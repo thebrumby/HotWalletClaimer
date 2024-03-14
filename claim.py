@@ -69,22 +69,22 @@ def Login(iseed, iseed_index, total_seeds):
               seed_area = '/html/body/div[1]/div/div[1]/label/textarea'
               seed_input = wait.until(EC.element_to_be_clickable((By.XPATH, seed_area)))
               if debug_is_on:
-                driver.save_screenshot(os.path.join(screenshots_path, "01_recovery_using_seed_phrase.png"))
+                driver.save_screenshot(os.path.join(screenshots_path, "01_recovery_using_seed_phrase_Seed_%d.png" % iseed_index))
               print("Seed input area found. Attempting to enter the seed phrase...")
               seed_input.click()
               seed_input.send_keys(iseed)
               if debug_is_on:
-                driver.save_screenshot(os.path.join(screenshots_path, "02_enter_seed_phrase.png"))
+                driver.save_screenshot(os.path.join(screenshots_path, "02_enter_seed_phrase_Seed_%d.png" % iseed_index))
               print("Seed phrase entered successfully.")
 
               print("Looking for the 'Continue' button to proceed with seed phrase submission...")
               enter_seed_xpath = '//*[@id="root"]/div/div[2]/button'
               enter_seed_button = wait.until(EC.element_to_be_clickable((By.XPATH, enter_seed_xpath)))
               if debug_is_on:
-                driver.save_screenshot(os.path.join(screenshots_path, "03_before_click_continue.png"))
+                driver.save_screenshot(os.path.join(screenshots_path, "03_before_click_continue_Seed_%d.png" % iseed_index))
               enter_seed_button.click()
               if debug_is_on:
-                driver.save_screenshot(os.path.join(screenshots_path, "04_importing_account.png"))
+                driver.save_screenshot(os.path.join(screenshots_path, "04_importing_account_Seed_%d.png" % iseed_index))
               print("Seed phrase submission attempted. Waiting for account import confirmation...")
             except TimeoutException as e:
               print("Failed to perform an action due to timeout: {}".format(e))
@@ -97,11 +97,11 @@ def Login(iseed, iseed_index, total_seeds):
               account_selection_button_xpath = '//*[@id="root"]/div/button'
               account_selection_button = wait.until(EC.element_to_be_clickable((By.XPATH, account_selection_button_xpath)))
               if debug_is_on:
-                driver.save_screenshot(os.path.join(screenshots_path, "05_select_account_byID.png"))
+                driver.save_screenshot(os.path.join(screenshots_path, "05_select_account_byID_Seed_%d.png" % iseed_index))
               account_selection_button.click()
               print("Account selection attempted. Waiting for the account to log in...")
               if debug_is_on:
-                driver.save_screenshot(os.path.join(screenshots_path, "06_initial_logged_in_screen.png"))
+                driver.save_screenshot(os.path.join(screenshots_path, "06_initial_logged_in_screen_Seed_%d.png" % iseed_index))
               print("Account successfully logged in. Proceeding with the next steps.")
             except TimeoutException as e:
               print("Timeout waiting for the account selection button: {}".format(e))
@@ -122,7 +122,7 @@ def Login(iseed, iseed_index, total_seeds):
             enter_seed_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="root"]/div/div/div/div[4]/div[1]')))
             enter_seed_button.click()
             if debug_is_on:
-                driver.save_screenshot(os.path.join(screenshots_path, "07_move_to_claim_page.png"))
+                driver.save_screenshot(os.path.join(screenshots_path, "07_move_to_claim_page_Seed_%d.png" % iseed_index))
 
             wait_time = claim(iseed, total_seeds, iseed_index)
             return wait_time
@@ -141,63 +141,57 @@ def Login(iseed, iseed_index, total_seeds):
 def claim(iseed, total_seeds, iseed_index):
     print("Log in successful. Starting Claim Logic!")
     if debug_is_on:
-        driver.save_screenshot(os.path.join(screenshots_path, "08_confirm_still_same_page.png"))  # Take screenshot
+        driver.save_screenshot("{}/08_confirm_still_same_page_Seed_{}.png".format(screenshots_path, iseed_index))
     
     try:
-        waktu_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
-        waktu_element = driver.find_element(By.XPATH, waktu_xpath)
-        waktu_text = waktu_element.text
+        # Define your wait time dynamically, adjusting based on the situation
+        wait_time_dynamic = WebDriverWait(driver, 120)
+        wait_time_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
+        wait_time_element = wait_time_dynamic.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
+        wait_time_text = wait_time_element.text
         forceClaim = False
-        
-        # Let's see if this wallet is Full or if making a claim is forced on for testing!
-        if waktu_text == "Filled" or forceClaim:
-            # Attempt to click "Check NEWS" button
+
+        if wait_time_text == "Filled" or forceClaim:
             try:
-                print("Let's wait 25 seconds for the page to catch up and see if there is any news to read.\n")
-                time.sleep(25)
-                if debug_is_on:
-                    driver.save_screenshot(os.path.join(screenshots_path, "09_preparing_to_check_news.png"))
+                # First, try to click "Check NEWS" button if it exists
+                print("Checking for news to read...")
                 check_news_button_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[2]/button[contains(@class, "sc-ktwOSD eZybGy") and contains(@style, "background: rgb(253, 132, 227)") and contains(text(), "Check NEWS")]'
-                check_news_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, check_news_button_xpath)))
+                check_news_button = wait_time_dynamic.until(EC.element_to_be_clickable((By.XPATH, check_news_button_xpath)))
                 check_news_button.click()
-                print("Found and clicked 'Check NEWS' button.\n")
+                print("News checked. Waiting for claim button...")
                 if debug_is_on:
-                    driver.save_screenshot(os.path.join(screenshots_path, "10_after_checking_news.png"))
+                    driver.save_screenshot("{}/09_after_checking_news_Seed_{}.png".format(screenshots_path, iseed_index))
             except TimeoutException:
-                print("'Check NEWS' button not found or not clickable.")
-            
-            # Regardless of NEWS button status, attempt to click "Claim HOT" button
+                print("No news to check or button not found.")
+
             try:
-                print("Let's wait 25 seconds for the page to catch up, before finally clicking the claim button!\n")
-                time.sleep(25)
+                # Now try to click "Claim HOT" button
+                print("Attempting to claim...")
+                if debug_is_on:
+                    driver.save_screenshot("{}/10_after_claim_Seed_{}.png".format(screenshots_path, iseed_index))
                 claim_button_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[2]//button[contains(@class, "sc-ktwOSD eZybGy") and contains(text(), "Claim HOT")]'
-                claim_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, claim_button_xpath)))
+                claim_button = wait_time_dynamic.until(EC.element_to_be_clickable((By.XPATH, claim_button_xpath)))
                 claim_button.click()
-                print("Attempting to submit a claim now! Another 75 second timer.\n")
-                if debug_is_on:
-                    driver.save_screenshot(os.path.join(screenshots_path, "11_preparing_to_claim.png"))
-                time.sleep(75)
-                if debug_is_on:
-                    driver.save_screenshot(os.path.join(screenshots_path, "12_after_the_claim.png"))
-                print("Claim attempt finished. Screenshot 12 will show if the pot has reset or not.\n")
-                return 60
+                print("Claim attempted. Please check the status.")
+                return 60  # Assuming next claim attempt after 1 hour
             except TimeoutException:
-                print("Claim HOT' button was not clickable within the expected time. This might be due to it being claimed too recently, or they changed the system again.")
+                print("Unable to claim at this time. Will retry after one hour.")
                 return 60
+
         else:
-            # If not forcing a claim and not "Filled", process the waiting time
-            matches = re.findall(r'(\d+)([hm])', waktu_text)
+            # If the wallet isn't ready to be claimed, calculate wait time based on the timer provided on the page
+            matches = re.findall(r'(\d+)([hm])', wait_time_text)
             if matches:
-                total_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
-                print("Not Time to Claim seed [{}] yet. Wait for {} Minutes.".format(iseed_index, total_time))
-                return total_time
+                total_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
+                print("Not Time to Claim seed [{}] yet. Wait for {} Minutes.".format(iseed_index + 1, total_time))
+                return max(1, total_time - 5)  # Reduce 5 minutes as buffer
             else:
-                print("No time data found. Check the page or xpath.")
-                return 60
+                print("No clear timer found. Check again later.")
+                return 60  # Default wait time when no specific time is found
     except Exception as e:
         print("An unexpected error occurred: {}".format(e))
-        return 60  # Let's give them an hour in case of too many errors and potential rate throttling. 
-        
+        return 60  # Default wait time in case of an unexpected error
+
 # Define your base path for screenshots
 screenshot_base = os.path.join(screenshots_path, "screenshot")
 
