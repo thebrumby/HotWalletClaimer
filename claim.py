@@ -11,7 +11,9 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
+# Initiate paths and variables
 debug_is_on = False
+forceClaim = False
 session_path = "./selenium2"
 os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots"
@@ -149,7 +151,6 @@ def claim(iseed, total_seeds, iseed_index):
         wait_time_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
         wait_time_element = wait_time_dynamic.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
         wait_time_text = wait_time_element.text
-        forceClaim = False
 
         if wait_time_text == "Filled" or forceClaim:
             try:
@@ -164,17 +165,28 @@ def claim(iseed, total_seeds, iseed_index):
             except TimeoutException:
                 print("No news to check or button not found.")
 
-            try:
+        try:
                 # Now try to click "Claim HOT" button
                 print("Attempting to claim...")
                 if debug_is_on:
-                    driver.save_screenshot("{}/10_after_claim_Seed_{}.png".format(screenshots_path, iseed_index))
+                    driver.save_screenshot("{}/10_before_clickig_claim_Seed_{}.png".format(screenshots_path, iseed_index))
                 claim_button_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[2]//button[contains(@class, "sc-ktwOSD eZybGy") and contains(text(), "Claim HOT")]'
                 claim_button = wait_time_dynamic.until(EC.element_to_be_clickable((By.XPATH, claim_button_xpath)))
                 claim_button.click()
                 print("Claim attempted. Please check the status.")
-                return 60  # Assuming next claim attempt after 1 hour
-            except TimeoutException:
+                wait_time_dynamic = WebDriverWait(driver, 30)
+                wait_time_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
+                wait_time_element = wait_time_dynamic.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
+                wait_time_text = wait_time_element.text
+                
+                # Extract time from wait_time_text
+                matches = re.findall(r'(\d+)([hm])', wait_time_text)
+                total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
+                if debug_is_on:
+                    driver.save_screenshot("{}/11_after_clickig_claim_Seed_{}.png".format(screenshots_path, iseed_index))
+                return max(60, total_wait_time)  # Wait one hour unless it updated
+
+        except TimeoutException:
                 print("Unable to claim at this time. Will retry after one hour.")
                 return 60
 
@@ -283,6 +295,7 @@ def get_seeds(seed_file_path="seed.txt"):
         while not seeds:
             print("No seed phrases entered. Please enter at least one seed phrase.")
             seeds = validate_and_collect_seeds()
+    clear_screen()
     return seeds
 
 # Main script execution
