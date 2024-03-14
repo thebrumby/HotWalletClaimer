@@ -17,7 +17,7 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
    ```bash
    sudo apt install -y git || true && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh && ./install.sh
    ```
-Then start a new screen session with ```screen -S hot_wallet``` and execute the Python script ```python3 claim.py```
+Then start a new screen session with ```screen -S hot_wallet``` and execute the Python script ```python3 claim.py```. You can exit Screen and leave the script running unattended by pressing ```CTRL+A+D``` and resume an already running Screen session with ```screen -r```
 
 #### Manual installation - ensure each command in the code block executes. 
 
