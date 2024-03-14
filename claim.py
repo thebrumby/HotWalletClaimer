@@ -180,10 +180,10 @@ def claim(iseed, total_seeds, iseed_index):
                 if debug_is_on:
                     driver.save_screenshot(os.path.join(screenshots_path, "12_after_the_claim.png"))
                 print("Claim attempt finished. Screenshot 12 will show if the pot has reset or not.\n")
-                return 5
+                return 60
             except TimeoutException:
                 print("Claim HOT' button was not clickable within the expected time. This might be due to it being claimed too recently, or they changed the system again.")
-                return 5
+                return 60
         else:
             # If not forcing a claim and not "Filled", process the waiting time
             matches = re.findall(r'(\d+)([hm])', waktu_text)
@@ -193,7 +193,7 @@ def claim(iseed, total_seeds, iseed_index):
                 return total_time
             else:
                 print("No time data found. Check the page or xpath.")
-                return None
+                return 60
     except Exception as e:
         print("An unexpected error occurred: {}".format(e))
         return 60  # Let's give them an hour in case of too many errors and potential rate throttling. 
