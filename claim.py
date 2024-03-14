@@ -13,7 +13,6 @@ print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
 # Initiate paths and variables
 debug_is_on = False
-forceClaim = False
 session_path = "./selenium2"
 os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots"
@@ -151,6 +150,7 @@ def claim(iseed, total_seeds, iseed_index):
         wait_time_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
         wait_time_element = wait_time_dynamic.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
         wait_time_text = wait_time_element.text
+        forceClaim = False
 
         if wait_time_text == "Filled" or forceClaim:
             try:
