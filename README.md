@@ -107,12 +107,15 @@ The HotWalletBot allows users to automate interactions with the "Claim Hot" game
 ## Security Considerations:
 
 ⚠️ Personal Use: Ideally, use this script on a personal machine that others do not have access to. Shared or public computers significantly increase the risk of sensitive information being compromised.
+
 ⚠️ Value at Risk: We strongly advise against using this script with accounts that hold substantial monetary value due to the security risks involved.
 
 ## Recommendations:
 
 💡 Private Devices: Preferably, only use this script on private, secure machines.
+
 💡 Caution with Seed Phrases: Be very cautious with accounts of significant value. Consider the security implications of storing and using seed phrases with this tool.
+
 💡 Awareness and Discretion: Understand the security trade-offs involved in using this automation tool. Your vigilance is crucial in safeguarding your information.
 
 ## Disclaimer:
