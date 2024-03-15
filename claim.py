@@ -330,6 +330,7 @@ def cycle_seeds(seeds):
                 min_wait -= this_wait
                 if min_wait > 0:
                     print("Waiting for another {} minutes.".format(min_wait))
+            driver.get('chrome://settings/clearBrowserData') # Let's trying clearing Chrome cache.
             iseed_index = 0
             wait_times.clear()
 
