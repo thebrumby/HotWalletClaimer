@@ -19,6 +19,17 @@ os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots"
 os.makedirs(screenshots_path, exist_ok=True)
 
+# Echo the Status to screen.
+if forceClaim:
+    print("forceClaim is enabled. We will attempt to process a claim even if the pot is not yet at minimum.")
+else:
+    print("forceClaim is disabled. We will wait for the timer until the earliest pot is Filled")
+
+if debug_is_on:
+    print("Debugging is enabled. Screenshots will be saved on your local drive in the specified folder.")
+else:
+    print("Debugging is disabled. No screenshots will be taken.")
+
 # Hardcode URL for the Telegram App
 url = 'https://tgapp.herewallet.app/auth/import#tgWebAppData=user%3D%257B%2522id%2522%253A831612161%252C%2522first_name%2522%253A%2522John%2522%252C%2522last_name%2522%253A%2522Doe%2522%252C%2522username%2522%253A%2522j_doe%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%257D&chat_instance%3D-1658397054350349435&chat_type%3Dsender&auth_date%3D1710122886&hash%3Da8ed62de9dc49dad96f3a46d8297046a51ad4587a625bcefcf611d06be2bf499&tgWebAppVersion=7.0&tgWebAppPlatform=web&tgWebAppBotInline=1&tgWebAppThemeParams=%7B%22bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%233390ec%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23707579%22%2C%22link_color%22%3A%22%2300488f%22%2C%22secondary_bg_color%22%3A%22%23f4f4f5%22%2C%22text_color%22%3A%22%23000000%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22accent_text_color%22%3A%22%233390ec%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%233390ec%22%2C%22subtitle_text_color%22%3A%22%23707579%22%2C%22destructive_text_color%22%3A%22%23df3f40%22%7D'
 
@@ -64,11 +75,23 @@ def Login(iseed, iseed_index, total_seeds):
             print('Login attempt {} out of 2 on seed number {} of {}.'.format(err+1, iseed_index, total_seeds))
             driver.get(url)
 
-            # Use WebDriverWait to wait for elements up to 60 seconds
-            wait = WebDriverWait(driver, 60)
+            # Use WebDriverWait to decide how long you will wait for each element to appear.
+            # This will be a mix of the variable page load times vs no such button.
+            wait = WebDriverWait(driver, 20)
+            print("Let's check if there is a login button on the intial screen, and press it (up to 20 seconds).")
+            if debug_is_on:
+                driver.save_screenshot(os.path.join(screenshots_path, "00_Initial_login_screen_%d.png" % iseed_index))
+            try:
+              # Looking for the "Log in" button and then click it. 
+              login_xpath = '//*[@id="root"]/div/button[contains(@class, "sc-ktwOSD eZybGy") and contains(text(), "Check NEWS")]'
+              login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_xpath)))
+              login_button.click()
+            except TimeoutException:
+              print("Doesn't seem like the login button is showing")
+
             try:
               print("Attempting to find the seed input area...")
-              seed_area = '/html/body/div[1]/div/div[1]/label/textarea'
+              seed_area = '//*[@id="root"]/div/div[1]/label/textarea'
               seed_input = wait.until(EC.element_to_be_clickable((By.XPATH, seed_area)))
               if debug_is_on:
                 driver.save_screenshot(os.path.join(screenshots_path, "01_recovery_using_seed_phrase_Seed_%d.png" % iseed_index))
@@ -95,22 +118,21 @@ def Login(iseed, iseed_index, total_seeds):
 
             try:
               print("Attempting to select the account...")
-              # Wait for the account selection button to be clickable
+              # Wait for the account selection button to be clickable - sometimes they remove this step. 
               account_selection_button_xpath = '//*[@id="root"]/div/button'
               account_selection_button = wait.until(EC.element_to_be_clickable((By.XPATH, account_selection_button_xpath)))
               if debug_is_on:
                 driver.save_screenshot(os.path.join(screenshots_path, "05_select_account_byID_Seed_%d.png" % iseed_index))
               account_selection_button.click()
-              print("Account selection attempted. Waiting for the account to log in...")
+              print("Waiting for the account to log in...")
               if debug_is_on:
                 driver.save_screenshot(os.path.join(screenshots_path, "06_initial_logged_in_screen_Seed_%d.png" % iseed_index))
-              print("Account successfully logged in. Proceeding with the next steps.")
+              print("Account successfully logged in waiting 60 seconds to allow page to load.")
             except TimeoutException as e:
               print("Timeout waiting for the account selection button: {}".format(e))
               # Handle the timeout scenario, perhaps by retrying or logging the failure
             except Exception as e:
               print("An error occurred during account selection or login confirmation: {}".format(e))
-
             try:
               # Replace 'xpath1' and 'xpath2' with your actual XPaths
               success = try_interact_with_elements(driver, '//*[@id="root"]/div/div/div/div[4]/div[1]', '//*[@id="root"]/div/button', screenshot_base="06")
@@ -119,12 +141,15 @@ def Login(iseed, iseed_index, total_seeds):
             except TimeoutException as e:
                 print(e)
             
-            # Again, wait for the next clickable element
+            # Wait for account to load and Storage to be clickable. This one can take a long time.
+            # if debug_is_on:
+            #    driver.save_screenshot(os.path.join(screenshots_path, "07a_move_to_claim_page_Seed_%d.png" % iseed_index))
+            # wait = WebDriverWait(driver, 120)
             # enter_seed_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="root"]/div/div/div/div[4]/div[2]/div')))
-            enter_seed_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="root"]/div/div/div/div[4]/div[1]')))
-            enter_seed_button.click()
+            # enter_seed_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="root"]/div/div/div[2]/div[1]/div[2]')))
+            # enter_seed_button.click()
             if debug_is_on:
-                driver.save_screenshot(os.path.join(screenshots_path, "07_move_to_claim_page_Seed_%d.png" % iseed_index))
+              driver.save_screenshot(os.path.join(screenshots_path, "07_move_to_claim_page_Seed_%d.png" % iseed_index))
 
             wait_time = claim(iseed, total_seeds, iseed_index)
             return wait_time
@@ -155,8 +180,10 @@ def claim(iseed, total_seeds, iseed_index):
         if wait_time_text == "Filled" or forceClaim:
             try:
                 # First, try to click "Check NEWS" button if it exists
+                wait_time_dynamic = WebDriverWait(driver, 30)
                 print("Checking for news to read...")
-                check_news_button_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[2]/button[contains(@class, "sc-ktwOSD eZybGy") and contains(@style, "background: rgb(253, 132, 227)") and contains(text(), "Check NEWS")]'
+                check_news_button_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[2]/button[contains(@class, "sc-ktwOSD eZybGy") and contains(text(), "Check NEWS")]'
+
                 check_news_button = wait_time_dynamic.until(EC.element_to_be_clickable((By.XPATH, check_news_button_xpath)))
                 check_news_button.click()
                 print("News checked. Waiting for claim button...")
@@ -167,10 +194,11 @@ def claim(iseed, total_seeds, iseed_index):
 
             try:
                 # Now try to click "Claim HOT" button
+                wait_time_dynamic = WebDriverWait(driver, 60)
                 print("Attempting to claim...")
                 if debug_is_on:
                     driver.save_screenshot("{}/10_before_clickig_claim_Seed_{}.png".format(screenshots_path, iseed_index))
-                claim_button_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[2]//button[contains(@class, "sc-ktwOSD eZybGy") and contains(text(), "Claim HOT")]'
+                claim_button_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[2]/button'
                 claim_button = wait_time_dynamic.until(EC.element_to_be_clickable((By.XPATH, claim_button_xpath)))
                 claim_button.click()
                 print("Claim attempted. Please check the status.")
