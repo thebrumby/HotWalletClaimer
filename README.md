@@ -16,7 +16,7 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
    ```bash
    sudo apt install -y git || true && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh && ./install.sh
    ```
-Start your first session with ```screen -S first_session```. Execute the Python script using ```python3 claim.py```, then follow the prompts to enter your session_ID (any unique ID of your choosing), your seed phrase, and log into Telegram. Once logged in, you should see the time until the script will attempt to claim. At this point, you may detach from the session (allowing it to run in the background) by pressing CTRL+A+D. You can later resume a running session with ```screen -r```.
+Start your first session with ```screen -S first_session```. Execute the Python script using ```python3 claim.py```, then follow the prompts to enter your session_ID (any unique ID of your choosing), your seed phrase, and log into Telegram. When prompted for Country Code, it should be in word form (e.g. USA, UNITED KINGDOM) and match exactly the list at https://web.telegram.org/k/ (log in by phone number). Once logged in, you should see the time until the script will attempt to claim. At this point, you may detach from the session (allowing it to run in the background) by pressing CTRL+A+D. You can later resume a running session with ```screen -r```.
 
 If you have a second account, start another session with ```screen -S screen_session``` and execute the Python script ```python3 claim.py```. You may now log in as described above to the second account. You can exit Screen and leave the script running unattended by pressing ```CTRL+A+D```. ```screen -r``` will now list the available sessions to resume.
 
