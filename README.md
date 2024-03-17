@@ -1,8 +1,8 @@
 # Near Protocol: Herewallet Hot Auto-Claim Bot
 
-This Python script automates claiming HOT tokens from the Herewallet app, which operates on the NEAR Protocol. The app allows users to "mine" HOT tokens distributed on the NEAR blockchain. For maximum rewards, users must log in regularly to claim tokens. This script streamlines the process, ensuring you receive the most HOT tokens possible. It's handy for those with multiple accounts, cycling through each account (identified by 12-word seed phrases), logging in, and claiming tokens when a wallet reaches capacity. If a wallet isn't full, the script calculates the remaining time and waits before retrying, optimizing network efficiency.
+This Python script automates claiming HOT tokens from the HereWallet app, which operates on the NEAR Protocol. The app allows users to "mine" HOT tokens distributed on the NEAR blockchain. For maximum rewards, users must log in regularly to claim tokens. This script streamlines the process, ensuring you receive the most HOT tokens possible by automatically logging in and claiming tokens when the wallet reaches capacity. If a wallet isn't full, the script calculates the remaining time and waits before retrying, optimizing network efficiency. By using SCREEN for unattended access, you can simultaneously manage multiple accounts.
 
-⚠️ Note: The Claim HOT game has previously overloaded the NEAR Protocol Blockchain; it frequently throws a network "Requires VPN" error. I recommend claiming manually in these cases and trying the script again in 24 hours.
+⚠️ Important: The Claim HOT game has quickly onboarded over 3.5 million users in under two months. This high demand has previously overloaded the NEAR Protocol blockchain. If you encounter script errors, consider waiting 24 hours before retrying. Updates will be pushed out to this script as needed to adapt to any structural changes in the game.
 
 The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 
@@ -16,7 +16,9 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
    ```bash
    sudo apt install -y git || true && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh && ./install.sh
    ```
-Then start a new screen session with ```screen -S hot_wallet``` and execute the Python script ```python3 claim.py```. You can exit Screen and leave the script running unattended by pressing ```CTRL+A+D``` and resume an already running Screen session with ```screen -r```
+Start your first session with ```screen -S first_session```. Execute the Python script using ```python3 claim.py```, then follow the prompts to enter your session_ID (any unique ID of your choosing), your seed phrase, and log into Telegram. Once logged in, you should see the time until the script will attempt to claim. At this point, you may detach from the session (allowing it to run in the background) by pressing CTRL+A+D. You can later resume a running session with ```screen -r```.
+
+If you have a second account, start another session with ```screen -S screen_session``` and execute the Python script ```python3 claim.py```. You may now log in as described above to the second account. You can exit Screen and leave the script running unattended by pressing ```CTRL+A+D```. ```screen -r``` will now list the available sessions to resume.
 
 ### Linux Manual installation - Ensure each command in the code block executes. 
 
