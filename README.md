@@ -2,8 +2,6 @@
 
 This Python script automates claiming HOT tokens from the HereWallet app, which operates on the NEAR Protocol. The app allows users to "mine" HOT tokens distributed on the NEAR blockchain. For maximum rewards, users must log in regularly to claim tokens. This script streamlines the process, ensuring you receive the most HOT tokens possible by automatically logging in and claiming tokens when the wallet reaches capacity. If a wallet isn't full, the script calculates the remaining time and waits before retrying, optimizing network efficiency and reducing your Gas Fees! By using SCREEN for unattended access, you can simultaneously manage multiple accounts.
 
-⚠️ Important: The Claim HOT game has quickly onboarded over 3.5 million users in under two months. This high demand has previously overloaded the NEAR Protocol blockchain. If you encounter script errors, consider waiting 24 hours before retrying. Updates will be pushed out to this script as needed to adapt to any structural changes in the game.
-
 The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 
 ## 🚀 How To Use (installation based on Ubuntu 20.04 and 22.04)
