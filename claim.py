@@ -103,10 +103,6 @@ def log_into_telegram():
     # Prompt the user for their country name
     user_input = input("Please enter your country name as it appears in the telegram List: ")
     user_input = user_input.strip()
-
-    # If user input is null, set it to "UNITED KINGDOM"
-    if not user_input:
-        user_input = "UNITED KINGDOM"
     # Click the dropdown to make it active (if necessary)
     country_code_dropdown.click()    
     # Send the country code to the dropdown. If the dropdown requires selection from options, use a different approach.
@@ -240,7 +236,7 @@ def next_steps():
             time.sleep(3)
             driver.save_screenshot("{}/08f_After_Selecting_Storage.png".format(screenshots_path))
 
-        print ("We appear to have corrected navigated to the storage page. Handing over to the Claim function :)")
+        print ("We appear to have correctly navigated to the storage page. Handing over to the Claim function :)")
 
     except TimeoutException:
         print("Failed to find or switch to the iframe within the timeout period.")
@@ -276,7 +272,7 @@ def claim():
                 wait_time_dynamic = WebDriverWait(driver, 30)
                 print("Checking for news to read...")
                 original_window = driver.current_window_handle
-                check_news_button_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[2]/button[contains(@class, "sc-ktwOSD eZybGy") and contains(text(), "Check NEWS")]'
+                check_news_button_xpath = '//button[contains(@class, "sc-ktwOSD") and contains(text(), "Check NEWS")]'
                 check_news_button = wait_time_dynamic.until(EC.element_to_be_clickable((By.XPATH, check_news_button_xpath)))
                 check_news_button.click()
                 driver.switch_to.window(original_window)
@@ -289,6 +285,7 @@ def claim():
             try:
                 # Now try to click "Claim HOT" button
                 try:
+                    # Let's double check if we have selected the iFrame after news
                     popup_body = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
                     iframe = popup_body.find_element(By.TAG_NAME, "iframe")
                     driver.switch_to.frame(iframe)
