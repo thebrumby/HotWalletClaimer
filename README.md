@@ -8,7 +8,7 @@ The HereWallet app/game can be found here: https://t.me/herewalletbot/app?starta
 
 ## 🚀 How To Use (installation based on Ubuntu 20.04 and 22.04)
 
-### Linux Users - Quick Start
+### Linux Users - Quick Start (or follow the manual steps below)
 #### Install GitHub (if necessary), fetch this repository, run the install script
 
 - VPS users should make an SSH connection via PuTTy or open the Command Window on a local machine.
