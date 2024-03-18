@@ -94,30 +94,28 @@ Inspired by https://github.com/vannszs/HotWalletBot.git
 
 # Security Considerations for HotWalletClaimer Usage
 
-The HotWalletBot allows users to automate interactions with the "Claim Hot" game. This tool offers the option to enter your seed phrases each time, or the convenience of storing your seed phrases through a seeds.txt file. 
+The HotWalletClaimer script allows users to automate interactions with the "Claim Hot" game. 
 
-⚠️ HTTPS Communication: All interactions with the web server occur over HTTPS, providing a secure channel.
+⚠️ HTTPS Communication: All interactions with the Telegram Web App occur over HTTPS, providing a secure channel.
 
-⚠️ Debugging and Screenshots: Enabling debug mode captures the login process, including seed phrase entry, in screenshots. These images are stored locally, raising privacy concerns despite not directly exposing data online.
+⚠️ Your seed phrase and Telegram login details are not saved on your local machine or transmitted unless you enable debugging mode (see below). 
 
-⚠️ Seed Phrases Storage: For ease of use, seed phrases can be stored in a seeds.txt file. This method, while convenient, is not secure as the information is stored unencrypted. Alternatively, you can enter the seed phrases each time you start the script. 
+⚠️ Debugging and Screenshots: Enabling debug mode captures the whole claim process, including Telegram login and seed phrase entry, in screenshots. These images are stored locally, raising privacy concerns on shared computers, despite not directly exposing data online. 
 
 ## Security Considerations:
 
-⚠️ Personal Use: Ideally, use this script on a personal machine that others do not have access to. Shared or public computers significantly increase the risk of sensitive information being compromised.
+⚠️ Personal Use: For optimal security, it is recommended to use this script on a personal machine that is not accessible by others. Shared or public computers significantly increase the risk of sensitive information, such as seed phrases or login credentials, being compromised.
 
-⚠️ Value at Risk: We strongly advise against using this script with accounts that hold substantial monetary value due to the security risks involved.
+⚠️ Value at Risk: We strongly recommend exercising caution when using this script with accounts holding significant monetary value in Near coins or other tokens. Although the script itself should not pose any security risks, the involvement of third-party or unknown malicious code could potentially compromise the security of your funds.
 
 ## Recommendations:
 
-💡 Private Devices: Preferably, only use this script on private, secure machines.
+💡 Private Devices: Only use this script on private, secure machines or Virtual Private Servers that only you have access to.
 
-💡 Caution with Seed Phrases: Be very cautious with accounts of significant value. Consider the security implications of storing and using seed phrases with this tool.
+💡 Caution with Seed Phrases: Be very cautious with accounts of significant value. Consider the security implications of entering seed phrases with this tool; and the effect of any unintended loss.
 
 💡 Awareness and Discretion: Understand the security trade-offs involved in using this automation tool. Your vigilance is crucial in safeguarding your information.
 
 ## Disclaimer:
-The use of HotWalletBot is at your own risk. The developers are not liable for any potential security breaches or financial losses. Your digital security is your responsibility. Always prioritize the protection of your accounts and sensitive information.
-
-This notice aims to balance the script's benefits with an awareness of its security limitations. User discretion is advised.
+Usage of HotWalletClamier is at your own risk. The developers are not liable for any potential security breaches or financial losses. Your digital security is your responsibility. Always prioritize the protection of your accounts and sensitive information.
 
