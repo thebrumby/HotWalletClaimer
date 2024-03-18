@@ -1,8 +1,10 @@
 # Near Protocol: Herewallet Hot Auto-Claim Bot
 
-This Python script automates claiming HOT tokens from the HereWallet app, which operates on the NEAR Protocol. The app allows users to "mine" HOT tokens distributed on the NEAR blockchain. For maximum rewards, users must log in regularly to claim tokens. This script streamlines the process, ensuring you receive the most HOT tokens possible by automatically logging in and claiming tokens when the wallet reaches capacity. If a wallet isn't full, the script calculates the remaining time and waits before retrying, optimizing network efficiency and reducing your Gas Fees! By using SCREEN for unattended access, you can simultaneously manage multiple accounts.
+This Python script automates claiming HOT tokens from the HereWallet app, which operates on the NEAR Protocol. The app allows users to "mine" HOT tokens distributed on the NEAR blockchain. For maximum rewards, users must log in regularly to claim tokens. This script streamlines the process, ensuring you receive the most HOT tokens possible by automatically logging in and claiming tokens when the wallet reaches capacity. If a wallet isn't full, the script calculates the remaining time and waits before retrying, optimizing network efficiency and reducing your Gas Fees!
 
-The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
+💡 TIP: You can claim on multiple HereWallet accounts using a single Telegram account, provided you use an individual session in SCREEN as described below. However, if you attempt to log into a single Telegram account more than 20 times in 24 hours via the One-Time Password (OTP) method, you will be blocked from doing so for one day due to flooding.
+
+The HereWallet app/game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 
 ## 🚀 How To Use (installation based on Ubuntu 20.04 and 22.04)
 
@@ -14,9 +16,9 @@ The game can be found here: https://t.me/herewalletbot/app?startapp=3441967
    ```bash
    sudo apt install -y git || true && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh && ./install.sh
    ```
-Start your first session with ```screen -S first_session```. Execute the Python script using ```python3 claim.py```, then follow the prompts to enter your session_ID (any unique ID of your choosing), your seed phrase, and log into Telegram. When prompted for Country Code, it should be in word form (e.g. USA, UNITED KINGDOM) and match exactly the list at https://web.telegram.org/k/ (log in by phone number). Once logged in, you should see the time until the script will attempt to claim. At this point, you may detach from the session (allowing it to run in the background) by pressing CTRL+A+D. You can later resume a running session with ```screen -r```.
+Start your first session with ```screen -S first_session```. If you are not in the HotWalletBot directory, you must ```cd HotWalletBot```. Execute the Python script using ```python3 claim.py```, then follow the [Usage Notes](#usage-notes) below to set up the session and automate the claiming process.  
 
-If you have a second account, start another session with ```screen -S screen_session``` and execute the Python script ```python3 claim.py```. You may now log in as described above to the second account. You can exit Screen and leave the script running unattended by pressing ```CTRL+A+D```. ```screen -r``` will now list the available sessions to resume.
+If you have a second account, start another session with ```screen -S second_session``` and execute the Python script ```python3 claim.py```. You may now log in as described above to the second account. You can exit Screen and leave the script running unattended by pressing ```CTRL+A+D```. ```screen -r``` will now list the available sessions to resume.
 
 ### Linux Manual installation - Ensure each command in the code block executes. 
 
@@ -64,12 +66,15 @@ If you have a second account, start another session with ```screen -S screen_ses
    python3 claim.py   
    ```
 
-Note: You have two options to integrate your accounts:
-1) Create a seed.txt file in the same directory as claim.py. This will load when claim.py starts (not recommended on shared computers).
-2) Operate without a seed.txt file. You will be prompted to enter the seed phrases every time you start the script (most secure).
+[<a name="usage-notes">#### Usage Notes:</a>]
 
-Each seed phrase should be 12 words, each separated by a space.
-As mentioned earlier, you may enter more than one seed phrase, with each one on a separate line.
+1) Each time you run python3 claim.py, you will be asked for a session name. If you only intend to operate one session, you can just hit enter, and it will call the session "1". If you intend to have more than one session, please give each one a unique session name. This can be "1", "2", "3", etc., or some familiar name of your choosing. The session name will be used to generate a folder in screenshots (in case debugging is enabled) and also in the Selenium folder for your browser session.
+2) You will next be asked for your seed phrase. This is needed to log into the HereWallet App. The code is pretty transparent, and it does not store or transmit your seed phrase. If you enable debugging, a screenshot of your seed phrase will be saved on your local computer. The seed phrase must be exactly 12 words, with no numbers or punctuation, and each word separated by a space.
+3) After entering the seed phrase, the screen will be cleared for added privacy.
+4) To log into Telegram, you will be asked for your Country Code. This should be in word format and exactly match the spelling at https://web.telegram.org/k/ (log in by phone number). Examples are "USA" and "UNITED KINGDOM".
+5) Next, you will be asked for your registered phone number for Telegram. This will allow them to send you a One-Time Passcode (OTP) via the Telegram Messaging App.
+6) Finally, if you correctly enter the One-Time Password, and assuming you are not blocked due to flooding requests, etc., the script will now be automated, with some key steps displayed in the console.
+7) If you wish to force the script to claim on the first attempt, whether the wallet is full or not, you can set forceClaim = True. If you are not getting the expected results, you can attempt to trace the problem by setting debug_is_on = True.
 
 # How to leave the script running for unattended claims
 
