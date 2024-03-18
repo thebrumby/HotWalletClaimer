@@ -6,6 +6,9 @@ This Python script automates claiming HOT tokens from the HereWallet app, which 
 
 The HereWallet app/game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 
+If you find this script useful, please consider buying me a coffee to show your support.
+- https://www.buymeacoffee.com/HotWallletBot
+
 ## 🚀 How To Use (installation based on Ubuntu 20.04 and 22.04)
 
 ### Linux Users - Quick Start (or follow the manual steps below)
@@ -87,10 +90,7 @@ If you want the script to run continuously, even after disconnecting from the se
 - To exit the session and leave it running in the background CTRL+A+D
 - To later resume session: ```screen -r```
 
-If you find this script useful, please consider buying me a coffee to show your support.
-- https://www.buymeacoffee.com/HotWallletBot
-
-Inspired by https://github.com/vannszs/HotWalletBot.git
+Inspired by a similar project: https://github.com/vannszs/HotWalletBot.git
 
 # Security Considerations for HotWalletClaimer Usage
 
