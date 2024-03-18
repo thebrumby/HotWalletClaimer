@@ -348,7 +348,7 @@ def claim():
             if matches:
                 total_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 print("Not Time to Claim seed yet. Wait for {} Minutes.".format(total_time))
-                return max(1, total_time - 5)  # Reduce 5 minutes as buffer
+                return max(5, total_time)  # Reduce 5 minutes as buffer
             else:
                 print("No clear timer found. Check again later.")
                 return 60  # Default wait time when no specific time is found
