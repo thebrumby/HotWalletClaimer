@@ -1,8 +1,8 @@
 # Near Protocol: Herewallet Hot Auto-Claim Bot
 
-This Python script automates claiming HOT tokens from the HereWallet app, which operates on the NEAR Protocol. The free-of-charge app allows users to "mine" HOT tokens distributed on the NEAR blockchain. However, for maximum rewards, users must log in at regular intervals to claim tokens. This script streamlines the process, ensuring you receive the most HOT tokens possible by automatically logging in and claiming tokens when the wallet reaches capacity. If the wallet isn't full, the script calculates the remaining time until full and waits before making the claim; optimizing network load and reducing your Gas Fees!
+This Python script simplifies claiming HOT tokens via the HereWalletBot, a free-to-use application on Telegram that operates on the NEAR Protocol blockchain. For optimal rewards, the app requires frequent logins to claim tokens. This script automates these actions, guaranteeing the maximum accumulation of HOT tokens by executing the claim sequence once the wallet is full. Should the wallet not be filled, it estimates the time until completion and waits to claim, thus optimizing both network usage and lowering your Gas Fees.
 
-💡 TIP: You can claim on multiple HereWallet accounts using a single Telegram account, provided you use individual sessions in SCREEN as described below. Each time you log into claim.py, and enter a One-Time Password (OTP), it counts as one login attempt. Attempting to log into a single Telegram account more than 20 times in a 24-hour period is considered "flooding" by Telegram, and they will apply a 24-hour cooldown on further login attempts. However, once logged in, you will stay logged in unless you exit the script.
+💡 TIP: You can claim on multiple HereWallet accounts using a single Telegram account, provided you use individual sessions in SCREEN as described below. Each time you start ```claim.py```, and enter a One-Time Password (OTP), it counts as one login attempt. Attempting to log into a single Telegram account more than 20 times in 24 hours is considered "flooding" by Telegram, and they will apply a 24-hour cooldown on further login attempts. However, once logged in, you will stay logged in unless you exit the script.
 
 The HereWallet app/game can be found here: https://t.me/herewalletbot/app?startapp=3441967
 
@@ -71,17 +71,18 @@ If you have a second account, from the command line (not within the first Screen
 <a name="usage-notes"></a>
 # Usage Notes:
 
-1) Each time you run python3 claim.py, you will be asked for a session name. If you only intend to operate one session, you can just hit enter, and it will call the session "1". If you intend to have more than one session, please give each one a unique session name. This can be "1", "2", "3", etc., or some familiar name of your choosing. The session name will be used to generate a folder in screenshots (in case debugging is enabled) and also in the Selenium folder for your browser session.
-2) You will next be asked for your seed phrase. This is needed to log into the HereWallet App. The code is pretty transparent, and it does not store or transmit your seed phrase. If you enable debugging, a screenshot of your seed phrase will be saved on your local computer. The seed phrase must be exactly 12 words, with no numbers or punctuation, and each word separated by a space.
+1) When you run python3 claim.py, the script will ask for a session name. For managing a single session, pressing enter will default the session to "1". If you want to claim on more than one account simultaneously, it's important to assign each a different Session Name. You might use a simple sequence like "1", "2", "3", or opt for specific identifiers such as "myWallet1", "myWallet2", and so forth. This unique name is needed to organize screenshots (if debugging is enabled) and segregate browser session data within Selenium. Not using unique names for concurrent accounts would log you out of your other sessions!
+2) Next, you'll be prompted to enter your seed phrase to link access with the HereWallet App. Rest assured, the script's code is completely transparent and your seed phrase is neither stored locally nor transmitted externally. However, if you activate debugging, be aware that a series of screenshots, including one of your seed phrase, will be saved on your local device. For a successful login, ensure your seed phrase consists of exactly 12 words, with no numbers or punctuation, and each word is separated by a single space.
 3) After entering the seed phrase, the screen will be cleared for added privacy.
-4) To log into Telegram, you will be asked for your Country Code. This should be in word format and exactly match the spelling at https://web.telegram.org/k/ (log in by phone number). Examples are "USA" and "UNITED KINGDOM".
-5) Next, you will be asked for your registered phone number for Telegram. This will allow them to send you a One-Time Passcode (OTP) via the Telegram Messaging App.
+4) To access Telegram, the script prompts for your Country name, which should be entered as text, exactly as it appears at https://web.telegram.org/k/ (log in by phone number). Examples include "USA" and "UNITED KINGDOM." If you're confident that your server's IP address aligns with the location of your phone number, simply pressing enter will prompt Telegram to use the default country code based on your server's IP address. However, if you encounter errors, or if your IP address doesn't match the country of your phone number, it will be necessary to specify your phone number's country as text.
+5) Next, you will be asked for your registered phone number for Telegram. This will allow them to send you a One-Time Passcode (OTP) via the Telegram Messaging App. The standard protocol is to omit the initial "0" as it will start with the international dialing code.
 6) Finally, if you correctly enter the One-Time Password, and assuming you are not blocked due to flooding requests, etc., the script will now be automated, with some of the main steps displayed in the console to reassure you it's working!
-7) If you wish to force the script to claim on the first attempt, whether the wallet is full or not, you can set forceClaim = True. If you are not getting the expected results, you can attempt to trace the problem by setting debug_is_on = True.
+- If you wish to force the script to claim on the first attempt, regardless of whether the wallet is full or not, or if the wallet is over 25% full and eligible for claiming, you can set ```forceClaim = True```.
+- If you are not getting the expected results, you can attempt to trace the problem by setting ```debug_is_on = True```.
 
 # How to leave the script running for unattended claims
 
-If you want the script to run continuously, even after disconnecting from the server, use screen:
+If you want the script to run continuously, even after disconnecting from the server, use SCREEN:
 
 - Install screen if required: ```sudo apt install -y screen```
 - Create session: ```screen -S hot_wallet```
