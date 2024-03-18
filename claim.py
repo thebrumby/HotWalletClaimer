@@ -14,7 +14,7 @@ print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
 # Initiate paths and variables
 forceClaim = False
-debug_is_on = False
+debug_is_on = True
 
 # Ask the user for a unique session ID
 user_input = input("If using Screen to create more than one instance, enter your unique session Name here: ")
@@ -101,7 +101,7 @@ def log_into_telegram():
     country_code_dropdown_xpath = '//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/div[1]/div[1]/span'    
     country_code_dropdown = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, country_code_dropdown_xpath)))
     # Prompt the user for their country name
-    user_input = input("Please enter your country name as it appears in the telegram List: ")
+    user_input = input("Please enter your country name as it appears in the Telegram list: ")
     user_input = user_input.strip()
     # Click the dropdown to make it active (if necessary)
     country_code_dropdown.click()    
@@ -285,7 +285,7 @@ def claim():
             try:
                 # Now try to click "Claim HOT" button
                 try:
-                    # Let's double check if we have selected the iFrame after news
+                    # Let's double check if we have to select the iFrame after news
                     popup_body = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
                     iframe = popup_body.find_element(By.TAG_NAME, "iframe")
                     driver.switch_to.frame(iframe)
@@ -294,7 +294,7 @@ def claim():
                     print(f"Iframe not found within popup_body: {e}")
 
                 except Exception as e:
-                    print(f"An unexpected error occurred while switching to iframe: {e}")
+                    print("It looks like there was no news, so we don't need to reselect the iFrame.")
 
                 wait_time_dynamic = WebDriverWait(driver, 60)
                 
@@ -330,6 +330,7 @@ def claim():
                 # Extract time from wait_time_text
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
+                total_wait_time += 1
                 print("Post claim raw wait time: %s & Processed = %s" % (wait_time_text, total_wait_time))
                 if debug_is_on:
                     driver.save_screenshot("{}/9g_after_get_time_remaining.png".format(screenshots_path))
@@ -347,6 +348,7 @@ def claim():
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
             if matches:
                 total_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
+                total_time += 1
                 print("Not Time to Claim seed yet. Wait for {} Minutes.".format(total_time))
                 return max(5, total_time)  # Reduce 5 minutes as buffer
             else:
