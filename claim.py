@@ -33,7 +33,7 @@ os.makedirs(screenshots_path, exist_ok=True)
 if forceClaim:
     print("forceClaim is enabled. We will attempt to process a claim even if the pot is not yet at minimum.")
 else:
-    print("forceClaim is disabled. We will wait for the timer to elapse and the storage pot is full.")
+    print("forceClaim is disabled. We will wait for the timer to elapse and the storage pot to be full.")
 
 if debug_is_on:
     print("Debugging is enabled. Screenshots will be saved on your local drive in the specified folder.")
