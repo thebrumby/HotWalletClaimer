@@ -65,7 +65,7 @@ If you have a second account, start another session with ```screen -S second_ses
    ```bash
    python3 claim.py   
    ```
-[<a name="usage-notes"></a>]
+<a name="usage-notes"></a>
 #### Usage Notes:
 
 1) Each time you run python3 claim.py, you will be asked for a session name. If you only intend to operate one session, you can just hit enter, and it will call the session "1". If you intend to have more than one session, please give each one a unique session name. This can be "1", "2", "3", etc., or some familiar name of your choosing. The session name will be used to generate a folder in screenshots (in case debugging is enabled) and also in the Selenium folder for your browser session.
