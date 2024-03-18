@@ -18,7 +18,7 @@ The HereWallet app/game can be found here: https://t.me/herewalletbot/app?starta
    ```
 Start your first session with ```screen -S first_session```. If you are not in the HotWalletBot directory, you must ```cd HotWalletBot```. Execute the Python script using ```python3 claim.py```, then follow the [Usage Notes](#usage-notes) below to set up the session and automate the claiming process. Pressing CTRL+A+D simultaneously will leave this session running in the background. ```screen -r``` will resume the session if you only have one active session. 
 
-If you have a second account, from the command line (not within the first Screen), start another session with ```screen -S second_session``` and execute the Python script ```python3 claim.py```. You may now log in as described above to the second account. You can exit Screen and leave the script running unattended by pressing ```CTRL+A+D```. ```screen -r``` will now list the available sessions to resume.
+If you have a second account, from the command line (not within the first Screen), start another session with ```screen -S second_session``` and execute the Python script ```python3 claim.py```. You may now log in as described above to the second account. You can exit Screen and leave the script unattended by pressing ```CTRL+A+D```. ```screen -r``` will now list the available sessions to resume. You may continue to keep account accounts, provided each has a unique name and screen, and also a unique Session Name when running ```python3 claim.py```.
 
 ### Linux Manual installation - Ensure each command in the code block executes. 
 
