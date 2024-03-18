@@ -92,7 +92,7 @@ If you find this script useful, please consider buying me a coffee to show your 
 
 Inspired by https://github.com/vannszs/HotWalletBot.git
 
-# Security Considerations for this HotWalletBot Usage
+# Security Considerations for HotWalletClaimer Usage
 
 The HotWalletBot allows users to automate interactions with the "Claim Hot" game. This tool offers the option to enter your seed phrases each time, or the convenience of storing your seed phrases through a seeds.txt file. 
 
