@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime
 import re
 import getpass
 from selenium import webdriver
@@ -17,6 +18,8 @@ print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 forceClaim = False
 debugIsOn = False
 hideSensitiveInput = True
+# Will save the login QR code in the screenshot folder for simplfied login.
+screenshotQRCode = True
 
 # Ask the user for a unique session ID
 user_input = input("If using Screen to create more than one instance, enter your unique Session Name here: ")
@@ -81,9 +84,24 @@ wait = WebDriverWait(driver, 10)
 
 def log_into_telegram():
     driver.get("https://web.telegram.org/k/#@herewalletbot")
+    wait = WebDriverWait(driver, 20)
+
+    #Let's try the QR Code method
+    if screenshotQRCode:
+        time.sleep(3)
+        driver.save_screenshot("{}/00_take_QR_Code_Screenshot.png".format(screenshots_path))
+        input('Hit enter after you snapped the QR code in Settings -> Devices -> Link Desktop Device:')
+        driver.get("https://web.telegram.org/k/#@herewalletbot")
+        try:
+            chat_xpath = "//div[contains(@class, 'input-message-input')]"
+            chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
+            # We were able to log in with the QR code, let's move to the next_steps()
+            return  
+
+        except TimeoutException:
+            print("Account not linked, switching to the OTP method")
 
     # The WebDriverWait timer can be adjusted based on function being performed and lag in the app. 
-    wait = WebDriverWait(driver, 20)
     login_button_xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
     login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
     login_button.click()
@@ -91,7 +109,7 @@ def log_into_telegram():
         time.sleep(3)
         driver.save_screenshot("{}/01_take_QR_Code_Screenshot.png".format(screenshots_path))
     # Let's wait until the Country Code list is available 
-    country_code_dropdown_xpath = '//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/div[1]/div[1]/span'    
+    country_code_dropdown_xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
     country_code_dropdown = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, country_code_dropdown_xpath)))
     # Prompt the user for their country name
     user_input = input("Please enter your Country Name as it appears in the Telegram list: ")
@@ -103,7 +121,7 @@ def log_into_telegram():
     country_code_dropdown.send_keys(Keys.RETURN)  # You might need to press ENTER to confirm the selection
     
     # Wait for the phone number input field to be clickable
-    phone_number_input_xpath = '//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/div[2]/div[1]'
+    phone_number_input_xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
     phone_number_input = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, phone_number_input_xpath)))
     if debugIsOn:
         time.sleep(3)
@@ -125,7 +143,7 @@ def log_into_telegram():
 
     # Wait for the "Next" button to be clickable and click it
     next_button_xpath = '//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/button[1]'
-    next_button = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, next_button_xpath)))
+    next_button = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, next_button_xpath)))
     next_button.click()
 
     if debugIsOn:
@@ -134,7 +152,7 @@ def log_into_telegram():
 
     try:
         # Attempt to locate and interact with the OTP field
-        password = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="auth-pages"]/div/div[2]/div[4]/div/div[3]/div/input')))
+        password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='tel']")))
         otp = input("What is the Telegram OTP from your app? ")
         password.send_keys(otp)
         clear_screen()
@@ -158,8 +176,8 @@ def next_steps():
         time.sleep(3)
         driver.save_screenshot("{}/06_Look_To_Start_HereWallet_App.png".format(screenshots_path))
 
-    # Locate the chat input field (assuming your XPath is correct)
-    chat_xpath = "//div[contains(@class, 'input-message-input')]"
+    # Locate the chat input field
+    chat_xpath = "//div[contains(@class, 'input-message-input') and @tabindex='-1']"
     chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
     chat_input.send_keys("/start")
     chat_input.send_keys(Keys.RETURN)  # Press Enter to send the command
@@ -168,10 +186,11 @@ def next_steps():
         time.sleep(3)
         driver.save_screenshot("{}/07_Start_App.png".format(screenshots_path))
    
-
-    # Wait for the "Open Wallet" button to become clickable after sending "/start" and then click it
-    open_wallet_buttons = driver.find_elements(By.XPATH, "//a[@href='https://t.me/herewalletbot/app']")
-    open_wallet_buttons[-1].click()  # Click the last button 
+    # Re-locate the "Open Wallet" button after sending "/start" 
+    time.sleep(2)
+    start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
+    start_app_button = wait.until(EC.element_to_be_clickable((By.XPATH, start_app_xpath)))
+    start_app_button.click()  # Now click the button
 
     if debugIsOn:
         time.sleep(3)
@@ -401,7 +420,9 @@ def main():
 
         while wait_time > 0:
             this_wait = min(wait_time, 15)
-            print(f"Waiting for {this_wait} more minutes...")
+            now = datetime.now()
+            timestamp = now.strftime("%H:%M")
+            print(f"[{timestamp}] Waiting for {this_wait} more minutes...")
             time.sleep(this_wait * 60)  # Convert minutes to seconds
             wait_time -= this_wait
             if wait_time > 0:
