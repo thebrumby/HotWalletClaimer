@@ -79,6 +79,7 @@ If you have a second account, from the command line (not within the first Screen
 6) Finally, if you correctly enter the One-Time Password, and assuming you are not blocked due to flooding requests, etc., the script will now be automated, with some of the main steps displayed in the console to reassure you it's working!
 - If you wish to force the script to claim on the first attempt, regardless of whether the wallet is full or not, or if the wallet is over 25% full and eligible for claiming, you can set ```forceClaim = True```.
 - If you are not getting the expected results, you can attempt to trace the problem by setting ```debug_is_on = True```.
+- You can control if your seed phrase and phone number entry appears on the screen with ```hideSensitiveInput = False``` and ```hideSensitiveInput = True```
 
 # How to leave the script running for unattended claims
 
