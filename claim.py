@@ -12,14 +12,13 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
-print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
-
 # Initiate global variables then set up paths and session data:
 forceClaim = False
 debugIsOn = False
 hideSensitiveInput = True
-# Will save the login QR code in the screenshot folder for simplfied login.
 screenshotQRCode = True
+
+print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
 # Ask the user for a unique session ID
 user_input = input("If using Screen to create more than one instance, enter your unique Session Name here: ")
@@ -85,6 +84,10 @@ wait = WebDriverWait(driver, 10)
 def log_into_telegram():
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     wait = WebDriverWait(driver, 20)
+    print ("There are several options to log into Telegram:")
+    print ("1. If screenshotQRCode = True, a png image of the login QR code will appear in your screenshots fold; you only get 30 seconds to capture it!")
+    print ("2. If you don't link the account in time, or screenshotQRCode = False, you will be asked for your Country, Phone Number and OTP.")
+    print ("3. If you get asked to do the QR code, and just want to enter the OTP, hit <Enter> and wait 20 seconds.\n")
 
     #Let's try the QR Code method
     if screenshotQRCode:
@@ -200,6 +203,7 @@ def next_steps():
     launch_app_xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
     launch_app_button = wait.until(EC.element_to_be_clickable((By.XPATH, launch_app_xpath)))
     driver.execute_script("arguments[0].click();", launch_app_button)
+
     if debugIsOn:
         time.sleep(3)
         driver.save_screenshot("{}/08a_Click_Launch_Button.png".format(screenshots_path))
@@ -208,14 +212,14 @@ def next_steps():
         # Wait for the pop-up body to be present
         print("Initialising HereWalletBot pop-up window...")
 
-        popup_body = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
+        popup_body = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
         # Assuming the iframe is directly within the popup_body, switch to it
         iframe = popup_body.find_element(By.TAG_NAME, "iframe")
         driver.switch_to.frame(iframe)
         print("Sucessfully switched to the iFrame...")
         # Now attempt to interact with elements within the iframe
-        login_button_xpath = '//*[@id="root"]/div/button'
-        login_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
+        login_button_xpath = "/html/body/div[1]/div/button/p"
+        login_button = WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
         login_button.click()
         print("Clicked log in...")
         if debugIsOn:
@@ -268,7 +272,7 @@ def claim():
 
     try:
         # Let's see how long until the wallet is ready to collected.
-        wait_time_dynamic = WebDriverWait(driver, 20)
+        wait_time_dynamic = WebDriverWait(driver, 60)
         wait_time_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
         wait_time_element = wait_time_dynamic.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
         wait_time_text = wait_time_element.text
@@ -331,7 +335,7 @@ def claim():
                     driver.save_screenshot("{}/9e_after_clicking_claim_HOT.png".format(screenshots_path))
 
                 # Now let's try again to get the time remaining until filled. 
-                wait_time_dynamic = WebDriverWait(driver, 30)
+                wait_time_dynamic = WebDriverWait(driver, 60)
                 wait_time_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
                 wait_time_element = wait_time_dynamic.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
                 wait_time_text = wait_time_element.text
@@ -340,7 +344,8 @@ def claim():
                     time.sleep(3)
                     driver.save_screenshot("{}/9f_before_get_time_remaining.png".format(screenshots_path))
 
-                # Extract time from wait_time_text
+                # Extract time until full again. Due to lag, we need to build in a wait:
+                time.sleep(10)
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_wait_time += 1
