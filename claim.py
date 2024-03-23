@@ -21,6 +21,13 @@ retryCount = 0
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
+# Format the session_path with the user's input
+session_path = "./selenium/{}".format(user_input)
+os.makedirs(session_path, exist_ok=True)
+screenshots_path = "./screenshots/{}".format(user_input)
+os.makedirs(screenshots_path, exist_ok=True)
+print(f"Our screenshot path is {screenshots_path}")
+
 # Prompt the user to modify settings
 def update_settings():
     global forceClaim, debugIsOn, screenshotQRCode
@@ -59,13 +66,6 @@ if numeric_dirs:
 # If user input is null, set it to the next available numeric session ID
 if not user_input:
     user_input = next_session_id
-
-# Format the session_path with the user's input
-session_path = "./selenium/{}".format(user_input)
-os.makedirs(session_path, exist_ok=True)
-screenshots_path = "./screenshots/{}".format(user_input)
-os.makedirs(screenshots_path, exist_ok=True)
-print(f"Our screenshot path is {screenshots_path}")
 
 # Define our base path for debugging screenshots
 screenshot_base = os.path.join(screenshots_path, "screenshot")
