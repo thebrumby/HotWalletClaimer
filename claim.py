@@ -14,9 +14,10 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 # Initiate global variables then set up paths and session data:
 forceClaim = False
-debugIsOn = True
+debugIsOn = False
 hideSensitiveInput = True
 screenshotQRCode = True
+retryCount = 0
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
@@ -173,7 +174,7 @@ def log_into_telegram():
           print("QR Code canvas not found within the timeout period, switching to the OTP method..")
 
     # OTP Login Method
-    wait = WebDriverWait(driver, 60)
+    wait = WebDriverWait(driver, 120)
     login_button_xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
     login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
     if debugIsOn:
@@ -181,7 +182,7 @@ def log_into_telegram():
     login_button.click()
 
     # Country Code Selection
-    wait = WebDriverWait(driver, 60)
+    wait = WebDriverWait(driver, 120)
     country_code_dropdown_xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
     country_code_dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, country_code_dropdown_xpath)))
     if debugIsOn:
@@ -192,7 +193,7 @@ def log_into_telegram():
     country_code_dropdown.send_keys(Keys.RETURN) 
 
     # Phone Number Input
-    wait = WebDriverWait(driver, 60)
+    wait = WebDriverWait(driver, 120)
     phone_number_input_xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
     phone_number_input = wait.until(EC.element_to_be_clickable((By.XPATH, phone_number_input_xpath)))
     if hideSensitiveInput:
@@ -205,7 +206,7 @@ def log_into_telegram():
     # Wait for the "Next" button to be clickable and click it
 
     
-    wait = WebDriverWait(driver, 60)
+    wait = WebDriverWait(driver, 120)
     next_button_xpath = "//button[contains(@class, 'btn-primary') and .//span[contains(text(), 'Next')]]"
     next_button = wait.until(EC.visibility_of_element_located((By.XPATH, next_button_xpath)))
     if debugIsOn:
@@ -214,7 +215,7 @@ def log_into_telegram():
 
     try:
         # Attempt to locate and interact with the OTP field
-        wait = WebDriverWait(driver, 60)
+        wait = WebDriverWait(driver, 120)
         password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='tel']")))
         otp = input("What is the Telegram OTP from your app? ")
         password.send_keys(otp)
@@ -226,6 +227,9 @@ def log_into_telegram():
         print("OTP entry has failed - maybe you entered the wrong code, or possible flood cooldown issue.")
 
     except Exception as e:  # Catch any other unexpected errors
+        if retryCount < 2:
+            retryCount += 1
+            log_into_telegram()
         print("Login failed. Error:", e) 
     
     if debugIsOn:
@@ -236,7 +240,7 @@ def next_steps():
     driver.get("https://web.telegram.org/k/#@herewalletbot")
 
     # Chat Input Field
-    wait = WebDriverWait(driver, 60)
+    wait = WebDriverWait(driver, 120)
     start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
     start_app_buttons = wait.until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
     clicked = False
@@ -256,7 +260,7 @@ def next_steps():
         print("None of the 'Open Wallet' buttons were clickable.")
 
     # "Launch" Button
-    wait = WebDriverWait(driver, 60)
+    wait = WebDriverWait(driver, 120)
     launch_app_xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
     launch_app_button = wait.until(EC.element_to_be_clickable((By.XPATH, launch_app_xpath)))
     if debugIsOn:
@@ -265,22 +269,22 @@ def next_steps():
 
     # HereWalletBot Pop-up Handling
     try:
-        wait = WebDriverWait(driver, 60)
-        print("Initialising HereWalletBot pop-up window... We need to Login with the seed phrase.")
+        wait = WebDriverWait(driver, 120)
+        print("Initialising HereWalletBot pop-up window...")
         popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
         iframe = popup_body.find_element(By.TAG_NAME, "iframe")
         driver.switch_to.frame(iframe)
         print("Successfully switched to the iframe...")
 
         # Now attempt to interact with elements within the iframe
-        wait = WebDriverWait(driver, 60)
+        wait = WebDriverWait(driver, 120)
         login_button_xpath = "//p[contains(text(), 'Log in')]"
         login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
         if debugIsOn:
             driver.save_screenshot("{}/08b_Found_Login_Button.png".format(screenshots_path))
         login_button.click()
         print("Clicked log in button...")
-        wait = WebDriverWait(driver, 60)
+        wait = WebDriverWait(driver, 120)
         input_field = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="root"]/div/div/div[1]/label/textarea')))
         if debugIsOn:
             driver.save_screenshot("{}/08c_Enter_Seed_Phrase.png".format(screenshots_path))
@@ -288,7 +292,7 @@ def next_steps():
         input_field.click()
         input_field.send_keys(seed_phrase)
         print("Entering seed phrase...")
-        wait = WebDriverWait(driver, 60)
+        wait = WebDriverWait(driver, 120)
         continue_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continue')]")))
         if debugIsOn:
             time.sleep(3)
@@ -301,7 +305,7 @@ def next_steps():
             driver.save_screenshot("{}/08e_Account_Selection_Screen.png".format(screenshots_path))
         login.click()
         print("Selected account...")
-        wait = WebDriverWait(driver, 60)
+        wait = WebDriverWait(driver, 120)
         storage = wait.until(EC.element_to_be_clickable((By.XPATH, "//h4[text()='Storage']")))
         print("Found the 'storage' page link...")
         storage.click()
@@ -314,8 +318,14 @@ def next_steps():
 
     except TimeoutException:
         print("Failed to find or switch to the iframe within the timeout period.")
+        if retryCount < 2:
+            retryCount += 1
+            next_steps()
     except Exception as e:
         print(f"An error occurred: {e}")
+        if retryCount < 2:
+            retryCount += 1
+            next_steps()
 
 def claim():
     print ("\nStarting a new cycle of the Claim function...\n")
@@ -324,7 +334,7 @@ def claim():
 
     try:
         # Let's see how long until the wallet is ready to collected.
-        wait = WebDriverWait(driver, 60)
+        wait = WebDriverWait(driver, 120)
         wait_time_xpath = "//div[contains(., 'Storage')]/p[@class='sc-gLLvby fbVioN']"
         wait_time_element = wait.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
         if debugIsOn:
@@ -359,7 +369,7 @@ def claim():
                 # Now try to click "Claim HOT" button
                 try:
                     # Let's double check if we have to select the iFrame after news
-                    wait = WebDriverWait(driver, 60)
+                    wait = WebDriverWait(driver, 120)
                     popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
                     iframe = popup_body.find_element(By.TAG_NAME, "iframe")
                     driver.switch_to.frame(iframe)
@@ -371,7 +381,7 @@ def claim():
                     if debugIsOn:
                         print("It looks like there was no news to read.")
                 
-                wait = WebDriverWait(driver, 60)
+                wait = WebDriverWait(driver, 120)
                 claim_button_xpath = "//div[div[p[contains(text(), 'Storage')]]]/div[button[contains(text(), 'Claim HOT')]]/button"
                 claim_button = wait.until(EC.visibility_of_element_located((By.XPATH, claim_button_xpath)))
                 if debugIsOn:
@@ -382,7 +392,7 @@ def claim():
 
                 # Now let's try again to get the time remaining until filled. 
                 time.sleep(15)
-                wait = WebDriverWait(driver, 60)
+                wait = WebDriverWait(driver, 120)
                 wait_time_xpath = "//div[contains(., 'Storage')]/p[@class='sc-gLLvby fbVioN']"
                 wait_time_element = wait.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
                 if debugIsOn:
@@ -400,8 +410,14 @@ def claim():
 
             except TimeoutException:
                 print("The claim process timed out: Maybe the site has lag? Will retry after one hour.")
+                if retryCount < 2:
+                    retryCount += 1
+                    claim()
                 return 60
             except Exception as e:
+                if retryCount < 2:
+                    retryCount += 1
+                    claim()
                 print(f"An error occurred while trying to claim: {e}\nLet's wait an hour and try again")
                 return 60
 
@@ -460,9 +476,12 @@ def main():
     clear_screen()
     print("Starting the login process...")
     if not loggedIn:
+        retryCount = 0
         log_into_telegram()
+    retryCount = 0
     next_steps()
     while True:
+        retryCount = 0
         wait_time = claim()
         global forceClaim
         forceClaim = False
