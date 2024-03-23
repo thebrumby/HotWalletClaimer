@@ -1,6 +1,6 @@
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 import getpass
 from selenium import webdriver
@@ -14,24 +14,57 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 # Initiate global variables then set up paths and session data:
 forceClaim = False
-debugIsOn = False
+debugIsOn = True
 hideSensitiveInput = True
 screenshotQRCode = True
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
+# Prompt the user to modify settings
+def update_settings():
+    global forceClaim, debugIsOn, screenshotQRCode
+
+    # Force a claim on first run
+    force_claim_response = input("Shall we force a claim on first run? (Y/N, default = N): ").strip().lower()
+    if force_claim_response == "y":
+        forceClaim = True
+
+    # Enable debugging
+    debug_response = input("Should we enable debugging? (Y/N, default = N): ").strip().lower()
+    if debug_response == "y":
+        debugIsOn = True
+
+    # Allow log in by QR code
+    qr_code_response = input("Shall we allow log in by QR code? (Y/N, default = Y): ").strip().lower()
+    if qr_code_response == "n":
+        screenshotQRCode = False
+
+# Update the settings based on user input
+update_settings()
+
 # Ask the user for a unique session ID
-user_input = input("If using Screen to create more than one instance, enter your unique Session Name here: ")
+user_input = input("Enter your unique Session Name here, or hit <enter> for the next sequential folder: ")
 user_input = user_input.strip()
-# If user input is null, set it to "1"
+
+# Check directories in the screenshots directory to find the next numeric session ID
+screenshots_dir = "./screenshots/"
+dir_contents = os.listdir(screenshots_dir)
+numeric_dirs = [dir_name for dir_name in dir_contents if dir_name.isdigit() and os.path.isdir(os.path.join(screenshots_dir, dir_name))]
+next_session_id = "1"
+if numeric_dirs:
+    highest_numeric_dir = max(map(int, numeric_dirs))
+    next_session_id = str(highest_numeric_dir + 1)
+
+# If user input is null, set it to the next available numeric session ID
 if not user_input:
-    user_input = "1"
+    user_input = next_session_id
 
 # Format the session_path with the user's input
 session_path = "./selenium/{}".format(user_input)
 os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots/{}".format(user_input)
 os.makedirs(screenshots_path, exist_ok=True)
+print(f"Our screenshot path is {screenshots_path}")
 
 # Define our base path for debugging screenshots
 screenshot_base = os.path.join(screenshots_path, "screenshot")
@@ -56,10 +89,11 @@ def setup_driver(chromedriver_path):
     chrome_options.add_argument("--log-level=3")  # Set log level to suppress INFO and WARNING messages
     chrome_options.add_argument("--disable-bluetooth")
     chrome_options.add_argument("--mute-audio")
-    chrome_options.add_argument("--incognito") # Allows for multiple HereWallet accounts from a single TG account
+    # chrome_options.add_argument("--incognito") # Allows for multiple HereWallet accounts from a single TG account
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    chrome_options.add_experimental_option("detach", True)
 
     # Compatibility Handling and error testing:
     try:
@@ -81,80 +115,106 @@ driver = setup_driver(chromedriver_path)
 time.sleep(1)
 wait = WebDriverWait(driver, 10)
 
+# Test if we are logged in from a previous session?
+driver.get("https://web.telegram.org/k/#@herewalletbot")
+wait = WebDriverWait(driver, 10)
+
+try:
+    if debugIsOn:
+        time.sleep(3)
+        driver.save_screenshot("{}/00a_Pre_starting_main.png".format(screenshots_path))
+    chat_xpath = "//div[contains(@class, 'input-message-input') and @tabindex='-1']"
+    chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
+    # If this point is reached, the element is clickable
+    print("Chat input is clickable. Exiting the function early.")
+    if debugIsOn:
+        time.sleep(3)
+        driver.save_screenshot("{}/00b_Found_Clickable_start.png".format(screenshots_path))
+    loggedIn = True
+except TimeoutException:
+    driver.execute_cdp_cmd("Network.clearBrowserCache", {})
+    if debugIsOn:
+        driver.save_screenshot("{}/00c_After_Clear_Cache.png".format(screenshots_path))
+    loggedIn = False
+
 def log_into_telegram():
     driver.get("https://web.telegram.org/k/#@herewalletbot")
-    wait = WebDriverWait(driver, 20)
-    print ("There are several options to log into Telegram:")
-    print ("1. If screenshotQRCode = True, a png image of the login QR code will appear in your screenshots fold; you only get 30 seconds to capture it!")
-    print ("2. If you don't link the account in time, or screenshotQRCode = False, you will be asked for your Country, Phone Number and OTP.")
-    print ("3. If you get asked to do the QR code, and just want to enter the OTP, hit <Enter> and wait 20 seconds.\n")
 
-    #Let's try the QR Code method
+    print("There are several ways to log into Telegram:")
+    print("1. If screenshotQRCode = True, a QR code image will be saved. Scan it within 30 seconds.")
+    print("2. If you don't link in time, or screenshotQRCode = False, you'll be asked for Country, Phone Number, and OTP.")
+    print("3. If asked for a QR code but want to use OTP, hit <Enter> and wait 20 seconds.\n")
+    
+    # QR Code Method
     if screenshotQRCode:
-        time.sleep(3)
-        driver.save_screenshot("{}/00_take_QR_Code_Screenshot.png".format(screenshots_path))
-        input('Hit enter after you snapped the QR code in Settings -> Devices -> Link Desktop Device:')
-        driver.get("https://web.telegram.org/k/#@herewalletbot")
         try:
+          wait = WebDriverWait(driver, 20)  # Wait up to 20 seconds for the QR canvas
+          qr_canvas_xpath = "//canvas[@class='qr-canvas']"
+          qr_canvas = wait.until(EC.presence_of_element_located((By.XPATH, qr_canvas_xpath))) 
+          # We've successfully found the QR code canvas
+          time.sleep(6)
+          driver.save_screenshot("{}/00_take_QR_Code_Screenshot.png".format(screenshots_path))
+          print ("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path))
+          input('Hit enter after you scanned the QR code in Settings -> Devices -> Link Desktop Device:')
+          driver.get("https://web.telegram.org/k/#@herewalletbot")
+
+          try:
+            wait = WebDriverWait(driver, 10)  # Assuming the login screen might take time
             chat_xpath = "//div[contains(@class, 'input-message-input')]"
             chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
-            # We were able to log in with the QR code, let's move to the next_steps()
+            print("QR Code Sucessfully Accepted!")
+            # Successful login using QR code
             return  
 
-        except TimeoutException:
-            print("Account not linked, switching to the OTP method")
+          except TimeoutException:
+            print("QR invalid (expires after 30 seconds), switching to the OTP method.")
 
-    # The WebDriverWait timer can be adjusted based on function being performed and lag in the app. 
+        except TimeoutException:
+          print("QR Code canvas not found within the timeout period, switching to the OTP method..")
+
+    # OTP Login Method
+    wait = WebDriverWait(driver, 60)
     login_button_xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
     login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
+    if debugIsOn:
+        driver.save_screenshot("{}/01_Login_By_Phone_Number.png".format(screenshots_path))
     login_button.click()
-    if debugIsOn:
-        time.sleep(3)
-        driver.save_screenshot("{}/01_take_QR_Code_Screenshot.png".format(screenshots_path))
-    # Let's wait until the Country Code list is available 
-    country_code_dropdown_xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
-    country_code_dropdown = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, country_code_dropdown_xpath)))
-    # Prompt the user for their country name
-    user_input = input("Please enter your Country Name as it appears in the Telegram list: ")
-    user_input = user_input.strip()
-    # Click the dropdown to make it active (if necessary)
-    country_code_dropdown.click()    
-    # Send the country code to the dropdown. If the dropdown requires selection from options, use a different approach.
-    country_code_dropdown.send_keys(user_input)
-    country_code_dropdown.send_keys(Keys.RETURN)  # You might need to press ENTER to confirm the selection
-    
-    # Wait for the phone number input field to be clickable
-    phone_number_input_xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
-    phone_number_input = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, phone_number_input_xpath)))
-    if debugIsOn:
-        time.sleep(3)
-        driver.save_screenshot("{}/02_After_Contry_Code_Confirmation.png".format(screenshots_path))
-    # Prompt the user for their phone number
-    if hideSensitiveInput:
-        user_phone = getpass.getpass("Please enter your phone number without leading 0 (your input is hidden): ")
-    else:
-        user_phone = input("Please enter your phone number without leading 0 (your input is visible): ")
 
-    
-    # Click the input field to make it active (if necessary)
-    phone_number_input.click()
-     # Send the phone number to the input field
-    phone_number_input.send_keys(user_phone)
+    # Country Code Selection
+    wait = WebDriverWait(driver, 60)
+    country_code_dropdown_xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
+    country_code_dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, country_code_dropdown_xpath)))
     if debugIsOn:
-        time.sleep(3)
-        driver.save_screenshot("{}/03_Ready_To_Click_Next.png".format(screenshots_path))
+        driver.save_screenshot("{}/02_Country_Code_Confirmation.png".format(screenshots_path))
+    user_input = input("Please enter your Country Name as it appears in the Telegram list: ").strip()
+    country_code_dropdown.click()  
+    country_code_dropdown.send_keys(user_input)
+    country_code_dropdown.send_keys(Keys.RETURN) 
+
+    # Phone Number Input
+    wait = WebDriverWait(driver, 60)
+    phone_number_input_xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
+    phone_number_input = wait.until(EC.element_to_be_clickable((By.XPATH, phone_number_input_xpath)))
+    if hideSensitiveInput:
+        user_phone = getpass.getpass("Please enter your phone number without leading 0 (hidden input): ")
+    else:
+        user_phone = input("Please enter your phone number without leading 0 (visible input): ")
+    phone_number_input.click() 
+    phone_number_input.send_keys(user_phone)
 
     # Wait for the "Next" button to be clickable and click it
-    next_button_xpath = '//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/button[1]'
-    next_button = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, next_button_xpath)))
-    next_button.click()
 
+    
+    wait = WebDriverWait(driver, 60)
+    next_button_xpath = "//button[contains(@class, 'btn-primary') and .//span[contains(text(), 'Next')]]"
+    next_button = wait.until(EC.visibility_of_element_located((By.XPATH, next_button_xpath)))
     if debugIsOn:
-        time.sleep(3)
-        driver.save_screenshot("{}/04_After_Clicking_Next.png".format(screenshots_path))
+        driver.save_screenshot("{}/03_Ready_To_Click_Next.png".format(screenshots_path))
+    next_button.click()
 
     try:
         # Attempt to locate and interact with the OTP field
+        wait = WebDriverWait(driver, 60)
         password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='tel']")))
         otp = input("What is the Telegram OTP from your app? ")
         password.send_keys(otp)
@@ -174,85 +234,78 @@ def log_into_telegram():
 
 def next_steps():
     driver.get("https://web.telegram.org/k/#@herewalletbot")
+
+    # Chat Input Field
     wait = WebDriverWait(driver, 60)
-    if debugIsOn:
-        time.sleep(3)
-        driver.save_screenshot("{}/06_Look_To_Start_HereWallet_App.png".format(screenshots_path))
-
-    # Locate the chat input field
-    chat_xpath = "//div[contains(@class, 'input-message-input') and @tabindex='-1']"
-    chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
-    chat_input.send_keys("/start")
-    chat_input.send_keys(Keys.RETURN)  # Press Enter to send the command
-    
-    if debugIsOn:
-        time.sleep(3)
-        driver.save_screenshot("{}/07_Start_App.png".format(screenshots_path))
-   
-    # Re-locate the "Open Wallet" button after sending "/start" 
-    time.sleep(2)
     start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
-    start_app_button = wait.until(EC.element_to_be_clickable((By.XPATH, start_app_xpath)))
-    start_app_button.click()  # Now click the button
+    start_app_buttons = wait.until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
+    clicked = False
+    for button in reversed(start_app_buttons):
+        try:
+            if debugIsOn:
+                driver.save_screenshot("{}/07_Open_Launch_Popup.png".format(screenshots_path))
+            button.click()
+            clicked = True
+            break
+        except StaleElementReferenceException:
+            continue
+        except ElementClickInterceptedException:
+            continue  # Try the next button if current one is intercepted
 
-    if debugIsOn:
-        time.sleep(3)
-        driver.save_screenshot("{}/08_Launch_Button.png".format(screenshots_path))
+    if not clicked:
+        print("None of the 'Open Wallet' buttons were clickable.")
 
-    # Wait for the "Launch" button to become clickable and then click it
+    # "Launch" Button
+    wait = WebDriverWait(driver, 60)
     launch_app_xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
     launch_app_button = wait.until(EC.element_to_be_clickable((By.XPATH, launch_app_xpath)))
-    driver.execute_script("arguments[0].click();", launch_app_button)
-
     if debugIsOn:
-        time.sleep(3)
-        driver.save_screenshot("{}/08a_Click_Launch_Button.png".format(screenshots_path))
+        driver.save_screenshot("{}/08_Launch_Button_to_Click.png".format(screenshots_path))
+    driver.execute_script("arguments[0].click();", launch_app_button)  # More reliable than direct click
 
+    # HereWalletBot Pop-up Handling
     try:
-        # Wait for the pop-up body to be present
-        print("Initialising HereWalletBot pop-up window...")
-
-        popup_body = WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
-        # Assuming the iframe is directly within the popup_body, switch to it
+        wait = WebDriverWait(driver, 60)
+        print("Initialising HereWalletBot pop-up window... We need to Login with the seed phrase.")
+        popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
         iframe = popup_body.find_element(By.TAG_NAME, "iframe")
         driver.switch_to.frame(iframe)
-        print("Sucessfully switched to the iFrame...")
+        print("Successfully switched to the iframe...")
+
         # Now attempt to interact with elements within the iframe
-        login_button_xpath = "/html/body/div[1]/div/button/p"
-        login_button = WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
-        login_button.click()
-        print("Clicked log in...")
-        if debugIsOn:
-            time.sleep(3)
-            driver.save_screenshot("{}/08b_Clicked_Login_Button.png".format(screenshots_path))
         wait = WebDriverWait(driver, 60)
-        input_field = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[1]/label/textarea')))
-        print("Found text area...")
+        login_button_xpath = "//p[contains(text(), 'Log in')]"
+        login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
+        if debugIsOn:
+            driver.save_screenshot("{}/08b_Found_Login_Button.png".format(screenshots_path))
+        login_button.click()
+        print("Clicked log in button...")
+        wait = WebDriverWait(driver, 60)
+        input_field = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="root"]/div/div/div[1]/label/textarea')))
+        if debugIsOn:
+            driver.save_screenshot("{}/08c_Enter_Seed_Phrase.png".format(screenshots_path))
+        print("Found seed phrase text area...")
         input_field.click()
         input_field.send_keys(seed_phrase)
         print("Entering seed phrase...")
+        wait = WebDriverWait(driver, 60)
+        continue_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continue')]")))
         if debugIsOn:
             time.sleep(3)
-            driver.save_screenshot("{}/08c_Enter_Seed_Phrase.png".format(screenshots_path))
-
-        select_account_next = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div[2]/button')))
-        select_account_next.click()
-        print("Clicking continue button...")
+            driver.save_screenshot("{}/08d_Found_continue_button.png".format(screenshots_path))
+        continue_button.click()
+        print("Clicked continue button after seed phrase entry...")
+        wait = WebDriverWait(driver, 120)
+        login = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Select account')]")))
         if debugIsOn:
-            time.sleep(3)
-            driver.save_screenshot("{}/08d_After_Seed_Phrase.png".format(screenshots_path))
-
-        login = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/button')))
+            driver.save_screenshot("{}/08e_Account_Selection_Screen.png".format(screenshots_path))
         login.click()
-        print("Clicking select account...")
-        time.sleep(3)
-        if debugIsOn:
-            time.sleep(3)
-            driver.save_screenshot("{}/08e_After_Selection_Accout.png".format(screenshots_path))
-
-        storage = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="root"]/div/div/div/div[4]/div[2]/h4')))
+        print("Selected account...")
+        wait = WebDriverWait(driver, 60)
+        storage = wait.until(EC.element_to_be_clickable((By.XPATH, "//h4[text()='Storage']")))
+        print("Found the 'storage' page link...")
         storage.click()
-        print("Selecting the 'storage' page...")
+        print("Moved to the 'storage' page...")
         time.sleep(3)
         if debugIsOn:
             print("\nWe appear to have correctly navigated to the storage page.\nHanding over to the Claim function :)\n")
@@ -267,14 +320,16 @@ def next_steps():
 def claim():
     print ("\nStarting a new cycle of the Claim function...\n")
     if debugIsOn:
-            time.sleep(3)
             driver.save_screenshot("{}/09a_Start_of_Claim_function.png".format(screenshots_path))
 
     try:
         # Let's see how long until the wallet is ready to collected.
-        wait_time_dynamic = WebDriverWait(driver, 60)
-        wait_time_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
-        wait_time_element = wait_time_dynamic.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
+        wait = WebDriverWait(driver, 60)
+        wait_time_xpath = "//div[contains(., 'Storage')]/p[@class='sc-gLLvby fbVioN']"
+        wait_time_element = wait.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
+        if debugIsOn:
+            driver.save_screenshot("{}/09b_Found_the_Wait_Time_function.png".format(screenshots_path))
+            print ("Found the current wait time countdown...")
         wait_time_text = wait_time_element.text
     except TimeoutException:
         print("Could not find the wait time element within the specified time.")
@@ -282,19 +337,15 @@ def claim():
 
     try:
         print("The pre-claim wait time is : {}".format(wait_time_text))
-        if debugIsOn:
-            time.sleep(3)
-            driver.save_screenshot("{}/09b_After_Get_Wait_Time_function.png".format(screenshots_path))
-        
         if wait_time_text == "Filled" or forceClaim:
             try:
                 # First, try to click "Check NEWS" button if it exists
-                wait_time_dynamic = WebDriverWait(driver, 10)
+                wait = WebDriverWait(driver, 10)
                 if debugIsOn:
                     print("Checking for news to read...")
                 original_window = driver.current_window_handle
-                check_news_button_xpath = '//button[contains(@class, "sc-ktwOSD") and contains(text(), "Check NEWS")]'
-                check_news_button = wait_time_dynamic.until(EC.element_to_be_clickable((By.XPATH, check_news_button_xpath)))
+                check_news_button_xpath = "//div[div[p[contains(text(), 'Storage')]]]/div[button[contains(text(), 'Check NEWS')]]/button"
+                check_news_button = wait.until(EC.element_to_be_clickable((By.XPATH, check_news_button_xpath)))
                 check_news_button.click()
                 driver.switch_to.window(original_window)
                 if debugIsOn:
@@ -308,7 +359,8 @@ def claim():
                 # Now try to click "Claim HOT" button
                 try:
                     # Let's double check if we have to select the iFrame after news
-                    popup_body = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
+                    wait = WebDriverWait(driver, 60)
+                    popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
                     iframe = popup_body.find_element(By.TAG_NAME, "iframe")
                     driver.switch_to.frame(iframe)
 
@@ -317,35 +369,27 @@ def claim():
 
                 except Exception as e:
                     if debugIsOn:
-                        print("It looks like there was no news, so we don't need to reselect the iFrame.")
-
-                wait_time_dynamic = WebDriverWait(driver, 60)
+                        print("It looks like there was no news to read.")
                 
+                wait = WebDriverWait(driver, 60)
+                claim_button_xpath = "//div[div[p[contains(text(), 'Storage')]]]/div[button[contains(text(), 'Claim HOT')]]/button"
+                claim_button = wait.until(EC.visibility_of_element_located((By.XPATH, claim_button_xpath)))
                 if debugIsOn:
-                    print("Attempting to claim...")
-                    time.sleep(3)
-                    driver.save_screenshot("{}/9d_before_clicking_claim_HOT.png".format(screenshots_path))
-                    
-                claim_button_xpath = "//button[contains(@class, 'sc-ktwOSD') and contains(text(), 'Claim HOT')]"
-                claim_button = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, claim_button_xpath)))
+                    print("Claim button found...")
+                    driver.save_screenshot("{}/9d_Claim_button_found.png".format(screenshots_path))
                 claim_button.click()
-
-                if debugIsOn:
-                    time.sleep(3)
-                    driver.save_screenshot("{}/9e_after_clicking_claim_HOT.png".format(screenshots_path))
+                print ("Claim button clicked...")
 
                 # Now let's try again to get the time remaining until filled. 
-                wait_time_dynamic = WebDriverWait(driver, 60)
-                wait_time_xpath = '//*[@id="root"]/div/div[2]/div/div[3]/div/div[2]/div[1]/p[2]'
-                wait_time_element = wait_time_dynamic.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
+                time.sleep(15)
+                wait = WebDriverWait(driver, 60)
+                wait_time_xpath = "//div[contains(., 'Storage')]/p[@class='sc-gLLvby fbVioN']"
+                wait_time_element = wait.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
+                if debugIsOn:
+                    driver.save_screenshot("{}/9f_wait_time_found.png".format(screenshots_path))
                 wait_time_text = wait_time_element.text
 
-                if debugIsOn:
-                    time.sleep(3)
-                    driver.save_screenshot("{}/9f_before_get_time_remaining.png".format(screenshots_path))
-
                 # Extract time until full again. Due to lag, we need to build in a wait:
-                time.sleep(10)
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_wait_time += 1
@@ -358,7 +402,7 @@ def claim():
                 print("The claim process timed out: Maybe the site has lag? Will retry after one hour.")
                 return 60
             except Exception as e:
-                print(f"An error occurred while trying to claim: {e}")
+                print(f"An error occurred while trying to claim: {e}\nLet's wait an hour and try again")
                 return 60
 
         else:
@@ -415,13 +459,17 @@ def main():
     seed_phrase = validate_seed_phrase()
     clear_screen()
     print("Starting the login process...")
-    log_into_telegram()
+    if not loggedIn:
+        log_into_telegram()
     next_steps()
     while True:
         wait_time = claim()
         global forceClaim
         forceClaim = False
-        print(f"Need to wait for {wait_time} minutes before the next claim attempt.")
+        now = datetime.now()
+        next_claim_time = now + timedelta(minutes=wait_time)
+        next_claim_time_str = next_claim_time.strftime("%H:%M")
+        print(f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.")
 
         while wait_time > 0:
             this_wait = min(wait_time, 15)
