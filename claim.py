@@ -225,6 +225,19 @@ def log_into_telegram():
 def next_steps():
     driver.get("https://web.telegram.org/k/#@herewalletbot")
 
+    # Let's look for the central tab and send the /start command
+    wait = WebDriverWait(driver, 60)
+    if debugIsOn:
+        time.sleep(10)
+        driver.save_screenshot("{}/06_Look_To_Start_HereWallet_App.png".format(screenshots_path))
+    time.sleep(10)
+    # Locate the chat input field
+    chat_xpath = "//div[contains(@class, 'input-message-input') and @tabindex='-1']"
+    chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
+    chat_input.click()
+    chat_input.send_keys("/start")
+    chat_input.send_keys(Keys.RETURN)  # Press Enter to send the command
+
     # Chat Input Field
     wait = WebDriverWait(driver, 120)
     start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
