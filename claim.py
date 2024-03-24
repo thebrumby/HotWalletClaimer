@@ -4,20 +4,20 @@ from datetime import datetime, timedelta
 import re
 import getpass
 from selenium import webdriver
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException
 
 # Initiate global variables then set up paths and session data:
 forceClaim = False
 debugIsOn = False
 hideSensitiveInput = True
 screenshotQRCode = True
-retryCount = 0
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
@@ -97,7 +97,7 @@ def setup_driver(chromedriver_path):
     chrome_options.add_argument("--log-level=3")  # Set log level to suppress INFO and WARNING messages
     chrome_options.add_argument("--disable-bluetooth")
     chrome_options.add_argument("--mute-audio")
-    # chrome_options.add_argument("--incognito") # Allows for multiple HereWallet accounts from a single TG account
+    chrome_options.add_argument("--incognito") # Allows for multiple HereWallet accounts from a single TG account
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
@@ -126,24 +126,6 @@ wait = WebDriverWait(driver, 10)
 # Test if we are logged in from a previous session?
 driver.get("https://web.telegram.org/k/#@herewalletbot")
 wait = WebDriverWait(driver, 10)
-
-try:
-    if debugIsOn:
-        time.sleep(3)
-        driver.save_screenshot("{}/00a_Pre_starting_main.png".format(screenshots_path))
-    chat_xpath = "//div[contains(@class, 'input-message-input') and @tabindex='-1']"
-    chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
-    # If this point is reached, the element is clickable
-    print("Chat input is clickable. Exiting the function early.")
-    if debugIsOn:
-        time.sleep(3)
-        driver.save_screenshot("{}/00b_Found_Clickable_start.png".format(screenshots_path))
-    loggedIn = True
-except TimeoutException:
-    driver.execute_cdp_cmd("Network.clearBrowserCache", {})
-    if debugIsOn:
-        driver.save_screenshot("{}/00c_After_Clear_Cache.png".format(screenshots_path))
-    loggedIn = False
 
 def log_into_telegram():
     driver.get("https://web.telegram.org/k/#@herewalletbot")
@@ -234,9 +216,6 @@ def log_into_telegram():
         print("OTP entry has failed - maybe you entered the wrong code, or possible flood cooldown issue.")
 
     except Exception as e:  # Catch any other unexpected errors
-        if retryCount < 2:
-            retryCount += 1
-            log_into_telegram()
         print("Login failed. Error:", e) 
     
     if debugIsOn:
@@ -289,50 +268,55 @@ def next_steps():
         login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
         if debugIsOn:
             driver.save_screenshot("{}/08b_Found_Login_Button.png".format(screenshots_path))
-        login_button.click()
+        # Simulate mouse interaction
+        actions = ActionChains(driver)
+        actions.move_to_element(login_button).pause(0.2).click().perform()
         print("Clicked log in button...")
+
         wait = WebDriverWait(driver, 120)
-        input_field = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="root"]/div/div/div[1]/label/textarea')))
+        input_field = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id=\"root\"]//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea")))
         if debugIsOn:
             driver.save_screenshot("{}/08c_Enter_Seed_Phrase.png".format(screenshots_path))
         print("Found seed phrase text area...")
-        input_field.click()
-        input_field.send_keys(seed_phrase)
-        print("Entering seed phrase...")
-        wait = WebDriverWait(driver, 120)
+
+        # Simulate mouse interaction before interacting 
+        actions = ActionChains(driver)
+        actions.move_to_element(input_field).pause(0.2).click().send_keys(validate_seed_phrase()).perform() 
+        print("Entered the seed phrase...")
+
         continue_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continue')]")))
         if debugIsOn:
             time.sleep(3)
             driver.save_screenshot("{}/08d_Found_continue_button.png".format(screenshots_path))
-        continue_button.click()
+        # Simulate mouse interaction
+        actions = ActionChains(driver)
+        actions.move_to_element(continue_button).pause(0.2).click().perform() 
         print("Clicked continue button after seed phrase entry...")
+
         wait = WebDriverWait(driver, 120)
-        login = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Select account')]")))
+        select_account = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Select account')]")))
         if debugIsOn:
             driver.save_screenshot("{}/08e_Account_Selection_Screen.png".format(screenshots_path))
-        login.click()
-        print("Selected account...")
-        wait = WebDriverWait(driver, 120)
+        actions = ActionChains(driver)
+        actions.move_to_element(select_account).pause(0.2).click().perform()
+
         storage = wait.until(EC.element_to_be_clickable((By.XPATH, "//h4[text()='Storage']")))
-        print("Found the 'storage' page link...")
-        storage.click()
-        print("Moved to the 'storage' page...")
-        time.sleep(3)
+        actions = ActionChains(driver)
+        actions.move_to_element(storage).pause(0.2)  # Slight delay to simulate human behavior 
+        actions.click(storage).perform()
+        print("Selecting the 'storage' page...")
+
         if debugIsOn:
             print("\nWe appear to have correctly navigated to the storage page.\nHanding over to the Claim function :)\n")
             time.sleep(3)
             driver.save_screenshot("{}/08f_After_Selecting_Storage.png".format(screenshots_path))
 
+
     except TimeoutException:
         print("Failed to find or switch to the iframe within the timeout period.")
-        if retryCount < 2:
-            retryCount += 1
-            next_steps()
+
     except Exception as e:
         print(f"An error occurred: {e}")
-        if retryCount < 2:
-            retryCount += 1
-            next_steps()
 
 def claim():
     print ("\nStarting a new cycle of the Claim function...\n")
@@ -361,9 +345,10 @@ def claim():
                 if debugIsOn:
                     print("Checking for news to read...")
                 original_window = driver.current_window_handle
-                check_news_button_xpath = "//div[div[p[contains(text(), 'Storage')]]]/div[button[contains(text(), 'Check NEWS')]]/button"
+                check_news_button_xpath = "//button[contains(text(), 'Check NEWS')]"
                 check_news_button = wait.until(EC.element_to_be_clickable((By.XPATH, check_news_button_xpath)))
-                check_news_button.click()
+                actions = ActionChains(driver)
+                actions.move_to_element(check_news_button).pause(0.2).click().perform() 
                 driver.switch_to.window(original_window)
                 if debugIsOn:
                     print("News checked. Waiting for claim button...")
@@ -373,9 +358,8 @@ def claim():
                     print("No news to check or button not found.")
 
             try:
-                # Now try to click "Claim HOT" button
+                # Let's double check if we have to reselect the iFrame after news
                 try:
-                    # Let's double check if we have to select the iFrame after news
                     wait = WebDriverWait(driver, 120)
                     popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
                     iframe = popup_body.find_element(By.TAG_NAME, "iframe")
@@ -389,12 +373,13 @@ def claim():
                         print("It looks like there was no news to read.")
                 
                 wait = WebDriverWait(driver, 120)
-                claim_button_xpath = "//div[div[p[contains(text(), 'Storage')]]]/div[button[contains(text(), 'Claim HOT')]]/button"
-                claim_button = wait.until(EC.visibility_of_element_located((By.XPATH, claim_button_xpath)))
+                claim_HOT_button_xpath = "//button[contains(text(), 'Claim HOT')]"
+                claim_HOT_button = wait.until(EC.element_to_be_clickable((By.XPATH, claim_HOT_button_xpath)))
                 if debugIsOn:
                     print("Claim button found...")
                     driver.save_screenshot("{}/9d_Claim_button_found.png".format(screenshots_path))
-                claim_button.click()
+                actions = ActionChains(driver)
+                actions.move_to_element(claim_HOT_button).pause(0.2).click().perform() 
                 print ("Claim button clicked...")
 
                 # Now let's try again to get the time remaining until filled. 
@@ -417,9 +402,6 @@ def claim():
 
             except TimeoutException:
                 print("The claim process timed out: Maybe the site has lag? Will retry after one hour.")
-                if retryCount < 2:
-                    retryCount += 1
-                    claim()
                 return 60
             except Exception as e:
                 if retryCount < 2:
@@ -478,14 +460,9 @@ def validate_seed_phrase():
             print(f"Error: {e}")
 
 def main():
-    global seed_phrase
-    seed_phrase = validate_seed_phrase()
     clear_screen()
     print("Starting the login process...")
-    if not loggedIn:
-        retryCount = 0
-        log_into_telegram()
-    retryCount = 0
+    log_into_telegram()
     next_steps()
     while True:
         retryCount = 0
