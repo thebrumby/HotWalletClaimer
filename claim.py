@@ -255,6 +255,7 @@ def next_steps():
 
     # HereWalletBot Pop-up Handling
     try:
+        # Let's try to switch focus to the iFrame.
         wait = WebDriverWait(driver, 120)
         print("Initialising HereWalletBot pop-up window...")
         popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
@@ -262,37 +263,36 @@ def next_steps():
         driver.switch_to.frame(iframe)
         print("Successfully switched to the iframe...")
 
-        # Now attempt to interact with elements within the iframe
+        # Attempt to interact with elements within the iframe.
+        # Let's click the login button first:
         wait = WebDriverWait(driver, 120)
         login_button_xpath = "//p[contains(text(), 'Log in')]"
         login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
         if debugIsOn:
             driver.save_screenshot("{}/08b_Found_Login_Button.png".format(screenshots_path))
-        # Simulate mouse interaction
         actions = ActionChains(driver)
         actions.move_to_element(login_button).pause(0.2).click().perform()
         print("Clicked log in button...")
 
+        # Then look for the seed phase textarea:
         wait = WebDriverWait(driver, 120)
         input_field = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id=\"root\"]//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea")))
         if debugIsOn:
             driver.save_screenshot("{}/08c_Enter_Seed_Phrase.png".format(screenshots_path))
         print("Found seed phrase text area...")
 
-        # Simulate mouse interaction before interacting 
+        # Paste in the seed phase (debug screenshot removed for production version):
         actions = ActionChains(driver)
         actions.move_to_element(input_field).pause(0.2).click().send_keys(validate_seed_phrase()).perform() 
         print("Entered the seed phrase...")
 
+        # Click the continue button after seed phrase entry:
         continue_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continue')]")))
-        if debugIsOn:
-            time.sleep(3)
-            driver.save_screenshot("{}/08d_Found_continue_button.png".format(screenshots_path))
-        # Simulate mouse interaction
         actions = ActionChains(driver)
         actions.move_to_element(continue_button).pause(0.2).click().perform() 
         print("Clicked continue button after seed phrase entry...")
 
+        # Click the account selection button:
         wait = WebDriverWait(driver, 120)
         select_account = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Select account')]")))
         if debugIsOn:
@@ -300,6 +300,7 @@ def next_steps():
         actions = ActionChains(driver)
         actions.move_to_element(select_account).pause(0.2).click().perform()
 
+        # Click on the Storage link:
         storage = wait.until(EC.element_to_be_clickable((By.XPATH, "//h4[text()='Storage']")))
         actions = ActionChains(driver)
         actions.move_to_element(storage).pause(0.2)  # Slight delay to simulate human behavior 
@@ -373,6 +374,7 @@ def claim():
                         print("It looks like there was no news to read.")
                 
                 wait = WebDriverWait(driver, 120)
+                # Click on the "Claim HOT" button:
                 claim_HOT_button_xpath = "//button[contains(text(), 'Claim HOT')]"
                 claim_HOT_button = wait.until(EC.element_to_be_clickable((By.XPATH, claim_HOT_button_xpath)))
                 if debugIsOn:
@@ -391,7 +393,7 @@ def claim():
                     driver.save_screenshot("{}/9f_wait_time_found.png".format(screenshots_path))
                 wait_time_text = wait_time_element.text
 
-                # Extract time until full again. Due to lag, we need to build in a wait:
+                # Extract time until the "Storage" pot is full again:
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_wait_time += 1
@@ -404,9 +406,6 @@ def claim():
                 print("The claim process timed out: Maybe the site has lag? Will retry after one hour.")
                 return 60
             except Exception as e:
-                if retryCount < 2:
-                    retryCount += 1
-                    claim()
                 print(f"An error occurred while trying to claim: {e}\nLet's wait an hour and try again")
                 return 60
 
@@ -427,16 +426,16 @@ def claim():
         return 60  # Default wait time in case of an unexpected error
 
 def clear_screen():
-    # For added privacy, let's clear the screen after entering the seed phrase or mobile phone number.
+    # Attempt to clear the screen after entering the seed phrase or mobile phone number.
     # For Windows
     if os.name == 'nt':
         os.system('cls')
-    # For macOS and Linux(here, os.name is 'posix')
+    # For macOS and Linux
     else:
         os.system('clear')
 
 def validate_seed_phrase():
-    # Let's grab the user inputed seed phrase and carry out basic validation
+    # Let's take the user inputed seed phrase and carry out basic validation
     while True:
         # Prompt the user for their seed phrase
         if hideSensitiveInput:
@@ -465,7 +464,6 @@ def main():
     log_into_telegram()
     next_steps()
     while True:
-        retryCount = 0
         wait_time = claim()
         global forceClaim
         forceClaim = False
