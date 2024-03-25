@@ -245,7 +245,7 @@ def next_steps():
         fl_button.click()
         print("Clicked the START button.")
     except TimeoutException:
-        print("As excepted, START button not found at this time.")
+        print("As expected, the START button was not found at this time.")
 
     # Let's look for the central tab and send the /start command
     wait = WebDriverWait(driver, 60)
@@ -255,7 +255,7 @@ def next_steps():
     time.sleep(10)
     # Locate the chat input field
     chat_xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
-    chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
+    chat_input = wait.until(EC.presence_of_element_located((By.XPATH, chat_xpath)))
     chat_input.click()
     chat_input.send_keys("/start")
     chat_input.send_keys(Keys.RETURN)  # Press Enter to send the command
