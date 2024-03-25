@@ -37,16 +37,22 @@ def update_settings():
     force_claim_response = input("Shall we force a claim on first run? (Y/N, default = N): ").strip().lower()
     if force_claim_response == "y":
         forceClaim = True
+    else:
+        forceClaim = False
 
     # Enable debugging
     debug_response = input("Should we enable debugging? (Y/N, default = N): ").strip().lower()
     if debug_response == "y":
         debugIsOn = True
+    else:
+        debugIsOn = False
 
     # Allow log in by QR code
     qr_code_response = input("Shall we allow log in by QR code? (Y/N, default = Y): ").strip().lower()
     if qr_code_response == "n":
         screenshotQRCode = False
+    else:
+        screenshotQRCode = True
 
 # Update the settings based on user input
 update_settings()
@@ -206,8 +212,12 @@ def log_into_telegram():
         # Attempt to locate and interact with the OTP field
         wait = WebDriverWait(driver, 120)
         password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='tel']")))
+        if debugIsOn:
+            time.sleep(3)
+            driver.save_screenshot("{}/04_Ready_for_OTP.png".format(screenshots_path))
         otp = input("What is the Telegram OTP from your app? ")
         password.send_keys(otp)
+        password.send_keys(Keys.RETURN)
         clear_screen()
         print("Let's try to log in using your Telegram OTP. Please Wait.")
 
@@ -224,6 +234,18 @@ def log_into_telegram():
 
 def next_steps():
     driver.get("https://web.telegram.org/k/#@herewalletbot")
+
+    # There is a very unlikely scenario that the chat might have been cleared.
+    # In this case, the "START" button needs pressing to expose the chat window!
+    wait = WebDriverWait(driver, 10)
+    print("Looking for the 'START' button which is present on first launch...")
+    try:
+        fl_xpath = "//button[contains(., 'START')]"
+        fl_button = wait.until(EC.element_to_be_clickable((By.XPATH, fl_xpath)))
+        fl_button.click()
+        print("Clicked the START button.")
+    except TimeoutException:
+        print("As excepted, START button not found at this time.")
 
     # Let's look for the central tab and send the /start command
     wait = WebDriverWait(driver, 60)
