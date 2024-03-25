@@ -217,7 +217,6 @@ def log_into_telegram():
             driver.save_screenshot("{}/04_Ready_for_OTP.png".format(screenshots_path))
         otp = input("What is the Telegram OTP from your app? ")
         password.send_keys(otp)
-        password.send_keys(Keys.RETURN)
         clear_screen()
         print("Let's try to log in using your Telegram OTP. Please Wait.")
 
