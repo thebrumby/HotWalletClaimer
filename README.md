@@ -4,7 +4,7 @@ This Python script simplifies claiming the cryptocurrency HOT, using the "HereWa
 
 💡 **TIP:** You can claim on multiple HereWallet accounts using a single Telegram account, provided you use an individual session for each account using SCREEN or an alternative, as described below. Each time you scan a QR Code or enter a One-Time Password (OTP), it counts as one login attempt. Attempting to log into a single Telegram account more than 20 times in 24 hours is considered "flooding" by Telegram, and they will apply a 24-hour cooldown on further login attempts. However, once logged in, you will stay logged in unless you exit the script.
 
-[The HereWallet app/game can be found here: https://t.me/herewalletbot/app?startapp=3441967](https://t.me/herewalletbot/app?startapp=3441967-village-85935)
+The HereWallet app/game can be found here: [https://t.me/herewalletbot/app?startapp=3441967](https://t.me/herewalletbot/app?startapp=3441967-village-85935)
 
 If you find this script useful, please consider buying me a coffee to show your support.
 - https://www.buymeacoffee.com/HotWallletBot
