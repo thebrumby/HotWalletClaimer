@@ -81,7 +81,7 @@ If you have a second account, from the command line (not within the first Screen
    You can resume an active screen session with ```screen -r yourSessionName```
 
 <a name="usage-notes"></a>
-## Setup and Usage Instructions
+## Usage Instructions
 
 #### After executing the script with python3 claim.py, the process flow is as follows:
 
