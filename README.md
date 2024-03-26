@@ -25,10 +25,11 @@ If you have a second account, from the command line (not within the first Screen
 
 💡 Tip: Each screen session consumes approximately 450 MB of server memory. The total number of sessions you can run is limited by your server's physical RAM. To maximize usage, you can add sessions up to the point where memory is nearly utilized. Executing ```sudo reboot``` clears all active sessions and releases memory once the operating system reboots, providing a quick way to refresh your system resources.
 
-<p align="center">See a walkthrough of all the steps, from server setup to installing the script, on <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">YouTube</a>.<br><br>
+<p align="center">
   <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">
     <img src="https://img.youtube.com/vi/MjUquyLWPGw/0.jpg" alt="YouTube Visual Instructions">
-  </a>
+  </a><br>
+   See a walkthrough of all the steps, from server setup to installing the script, on <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">YouTube</a>.
 </p>
 
 ### Linux Manual installation - Ensure each command in the code block executes. 
