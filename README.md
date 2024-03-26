@@ -25,6 +25,9 @@ If you have a second account, from the command line (not within the first Screen
 
 💡 Tip: Each screen session consumes approximately 450 MB of server memory. The total number of sessions you can run is limited by your server's physical RAM. To maximize usage, you can add sessions up to the point where memory is nearly utilized. Executing ```sudo reboot``` clears all active sessions and releases memory once the operating system reboots, providing a quick way to refresh your system resources.
 
+[![YouTube Visual Instructions](https://img.youtube.com/vi/MjUquyLWPGw/0.jpg)](https://www.youtube.com/watch?v=MjUquyLWPGw "YouTube Visual Instructions")
+
+
 ### Linux Manual installation - Ensure each command in the code block executes. 
 
 1. **Install Python & PIP:**
