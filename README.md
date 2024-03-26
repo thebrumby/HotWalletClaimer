@@ -25,8 +25,11 @@ If you have a second account, from the command line (not within the first Screen
 
 💡 Tip: Each screen session consumes approximately 450 MB of server memory. The total number of sessions you can run is limited by your server's physical RAM. To maximize usage, you can add sessions up to the point where memory is nearly utilized. Executing ```sudo reboot``` clears all active sessions and releases memory once the operating system reboots, providing a quick way to refresh your system resources.
 
-[![YouTube Visual Instructions](https://img.youtube.com/vi/MjUquyLWPGw/0.jpg)](https://www.youtube.com/watch?v=MjUquyLWPGw "YouTube Visual Instructions")
-
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">
+    <img src="https://img.youtube.com/vi/MjUquyLWPGw/0.jpg" alt="YouTube Visual Instructions">
+  </a>
+</p>
 
 ### Linux Manual installation - Ensure each command in the code block executes. 
 
@@ -37,14 +40,14 @@ If you have a second account, from the command line (not within the first Screen
    sudo apt install -y python3 python3-pip
    python3 --version   
    ```
-2. **Download the Chrome `.deb` package:**
+2. **Download & Install the Chrome `.deb` package:**
 
    ```bash
    wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb
    sudo apt install -y /tmp/chrome.deb
    rm /tmp/chrome.deb   
    ```
-3. **Download Chromedriver:**
+3. **Download & Install Chromedriver:**
 
    ```bash
    sudo apt install -y unzip
@@ -69,10 +72,14 @@ If you have a second account, from the command line (not within the first Screen
    ```bash
    pip install selenium Pillow   
    ```
-7. **Run the Python script or use the unattended method below:**
+7. **Start a Screen Session for Unattended Access & execute the Python script:**
    ```bash
+   screen -S yourSessionName
    python3 claim.py   
    ```
+   You can exit the screen session by pressing ```CTRL+A+D``` simultaneously.
+   You can resume an active screen session with ```screen -r yourSessionName```
+
 <a name="usage-notes"></a>
 ## Setup and Usage Instructions
 
