@@ -77,8 +77,8 @@ If you have a second account, from the command line (not within the first Screen
    screen -S yourSessionName
    python3 claim.py   
    ```
-   You can exit the screen session by pressing ```CTRL+A+D``` simultaneously.
-   You can resume an active screen session with ```screen -r yourSessionName```
+   - You can exit the screen session by pressing ```CTRL+A+D``` simultaneously, it will remain running in the background for unattended claims, provided you successfully log in.
+   - You can resume an active screen session with ```screen -r yourSessionName```
 
 <a name="usage-notes"></a>
 ## Usage Instructions
