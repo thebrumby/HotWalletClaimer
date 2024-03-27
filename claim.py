@@ -237,56 +237,75 @@ def next_steps():
 
     # There is a very unlikely scenario that the chat might have been cleared.
     # In this case, the "START" button needs pressing to expose the chat window!
-    wait = WebDriverWait(driver, 10)
-    print("Looking for the 'START' button which is present on first launch...")
+    wait = WebDriverWait(driver, 5)
+    print("Looking for the 'START' button which is only present on first launch...")
     try:
         fl_xpath = "//button[contains(., 'START')]"
         fl_button = wait.until(EC.element_to_be_clickable((By.XPATH, fl_xpath)))
-        fl_button.click()
+        actions = ActionChains(driver)
+        actions.move_to_element(fl_button).pause(0.2)  # Slight delay to simulate human behavior
+        actions.click(fl_button).perform()
         print("Clicked the START button.")
     except TimeoutException:
         print("As expected, the START button was not found at this time.")
 
     # Let's look for the central tab and send the /start command
-    wait = WebDriverWait(driver, 60)
     if debugIsOn:
-        time.sleep(10)
+        time.sleep(3)
         driver.save_screenshot("{}/06_Look_To_Start_HereWallet_App.png".format(screenshots_path))
-    time.sleep(10)
-    # Locate the chat input field
-    chat_xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
-    chat_input = wait.until(EC.presence_of_element_located((By.XPATH, chat_xpath)))
-    chat_input.click()
-    chat_input.send_keys("/start")
-    chat_input.send_keys(Keys.RETURN)  # Press Enter to send the command
 
-    # Chat Input Field
-    wait = WebDriverWait(driver, 120)
+    print("Sending the '/start' command to the central console...")
+    try:
+        wait = WebDriverWait(driver, 10)
+        chat_xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
+        chat_input = wait.until(EC.presence_of_element_located((By.XPATH, chat_xpath)))
+        actions = ActionChains(driver)
+        actions.move_to_element(chat_input).pause(0.2)
+        actions.click(chat_input).pause(0.2)
+        actions.perform()
+        chat_input.send_keys("/start")
+        chat_input.send_keys(Keys.RETURN)
+        print("Sucessfully sent the '/start' command.")
+    except TimeoutException:
+        # Unable to enter the start command
+        print("Unable to send the '/start' command.")
+
+    # Now let's try to find a working link to open the launch button
     start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
     start_app_buttons = wait.until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
     clicked = False
+    print ("Looking for a link to open the app...")
     for button in reversed(start_app_buttons):
+        actions = ActionChains(driver)
+        actions.move_to_element(button).pause(0.2)
         try:
             if debugIsOn:
                 driver.save_screenshot("{}/07_Open_Launch_Popup.png".format(screenshots_path))
-            button.click()
+            actions.click(button)
+            actions.perform()
             clicked = True
             break
         except StaleElementReferenceException:
             continue
         except ElementClickInterceptedException:
-            continue  # Try the next button if current one is intercepted
-
+            continue
     if not clicked:
         print("None of the 'Open Wallet' buttons were clickable.")
+    else:
+        print ("The link to open the app was sucessfully clicked.")
 
-    # "Launch" Button
-    wait = WebDriverWait(driver, 120)
+    # Now let's move to and JS click the "Launch" Button
+    wait = WebDriverWait(driver, 20)
     launch_app_xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
     launch_app_button = wait.until(EC.element_to_be_clickable((By.XPATH, launch_app_xpath)))
+    actions = ActionChains(driver)
+    actions.move_to_element(launch_app_button).pause(0.2)
+    actions.perform()
+    time.sleep(2)
+    driver.execute_script("arguments[0].click();", launch_app_button)
     if debugIsOn:
         driver.save_screenshot("{}/08_Launch_Button_to_Click.png".format(screenshots_path))
-    driver.execute_script("arguments[0].click();", launch_app_button)  # More reliable than direct click
+
 
     # HereWalletBot Pop-up Handling
     try:
@@ -325,7 +344,7 @@ def next_steps():
         continue_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Continue')]")))
         actions = ActionChains(driver)
         actions.move_to_element(continue_button).pause(0.2).click().perform() 
-        print("Clicked continue button after seed phrase entry...")
+        print("Clicked continue button after seed phrase entry (loading app, please be patient)...")
 
         # Click the account selection button:
         wait = WebDriverWait(driver, 120)
@@ -362,7 +381,7 @@ def claim():
     try:
         # Let's see how long until the wallet is ready to collected.
         wait = WebDriverWait(driver, 120)
-        wait_time_xpath = "//div[contains(., 'Storage')]/p[@class='sc-gLLvby fbVioN']"
+        wait_time_xpath = "//div[contains(., 'Storage')]/p[2]"
         wait_time_element = wait.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
         if debugIsOn:
             driver.save_screenshot("{}/09b_Found_the_Wait_Time_function.png".format(screenshots_path))
@@ -422,7 +441,7 @@ def claim():
                 # Now let's try again to get the time remaining until filled. 
                 time.sleep(15)
                 wait = WebDriverWait(driver, 120)
-                wait_time_xpath = "//div[contains(., 'Storage')]/p[@class='sc-gLLvby fbVioN']"
+                wait_time_xpath = "//div[contains(., 'Storage')]/p[2]"
                 wait_time_element = wait.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
                 if debugIsOn:
                     driver.save_screenshot("{}/9f_wait_time_found.png".format(screenshots_path))
