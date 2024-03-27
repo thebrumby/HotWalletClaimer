@@ -136,10 +136,7 @@ wait = WebDriverWait(driver, 10)
 def log_into_telegram():
     driver.get("https://web.telegram.org/k/#@herewalletbot")
 
-    print("There are several ways to log into Telegram:")
-    print("1. If screenshotQRCode = True, a QR code image will be saved. Scan it within 30 seconds.")
-    print("2. If you don't link in time, or screenshotQRCode = False, you'll be asked for Country, Phone Number, and OTP.")
-    print("3. If asked for a QR code but want to use OTP, hit <Enter> and wait 20 seconds.\n")
+    print("*** Important: Having @HereWalletBot open in your Telegram App might stop this script loggin in! ***")
     
     # QR Code Method
     if screenshotQRCode:
@@ -169,6 +166,7 @@ def log_into_telegram():
           print("QR Code canvas not found within the timeout period, switching to the OTP method..")
 
     # OTP Login Method
+    driver.get("https://web.telegram.org/k/#@herewalletbot")
     wait = WebDriverWait(driver, 120)
     login_button_xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
     login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
@@ -243,8 +241,8 @@ def next_steps():
         fl_xpath = "//button[contains(., 'START')]"
         fl_button = wait.until(EC.element_to_be_clickable((By.XPATH, fl_xpath)))
         actions = ActionChains(driver)
-        actions.move_to_element(fl_button).pause(0.2)  # Slight delay to simulate human behavior
-        actions.click(fl_button).perform()
+        actions.move_to_element(fl_button).pause(0.2).perform()
+        driver.execute_script("arguments[0].click();", fl_button)
         print("Clicked the START button.")
     except TimeoutException:
         print("As expected, the START button was not found at this time.")
@@ -257,12 +255,11 @@ def next_steps():
     print("Sending the '/start' command to the central console...")
     try:
         wait = WebDriverWait(driver, 10)
-        chat_xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
+        chat_xpath = "(//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')])[last()]"
         chat_input = wait.until(EC.presence_of_element_located((By.XPATH, chat_xpath)))
         actions = ActionChains(driver)
-        actions.move_to_element(chat_input).pause(0.2)
-        actions.click(chat_input).pause(0.2)
-        actions.perform()
+        actions.move_to_element(chat_input).pause(0.2).perform()
+        driver.execute_script("arguments[0].click();", chat_input)
         chat_input.send_keys("/start")
         chat_input.send_keys(Keys.RETURN)
         print("Sucessfully sent the '/start' command.")
@@ -281,8 +278,8 @@ def next_steps():
         try:
             if debugIsOn:
                 driver.save_screenshot("{}/07_Open_Launch_Popup.png".format(screenshots_path))
-            actions.click(button)
             actions.perform()
+            driver.execute_script("arguments[0].click();", button)
             clicked = True
             break
         except StaleElementReferenceException:
@@ -305,7 +302,6 @@ def next_steps():
     driver.execute_script("arguments[0].click();", launch_app_button)
     if debugIsOn:
         driver.save_screenshot("{}/08_Launch_Button_to_Click.png".format(screenshots_path))
-
 
     # HereWalletBot Pop-up Handling
     try:
@@ -357,8 +353,8 @@ def next_steps():
         # Click on the Storage link:
         storage = wait.until(EC.element_to_be_clickable((By.XPATH, "//h4[text()='Storage']")))
         actions = ActionChains(driver)
-        actions.move_to_element(storage).pause(0.2)  # Slight delay to simulate human behavior 
-        actions.click(storage).perform()
+        actions.move_to_element(storage).pause(0.2).perform()
+        driver.execute_script("arguments[0].click();", storage)
         print("Selecting the 'storage' page...")
 
         if debugIsOn:
