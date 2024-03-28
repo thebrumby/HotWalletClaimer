@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from datetime import datetime, timedelta
 import re
@@ -160,14 +161,16 @@ def log_into_telegram():
             return  
 
           except TimeoutException:
-            print("QR invalid (expires after 30 seconds), switching to the OTP method.")
+            print("Timeout: Restart the script and retry the QR Code or switch to the OTP method.")
+            sys.exit()
 
         except TimeoutException:
-          print("QR Code canvas not found within the timeout period, switching to the OTP method..")
+          print("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.")
+          sys.exit() 
 
     # OTP Login Method
     driver.get("https://web.telegram.org/k/#@herewalletbot")
-    wait = WebDriverWait(driver, 120)
+    wait = WebDriverWait(driver, 20)
     login_button_xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
     login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
     if debugIsOn:
@@ -175,7 +178,7 @@ def log_into_telegram():
     login_button.click()
 
     # Country Code Selection
-    wait = WebDriverWait(driver, 120)
+    wait = WebDriverWait(driver, 20)
     country_code_dropdown_xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
     country_code_dropdown = wait.until(EC.element_to_be_clickable((By.XPATH, country_code_dropdown_xpath)))
     if debugIsOn:
@@ -186,7 +189,7 @@ def log_into_telegram():
     country_code_dropdown.send_keys(Keys.RETURN) 
 
     # Phone Number Input
-    wait = WebDriverWait(driver, 120)
+    wait = WebDriverWait(driver, 20)
     phone_number_input_xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
     phone_number_input = wait.until(EC.element_to_be_clickable((By.XPATH, phone_number_input_xpath)))
     if hideSensitiveInput:
@@ -199,7 +202,7 @@ def log_into_telegram():
     # Wait for the "Next" button to be clickable and click it
 
     
-    wait = WebDriverWait(driver, 120)
+    wait = WebDriverWait(driver, 20)
     next_button_xpath = "//button[contains(@class, 'btn-primary') and .//span[contains(text(), 'Next')]]"
     next_button = wait.until(EC.visibility_of_element_located((By.XPATH, next_button_xpath)))
     if debugIsOn:
@@ -208,7 +211,7 @@ def log_into_telegram():
 
     try:
         # Attempt to locate and interact with the OTP field
-        wait = WebDriverWait(driver, 120)
+        wait = WebDriverWait(driver, 20)
         password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='tel']")))
         if debugIsOn:
             time.sleep(3)
@@ -253,19 +256,25 @@ def next_steps():
         driver.save_screenshot("{}/06_Look_To_Start_HereWallet_App.png".format(screenshots_path))
 
     print("Sending the '/start' command to the central console...")
+    driver.get("https://web.telegram.org/k/#@herewalletbot")
     try:
-        wait = WebDriverWait(driver, 10)
-        chat_xpath = "(//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')])[last()]"
-        chat_input = wait.until(EC.presence_of_element_located((By.XPATH, chat_xpath)))
+        wait = WebDriverWait(driver, 30)
+        chat_xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
+        chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
+        print("Message box valid...")
         actions = ActionChains(driver)
         actions.move_to_element(chat_input).pause(0.2).perform()
-        driver.execute_script("arguments[0].click();", chat_input)
+        actions.click(chat_input).perform() 
         chat_input.send_keys("/start")
         chat_input.send_keys(Keys.RETURN)
         print("Sucessfully sent the '/start' command.")
     except TimeoutException:
         # Unable to enter the start command
         print("Unable to send the '/start' command.")
+    except ElementClickInterceptedException:
+        print("Error: The message box might be blocked by another element.")
+    except Exception as e:  # Catch other potential errors
+        rint(f"An error occurred during interaction: {e}")
 
     # Now let's try to find a working link to open the launch button
     start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
