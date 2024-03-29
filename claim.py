@@ -153,7 +153,7 @@ def log_into_telegram():
           driver.get("https://web.telegram.org/k/#@herewalletbot")
 
           try:
-            wait = WebDriverWait(driver, 10)  # Assuming the login screen might take time
+            wait = WebDriverWait(driver, 30)  # Assuming the login screen might take time
             chat_xpath = "//div[contains(@class, 'input-message-input')]"
             chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
             print("QR Code Sucessfully Accepted!")
@@ -162,15 +162,13 @@ def log_into_telegram():
 
           except TimeoutException:
             print("Timeout: Restart the script and retry the QR Code or switch to the OTP method.")
-            sys.exit()
 
         except TimeoutException:
           print("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.")
-          sys.exit() 
 
     # OTP Login Method
     driver.get("https://web.telegram.org/k/#@herewalletbot")
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 30)
     login_button_xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
     login_button = wait.until(EC.element_to_be_clickable((By.XPATH, login_button_xpath)))
     if debugIsOn:
@@ -264,7 +262,7 @@ def next_steps():
         print("Message box valid...")
         actions = ActionChains(driver)
         actions.move_to_element(chat_input).pause(0.2).perform()
-        actions.click(chat_input).perform() 
+        driver.execute_script("arguments[0].click();", chat_input)
         chat_input.send_keys("/start")
         chat_input.send_keys(Keys.RETURN)
         print("Sucessfully sent the '/start' command.")
