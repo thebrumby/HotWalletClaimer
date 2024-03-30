@@ -264,13 +264,14 @@ def next_steps():
         driver.execute_script("arguments[0].click();", chat_input)
         chat_input.send_keys("/start")
         chat_input.send_keys(Keys.RETURN)
-        print("Successfully sent the '/start' command. Possible causes might be:")
+        print("Successfully sent the '/start' command.")
+        
+    except TimeoutException:
+        # Unable to enter the start command
+        print("Unable to send the '/start' command.  Possible causes might be:")
         print("- You used the OTP method and it didn't take.")
         print("- You can always try deleting the chat with @HereWalletBot in your Telegram app and try again.")
         print("- Check GitHub for a code update!")
-    except TimeoutException:
-        # Unable to enter the start command
-        print("Unable to send the '/start' command.")
     except ElementClickInterceptedException:
         print("Error: The message box might be blocked by another element.")
     except Exception as e:  # Catch other potential errors
