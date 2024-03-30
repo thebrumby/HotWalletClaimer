@@ -130,10 +130,6 @@ driver = setup_driver(chromedriver_path)
 time.sleep(1)
 wait = WebDriverWait(driver, 10)
 
-# Test if we are logged in from a previous session?
-driver.get("https://web.telegram.org/k/#@herewalletbot")
-wait = WebDriverWait(driver, 10)
-
 def log_into_telegram():
     driver.get("https://web.telegram.org/k/#@herewalletbot")
 
@@ -146,13 +142,14 @@ def log_into_telegram():
           qr_canvas_xpath = "//canvas[@class='qr-canvas']"
           qr_canvas = wait.until(EC.presence_of_element_located((By.XPATH, qr_canvas_xpath))) 
           # We've successfully found the QR code canvas
-          time.sleep(6)
+          time.sleep(5)
           driver.save_screenshot("{}/00_take_QR_Code_Screenshot.png".format(screenshots_path))
           print ("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path))
           input('Hit enter after you scanned the QR code in Settings -> Devices -> Link Desktop Device:')
           driver.get("https://web.telegram.org/k/#@herewalletbot")
 
           try:
+            print ("Validating the QR Code...")
             wait = WebDriverWait(driver, 30)  # Assuming the login screen might take time
             chat_xpath = "//div[contains(@class, 'input-message-input')]"
             chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
@@ -167,6 +164,7 @@ def log_into_telegram():
           print("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.")
 
     # OTP Login Method
+    print("Attempting to load the OTP method...")
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     wait = WebDriverWait(driver, 30)
     login_button_xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
@@ -255,13 +253,14 @@ def next_steps():
 
     print("Sending the '/start' command to the central console...")
     driver.get("https://web.telegram.org/k/#@herewalletbot")
+    WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
     try:
         wait = WebDriverWait(driver, 30)
         chat_xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
-        chat_input = wait.until(EC.element_to_be_clickable((By.XPATH, chat_xpath)))
-        print("Message box valid...")
-        actions = ActionChains(driver)
-        actions.move_to_element(chat_input).pause(0.2).perform()
+        chat_input = wait.until(EC.presence_of_element_located((By.XPATH, chat_xpath)))
+        print("Input Message Container is valid...")
+        # actions = ActionChains(driver)
+        # actions.move_to_element(chat_input).pause(0.2).perform()
         driver.execute_script("arguments[0].click();", chat_input)
         chat_input.send_keys("/start")
         chat_input.send_keys(Keys.RETURN)
@@ -272,7 +271,7 @@ def next_steps():
     except ElementClickInterceptedException:
         print("Error: The message box might be blocked by another element.")
     except Exception as e:  # Catch other potential errors
-        rint(f"An error occurred during interaction: {e}")
+        print(f"An error occurred during interaction: {e}")
 
     # Now let's try to find a working link to open the launch button
     start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
@@ -384,7 +383,7 @@ def claim():
     try:
         # Let's see how long until the wallet is ready to collected.
         wait = WebDriverWait(driver, 120)
-        wait_time_xpath = "//div[contains(., 'Storage')]/p[2]"
+        wait_time_xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
         wait_time_element = wait.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
         if debugIsOn:
             driver.save_screenshot("{}/09b_Found_the_Wait_Time_function.png".format(screenshots_path))
@@ -442,9 +441,8 @@ def claim():
                 print ("Claim button clicked...")
 
                 # Now let's try again to get the time remaining until filled. 
-                time.sleep(15)
                 wait = WebDriverWait(driver, 120)
-                wait_time_xpath = "//div[contains(., 'Storage')]/p[2]"
+                wait_time_xpath = "//div[contains(., 'Storage')]//p[contains(., 'to fill')]"
                 wait_time_element = wait.until(EC.visibility_of_element_located((By.XPATH, wait_time_xpath)))
                 if debugIsOn:
                     driver.save_screenshot("{}/9f_wait_time_found.png".format(screenshots_path))
