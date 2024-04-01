@@ -453,6 +453,7 @@ def claim():
                 wait_time_text = wait_time_element.text
 
                 # Extract time until the "Storage" pot is full again:
+                time.sleep(15)
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_wait_time += 1
