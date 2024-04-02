@@ -76,10 +76,11 @@ If you have a second account, from the command line (not within the first Screen
 7. **Start a Screen Session for Unattended Access & execute the Python script:**
    ```bash
    screen -S yourSessionName
-   python3 claim.py [optionalExistingSessionName]
+   python3 claim.py [optionalSessionName]
    ```
    - You can exit the screen session by pressing ```CTRL+A+D``` simultaneously, it will remain running in the background for unattended claims, provided you successfully log in.
    - You can resume an active screen session with ```screen -r yourSessionName```
+   - By specifying an [optionalSessionName], it will attempt to resume that session (if it exists) or set it up without the option to change the default settings in the command line interface. 
 
 <a name="usage-notes"></a>
 ## Usage Instructions
