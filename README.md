@@ -1,6 +1,6 @@
 # Near Protocol: Herewallet Hot Auto-Claim Bot
 
-This Python script simplifies claiming the cryptocurrency HOT, using the "HereWalletBot" app, a free-to-use application on Telegram that is also Web3 enabled on the NEAR Protocol blockchain. The app requires frequent logins to claim HOT tokens if you intend to accumulate the maximum rewards. This script automates these actions, attempting to execute the claim sequence immediately once the wallet is full. Should the wallet not be filled, it calculates the time until completion and waits to claim, optimizing network usage and lowering your Gas Fees.
+This Python script simplifies claiming the cryptocurrency HOT, using the "HereWalletBot" app, a free-to-use application on Telegram that is also Web3 enabled on the NEAR Protocol blockchain. The app requires frequent logins to claim HOT tokens if you intend to accumulate the maximum rewards. This script automates the claim process, attempting to claim immediately after the wallet is full. Should the wallet not be filled, it calculates the time until completion and waits to claim, optimizing network usage and lowering your Gas Fees.
 
 💡 TIP: Claiming multiple HereWallet accounts with a single Telegram account is possible by setting up individual sessions. This can be achieved through SCREEN, as outlined below, or with alternatives like PM2, allowing for separate, dedicated sessions for each game account.
 
@@ -88,8 +88,8 @@ If you have a second account, from the command line (not within the first Screen
 #### After executing the script with ```python3 claim.py```, the process flow is as follows:
 
 1. **Force Claim on First Run:** Enter `y` to force a claim even if the wallet isn't full; or press `<Enter>` to skip.
-2. **Enable Debugging:** Type `y` to activate debugging screenshots or press `<Enter>` to keep debugging off (default).
-3. **QR Code Login Option:** Press `<Enter>` to log in by scanning a QR code, or type `n` for phone number and OTP.
+2. **Enable Debugging:** Type `y` to activate debugging screenshots or press `<Enter>` to keep debugging off.
+3. **QR Code Login Option:** Press `<Enter>` to log in by scanning a QR code, or `n` for phone number and OTP.
 4. **Session Name Configuration:**
    - Press `<Enter>` to assign a default session name of ascending numeric values (1, 2, 3, etc.).
    - Alternatively, you can enter your value (JohnDoes_Wallet, myWallet1, etc).
