@@ -26,10 +26,6 @@ pip install selenium Pillow
 # And make sure we have screen!
 sudo apt install -y screen || true
 
-# And PM2
-sudo apt install -y npm || true
-npm install pm2 -g
-
 # Finish by showing the versions
 python3 --version
 chromedriver --version
