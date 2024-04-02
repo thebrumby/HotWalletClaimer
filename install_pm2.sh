@@ -7,7 +7,7 @@ sudo apt update
 sudo apt install -y curl software-properties-common
 
 # Add NodeSource repository for recent Node.js versions 
-curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 
 # Install Node.js and npm
 sudo apt install -y nodejs
