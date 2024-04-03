@@ -132,23 +132,21 @@ Before using PM2 to manage your wallet sessions, you should first open the ```py
 
 ## Inspiration and Enhancement
 
-This project was inspired by [vannszs/HotWalletBot](https://github.com/vannszs/HotWalletBot.git). However, the code in this repository has been completely rewritten and extended and is not a fork.
+The idea of using Selenium to interact with the HereWalletBot was inspired by the project [vannszs/HotWalletBot](https://github.com/vannszs/HotWalletBot.git). However, the code in this repository has been completely rewritten, with many additional features, so I do not consider it a fork. However, Kudos to the original project for the concept. 
 
 # Security Considerations for HotWalletClaimer Usage
 
-The HotWalletClaimer script allows users to automate interactions with the "Claim Hot" game. 
+💡 Communication: The only external communication is with the Telegram Web App, which occurs over HTTPS, providing a secure channel.
 
-⚠️ HTTPS Communication: All interactions with the Telegram Web App occur over HTTPS, providing a secure channel.
+⚠️ Your seed phrase and Telegram login details are not stored or transmitted by this script, except during the unavoidable one-time login process with https://web.telegram.org/k/#@herewalletbot. As of version v1.3.4, the Google Chrome session is now saved into the ```./HotWalletBot/selenium``` folder - if this information was compromised, it would allow a suitably experienced individual to access your account.  
 
-⚠️ Your seed phrase and Telegram login details are not stored or transmitted by this script, except during the unavoidable one-time login process on https://web.telegram.org/k/#@herewalletbot. 
+💡 Debugging: Enabling debug mode captures the whole process as screenshots, excluding the seed phrase entry step. These images are stored locally to assist you in the event of errors and are not otherwise transmitted or uploaded in any way.
 
-⚠️ Debugging: Enabling debug mode captures the whole process as screenshots, excluding the seed phrase entry step. These images are stored locally to assist you in the event of errors and are not otherwise transmitted or uploaded in any way.
-
-## Security Considerations:
+## Security Best Practice:
 
 💡 Private Devices: Only use this script on private, secure machines or Virtual Private Servers that only you can access.
 
-💡 Caution with Seed Phrases: Be very cautious with accounts of significant value. Consider the effect of any unintended loss should your seed phrase become compromised.
+⚠️ Caution with Seed Phrases: Be very cautious with accounts of significant value. Consider the effect of any unintended loss should your seed phrase become compromised.
 
 💡 Awareness and Discretion: Understand the security trade-offs of using this automation tool or any other third-party tools. Your vigilance is crucial in safeguarding your information.
 
