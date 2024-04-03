@@ -20,6 +20,7 @@ forceClaim = False
 debugIsOn = False
 hideSensitiveInput = True
 screenshotQRCode = True
+logPM2Messages = False
 driver = None
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
@@ -57,6 +58,29 @@ def update_settings():
     else:
         screenshotQRCode = True
 
+def add_status_message(message):
+    """Prepend a status message to pm2_updates.txt with a timestamp."""
+    datetime_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    full_message = f"{datetime_now} - {message}\n"
+    
+    # Check if the file exists and read its content
+    if os.path.isfile(status_file_path):
+        with open(status_file_path, 'r') as file:
+            content = file.read()
+    else:
+        content = ""
+    
+    # Prepend the new message and write everything back
+    with open(status_file_path, 'w') as file:
+        file.write(full_message + content)
+
+def log_next_claim_attempt(next_claim_time, wait_time_minutes):
+    """Log message about next claim attempt."""
+    next_claim_time_str = next_claim_time.strftime("%Y-%m-%d %H:%M:%S")
+    message = f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time_minutes} minutes."
+    add_status_message(message)
+    print(message)
+
 def get_session_id():
     """Prompts the user for a session ID or determines the next sequential ID.
 
@@ -86,6 +110,9 @@ def get_session_id():
 if len(sys.argv) > 1:
         user_input = sys.argv[1]  # Get session ID from command-line argument
         print(f"Session ID provided: {user_input}")
+        # Safely check for a second argument
+        if len(sys.argv) > 2 and sys.argv[2] == "verbose":
+            logPM2Messages = True
 else:
     update_settings()
     user_input = get_session_id()
@@ -96,6 +123,8 @@ os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots/{}".format(user_input)
 os.makedirs(screenshots_path, exist_ok=True)
 print(f"Our screenshot path is {screenshots_path}")
+status_file_name = "pm2_updates.txt"
+status_file_path = os.path.join(screenshots_path, status_file_name)
 
 # Define our base path for debugging screenshots
 screenshot_base = os.path.join(screenshots_path, "screenshot")
@@ -700,7 +729,10 @@ def main():
         now = datetime.now()
         next_claim_time = now + timedelta(minutes=wait_time)
         next_claim_time_str = next_claim_time.strftime("%H:%M")
-        print(f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.")
+        if logPM2Messages:
+            log_next_claim_attempt(next_claim_time, wait_time)
+        else:
+            print(f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.")
 
         while wait_time > 0:
             this_wait = min(wait_time, 15)
