@@ -2,7 +2,7 @@
 
 This Python script simplifies claiming the cryptocurrency HOT, using the "HereWalletBot" app, a free-to-use application on Telegram that is also Web3 enabled on the NEAR Protocol blockchain. The app requires frequent logins to claim HOT tokens if you intend to accumulate the maximum rewards. This script automates the claim process, attempting to claim immediately after the wallet is full. Should the wallet not be filled, it calculates the time until completion and waits to claim, optimizing network usage and lowering your Gas Fees.
 
-💡 TIP: Claiming multiple HereWallet accounts with a single Telegram account is possible by setting up individual sessions. This can be achieved through SCREEN, as outlined below, or with alternatives like PM2, allowing for separate, dedicated sessions for each game account.
+💡 TIP: Claiming multiple HereWallet accounts with a single Telegram account is possible by setting up individual sessions. This can be achieved through SCREEN, as outlined below, or with alternatives like [PM2](#pm2), allowing for separate, dedicated sessions for each game account.
 
 The HereWallet app/game can be found here: [https://t.me/herewalletbot/app?startapp=3441967-village-85935](https://t.me/herewalletbot/app?startapp=3441967-village-85935)
 
@@ -23,7 +23,7 @@ Start your first session with ```screen -S first_session```. If you are not in t
 
 If you have a second account, from the command line (not within the first Screen), start another session with ```screen -S second_session``` and execute the Python script ```python3 claim.py```. You may now run another instance of ```python3 claim.py``` to log into the second account. You can exit Screen and leave the script unattended by pressing ```CTRL+A+D```. ```screen -r second_session``` will resume the session for you to check on progress, or for errors. If you wish to start the Python script without the CLI setup and go straight into an existing session, use ```python3 claim.py 2```. Note: 2 is the default session name for the second session, if you changed it,  replace "[2]"  with the exact Session Name you specified when setting this session up. 
 
-💡 Tip: Each active Python script, when not idle (e.g. logging in or making a claim), requires approximately 450 MB of server memory and also utilizes a portion of CPU resources for the Chrome Driver process. It's essential to assess your server's capacity to ensure you have enough resources to support the number of concurrent sessions you wish to operate. Remember, the ```sudo reboot``` command can clear all active screen sessions, however, if the login process for Telegram and the HereWalletBot successfully completed, you can resume previous sessions by using the original sessionName when restarting the Python script.
+💡 Tip: Each active Python script, requires approximately 450 MB of server memory and also utilizes a portion of CPU resources for the Chrome Driver process while logging in or making a claim. It is important to assess your server's resources to ensure you can support the number of concurrent sessions you wish to operate.
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">
@@ -87,9 +87,9 @@ If you have a second account, from the command line (not within the first Screen
 
 #### After executing the script with ```python3 claim.py```, the process flow is as follows:
 
-1. **Force Claim on First Run:** Enter `y` to force a claim even if the wallet isn't full; or press `<Enter>` to skip.
-2. **Enable Debugging:** Type `y` to activate debugging screenshots or press `<Enter>` to keep debugging off.
-3. **QR Code Login Option:** Press `<Enter>` to log in by scanning a QR code, or `n` for phone number and OTP.
+1. **Force Claim on First Run:** Enter `y` to force a claim even if the wallet isn't full; or press `<Enter>` to wait until full.
+2. **Enable Debugging:** Type `y` to activate debugging screenshots or press `<Enter>` to leave debugging off.
+3. **QR Code Login Option:** Press `<Enter>` to log in by scanning a QR code in the screenshots folder, or `n` for phone number and OTP.
 4. **Session Name Configuration:**
    - Press `<Enter>` to assign a default session name of ascending numeric values (1, 2, 3, etc.).
    - Alternatively, you can enter your value (JohnDoes_Wallet, myWallet1, etc).
@@ -104,9 +104,31 @@ If you have a second account, from the command line (not within the first Screen
 
 After following these steps, if all inputs are correctly entered, and assuming no flooding block is in place, you'll successfully logged into both Telegram and HereWallet.
 
+<a name="pm2"></a>
 ## Use of PM2
 
-PM2 is a popular process manager for Node.js applications, but it can manage processes for any type of application, including Python scripts. It's often used in production environments to ensure applications run continuously (auto-restarting after crashes or system reboots), facilitate common system admin tasks, and provide a straightforward way to manage application logging, monitoring, and clustering. While we do not intend to cover the use of PM2 as part of this project, but considering you may pass the session name as a system argument when calling the script (```python3 claim.py yourSessionName```), then it would be a logical way of managing sessions that have already been defined.
+Install PM2 manually, or use the install script packaged here:
+
+   ```bash
+   sudo chmod +x install_pm2.sh && sudo ./install_pm2.sh
+   ```
+
+Before using PM2 to manage your wallet sessions, you should first open the ```python3 claim.py``` from the command line and set up each wallet. After signing into Telegram and entering the seed phrase, you will be passed onto the claim function. At this point, you can quit with ```CTRL+Z``` and then resume the session with PM2. The option argument ```verbose``` will save a text file in the screenshots folder where you can see the next time until claim. 
+
+- First, initialize PM2 with systemd to ensure your applications start on boot:
+   - ```pm2 startup systemd```
+- To add your Python script as a session in PM2, use the following command. This example adds a session named firstWallet:
+   - ```pm2 start claim.py --name firstWallet -- 1 verbose```
+- To add a second session, you can use a similar command with a different name and session identifier:
+   - ```pm2 start claim.py --name secondWallet -- 2 verbose```
+- After adding your sessions, save your PM2 list. This makes sure your session configuration persists through system reboots:
+   - ```pm2 save```
+- To view the current list of processes managed by PM2:
+   - ```pm2 list```
+- If you need to remove a wallet from PM2's management, you can delete it by its name:
+   - ```pm2 delete firstWallet```
+- If you wish to stop using PM2 as a service, you can disable it with:
+   - ```pm2 unstartup systemd```
 
 ## Inspiration and Enhancement
 
