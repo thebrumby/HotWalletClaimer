@@ -129,6 +129,13 @@ Before using PM2 to manage your wallet sessions, you should first open the ```py
    - ```pm2 delete firstWallet```
 - If you wish to stop using PM2 as a service, you can disable it with:
    - ```pm2 unstartup systemd```
+ 
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=JUmczcdsaAw" title="YouTube PM2 Instructions">
+    <img src="https://img.youtube.com/vi/JUmczcdsaAw/0.jpg" alt="YouTube PM2 Instructions">
+  </a><br>
+   See a walkthrough of how to automate claims using PM, on <a href="https://www.youtube.com/watch?v=JUmczcdsaAw" title="YouTube Visual Instructions">YouTube</a>.
+</p>
 
 ## Inspiration and Enhancement
 
