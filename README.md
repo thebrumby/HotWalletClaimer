@@ -2,7 +2,7 @@
 
 This Python script simplifies claiming the cryptocurrency HOT, using the "HereWalletBot" app, a free-to-use application on Telegram that is also Web3 enabled on the NEAR Protocol blockchain. The app requires frequent logins to claim HOT tokens if you intend to accumulate the maximum rewards. This script automates the claim process, attempting to claim immediately after the wallet is full. Should the wallet not be filled, it calculates the time until completion and waits to claim, optimizing network usage and lowering your Gas Fees.
 
-💡 TIP: Claiming multiple HereWallet accounts with a single Telegram account is possible by setting up individual sessions. This can be achieved through SCREEN, as outlined below, or with alternatives like [PM2](#pm2), allowing for separate, dedicated sessions for each game account.
+💡 TIP: It is possible to manage multiple HereWallet accounts using just one Telegram account by initiating several distinct sessions. For a straightforward setup, consider using **SCREEN** (see the quick start guide below). However, for enhanced stability and manageability, [PM2](#pm2) is recommended. While potentially more complex to set up for a novice, [PM2](#pm2) facilitates the creation of isolated, dedicated sessions for each HereWallet account, providing a robust solution for simultaneous account management.
 
 The HereWallet app/game can be found here: [https://t.me/herewalletbot/app?startapp=3441967-village-85935](https://t.me/herewalletbot/app?startapp=3441967-village-85935)
 
