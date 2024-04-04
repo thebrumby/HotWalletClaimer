@@ -125,6 +125,8 @@ Before using PM2 to manage your wallet sessions, you should first open the ```py
    - ```pm2 save```
 - To view the current list of processes managed by PM2:
    - ```pm2 list```
+- To see the output which would have been previously visible in the Screen console:
+   - ```pm2 log firstWallet```
 - If you need to remove a wallet from PM2's management, you can delete it by its name:
    - ```pm2 delete firstWallet```
 - If you wish to stop using PM2 as a service, you can disable it with:
