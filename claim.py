@@ -24,6 +24,7 @@ screenshotQRCode = True
 logPM2Messages = False
 driver = None
 target_element = None
+forceNewSession = False
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
@@ -37,7 +38,7 @@ print(f"Our screenshot path is {screenshots_path}")
 
 # Prompt the user to modify settings
 def update_settings():
-    global forceClaim, debugIsOn, screenshotQRCode
+    global forceClaim, debugIsOn, screenshotQRCode, forceNewSession
 
     # Force a claim on first run
     force_claim_response = input("Shall we force a claim on first run? (Y/N, default = N): ").strip().lower()
@@ -59,6 +60,14 @@ def update_settings():
         screenshotQRCode = False
     else:
         screenshotQRCode = True
+
+    # Allow force new session
+    new_session_response = input("Should we reset the current session, even if it could be resumed? (Y/N, default = N): ").strip().lower()
+    if new_session_response == "y":
+        forceNewSession = True
+        print ("force new session should now be true!")
+    else:
+        screenshotQRCode = False
 
 def add_status_message(message):
     """Prepend a status message to pm2_updates.txt with a timestamp."""
@@ -665,11 +674,12 @@ def validate_seed_phrase():
             print(f"Error: {e}")
 
 def main():
+    global forceNewSession
     driver = get_driver()
     quit_driver()
     clear_screen()
     cookies_path = os.path.join(session_path, 'cookies.json')
-    if os.path.exists(cookies_path):
+    if os.path.exists(cookies_path) and not forceNewSession:
         print("Resuming the previous session...")
     else:
         print("Starting the Telegram & HereWalletBot login process...")
