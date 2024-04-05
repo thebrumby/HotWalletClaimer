@@ -62,10 +62,9 @@ def update_settings():
         screenshotQRCode = True
 
     # Allow force new session
-    new_session_response = input("Should we reset the current session, even if it could be resumed? (Y/N, default = N): ").strip().lower()
+    new_session_response = input("Should we log in again, even if the session could be resumed? (Y/N, default = N): ").strip().lower()
     if new_session_response == "y":
         forceNewSession = True
-        print ("force new session should now be true!")
     else:
         screenshotQRCode = False
 
