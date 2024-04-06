@@ -229,7 +229,6 @@ def log_into_telegram():
           try:
             driver.get("https://web.telegram.org/k/#@herewalletbot")
             WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            print("\nStep 00b - Attempting to verify if we are logged in, or the QR code is showing.")
             xpath = "//canvas[@class='qr-canvas']"
             wait = WebDriverWait(driver, 5)
             wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -244,21 +243,21 @@ def log_into_telegram():
           print("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.")
 
     # OTP Login Method
-    print("Attempting to load the OTP method...")
+    print("Initiating the One-Time Password (OTP) method...")
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
     move_and_click(xpath, 30, True, "switch to log in by phone number", "01a", "clickable")
 
     # Country Code Selection
     xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
-    target_element = move_and_click(xpath, 30, True, "update users country (OTP Method)", "01b", "clickable")
+    target_element = move_and_click(xpath, 30, True, "update users country", "01b", "clickable")
     user_input = input("Please enter your Country Name as it appears in the Telegram list: ").strip()  
     target_element.send_keys(user_input)
     target_element.send_keys(Keys.RETURN) 
 
     # Phone Number Input
     xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
-    target_element = move_and_click(xpath, 30, True, "enter users phone number (OTP Method)", "01c", "clickable")
+    target_element = move_and_click(xpath, 30, True, "request users phone number", "01c", "clickable")
     if hideSensitiveInput:
         user_phone = getpass.getpass("Please enter your phone number without leading 0 (hidden input): ")
     else:
@@ -267,7 +266,7 @@ def log_into_telegram():
 
     # Wait for the "Next" button to be clickable and click it    
     xpath = "//button[contains(@class, 'btn-primary') and .//span[contains(text(), 'Next')]]"
-    move_and_click(xpath, 30, True, "click next and proceed to OTP entry (OTP Method)", "01d", "visible")
+    move_and_click(xpath, 30, True, "click next to proceed to OTP entry", "01d", "visible")
 
     try:
         # Attempt to locate and interact with the OTP field
@@ -279,7 +278,6 @@ def log_into_telegram():
         otp = input("What is the Telegram OTP from your app? ")
         password.click()
         password.send_keys(otp)
-        clear_screen()
         print("Let's try to log in using your Telegram OTP. Please Wait.")
 
     except TimeoutException:
@@ -298,6 +296,26 @@ def log_into_telegram():
 def next_steps():
     global driver, target_element, debugIsOn
     driver = get_driver()
+
+    try:
+        driver.get("https://web.telegram.org/k/#@herewalletbot")
+        WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+        print("Step 01 - Attempting to verify if we are logged in, or the QR code is showing.")
+        xpath = "//canvas[@class='qr-canvas']"
+        wait = WebDriverWait(driver, 5)
+        wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+        if debugIsOn:
+            screenshot_path = f"{screenshots_path}/01-Test QR code after session is resumed.png"
+            driver.save_screenshot(screenshot_path)
+        print("Chrome driver reports the QR code is visible: It appears we are no longer logged in.")
+        print("Most likely you will get an error next that the central input box is not found.")
+        print("The best solution will be to restart the script from CLI force a fresh log in.\n")
+
+    except TimeoutException:
+        print("Step 01 - nothing found to action. The QR code test passed.\n")
+
+
+
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
 
@@ -306,7 +324,7 @@ def next_steps():
     wait = WebDriverWait(driver, 5)
     print("Looking for the 'START' button which is only present on first launch...")
     xpath = "//button[contains(., 'START')]"
-    move_and_click(xpath, 5, True, "check for the start button (if chat has been reset)", "02", "clickable")
+    move_and_click(xpath, 5, True, "check for the start button (should not be present)", "02", "clickable")
 
     # Look for the center console and send the /start command. 
     driver.get("https://web.telegram.org/k/#@herewalletbot")
@@ -330,25 +348,25 @@ def next_steps():
         # Attempt to interact with elements within the iframe.
         # Let's click the login button first:
         xpath = "//p[contains(text(), 'Log in')]"
-        move_and_click(xpath, 30, True, "log into HereWallet", "08", "clickable")
+        move_and_click(xpath, 30, True, "find the HereWallet log-in button", "08", "clickable")
 
         # Then look for the seed phase textarea:
         xpath = "//*[@id=\"root\"]//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
-        input_field = move_and_click(xpath, 30, True, "enter seedphrase", "09", "clickable")
+        input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", "09", "clickable")
         input_field.send_keys(validate_seed_phrase()) 
         print("Entered the seed phrase...")
 
         # Click the continue button after seed phrase entry:
         xpath = "//button[contains(text(), 'Continue')]"
-        move_and_click(xpath, 30, True, "continue after seedphrase entry", "10", "clickable")
+        move_and_click(xpath, 30, True, "click continue after seedphrase entry", "10", "clickable")
 
         # Click the account selection button:
         xpath = "//button[contains(text(), 'Select account')]"
-        move_and_click(xpath, 120, True, "continue at account selection screen", "11", "clickable")
+        move_and_click(xpath, 120, True, "click continue at account selection screen", "11", "clickable")
 
         # Click on the Storage link:
         xpath = "//h4[text()='Storage']"
-        move_and_click(xpath, 30, True, "select the storage link in the game", "12", "clickable")
+        move_and_click(xpath, 30, True, "select the 'storage' link", "12", "clickable")
         print ("We appear to be logged in, let's save the cookies.")
         cookies_path = f"{session_path}/cookies.json"
         cookies = driver.get_cookies()
@@ -370,7 +388,7 @@ def next_steps():
 def claim():
     global driver, target_element, debugIsOn
     driver = get_driver()
-    print ("\nCHROME DRIVER INITIALISED: If you experience an error in the code, you may need to log in again.")
+    print ("\nCHROME DRIVER INITIALISED: If you experience an error in the code after this point, you may need to log in again.")
     print ("If you deliberately stop the script before Chrome Driver is detached, you may also need to log in again.\n")
 
     try:
@@ -388,7 +406,7 @@ def claim():
         print("The best solution will be to restart the script from CLI force a fresh log in.\n")
 
     except TimeoutException:
-        print("Step 100 - Nothing to interact with. QR code test passed.\n")
+        print("Step 100 - nothing found to action. The QR code test passed.\n")
 
 
     driver.get("https://web.telegram.org/k/#@herewalletbot")
@@ -401,7 +419,7 @@ def claim():
     # There is a very unlikely scenario that the chat might have been cleared.
     # In this case, the "START" button needs pressing to expose the chat window!
     xpath = "//button[contains(., 'START')]"
-    move_and_click(xpath, 5, True, "check for the start button (if chat has been reset)", "101", "clickable")
+    move_and_click(xpath, 5, True, "check for the start button (should not be present)", "101", "clickable")
 
     # Let's try to send the start command:
     send_start("102")
@@ -418,7 +436,7 @@ def claim():
 
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
-    move_and_click(xpath, 30, True, "clicking on the storage button", "107", "clickable")
+    move_and_click(xpath, 30, True, "click the 'open storage' button", "107", "clickable")
 
     try:
         # Let's see how long until the wallet is ready to collected.
@@ -583,11 +601,9 @@ def find_working_link(step):
 
 def send_start(step):
     global driver, screenshots_path, debugIsOn
-    print(f"Step {step} - Attempting to find the message input box and send '/start'...")
-
     xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
     try:
-        chat_input = move_and_click(xpath, 30, False, "look for the central message box", step, "present")
+        chat_input = move_and_click(xpath, 30, False, "find the chat window/message input box", step, "present")
 
         if chat_input:
             step_int = int(step)
@@ -649,13 +665,13 @@ def move_and_click(xpath, wait_time, click, action_description, step, expectedCo
                 actions = ActionChains(driver)
                 actions.move_to_element(target_element).pause(0.2).click().perform()
                 if debugIsOn:
-                    print(f"Successfully clicked {action_description} using ActionChains.")
+                    print(f"Step {step} - Successfully clicked {action_description} using ActionChains.")
             except Exception as e:
                 if debugIsOn:
-                    print(f"ActionChains click failed. Attempting JavaScript click as fallback.")
+                    print(f"Step {step} - ActionChains click failed. Attempting JavaScript click as fallback.")
                 driver.execute_script("arguments[0].click();", target_element)
                 if debugIsOn:
-                    print(f"Successfully clicked {action_description} using JavaScript fallback.")
+                    print(f"Step {step} - Successfully clicked {action_description} using JavaScript fallback.")
         if not failed:
             print(f"Step {step} - Successfully interacted with: {action_description}.\n")
         if debugIsOn:
