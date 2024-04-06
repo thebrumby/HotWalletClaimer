@@ -90,7 +90,7 @@ If you have a second account, from the command line (not within the first Screen
 1. **Force Claim on First Run:** Enter `y` to force a claim even if the wallet isn't full; or press `<Enter>` to wait until full.
 2. **Enable Debugging:** Type `y` to activate debugging screenshots or press `<Enter>` to leave debugging off.
 3. **QR Code Login Option:** Press `<Enter>` to log in by scanning a QR code in the screenshots folder, or `n` for phone number and OTP.
-4. **Force log in again:** If the session is throwing errors, start the login process from the beginning. 
+4. **Force log in again:** Enter 'y' to force logging in again if the current session throws errors. 
 5. **Session Name Configuration:**
    - Press `<Enter>` to assign a default session name of ascending numeric values (1, 2, 3, etc.).
    - Alternatively, you can enter your value (JohnDoes_Wallet, myWallet1, etc).
