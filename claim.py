@@ -202,7 +202,7 @@ def quit_driver():
         driver = None 
  
 def log_into_telegram():
-    global driver, target_element, debugIsOn, session_path, screenshots_path
+    global driver, target_element, debugIsOn, session_path, screenshots_path, screenshotQRCode
 
     if os.path.exists(session_path):
         shutil.rmtree(session_path)
@@ -227,16 +227,18 @@ def log_into_telegram():
           print ("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path))
           input('Hit enter after you scanned the QR code in Settings -> Devices -> Link Desktop Device:')
           try:
-            print ("Validating the QR Code (30 seconds wait if not valid)...\n")
             driver.get("https://web.telegram.org/k/#@herewalletbot")
             WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            print("\nStep 00b - Attempting to verify if we are logged in, or the QR code is showing.")
             xpath = "//canvas[@class='qr-canvas']"
-            move_and_click(xpath, 30, False, "check if logged in (Validate QR code)", "00b", "invisible")
+            wait = WebDriverWait(driver, 5)
+            wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
             # Successful login using QR code
-            return
-
-          except TimeoutException:
             print("Timeout: Restart the script and retry the QR Code or wait for the OTP method.")
+            
+          except TimeoutException:
+            return
+            
 
         except TimeoutException:
           print("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.")
@@ -309,93 +311,44 @@ def next_steps():
     # Look for the center console and send the /start command. 
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-    try:
-        xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
-        chat_input = move_and_click(xpath, 30, False, "look for the central message box", "03", "present")
-        if chat_input:  # Ensure chat_input is not None
-            if debugIsOn:
-                print("Input Message Container is valid...")
-            chat_input.send_keys("/start")
-            chat_input.send_keys(Keys.RETURN)
-            print("Successfully sent the '/start' command.\n")
-        else:
-            print("Failed to find the message input box.\n")
-        
-    except TimeoutException:
-        # Unable to enter the start command
-        print("Unable to send the '/start' command.  Possible causes might be:")
-        print("- You used the OTP method and it didn't take.")
-        print("- You can always try deleting the chat with @HereWalletBot in your Telegram app and try again.")
-        print("- Check GitHub for a code update!")
-    except ElementClickInterceptedException:
-        print("Error: The message box might be blocked by another element.")
-    except Exception as e:  # Catch other potential errors
-        print(f"An error occurred during interaction: {e}")
+
+    # Let's try to send the start command:
+    send_start("03")
 
     # Now let's try to find a working link to open the launch button
-    start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
-    start_app_buttons = wait.until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
-    clicked = False
-    print ("Looking for a link to open the app...")
-    for button in reversed(start_app_buttons):
-        actions = ActionChains(driver)
-        actions.move_to_element(button).pause(0.2)
-        try:
-            if debugIsOn:
-                driver.save_screenshot("{}/04_Open_Launch_Popup.png".format(screenshots_path))
-            actions.perform()
-            driver.execute_script("arguments[0].click();", button)
-            clicked = True
-            break
-        except StaleElementReferenceException:
-            continue
-        except ElementClickInterceptedException:
-            continue
-    if not clicked:
-        print("None of the 'Open Wallet' buttons were clickable.\n")
-    else:
-        print ("The link to open the app was sucessfully clicked.\n")
+    find_working_link("05")
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-    move_and_click(xpath, 30, True, "click the 'Launch' button", "05", "clickable")
+    move_and_click(xpath, 30, True, "click the 'Launch' button", "06", "clickable")
 
     # HereWalletBot Pop-up Handling
     try:
-            # HereWalletBot Pop-up Handling
-        try:
-            # Let's try to switch focus to the iFrame.
-            wait = WebDriverWait(driver, 120)
-            print("Initialising HereWalletBot pop-up window...")
-            popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
-            iframe = popup_body.find_element(By.TAG_NAME, "iframe")
-            driver.switch_to.frame(iframe)
-            print("Successfully switched to the iframe...\n")
-        except TimeoutException:
-            print("Failed to find or switch to the iframe within the timeout period.\n")
+        # HereWalletBot Pop-up Handling
+        select_iframe("07")
 
         # Attempt to interact with elements within the iframe.
         # Let's click the login button first:
         xpath = "//p[contains(text(), 'Log in')]"
-        move_and_click(xpath, 30, True, "log into HereWallet", "06", "clickable")
+        move_and_click(xpath, 30, True, "log into HereWallet", "08", "clickable")
 
         # Then look for the seed phase textarea:
         xpath = "//*[@id=\"root\"]//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
-        input_field = move_and_click(xpath, 30, True, "enter seedphrase", "07", "clickable")
+        input_field = move_and_click(xpath, 30, True, "enter seedphrase", "09", "clickable")
         input_field.send_keys(validate_seed_phrase()) 
         print("Entered the seed phrase...")
 
         # Click the continue button after seed phrase entry:
         xpath = "//button[contains(text(), 'Continue')]"
-        move_and_click(xpath, 30, True, "continue after seedphrase entry", "08", "clickable")
+        move_and_click(xpath, 30, True, "continue after seedphrase entry", "10", "clickable")
 
         # Click the account selection button:
         xpath = "//button[contains(text(), 'Select account')]"
-        move_and_click(xpath, 120, True, "continue at account selection screen", "09", "clickable")
+        move_and_click(xpath, 120, True, "continue at account selection screen", "11", "clickable")
 
         # Click on the Storage link:
         xpath = "//h4[text()='Storage']"
-        move_and_click(xpath, 30, True, "select the storage link in the game", "10", "clickable")
+        move_and_click(xpath, 30, True, "select the storage link in the game", "12", "clickable")
         print ("We appear to be logged in, let's save the cookies.")
         cookies_path = f"{session_path}/cookies.json"
         cookies = driver.get_cookies()
@@ -417,7 +370,27 @@ def next_steps():
 def claim():
     global driver, target_element, debugIsOn
     driver = get_driver()
-    print ("\nStarting a new cycle of the Claim function...\n")
+    print ("\nCHROME DRIVER INITIALISED: If you experience an error in the code, you may need to log in again.")
+    print ("If you deliberately stop the script before Chrome Driver is detached, you may also need to log in again.\n")
+
+    try:
+        driver.get("https://web.telegram.org/k/#@herewalletbot")
+        WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+        print("Step 100 - Attempting to verify if we are logged in, or the QR code is showing.")
+        xpath = "//canvas[@class='qr-canvas']"
+        wait = WebDriverWait(driver, 5)
+        wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+        if debugIsOn:
+            screenshot_path = f"{screenshots_path}/100-Test QR code after session is resumed.png"
+            driver.save_screenshot(screenshot_path)
+        print("Chrome driver reports the QR code is visible: It appears we are no longer logged in.")
+        print("Most likely you will get an error next that the central input box is not found.")
+        print("The best solution will be to restart the script from CLI force a fresh log in.\n")
+
+    except TimeoutException:
+        print("Step 100 - Nothing to interact with. QR code test passed.\n")
+
+
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
 
@@ -430,83 +403,27 @@ def claim():
     xpath = "//button[contains(., 'START')]"
     move_and_click(xpath, 5, True, "check for the start button (if chat has been reset)", "101", "clickable")
 
-    # Look for the center console and send the /start command. 
-    driver.get("https://web.telegram.org/k/#@herewalletbot")
-    WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-    try:
-        xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
-        chat_input = move_and_click(xpath, 30, False, "look for the central message box", "102", "present")
-        if chat_input:  # Ensure chat_input is not None
-            if debugIsOn:
-                print("Input Message Container is valid...")
-            chat_input.send_keys("/start")
-            chat_input.send_keys(Keys.RETURN)
-            print("Successfully sent the '/start' command.\n")
-        else:
-            print("Failed to find the message input box.\n")
-    except TimeoutException:
-        # Unable to enter the start command
-        print("Unable to send the '/start' command.  Possible causes might be:")
-        print("- You used the OTP method and it didn't take.")
-        print("- You can always try deleting the chat with @HereWalletBot in your Telegram app and try again.")
-        print("- Check GitHub for a code update!")
-    except ElementClickInterceptedException:
-        print("Error: The message box might be blocked by another element.")
-    except Exception as e:  # Catch other potential errors
-        print(f"An error occurred during interaction: {e}")
+    # Let's try to send the start command:
+    send_start("102")
 
     # Now let's try to find a working link to open the launch button
-    start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
-    wait = WebDriverWait(driver, 20)
-    start_app_buttons = wait.until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
-    clicked = False
-    print ("Looking for a link to open the app...")
-    for button in reversed(start_app_buttons):
-        actions = ActionChains(driver)
-        actions.move_to_element(button).pause(0.2)
-        try:
-            if debugIsOn:
-                driver.save_screenshot("{}/04_Open_Launch_Popup.png".format(screenshots_path))
-            actions.perform()
-            driver.execute_script("arguments[0].click();", button)
-            clicked = True
-            break
-        except StaleElementReferenceException:
-            continue
-        except ElementClickInterceptedException:
-            continue
-    if not clicked:
-        print("None of the 'Open Wallet' buttons were clickable.\n")
-    else:
-        print ("The link to open the app was sucessfully clicked.\n")
+    find_working_link("104")
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-    move_and_click(xpath, 30, True, "click the 'Launch' button", "104", "clickable")
+    move_and_click(xpath, 30, True, "click the 'Launch' button", "105", "clickable")
 
     # HereWalletBot Pop-up Handling
-    try:
-        # Let's try to switch focus to the iFrame.
-        wait = WebDriverWait(driver, 120)
-        print("Initialising HereWalletBot pop-up window...")
-        popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
-        iframe = popup_body.find_element(By.TAG_NAME, "iframe")
-        driver.switch_to.frame(iframe)
-        print("Successfully switched to the iframe...\n")
-    except TimeoutException:
-        print("Failed to find or switch to the iframe within the timeout period.\n")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    select_iframe("106")
 
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
-    move_and_click(xpath, 30, True, "clicking on the storage button", "105", "clickable")
+    move_and_click(xpath, 30, True, "clicking on the storage button", "107", "clickable")
 
     try:
         # Let's see how long until the wallet is ready to collected.
         xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-        wait_time_element = move_and_click(xpath, 20, False, "get the pre-claim wait timer", "106", "visible")
+        wait_time_element = move_and_click(xpath, 20, False, "get the pre-claim wait timer", "108", "visible")
         wait_time_text = wait_time_element.text
     except TimeoutException:
         print("Could not find the wait time element within the specified time.")
@@ -518,7 +435,7 @@ def claim():
             try:
                 original_window = driver.current_window_handle
                 xpath = "//button[contains(text(), 'Check NEWS')]"
-                move_and_click(xpath, 10, True, "check for NEWS.", "107", "clickable")
+                move_and_click(xpath, 10, True, "check for NEWS.", "109", "clickable")
                 driver.switch_to.window(original_window)
             except TimeoutException:
                 if debugIsOn:
@@ -526,36 +443,26 @@ def claim():
 
             try:
                 # Let's double check if we have to reselect the iFrame after news
-                try:
-                    wait = WebDriverWait(driver, 5)
-                    popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
-                    iframe = popup_body.find_element(By.TAG_NAME, "iframe")
-                    driver.switch_to.frame(iframe)
-
-                except NoSuchElementException as e:
-                    print(f"Iframe not found within popup_body: {e}")
-
-                except Exception as e:
-                    # if debugIsOn:
-                    print("It looks like there was no news to read.")
+                # HereWalletBot Pop-up Handling
+                select_iframe("109")
                 
                 # Click on the "Claim HOT" button:
                 xpath = "//button[contains(text(), 'Claim HOT')]"
-                move_and_click(xpath, 30, True, "click the claim button", "109", "clickable")
+                move_and_click(xpath, 30, True, "click the claim button", "110", "clickable")
 
                 # Now let's try again to get the time remaining until filled. 
                 # 4th April 24 - Let's wait for the spinner to disappear before trying to get the new time to fill.
-                print ("Let's wait for the pending Claim spinner to stop spinning...")
+                print ("Step 111 - Let's wait for the pending Claim spinner to stop spinning...")
                 time.sleep(5)
                 wait = WebDriverWait(driver, 240)
                 spinner_xpath = "//*[contains(@class, 'spinner')]" 
                 try:
                     wait.until(EC.invisibility_of_element_located((By.XPATH, spinner_xpath)))
-                    print("Pending action spinner has stopped...")
+                    print("Step 111 - Pending action spinner has stopped...")
                 except TimeoutException:
-                    print("Looks like the site has lag- the Spinner did not disappear in time...")
+                    print("Step 111 - Looks like the site has lag- the Spinner did not disappear in time...")
                 xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-                wait_time_element = move_and_click(xpath, 20, False, "get the pre-claim wait timer", "110", "visible")
+                wait_time_element = move_and_click(xpath, 20, False, "get the pre-claim wait timer", "112", "visible")
                 wait_time_text = wait_time_element.text
                 # Extract time until the "Storage" pot is full again:
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
@@ -595,6 +502,122 @@ def clear_screen():
     # For macOS and Linux
     else:
         os.system('clear')
+
+def select_iframe(step):
+    global driver, screenshots_path, debugIsOn
+    print(f"Step {step} - Initialising HereWalletBot pop-up window...")
+
+    try:
+        wait = WebDriverWait(driver, 20)
+        popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
+        iframe = popup_body.find_element(By.TAG_NAME, "iframe")
+        driver.switch_to.frame(iframe)
+        print(f"Step {step} - Successfully switched to the iframe.\n")
+
+        if debugIsOn:
+            screenshot_path = f"{screenshots_path}/{step}-iframe-switched.png"
+            driver.save_screenshot(screenshot_path)
+
+    except TimeoutException:
+        print(f"Step {step} - Failed to find or switch to the iframe within the timeout period.\n")
+        if debugIsOn:
+            screenshot_path = f"{screenshots_path}/{step}-iframe-timeout.png"
+            driver.save_screenshot(screenshot_path)
+    except Exception as e:
+        print(f"Step {step} - An error occurred while attempting to switch to the iframe: {e}\n")
+        if debugIsOn:
+            screenshot_path = f"{screenshots_path}/{step}-iframe-error.png"
+            driver.save_screenshot(screenshot_path)
+
+def find_working_link(step):
+    global driver, screenshots_path, debugIsOn
+    print(f"Step {step} - Looking for a link to open the app...")
+
+    start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
+    try:
+        start_app_buttons = WebDriverWait(driver, 30).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
+        clicked = False
+
+        for button in reversed(start_app_buttons):
+            actions = ActionChains(driver)
+            actions.move_to_element(button).pause(0.2)
+            try:
+                if debugIsOn:
+                    driver.save_screenshot(f"Step {step} - Find working link.png".format(screenshots_path))
+                actions.perform()
+                driver.execute_script("arguments[0].click();", button)
+                clicked = True
+                break
+            except StaleElementReferenceException:
+                continue
+            except ElementClickInterceptedException:
+                continue
+
+        if not clicked:
+            print(f"Step {step} - None of the 'Open Wallet' buttons were clickable.\n")
+            if debugIsOn:
+                screenshot_path = f"{screenshots_path}/{step}-no-clickable-button.png"
+                driver.save_screenshot(screenshot_path)
+        else:
+            print(f"Step {step} - The link to open the app was successfully clicked.\n")
+            if debugIsOn:
+                screenshot_path = f"{screenshots_path}/{step}-app-opened.png"
+                driver.save_screenshot(screenshot_path)
+
+    except TimeoutException:
+        print(f"Step {step} - Failed to find the 'Open Wallet' button within the expected timeframe.\n")
+        if debugIsOn:
+            screenshot_path = f"{screenshots_path}/{step}-timeout-finding-button.png"
+            driver.save_screenshot(screenshot_path)
+    except Exception as e:
+        print(f"Step {step} - An error occurred while trying to open the app: {e}\n")
+        if debugIsOn:
+            screenshot_path = f"{screenshots_path}/{step}-unexpected-error-opening-app.png"
+            driver.save_screenshot(screenshot_path)
+
+
+def send_start(step):
+    global driver, screenshots_path, debugIsOn
+    print(f"Step {step} - Attempting to find the message input box and send '/start'...")
+
+    xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
+    try:
+        chat_input = move_and_click(xpath, 30, False, "look for the central message box", step, "present")
+
+        if chat_input:
+            step_int = int(step)
+            step_int += 1
+            step = f"{step_int:02}"
+            print(f"Step {step} - Atempting to send the '/start' command.")
+            chat_input.send_keys("/start")
+            chat_input.send_keys(Keys.RETURN)
+            print(f"Step {step} - Successfully sent the '/start' command.\n")
+            if debugIsOn:
+                screenshot_path = f"{screenshots_path}/{step}-sent-start.png"
+                driver.save_screenshot(screenshot_path)
+        else:
+            print(f"Step {step} - Failed to find the message input box.\n")
+
+    except TimeoutException:
+        print("Unable to send the '/start' command. Possible causes might be:")
+        print("- You used the OTP method and it didn't take.")
+        print("- You can always try deleting the chat with @HereWalletBot in your Telegram app and try again.")
+        print("- Check GitHub for a code update!")
+        if debugIsOn:
+            screenshot_path = f"{screenshots_path}/{step}-timeout-error.png"
+            driver.save_screenshot(screenshot_path)
+
+    except ElementClickInterceptedException:
+        print(f"Step {step} - Error: The message box might be blocked by another element.")
+        if debugIsOn:
+            screenshot_path = f"{screenshots_path}/{step}-click-intercepted.png"
+            driver.save_screenshot(screenshot_path)
+
+    except Exception as e:
+        print(f"Step {step} - An error occurred during interaction: {e}")
+        if debugIsOn:
+            screenshot_path = f"{screenshots_path}/{step}-unexpected-error.png"
+            driver.save_screenshot(screenshot_path)
 
 def move_and_click(xpath, wait_time, click, action_description, step, expectedCondition):
     global driver, screenshots_path, debugIsOn
@@ -686,6 +709,7 @@ def main():
         quit_driver()
         next_steps()
         quit_driver()
+        print ("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n")
         # Let's now offer the option to stop here or carry on.
         user_choice = input("Enter 'y' to continue to 'claim' function or 'n' to exit and resume in PM2: ").lower()
         if user_choice == "n":
@@ -694,6 +718,7 @@ def main():
     while True:
         wait_time = claim()
         quit_driver()
+        print ("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n")
         global forceClaim
         forceClaim = False
         now = datetime.now()
