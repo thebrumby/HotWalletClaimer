@@ -468,7 +468,12 @@ def claim():
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_wait_time += 1
-                print("Claim attempted. Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time))
+                if wait_time_text == "Filled":
+                    print("The wait timer is still showing: Filled.")
+                    print("This means either the claim failed, or there is >4 minutes lag in the game.")
+                    print("We'll check back in 1 hour to see if the claim processed and if not try again.")
+                else:
+                    print("Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time))
                 return max(60, total_wait_time)
 
             except TimeoutException:
