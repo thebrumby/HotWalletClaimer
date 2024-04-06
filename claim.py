@@ -300,7 +300,7 @@ def next_steps():
     try:
         driver.get("https://web.telegram.org/k/#@herewalletbot")
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        print("Step 01 - Attempting to verify if we are logged in, or the QR code is showing.")
+        print("Step 01 - Attempting to verify if we are logged in (QR code not present).")
         xpath = "//canvas[@class='qr-canvas']"
         wait = WebDriverWait(driver, 5)
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -394,7 +394,7 @@ def claim():
     try:
         driver.get("https://web.telegram.org/k/#@herewalletbot")
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        print("Step 100 - Attempting to verify if we are logged in, or the QR code is showing.")
+        print("Step 100 - Attempting to verify if we are logged in (QR code not present).")
         xpath = "//canvas[@class='qr-canvas']"
         wait = WebDriverWait(driver, 5)
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -508,7 +508,7 @@ def claim():
                 total_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_time += 1
                 total_time = max(5, total_time) # Wait at least 5 minutes or the time
-                print("Not Time to claim this wallet yet. Wait for {} Minutes will the storage is filled.".format(total_time))
+                print("Not Time to claim this wallet yet. Wait for {} minutes until the storage is filled.".format(total_time))
                 return total_time 
             else:
                 print("No wait time data found? Let's check again in one hour.")
