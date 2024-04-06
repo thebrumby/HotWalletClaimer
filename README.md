@@ -90,17 +90,19 @@ If you have a second account, from the command line (not within the first Screen
 1. **Force Claim on First Run:** Enter `y` to force a claim even if the wallet isn't full; or press `<Enter>` to wait until full.
 2. **Enable Debugging:** Type `y` to activate debugging screenshots or press `<Enter>` to leave debugging off.
 3. **QR Code Login Option:** Press `<Enter>` to log in by scanning a QR code in the screenshots folder, or `n` for phone number and OTP.
-4. **Session Name Configuration:**
+4. **Force log in again:** If the session is throwing errors, start the login process from the beginning. 
+5. **Session Name Configuration:**
    - Press `<Enter>` to assign a default session name of ascending numeric values (1, 2, 3, etc.).
    - Alternatively, you can enter your value (JohnDoes_Wallet, myWallet1, etc).
    - If restarting the script after stopping it, you may want to re-use a previous Session Name to keep the screenshots in the same location and to attempt to avoid logging in again on Telegram.
-5. **Country Name for Telegram:**
+6. **Country Name for Telegram:**
    - Input your Country Name exactly as listed on [Telegram's login page](https://web.telegram.org/k/), like "USA" or "UNITED KINGDOM".
    - As a shortcut, pressing `<Enter>` attempts to select the corresponding Country Name based on your internet connection IP address.
    - If your IP address location differs from your registered phone number location, you MUST explicitly specify the Country Name. 
-6. **Phone Number Entry:** Omit the initial "0" from your phone number when prompted.
-7. **One-Time Password (OTP)**: Enter the One-Time Password that has been sent to your Telegram Messaging Account.
-8. **Seed Phrase Input for HereWallet Login:** Your seed phrase remains private, with script transparency ensuring security. Ensure your phrase consists of exactly 12 words, spaced correctly without punctuation or numbers.
+7. **Phone Number Entry:** Omit the initial "0" from your phone number when prompted.
+8. **One-Time Password (OTP)**: Enter the One-Time Password that has been sent to your Telegram Messaging Account.
+9. **Seed Phrase Input for HereWallet Login:** Your seed phrase remains private, with script transparency ensuring security. Ensure your phrase consists of exactly 12 words, spaced correctly without punctuation or numbers.
+10. **Exit script after login:** Before proceeding with the claim function, there is the option to save your progress for later use (such as starting an unattended claim in PM2)
 
 After following these steps, if all inputs are correctly entered, and assuming no flooding block is in place, you'll successfully logged into both Telegram and HereWallet.
 
