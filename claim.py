@@ -480,7 +480,7 @@ def claim():
                 except TimeoutException:
                     print("Step 111 - Looks like the site has lag- the Spinner did not disappear in time.\n")
                 xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-                wait_time_element = move_and_click(xpath, 20, False, "get the pre-claim wait timer", "112", "visible")
+                wait_time_element = move_and_click(xpath, 20, False, "get the post-claim wait timer", "112", "visible")
                 wait_time_text = wait_time_element.text
                 # Extract time until the "Storage" pot is full again:
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
@@ -528,7 +528,7 @@ def clear_screen():
 
 def select_iframe(step):
     global driver, screenshots_path, debugIsOn
-    print(f"Step {step} - Initialising HereWalletBot pop-up window...")
+    print(f"Step {step} - Attempting to switch to the pop-up iFrame...")
 
     try:
         wait = WebDriverWait(driver, 20)
