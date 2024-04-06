@@ -476,9 +476,9 @@ def claim():
                 spinner_xpath = "//*[contains(@class, 'spinner')]" 
                 try:
                     wait.until(EC.invisibility_of_element_located((By.XPATH, spinner_xpath)))
-                    print("Step 111 - Pending action spinner has stopped...")
+                    print("Step 111 - Pending action spinner has stopped.\n")
                 except TimeoutException:
-                    print("Step 111 - Looks like the site has lag- the Spinner did not disappear in time...")
+                    print("Step 111 - Looks like the site has lag- the Spinner did not disappear in time.\n")
                 xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
                 wait_time_element = move_and_click(xpath, 20, False, "get the pre-claim wait timer", "112", "visible")
                 wait_time_text = wait_time_element.text
