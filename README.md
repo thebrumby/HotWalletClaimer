@@ -93,7 +93,7 @@ If you have a second account, from the command line (not within the first Screen
 4. **Force log in again:** Enter 'y' to force restarting the log-in process (in case an existing session throws errors). 
 5. **Session Name Configuration:**
    - Press `<Enter>` to assign a default session name of ascending numeric values (1, 2, 3, etc.).
-   - Alternatively, you can enter your own value (JohnDoes_Wallet, myWallet1, etc).
+   - Alternatively, you can enter your own value (JohnDoe_Wallet, myWallet1, etc).
    - Reusing an existing session name will attempt to resume that session unless you selected the option to force log in again.
 6. **Country Name for Telegram:**
    - Input your Country Name exactly as listed on [Telegram's login page](https://web.telegram.org/k/), like "USA" or "UNITED KINGDOM".
