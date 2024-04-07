@@ -115,15 +115,15 @@ Install PM2 manually, or use the install script packaged here:
    sudo chmod +x install_pm2.sh && sudo ./install_pm2.sh
    ```
 
-Before using PM2 to manage your wallet sessions, you should first open the ```python3 claim.py``` from the command line and set up each wallet. After signing into Telegram and entering the seed phrase, you will be passed onto the claim function. At this point, you can quit with ```CTRL+Z``` and then resume the session with PM2. The option argument ```verbose``` will save a text file in the screenshots folder where you can see the next time until claim. 
+Before using PM2 to manage your wallet sessions, you should open the script with ```python3 claim.py``` and set up each wallet. After following the process to sign into Telegram and enter your seed phrase, you will be prompted if you want to exit before being handed over to the claim function. You can select 'n' to exit the script and resume the session with PM2 as outlined below. 
 
 - First, initialize PM2 with systemd to ensure your applications start on boot:
-   - ```pm2 startup systemd``` (follow the on-screen prompt to enable resume on reboot if you are not super user)
-- To add your Python script as a session in PM2, use the following command. This example adds a session named firstWallet:
-   - ```pm2 start claim.py --name firstWallet -- 1```
+   - ```pm2 startup systemd``` (follow the on-screen prompt to enable resume on reboot if you are not superuser)
+- Use the following command to add your Python script as a PM2 session. This example adds a session named firstWallet:
+   - ```pm2 start claim.py --name firstWallet -- 1``` (if you named your session folder something else during setup, replace 1 with your session name)
 - To add a second session, you can use a similar command with a different name and session identifier:
-   - ```pm2 start claim.py --name secondWallet -- 2```
-- After adding your sessions, save your PM2 list. This makes sure your session configuration persists through system reboots:
+   - ```pm2 start claim.py --name secondWallet -- 2``` (if you named your session folder something else during setup, replace 2 with your session name)
+- After adding/updating your sessions, save them with the command below. This makes sure your session configuration persists through system reboots:
    - ```pm2 save```
 - To view the current list of processes managed by PM2:
    - ```pm2 list```
