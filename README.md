@@ -120,9 +120,9 @@ Before using PM2 to manage your wallet sessions, you should first open the ```py
 - First, initialize PM2 with systemd to ensure your applications start on boot:
    - ```pm2 startup systemd``` (follow the on-screen prompt to enable resume on reboot if you are not super user)
 - To add your Python script as a session in PM2, use the following command. This example adds a session named firstWallet:
-   - ```pm2 start claim.py --name firstWallet -- 1 verbose```
+   - ```pm2 start claim.py --name firstWallet -- 1```
 - To add a second session, you can use a similar command with a different name and session identifier:
-   - ```pm2 start claim.py --name secondWallet -- 2 verbose```
+   - ```pm2 start claim.py --name secondWallet -- 2```
 - After adding your sessions, save your PM2 list. This makes sure your session configuration persists through system reboots:
    - ```pm2 save```
 - To view the current list of processes managed by PM2:
