@@ -118,7 +118,7 @@ Install PM2 manually, or use the install script packaged here:
 Before using PM2 to manage your wallet sessions, you should first open the ```python3 claim.py``` from the command line and set up each wallet. After signing into Telegram and entering the seed phrase, you will be passed onto the claim function. At this point, you can quit with ```CTRL+Z``` and then resume the session with PM2. The option argument ```verbose``` will save a text file in the screenshots folder where you can see the next time until claim. 
 
 - First, initialize PM2 with systemd to ensure your applications start on boot:
-   - ```pm2 startup systemd```
+   - ```pm2 startup systemd``` (follow the on-screen prompt to enable resume on reboot if you are not super user)
 - To add your Python script as a session in PM2, use the following command. This example adds a session named firstWallet:
    - ```pm2 start claim.py --name firstWallet -- 1 verbose```
 - To add a second session, you can use a similar command with a different name and session identifier:
