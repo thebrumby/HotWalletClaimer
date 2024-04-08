@@ -406,10 +406,9 @@ def claim():
 
         if last_lock == None:
             last_lock = current_lock
-
-        print(f"Waiting to start claim for: {current_lock}, attempt {retries}.")
     
         # Compare current and last lock
+        print(f"Waiting to start claim for: {current_lock}, attempt {retries}.")
         if current_lock == last_lock:
             retries += 1
         else:
