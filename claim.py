@@ -5,6 +5,7 @@ import time
 import re
 import json
 import getpass
+import random
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
@@ -35,6 +36,9 @@ os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots/{}".format(user_input)
 os.makedirs(screenshots_path, exist_ok=True)
 print(f"Our screenshot path is {screenshots_path}")
+backup_path = "./backups/{}".format(user_input)
+os.makedirs(backup_path, exist_ok=True)
+print(f"Our screenshot path is {backup_path}")
 
 # Prompt the user to modify settings
 def update_settings():
@@ -132,6 +136,8 @@ session_path = "./selenium/{}".format(user_input)
 os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots/{}".format(user_input)
 os.makedirs(screenshots_path, exist_ok=True)
+backup_path = "./backups/{}".format(user_input)
+os.makedirs(backup_path, exist_ok=True)
 print(f"Our screenshot path is {screenshots_path}")
 status_file_name = "pm2_updates.txt"
 status_file_path = os.path.join(screenshots_path, status_file_name)
@@ -202,7 +208,7 @@ def quit_driver():
         driver = None 
  
 def log_into_telegram():
-    global driver, target_element, debugIsOn, session_path, screenshots_path, screenshotQRCode
+    global driver, target_element, debugIsOn, session_path, screenshots_path, backup_path, screenshotQRCode
 
     if os.path.exists(session_path):
         shutil.rmtree(session_path)
@@ -210,6 +216,9 @@ def log_into_telegram():
     if os.path.exists(screenshots_path):
         shutil.rmtree(screenshots_path)
     os.makedirs(screenshots_path, exist_ok=True)
+    if os.path.exists(backup_path):
+        shutil.rmtree(backup_path)
+    os.makedirs(backup_path, exist_ok=True)
 
     driver = get_driver()
     driver.get("https://web.telegram.org/k/#@herewalletbot")
@@ -294,7 +303,7 @@ def log_into_telegram():
         driver.save_screenshot("{}/01f_After_Entering_OTP.png".format(screenshots_path))
     
 def next_steps():
-    global driver, target_element, debugIsOn
+    global driver, target_element, debugIsOn, backup_path, session_path
     driver = get_driver()
 
     try:
@@ -373,6 +382,12 @@ def next_steps():
         with open(cookies_path, 'w') as file:
             json.dump(cookies, file)
 
+        try: 
+            shutil.copytree(session_path, backup_path, dirs_exist_ok=True)
+            print ("We backed up the session data in case of a later crash!")
+        except TimeoutException:
+            print ("Opps, we weren't able to make a backup of the session data!")
+
         if debugIsOn:
             print("\nWe appear to have correctly navigated to the storage page.\nHanding over to the Claim function :)\n")
             time.sleep(3)
@@ -386,7 +401,38 @@ def next_steps():
         print(f"An error occurred: {e}")
 
 def claim():
-    global driver, target_element, debugIsOn
+    global driver, target_element, debugIsOn, session_path
+
+    # Initialize variables
+    last_lock = None
+    retries = 1
+
+    while retries < 4:
+        # Check if file exists
+        if not os.path.exists("status.txt"):
+            break
+    
+        # Read current_lock from file
+        with open("status.txt", "r") as file:
+            current_lock = file.read().strip()
+
+        print(f"Waiting to start claim for: {current_lock}, attempt {retries}.")
+    
+        # Compare current and last lock
+        if current_lock == last_lock:
+            retries += 1
+        else:
+            last_lock = current_lock
+            retries = 0
+    
+        # Sleep for a random time between 40 to 55 seconds
+        random_timer = random.randint(20, 35)
+        time.sleep(random_timer)
+
+    with open("status.txt", "w") as file:
+        file.write(session_path)
+    print (f"Preventing other sessions from executing with lock file: {session_path}...")
+
     driver = get_driver()
     print ("\nCHROME DRIVER INITIALISED: If you experience an error in the code after this point, you may need to log in again.")
     print ("If you deliberately stop the script before Chrome Driver is detached, you may also need to log in again.\n")
@@ -566,7 +612,7 @@ def find_working_link(step):
             actions.move_to_element(button).pause(0.2)
             try:
                 if debugIsOn:
-                    driver.save_screenshot(f"Step {step} - Find working link.png".format(screenshots_path))
+                    driver.save_screenshot(f"{screenshots_path}/{step} - Find working link.png".format(screenshots_path))
                 actions.perform()
                 driver.execute_script("arguments[0].click();", button)
                 clicked = True
@@ -600,45 +646,50 @@ def find_working_link(step):
 
 
 def send_start(step):
-    global driver, screenshots_path, debugIsOn
+    global driver, screenshots_path, backup_path, debugIsOn
     xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
-    try:
+    
+    def attempt_send_start():
+        nonlocal step  # Allows us to modify the outer function's step variable
         chat_input = move_and_click(xpath, 30, False, "find the chat window/message input box", step, "present")
-
         if chat_input:
-            step_int = int(step)
-            step_int += 1
-            step = f"{step_int:02}"
-            print(f"Step {step} - Atempting to send the '/start' command.")
             chat_input.send_keys("/start")
             chat_input.send_keys(Keys.RETURN)
-            print(f"Step {step} - Successfully sent the '/start' command.\n")
+            step_int = int(step) + 1
+            new_step = f"{step_int:02}"
+            print(f"Step {new_step} - Successfully sent the '/start' command.\n")
             if debugIsOn:
-                screenshot_path = f"{screenshots_path}/{step}-sent-start.png"
+                screenshot_path = f"{screenshots_path}/{new_step}-sent-start.png"
                 driver.save_screenshot(screenshot_path)
+            return True
         else:
             print(f"Step {step} - Failed to find the message input box.\n")
+            return False
 
-    except TimeoutException:
-        print("Unable to send the '/start' command. Possible causes might be:")
-        print("- You used the OTP method and it didn't take.")
-        print("- You can always try deleting the chat with @HereWalletBot in your Telegram app and try again.")
-        print("- Check GitHub for a code update!")
-        if debugIsOn:
-            screenshot_path = f"{screenshots_path}/{step}-timeout-error.png"
-            driver.save_screenshot(screenshot_path)
+    if not attempt_send_start():
+        # Attempt failed, try restoring from backup and retry
+        print(f"Step {step} - Attempting to restore from backup and retry.\n")
+        if restore_from_backup():
+            if not attempt_send_start():  # Retry after restoring backup
+                print(f"Step {step} - Retried after restoring backup, but still failed to send the '/start' command.\n")
+        else:
+            print(f"Step {step} - Backup restoration failed or backup directory does not exist.\n")
 
-    except ElementClickInterceptedException:
-        print(f"Step {step} - Error: The message box might be blocked by another element.")
-        if debugIsOn:
-            screenshot_path = f"{screenshots_path}/{step}-click-intercepted.png"
-            driver.save_screenshot(screenshot_path)
-
-    except Exception as e:
-        print(f"Step {step} - An error occurred during interaction: {e}")
-        if debugIsOn:
-            screenshot_path = f"{screenshots_path}/{step}-unexpected-error.png"
-            driver.save_screenshot(screenshot_path)
+def restore_from_backup():
+    if os.path.exists(backup_path):
+        try:
+            quit_driver()
+            shutil.rmtree(session_path)
+            shutil.copytree(backup_path, session_path, dirs_exist_ok=True)
+            print("Backup restored successfully.\n")
+            driver = get_driver()
+            return True
+        except Exception as e:
+            print(f"Error restoring backup: {e}\n")
+            return False
+    else:
+        print("Backup directory does not exist.\n")
+        return False
 
 def move_and_click(xpath, wait_time, click, action_description, step, expectedCondition):
     global driver, screenshots_path, debugIsOn
@@ -717,7 +768,7 @@ def validate_seed_phrase():
             print(f"Error: {e}")
 
 def main():
-    global forceNewSession
+    global forceNewSession, session_path
     driver = get_driver()
     quit_driver()
     clear_screen()
@@ -738,6 +789,14 @@ def main():
             sys.exit()
     while True:
         wait_time = claim()
+        # Clear the lock
+        status_file_path = "status.txt"
+        if os.path.exists(status_file_path):
+            # Delete the file
+            os.remove(status_file_path)
+            print(f"Removing the processing lock for: {session_path}.")
+        else:
+            print(f"The processing lock has already been removed.")
         quit_driver()
         print ("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n")
         global forceClaim
