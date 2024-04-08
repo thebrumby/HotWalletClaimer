@@ -525,9 +525,14 @@ def claim():
                     print("Step 111 - Pending action spinner has stopped.\n")
                 except TimeoutException:
                     print("Step 111 - Looks like the site has lag- the Spinner did not disappear in time.\n")
-                xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-                wait_time_element = move_and_click(xpath, 20, False, "get the post-claim wait timer", "112", "visible")
-                wait_time_text = wait_time_element.text
+                try:
+                    # Let's see how long until the wallet is ready to collected.
+                    xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
+                    wait_time_element = move_and_click(xpath, 20, False, "get the post-claim wait timer", "112", "visible")
+                    wait_time_text = wait_time_element.text
+                except TimeoutException:
+                    print("Could not find the wait time element within the specified time.")
+                    wait_time_text = "Unknown"
                 # Extract time until the "Storage" pot is full again:
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
