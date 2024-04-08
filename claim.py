@@ -407,7 +407,7 @@ def claim():
     last_lock = None
     retries = 1
 
-    while retries < 4:
+    while retries < 11:
         # Check if file exists
         if not os.path.exists("status.txt"):
             break
@@ -416,6 +416,9 @@ def claim():
         with open("status.txt", "r") as file:
             current_lock = file.read().strip()
 
+        if last_lock == None:
+            last_lock = current_lock
+
         print(f"Waiting to start claim for: {current_lock}, attempt {retries}.")
     
         # Compare current and last lock
@@ -423,11 +426,16 @@ def claim():
             retries += 1
         else:
             last_lock = current_lock
-            retries = 0
+            retries = 1
     
-        # Sleep for a random time between 40 to 55 seconds
-        random_timer = random.randint(20, 35)
+        # Sleep for a random time between 20 to 40 seconds
+        random_timer = random.randint(20, 40)
         time.sleep(random_timer)
+
+    if os.path.exists("status.txt"):
+        with open("status.txt", "r") as file:
+            current_lock = file.read().strip()
+        print (f"It seems that {current_lock} is stuck. Continuing anyway...")
 
     with open("status.txt", "w") as file:
         file.write(session_path)
@@ -492,6 +500,8 @@ def claim():
     except TimeoutException:
         print("Could not find the wait time element within the specified time.")
         wait_time_text = "Unknown"
+    except Exception as e:
+        print(f"You probably lost your logged in status.")
 
     try:
         print("The pre-claim wait time is : {}".format(wait_time_text))
@@ -686,8 +696,10 @@ def restore_from_backup():
             quit_driver()
             shutil.rmtree(session_path)
             shutil.copytree(backup_path, session_path, dirs_exist_ok=True)
-            print("Backup restored successfully.\n")
             driver = get_driver()
+            driver.get("https://web.telegram.org/k/#@herewalletbot")
+            WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            print("Backup restored successfully.\n")
             return True
         except Exception as e:
             print(f"Error restoring backup: {e}\n")
