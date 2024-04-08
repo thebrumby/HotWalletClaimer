@@ -382,18 +382,6 @@ def next_steps():
         with open(cookies_path, 'w') as file:
             json.dump(cookies, file)
 
-        try: 
-            shutil.copytree(session_path, backup_path, dirs_exist_ok=True)
-            print ("We backed up the session data in case of a later crash!")
-        except TimeoutException:
-            print ("Opps, we weren't able to make a backup of the session data!")
-
-        if debugIsOn:
-            print("\nWe appear to have correctly navigated to the storage page.\nHanding over to the Claim function :)\n")
-            time.sleep(3)
-            driver.save_screenshot("{}/11-Sign In Process Complete.png".format(screenshots_path))
-
-
     except TimeoutException:
         print("Failed to find or switch to the iframe within the timeout period.")
 
@@ -798,6 +786,12 @@ def main():
         quit_driver()
         next_steps()
         quit_driver()
+        try: 
+            shutil.copytree(session_path, backup_path, dirs_exist_ok=True)
+            print ("We backed up the session data in case of a later crash!")
+        except TimeoutException:
+            print ("Opps, we weren't able to make a backup of the session data!")
+
         print ("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n")
         # Let's now offer the option to stop here or carry on.
         user_choice = input("Enter 'y' to continue to 'claim' function or 'n' to exit and resume in PM2: ").lower()
