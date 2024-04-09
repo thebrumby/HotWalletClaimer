@@ -688,6 +688,22 @@ def restore_from_backup():
 
 def move_and_click(xpath, wait_time, click, action_description, step, expectedCondition):
     global driver, screenshots_path, debugIsOn
+
+    try:
+        # Locate the div with id 'close-button' and click it
+        close_button_div = driver.find_element(By.ID, "close-button")
+        close_button_div.click()
+        print(f"Step {step} - Clicked on the div with id 'close-button'.")
+    except NoSuchElementException:
+        pass # the close button wasn't found
+
+    try:
+        # Let's try switching to the "body" before each action!
+        body_element = driver.find_element(By.TAG_NAME, "body")
+        ActionChains(driver).move_to_element(body_element).click().perform()
+    except NoSuchElementException:
+        pass # the close button wasn't found
+
     target_element = None
     failed = False
     print(f"Step {step} - Attempting to {action_description}...")
