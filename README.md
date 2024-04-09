@@ -29,7 +29,8 @@ If you have a second account, from the command line (not within the first Screen
   <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">
     <img src="https://img.youtube.com/vi/MjUquyLWPGw/0.jpg" alt="YouTube Visual Instructions">
   </a><br>
-   See a walkthrough of all the steps, from server setup to installing the script, on <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">YouTube</a>.
+   See a walkthrough of all the steps, from server setup to installing the script, on <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">YouTube</a>. ![image](https://github.com/thebrumby/HotWalletClaimer/assets/29182343/eaecb0e1-99ea-4522-8e79-3ab4843a6469)
+
 </p>
 
 ### Linux Manual installation - Ensure each command in the code block executes. 
