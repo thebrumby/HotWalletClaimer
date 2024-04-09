@@ -27,19 +27,18 @@ If you have a second account, from the command line (not within the first Screen
 
 <p align="center">
   <table style="margin-left: auto; margin-right: auto; width: 100%;"><tr>
-    <td style="width: 50%;">
+    <td style="width: 50%; vertical-align: top;">
       <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">
         <img src="https://img.youtube.com/vi/MjUquyLWPGw/0.jpg" alt="YouTube Visual Instructions" style="max-width: 100%; height: auto;">
       </a>
+      <div style="text-align: center; margin-top: 10px;">
+        See a walkthrough of all the steps, from server setup to installing the script, on <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">YouTube</a>.
+      </div>
     </td>
-    <td style="width: 50%;">
+    <td style="width: 50%; vertical-align: top;">
       <img src="https://github.com/thebrumby/HotWalletClaimer/assets/29182343/eaecb0e1-99ea-4522-8e79-3ab4843a6469" alt="image" style="max-width: 100%; height: auto;">
     </td>
   </tr></table>
-  <br>
-  <div style="text-align: center;">
-    See a walkthrough of all the steps, from server setup to installing the script, on <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">YouTube</a>.
-  </div>
 </p>
 
 ### Linux Manual installation - Ensure each command in the code block executes. 
