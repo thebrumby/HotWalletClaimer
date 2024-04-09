@@ -26,11 +26,20 @@ If you have a second account, from the command line (not within the first Screen
 💡 Tip: Each active Python script, requires approximately 450 MB of server memory and also utilizes a portion of CPU resources for the Chrome Driver process while logging in or making a claim. It is important to assess your server's resources to ensure you can support the number of concurrent sessions you wish to operate.
 
 <p align="center">
-  <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">
-    <img src="https://img.youtube.com/vi/MjUquyLWPGw/0.jpg" alt="YouTube Visual Instructions">
-  </a><br>
-   See a walkthrough of all the steps, from server setup to installing the script, on <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">YouTube</a>. ![image](https://github.com/thebrumby/HotWalletClaimer/assets/29182343/eaecb0e1-99ea-4522-8e79-3ab4843a6469)
-
+  <table style="margin-left: auto; margin-right: auto; width: 100%;"><tr>
+    <td style="width: 50%;">
+      <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">
+        <img src="https://img.youtube.com/vi/MjUquyLWPGw/0.jpg" alt="YouTube Visual Instructions" style="max-width: 100%; height: auto;">
+      </a>
+    </td>
+    <td style="width: 50%;">
+      <img src="https://github.com/thebrumby/HotWalletClaimer/assets/29182343/eaecb0e1-99ea-4522-8e79-3ab4843a6469" alt="image" style="max-width: 100%; height: auto;">
+    </td>
+  </tr></table>
+  <br>
+  <div style="text-align: center;">
+    See a walkthrough of all the steps, from server setup to installing the script, on <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">YouTube</a>.
+  </div>
 </p>
 
 ### Linux Manual installation - Ensure each command in the code block executes. 
