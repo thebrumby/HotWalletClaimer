@@ -36,7 +36,7 @@ If you have a second account, from the command line (not within the first Screen
       </div>
     </td>
     <td style="width: 50%; vertical-align: top;">
-      <img src="https://github.com/thebrumby/HotWalletClaimer/assets/29182343/eaecb0e1-99ea-4522-8e79-3ab4843a6469" alt="image" style="max-width: 100%; height: auto;">
+      <img src="https://github.com/thebrumby/HotWalletClaimer/assets/29182343/f3c2f57c-282a-4d3c-be9a-15113a466c44" alt="image" style="max-width: 100%; height: auto;">
     </td>
   </tr></table>
 </p>
