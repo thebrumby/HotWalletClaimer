@@ -17,7 +17,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException
 from datetime import datetime, timedelta
 
-# Initiate global variables then set up paths and session data:
+# Initiate global variables:
 forceClaim = False
 debugIsOn = False
 hideSensitiveInput = True
@@ -29,7 +29,7 @@ forceNewSession = False
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
-# Format the session_path with the user's input
+# Set up paths and sessions:
 user_input = ""
 session_path = "./selenium/{}".format(user_input)
 os.makedirs(session_path, exist_ok=True)
@@ -66,7 +66,7 @@ def update_settings():
         screenshotQRCode = True
 
     # Allow force new session
-    new_session_response = input("Should we log in again, even if the session could be resumed? (Y/N, default = N): ").strip().lower()
+    new_session_response = input("Force New Login? If your existing session crashed (Y/N, default = N): ").strip().lower()
     if new_session_response == "y":
         forceNewSession = True
     else:
@@ -127,6 +127,8 @@ if len(sys.argv) > 1:
         # Safely check for a second argument
         if len(sys.argv) > 2 and sys.argv[2] == "verbose":
             logPM2Messages = True
+        if len(sys.argv) > 2 and sys.argv[2] == "debug":
+            debugIsOn = True
 else:
     update_settings()
     user_input = get_session_id()
@@ -144,17 +146,6 @@ status_file_path = os.path.join(screenshots_path, status_file_name)
 
 # Define our base path for debugging screenshots
 screenshot_base = os.path.join(screenshots_path, "screenshot")
-
-# Echo the Status to screen.
-if forceClaim:
-    print("forceClaim is enabled. We will attempt to process a claim even if the pot is not yet at minimum.")
-else:
-    print("forceClaim is disabled. We will wait for the timer to elapse and the storage pot to be full.")
-
-if debugIsOn:
-    print("Debugging is enabled. Screenshots will be saved on your local drive in the specified folder.")
-else:
-    print("Debugging is disabled. No screenshots will be taken.")
 
 def setup_driver(chromedriver_path):
 
@@ -242,7 +233,7 @@ def log_into_telegram():
             wait = WebDriverWait(driver, 5)
             wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
             # Successful login using QR code
-            print("Timeout: Restart the script and retry the QR Code or wait for the OTP method.")
+            print("\nTimeout: Restart the script and retry the QR Code or wait for the OTP method.")
             
           except TimeoutException:
             return
@@ -252,7 +243,7 @@ def log_into_telegram():
           print("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.")
 
     # OTP Login Method
-    print("Initiating the One-Time Password (OTP) method...")
+    print("Initiating the One-Time Password (OTP) method...\n")
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
     move_and_click(xpath, 30, True, "switch to log in by phone number", "01a", "clickable")
@@ -284,14 +275,14 @@ def log_into_telegram():
         if debugIsOn:
             time.sleep(3)
             driver.save_screenshot("{}/01e_Ready_for_OTP.png".format(screenshots_path))
-        otp = input("What is the Telegram OTP from your app? ")
+        otp = input("Step 01e - What is the Telegram OTP from your app? ")
         password.click()
         password.send_keys(otp)
-        print("Let's try to log in using your Telegram OTP. Please Wait.")
+        print("Step 01e - Let's try to log in using your Telegram OTP.\n")
 
     except TimeoutException:
         # OTP field not found 
-        print("OTP entry has failed - maybe you entered the wrong code, or possible flood cooldown issue.")
+        print("Step 01e - OTP entry has failed - maybe you entered the wrong code, or possible flood cooldown issue.")
 
     except Exception as e:  # Catch any other unexpected errors
         print("Login failed. Error:", e) 
@@ -309,7 +300,7 @@ def next_steps():
     try:
         driver.get("https://web.telegram.org/k/#@herewalletbot")
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        print("Step 01 - Attempting to verify if we are logged in (QR code not present).")
+        print("Step 01 - Attempting to verify if we are logged in (QR code should be not present).")
         xpath = "//canvas[@class='qr-canvas']"
         wait = WebDriverWait(driver, 5)
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -331,7 +322,6 @@ def next_steps():
     # There is a very unlikely scenario that the chat might have been cleared.
     # In this case, the "START" button needs pressing to expose the chat window!
     wait = WebDriverWait(driver, 5)
-    print("Looking for the 'START' button which is only present on first launch...")
     xpath = "//button[contains(., 'START')]"
     move_and_click(xpath, 5, True, "check for the start button (should not be present)", "02", "clickable")
 
@@ -363,7 +353,7 @@ def next_steps():
         xpath = "//*[@id=\"root\"]//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
         input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", "09", "clickable")
         input_field.send_keys(validate_seed_phrase()) 
-        print("Entered the seed phrase...")
+        print("Step 09 - Was successfully able to enter the seed phrase...")
 
         # Click the continue button after seed phrase entry:
         xpath = "//button[contains(text(), 'Continue')]"
@@ -375,8 +365,7 @@ def next_steps():
 
         # Click on the Storage link:
         xpath = "//h4[text()='Storage']"
-        move_and_click(xpath, 30, True, "select the 'storage' link", "12", "clickable")
-        print ("We appear to be logged in, let's save the cookies.")
+        move_and_click(xpath, 30, True, "click the 'storage' link", "12", "clickable")
         cookies_path = f"{session_path}/cookies.json"
         cookies = driver.get_cookies()
         with open(cookies_path, 'w') as file:
@@ -395,7 +384,7 @@ def claim():
     last_lock = None
     retries = 1
 
-    while retries < 11:
+    while retries < 12:
         # Check if file exists
         if not os.path.exists("status.txt"):
             break
@@ -408,12 +397,13 @@ def claim():
             last_lock = current_lock
     
         # Compare current and last lock
-        print(f"Waiting to start claim for: {current_lock}, attempt {retries}.")
         if current_lock == last_lock:
+            print(f"Waiting to start claim for: {current_lock}, attempt {retries}.")
             retries += 1
         else:
             last_lock = current_lock
             retries = 1
+            print(f"Waiting to start claim for: {current_lock}, attempt {retries}.")
     
         # Sleep for a random time between 20 to 40 seconds
         random_timer = random.randint(20, 40)
@@ -426,16 +416,16 @@ def claim():
 
     with open("status.txt", "w") as file:
         file.write(session_path)
-    print (f"Preventing other sessions from executing with lock file: {session_path}...")
+    print (f"Preventing other sessions from executing with 'status.txt' lock file for session: {session_path}...")
 
     driver = get_driver()
-    print ("\nCHROME DRIVER INITIALISED: If you experience an error in the code after this point, you may need to log in again.")
-    print ("If you deliberately stop the script before Chrome Driver is detached, you may also need to log in again.\n")
+    print ("\nCHROME DRIVER INITIALISED: If the script exits before detaching, the session may need to be restored.")
+    print ("If it still fails after restore, restart the session and force fresh login.\n")
 
     try:
         driver.get("https://web.telegram.org/k/#@herewalletbot")
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        print("Step 100 - Attempting to verify if we are logged in (QR code not present).")
+        print("Step 100 - Attempting to verify if we are logged in (hopefully QR code is not present).")
         xpath = "//canvas[@class='qr-canvas']"
         wait = WebDriverWait(driver, 5)
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -455,7 +445,7 @@ def claim():
 
     if debugIsOn:
         time.sleep(3)
-        driver.save_screenshot("{}/100_Initial_Claim_Launch.png".format(screenshots_path))
+        driver.save_screenshot("{}/Step 100 Pre-Claim screenshot.png".format(screenshots_path))
 
     # There is a very unlikely scenario that the chat might have been cleared.
     # In this case, the "START" button needs pressing to expose the chat window!
@@ -477,7 +467,7 @@ def claim():
 
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
-    move_and_click(xpath, 30, True, "click the 'open storage' button", "107", "clickable")
+    move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable")
 
     try:
         # Let's see how long until the wallet is ready to collected.
@@ -576,14 +566,14 @@ def clear_screen():
 
 def select_iframe(step):
     global driver, screenshots_path, debugIsOn
-    print(f"Step {step} - Attempting to switch to the pop-up iFrame...")
+    print(f"Step {step} - Attempting to switch to the app's iFrame...")
 
     try:
         wait = WebDriverWait(driver, 20)
         popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
         iframe = popup_body.find_element(By.TAG_NAME, "iframe")
         driver.switch_to.frame(iframe)
-        print(f"Step {step} - Successfully switched to the iframe.\n")
+        print(f"Step {step} - Was successfully able to switch to the app's iFrame.\n")
 
         if debugIsOn:
             screenshot_path = f"{screenshots_path}/{step}-iframe-switched.png"
@@ -602,7 +592,7 @@ def select_iframe(step):
 
 def find_working_link(step):
     global driver, screenshots_path, debugIsOn
-    print(f"Step {step} - Looking for a link to open the app...")
+    print(f"Step {step} - Attempting to open a link for the app...")
 
     start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
     try:
@@ -630,7 +620,7 @@ def find_working_link(step):
                 screenshot_path = f"{screenshots_path}/{step}-no-clickable-button.png"
                 driver.save_screenshot(screenshot_path)
         else:
-            print(f"Step {step} - The link to open the app was successfully clicked.\n")
+            print(f"Step {step} - Successfully able to open a link for the app..\n")
             if debugIsOn:
                 screenshot_path = f"{screenshots_path}/{step}-app-opened.png"
                 driver.save_screenshot(screenshot_path)
@@ -655,10 +645,11 @@ def send_start(step):
         nonlocal step  # Allows us to modify the outer function's step variable
         chat_input = move_and_click(xpath, 30, False, "find the chat window/message input box", step, "present")
         if chat_input:
-            chat_input.send_keys("/start")
-            chat_input.send_keys(Keys.RETURN)
             step_int = int(step) + 1
             new_step = f"{step_int:02}"
+            print(f"Step {new_step} - Attempting to send the '/start' command...")
+            chat_input.send_keys("/start")
+            chat_input.send_keys(Keys.RETURN)
             print(f"Step {new_step} - Successfully sent the '/start' command.\n")
             if debugIsOn:
                 screenshot_path = f"{screenshots_path}/{new_step}-sent-start.png"
@@ -720,15 +711,15 @@ def move_and_click(xpath, wait_time, click, action_description, step, expectedCo
                 actions = ActionChains(driver)
                 actions.move_to_element(target_element).pause(0.2).click().perform()
                 if debugIsOn:
-                    print(f"Step {step} - Successfully clicked {action_description} using ActionChains.")
+                    print(f"Step {step} - Managed to {action_description} using ActionChains.")
             except Exception as e:
                 if debugIsOn:
                     print(f"Step {step} - ActionChains click failed. Attempting JavaScript click as fallback.")
                 driver.execute_script("arguments[0].click();", target_element)
                 if debugIsOn:
-                    print(f"Step {step} - Successfully clicked {action_description} using JavaScript fallback.")
+                    print(f"Step {step} - Managed to {action_description} using JavaScript fallback.")
         if not failed:
-            print(f"Step {step} - Successfully interacted with: {action_description}.\n")
+            print(f"Step {step} - Was successfully able to {action_description}.\n")
         if debugIsOn:
             screenshot_path = f"{screenshots_path}/{step}-{action_description}.png"
             driver.save_screenshot(screenshot_path)
@@ -804,7 +795,7 @@ def main():
         if os.path.exists(status_file_path):
             # Delete the file
             os.remove(status_file_path)
-            print(f"Removing the processing lock for: {session_path}.")
+            print(f"Removing the processing lock for session: {session_path}.")
         else:
             print(f"The processing lock has already been removed.")
         quit_driver()
