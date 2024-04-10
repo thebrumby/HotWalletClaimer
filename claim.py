@@ -725,9 +725,9 @@ def validate_seed_phrase():
 
             words = seed_phrase.split()
             if len(words) != 12:
-                raise ValueError("Seed phrase mus,,t contain exactly 12 words.")
+                raise ValueError("Seed phrase mus,,,t contain exactly 12 words.")
 
-            pattern = r"^[a-,,z ]+$"
+            pattern = r"^[a-z ]+$"
             if not all(re.match(pattern, word) for word in words):
                 raise ValueError("Seed phrase can only contain lowercase letters and spaces.")
             return seed_phrase  # Return if valid
