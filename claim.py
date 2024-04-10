@@ -222,7 +222,7 @@ def log_into_telegram():
         try:
           WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
           xpath = "//canvas[@class='qr-canvas']"
-          move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible")
+          move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible", False)
           driver.save_screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
           print ("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path))
           input('Hit enter after you scanned the QR code in Settings -> Devices -> Link Desktop Device:')
@@ -246,18 +246,18 @@ def log_into_telegram():
     print("Initiating the One-Time Password (OTP) method...\n")
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
-    move_and_click(xpath, 30, True, "switch to log in by phone number", "01a", "clickable")
+    move_and_click(xpath, 30, True, "switch to log in by phone number", "01a", "clickable", False)
 
     # Country Code Selection
     xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
-    target_element = move_and_click(xpath, 30, True, "update users country", "01b", "clickable")
+    target_element = move_and_click(xpath, 30, True, "update users country", "01b", "clickable", False)
     user_input = input("Please enter your Country Name as it appears in the Telegram list: ").strip()  
     target_element.send_keys(user_input)
     target_element.send_keys(Keys.RETURN) 
 
     # Phone Number Input
     xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
-    target_element = move_and_click(xpath, 30, True, "request users phone number", "01c", "clickable")
+    target_element = move_and_click(xpath, 30, True, "request users phone number", "01c", "clickable", False)
     if hideSensitiveInput:
         user_phone = getpass.getpass("Please enter your phone number without leading 0 (hidden input): ")
     else:
@@ -266,7 +266,7 @@ def log_into_telegram():
 
     # Wait for the "Next" button to be clickable and click it    
     xpath = "//button[contains(@class, 'btn-primary') and .//span[contains(text(), 'Next')]]"
-    move_and_click(xpath, 30, True, "click next to proceed to OTP entry", "01d", "visible")
+    move_and_click(xpath, 30, True, "click next to proceed to OTP entry", "01d", "visible", False)
 
     try:
         # Attempt to locate and interact with the OTP field
@@ -298,74 +298,26 @@ def next_steps():
     driver = get_driver()
 
     try:
-        driver.get("https://web.telegram.org/k/#@herewalletbot")
+        driver.get("https://tgapp.herewallet.app/auth/import")
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        print("Step 01 - Attempting to verify if we are logged in (QR code should be not present).")
-        xpath = "//canvas[@class='qr-canvas']"
-        wait = WebDriverWait(driver, 5)
-        wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-        if debugIsOn:
-            screenshot_path = f"{screenshots_path}/01-Test QR code after session is resumed.png"
-            driver.save_screenshot(screenshot_path)
-        print("Chrome driver reports the QR code is visible: It appears we are no longer logged in.")
-        print("Most likely you will get an error next that the central input box is not found.")
-        print("The best solution will be to restart the script from CLI force a fresh log in.\n")
-
-    except TimeoutException:
-        print("Step 01 - nothing found to action. The QR code test passed.\n")
-
-
-
-    driver.get("https://web.telegram.org/k/#@herewalletbot")
-    WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-
-    # There is a very unlikely scenario that the chat might have been cleared.
-    # In this case, the "START" button needs pressing to expose the chat window!
-    wait = WebDriverWait(driver, 5)
-    xpath = "//button[contains(., 'START')]"
-    move_and_click(xpath, 5, True, "check for the start button (should not be present)", "02", "clickable")
-
-    # Look for the center console and send the /start command. 
-    driver.get("https://web.telegram.org/k/#@herewalletbot")
-    WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-
-    # Let's try to send the start command:
-    send_start("03")
-
-    # Now let's try to find a working link to open the launch button
-    find_working_link("05")
-
-    # Now let's move to and JS click the "Launch" Button
-    xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-    move_and_click(xpath, 30, True, "click the 'Launch' button", "06", "clickable")
-
-    # HereWalletBot Pop-up Handling
-    try:
-        # HereWalletBot Pop-up Handling
-        select_iframe("07")
-
-        # Attempt to interact with elements within the iframe.
-        # Let's click the login button first:
-        xpath = "//p[contains(text(), 'Log in')]"
-        move_and_click(xpath, 30, True, "find the HereWallet log-in button", "08", "clickable")
-
+        
         # Then look for the seed phase textarea:
-        xpath = "//*[@id=\"root\"]//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
-        input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", "09", "clickable")
+        xpath = "//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
+        input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", "09", "clickable", False)
         input_field.send_keys(validate_seed_phrase()) 
         print("Step 09 - Was successfully able to enter the seed phrase...")
 
         # Click the continue button after seed phrase entry:
         xpath = "//button[contains(text(), 'Continue')]"
-        move_and_click(xpath, 30, True, "click continue after seedphrase entry", "10", "clickable")
+        move_and_click(xpath, 30, True, "click continue after seedphrase entry", "10", "clickable", False)
 
         # Click the account selection button:
         xpath = "//button[contains(text(), 'Select account')]"
-        move_and_click(xpath, 120, True, "click continue at account selection screen", "11", "clickable")
+        move_and_click(xpath, 120, True, "click continue at account selection screen", "11", "clickable", False)
 
         # Click on the Storage link:
         xpath = "//h4[text()='Storage']"
-        move_and_click(xpath, 30, True, "click the 'storage' link", "12", "clickable")
+        move_and_click(xpath, 30, True, "click the 'storage' link", "12", "clickable", False)
         cookies_path = f"{session_path}/cookies.json"
         cookies = driver.get_cookies()
         with open(cookies_path, 'w') as file:
@@ -433,8 +385,8 @@ def claim():
             screenshot_path = f"{screenshots_path}/100-Test QR code after session is resumed.png"
             driver.save_screenshot(screenshot_path)
         print("Chrome driver reports the QR code is visible: It appears we are no longer logged in.")
-        print("Most likely you will get an error next that the central input box is not found.")
-        print("The best solution will be to restart the script from CLI force a fresh log in.\n")
+        print("Most likely you will get a warning that the central input box is not found.")
+        print("System will try to restore session, or restart the script from CLI force a fresh log in.\n")
 
     except TimeoutException:
         print("Step 100 - nothing found to action. The QR code test passed.\n")
@@ -450,7 +402,7 @@ def claim():
     # There is a very unlikely scenario that the chat might have been cleared.
     # In this case, the "START" button needs pressing to expose the chat window!
     xpath = "//button[contains(., 'START')]"
-    move_and_click(xpath, 5, True, "check for the start button (should not be present)", "101", "clickable")
+    move_and_click(xpath, 5, True, "check for the start button (should not be present)", "101", "clickable", False)
 
     # Let's try to send the start command:
     send_start("102")
@@ -460,19 +412,19 @@ def claim():
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-    move_and_click(xpath, 30, True, "click the 'Launch' button", "105", "clickable")
+    move_and_click(xpath, 30, True, "click the 'Launch' button", "105", "clickable", False)
 
     # HereWalletBot Pop-up Handling
     select_iframe("106")
 
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
-    move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable")
+    move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable", True)
 
     try:
         # Let's see how long until the wallet is ready to collected.
         xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-        wait_time_element = move_and_click(xpath, 20, False, "get the pre-claim wait timer", "108", "visible")
+        wait_time_element = move_and_click(xpath, 20, False, "get the pre-claim wait timer", "108", "visible", True)
         wait_time_text = wait_time_element.text
     except TimeoutException:
         print("Could not find the wait time element within the specified time.")
@@ -486,7 +438,7 @@ def claim():
             try:
                 original_window = driver.current_window_handle
                 xpath = "//button[contains(text(), 'Check NEWS')]"
-                move_and_click(xpath, 10, True, "check for NEWS.", "109", "clickable")
+                move_and_click(xpath, 10, True, "check for NEWS.", "109", "clickable", True)
                 driver.switch_to.window(original_window)
             except TimeoutException:
                 if debugIsOn:
@@ -499,7 +451,7 @@ def claim():
                 
                 # Click on the "Claim HOT" button:
                 xpath = "//button[contains(text(), 'Claim HOT')]"
-                move_and_click(xpath, 30, True, "click the claim button", "110", "clickable")
+                move_and_click(xpath, 30, True, "click the claim button", "110", "clickable", True)
 
                 # Now let's try again to get the time remaining until filled. 
                 # 4th April 24 - Let's wait for the spinner to disappear before trying to get the new time to fill.
@@ -515,7 +467,7 @@ def claim():
                 try:
                     # Let's see how long until the wallet is ready to collected.
                     xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-                    wait_time_element = move_and_click(xpath, 20, False, "get the post-claim wait timer", "112", "visible")
+                    wait_time_element = move_and_click(xpath, 20, False, "get the post-claim wait timer", "112", "visible", True)
                     wait_time_text = wait_time_element.text
                 except TimeoutException:
                     print("Could not find the wait time element within the specified time.")
@@ -643,7 +595,7 @@ def send_start(step):
     
     def attempt_send_start():
         nonlocal step  # Allows us to modify the outer function's step variable
-        chat_input = move_and_click(xpath, 30, False, "find the chat window/message input box", step, "present")
+        chat_input = move_and_click(xpath, 30, False, "find the chat window/message input box", step, "present", False)
         if chat_input:
             step_int = int(step) + 1
             new_step = f"{step_int:02}"
@@ -686,24 +638,27 @@ def restore_from_backup():
         print("Backup directory does not exist.\n")
         return False
 
-def move_and_click(xpath, wait_time, click, action_description, step, expectedCondition):
+def close_modal(step):
+    try:
+        print(f"Step {step} - Check if we need to close the modal (wait 5 seconds)...")
+
+        try:  # Attempt to find the modal
+            modal = WebDriverWait(driver, 5).until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "react-modal-sheet-content"))
+            )
+            driver.execute_script("arguments[0].style.display = 'none';", modal)
+            print(f"Step {step} - Closed Modal.")
+
+        except TimeoutException:
+            print(f"Step {step} - Modal not visible within timeout. Continuing...")
+
+    except NoSuchElementException:
+        print(f"Step {step} - Modal not found.")
+
+def move_and_click(xpath, wait_time, click, action_description, step, expectedCondition, closeModal):
     global driver, screenshots_path, debugIsOn
-
-    try:
-        # Locate the div with id 'close-button' and click it
-        close_button_div = driver.find_element(By.ID, "close-button")
-        close_button_div.click()
-        print(f"Step {step} - Clicked on the div with id 'close-button'.")
-    except NoSuchElementException:
-        pass # the close button wasn't found
-
-    try:
-        # Let's try switching to the "body" before each action!
-        body_element = driver.find_element(By.TAG_NAME, "body")
-        ActionChains(driver).move_to_element(body_element).click().perform()
-    except NoSuchElementException:
-        pass # the close button wasn't found
-
+    if closeModal:
+        close_modal(step)
     target_element = None
     failed = False
     print(f"Step {step} - Attempting to {action_description}...")
