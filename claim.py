@@ -432,7 +432,9 @@ def claim():
         print("Could not find the wait time element within the specified time.")
         wait_time_text = "Unknown"
     except Exception as e:
-        print(f"You probably lost your logged in status.")
+        print(f"Looks like there was an error - let's try again in 15 minutes.")
+        return 15
+        wait_time_text = "Unknown"
 
     try:
         print("The pre-claim wait time is : {}".format(wait_time_text))
@@ -643,9 +645,13 @@ def restore_from_backup():
 def close_modal(step):
     try:
         print(f"Step {step} - Check if we need to close the modal (wait 5 seconds)...")
+        if step == "107" or step == "108":
+          timer = 10
+        else:
+          timer = 5
 
         try:  # Attempt to find the modal
-            modal = WebDriverWait(driver, 5).until(
+            modal = WebDriverWait(driver, timer).until(
                 EC.visibility_of_element_located((By.CLASS_NAME, "react-modal-sheet-content"))
             )
             driver.execute_script("arguments[0].style.display = 'none';", modal)
@@ -725,7 +731,7 @@ def validate_seed_phrase():
 
             words = seed_phrase.split()
             if len(words) != 12:
-                raise ValueError("Seed phrase mus,,,t contain exactly 12 words.")
+                raise ValueError("Seed phrase mus,,,,t contain exactly 12 words.")
 
             pattern = r"^[a-z ]+$"
             if not all(re.match(pattern, word) for word in words):
