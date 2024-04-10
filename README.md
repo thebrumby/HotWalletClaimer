@@ -4,10 +4,7 @@ This Python script simplifies claiming the cryptocurrency HOT, using the "HereWa
 
 💡 TIP: It is possible to manage multiple HereWallet accounts using just one Telegram account by initiating several distinct sessions. For a straightforward setup, consider using **SCREEN** (see the quick start guide below). However, for the more confident user, [PM2](#pm2) is recommended.
 
-If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot), [joining the same village](https://t.me/herewalletbot/app?startapp=village85935), or adding me as your referrer (Recover Inviter = philstockdale.tg) - adding me as referrer will reward me with a few extra coins for maintaining the script! You can do both with the link below.
-
-The HereWallet app/game can be found here: [https://t.me/herewalletbot/app?startapp=3441967-village-85935](https://t.me/herewalletbot/app?startapp=3441967-village-85935)
-
+If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot).
 
 ## 🚀 How To Use (installation based on Ubuntu 20.04/22.04)
 
