@@ -70,7 +70,7 @@ def update_settings():
     if new_session_response == "y":
         forceNewSession = True
     else:
-        screenshotQRCode = False
+        forceNewSession = False
 
 def add_status_message(message):
     """Prepend a status message to pm2_updates.txt with a timestamp."""
@@ -216,6 +216,7 @@ def log_into_telegram():
 
     print(f"Our screenshot path is {screenshots_path}\n")
     print("*** Important: Having @HereWalletBot open in your Telegram App might stop this script loggin in! ***\n")
+    print(f"The QR code status is  {screenshotQRCode}\n")
     
     # QR Code Method
     if screenshotQRCode:
@@ -223,6 +224,7 @@ def log_into_telegram():
           WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
           xpath = "//canvas[@class='qr-canvas']"
           move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible", False)
+          time.sleep(5)
           driver.save_screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
           print ("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path))
           input('Hit enter after you scanned the QR code in Settings -> Devices -> Link Desktop Device:')
@@ -723,9 +725,9 @@ def validate_seed_phrase():
 
             words = seed_phrase.split()
             if len(words) != 12:
-                raise ValueError("Seed phrase must contain exactly 12 words.")
+                raise ValueError("Seed phrase mus,,t contain exactly 12 words.")
 
-            pattern = r"^[a-z ]+$"
+            pattern = r"^[a-,,z ]+$"
             if not all(re.match(pattern, word) for word in words):
                 raise ValueError("Seed phrase can only contain lowercase letters and spaces.")
             return seed_phrase  # Return if valid
