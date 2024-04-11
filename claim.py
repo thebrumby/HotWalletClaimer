@@ -423,21 +423,10 @@ def claim():
     xpath = "//h4[text()='Storage']"
     move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable", True)
 
-    try:
-        # Let's see how long until the wallet is ready to collected.
-        xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-        wait_time_element = move_and_click(xpath, 20, False, "get the pre-claim wait timer", "108", "visible", True)
-        wait_time_text = wait_time_element.text
-    except TimeoutException:
-        print("Could not find the wait time element within the specified time.")
-        wait_time_text = "Unknown"
-    except Exception as e:
-        print(f"Looks like there was an error - let's try again in 15 minutes.")
-        return 15
-        wait_time_text = "Unknown"
+    wait_time_text = get_wait_time("108") 
 
     try:
-        print("The pre-claim wait time is : {}".format(wait_time_text))
+        print("Step 108 - The pre-claim wait time is : {}".format(wait_time_text))
         if wait_time_text == "Filled" or forceClaim:
             try:
                 original_window = driver.current_window_handle
@@ -468,15 +457,7 @@ def claim():
                     print("Step 111 - Pending action spinner has stopped.\n")
                 except TimeoutException:
                     print("Step 111 - Looks like the site has lag- the Spinner did not disappear in time.\n")
-                try:
-                    # Let's see how long until the wallet is ready to collected.
-                    xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-                    wait_time_element = move_and_click(xpath, 20, False, "get the post-claim wait timer", "112", "visible", True)
-                    wait_time_text = wait_time_element.text
-                except TimeoutException:
-                    print("Could not find the wait time element within the specified time.")
-                    wait_time_text = "Unknown"
-                # Extract time until the "Storage" pot is full again:
+                wait_time_text = get_wait_time("112") 
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_wait_time += 1
@@ -510,6 +491,23 @@ def claim():
     except Exception as e:
         print("An unexpected error occurred: {}".format(e))
         return 60  # Default wait time in case of an unexpected error
+        
+def get_wait_time(step_number="108", max_attempts=2):
+    
+    for attempt in range(1, max_attempts + 1):
+        try:
+            xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
+            wait_time_element = move_and_click(xpath, 20, True, "get the pre-claim wait timer", step_number, "visible", True)
+            return wait_time_element.text
+
+        except TimeoutException:
+            print(f"Attempt {attempt}: Wait time element not found. Retrying...")
+
+        except Exception as e:
+            print(f"An error occurred on attempt {attempt}: {e}")
+
+    # If all attempts fail         
+    return "Unknown"
 
 def clear_screen():
     # Attempt to clear the screen after entering the seed phrase or mobile phone number.
@@ -644,12 +642,11 @@ def restore_from_backup():
 
 def close_modal(step):
     try:
-        print(f"Step {step} - Check if we need to close the modal (wait 5 seconds)...")
         if step == "107" or step == "108":
           timer = 10
         else:
           timer = 5
-
+        print(f"Step {step} - Check if we need to close the modal (wait {timer} seconds)...")
         try:  # Attempt to find the modal
             modal = WebDriverWait(driver, timer).until(
                 EC.visibility_of_element_located((By.CLASS_NAME, "react-modal-sheet-content"))
@@ -727,7 +724,7 @@ def validate_seed_phrase():
             seed_phrase = input("Please enter your 12-word seed phrase (your input is visible): ")
         try:
             if not seed_phrase:
-                raise ValueError("Seed phrase cannot be empty.")
+              raise ValueError("Seed phrase cannot be empty.")
 
             words = seed_phrase.split()
             if len(words) != 12:
@@ -739,7 +736,7 @@ def validate_seed_phrase():
             return seed_phrase  # Return if valid
 
         except ValueError as e:
-            print(f"Error: {e}")
+            print(f"Error: {e},,")
 
 def main():
     global forceNewSession, session_path
