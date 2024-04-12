@@ -97,7 +97,7 @@ If you have a second account, from the command line (not within the first Screen
 2. **Enable Debugging:** Type `y` to activate debugging screenshots or press `<Enter>` to leave debugging off.
 3. **QR Code Login Option:** Press `<Enter>` to log in by scanning a QR code in the screenshots folder, or `n` for phone number and OTP.
 4. **Force log in again:** Enter 'y' to force restarting the log-in process (in case an existing session throws errors).
-5. **Current max concurrent sessions:** Set how many sessions you wish to allow to be concurrently handled. Each one will use 450 MB RAM + some CPU power, but only during the startup/claim phases.
+5. **Maximum concurrent claims:** Set the number of claim sessions that can be processed simultaneously. Any claims that exceed this limit will be queued until a session slot becomes available. Please note that each active session typically consumes approximately 450 MB of RAM and additional CPU resources during the startup and claim phases.
 6. **Session Name Configuration:**
    - Press `<Enter>` to assign a default session name of ascending numeric values (1, 2, 3, etc.).
    - Alternatively, you can enter your own value (JohnDoe_Wallet, myWallet1, etc).
