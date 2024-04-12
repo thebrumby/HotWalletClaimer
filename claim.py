@@ -85,6 +85,8 @@ def update_settings():
     else:
         forceNewSession = False
         
+    print("\nSet the number of claim sessions that can be processed simultaneously. Any claims that exceed this limit will be queued until a session slot becomes available. Please note that each active session typically consumes approximately 450 MB of RAM and additional CPU resources during the startup and claim phases.")
+    
     new_max_sessions = input(f"Current max concurrent sessions: {maxSessions} (Press Enter to keep, or enter a new value): ")
 
     # Update if the user provided input 
