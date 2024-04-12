@@ -22,10 +22,13 @@ forceClaim = False
 debugIsOn = False
 hideSensitiveInput = True
 screenshotQRCode = True
-logPM2Messages = False
 driver = None
 target_element = None
 forceNewSession = False
+firstClaim = False
+status_file_path = "status.txt"
+DEFAULT_MAX_SESSIONS = 1
+
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
@@ -40,9 +43,19 @@ backup_path = "./backups/{}".format(user_input)
 os.makedirs(backup_path, exist_ok=True)
 print(f"Our screenshot path is {backup_path}")
 
+# Check if the settings file exists
+if os.path.exists("concurrent_sessions.txt"):
+    with open("concurrent_sessions.txt", "r") as f:
+        try:
+            maxSessions = int(f.read().strip())
+        except ValueError:
+            print("Invalid value found in 'concurrent_sessions.txt'. Using default.")
+else:
+    maxSessions = DEFAULT_MAX_SESSIONS  # No file, use the default
+
 # Prompt the user to modify settings
 def update_settings():
-    global forceClaim, debugIsOn, screenshotQRCode, forceNewSession
+    global forceClaim, debugIsOn, screenshotQRCode, forceNewSession, maxSessions
 
     # Force a claim on first run
     force_claim_response = input("Shall we force a claim on first run? (Y/N, default = N): ").strip().lower()
@@ -71,29 +84,19 @@ def update_settings():
         forceNewSession = True
     else:
         forceNewSession = False
+        
+    new_max_sessions = input(f"Current max concurrent sessions: {maxSessions} (Press Enter to keep, or enter a new value): ")
 
-def add_status_message(message):
-    """Prepend a status message to pm2_updates.txt with a timestamp."""
-    datetime_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    full_message = f"{datetime_now} - {message}\n"
-    
-    # Check if the file exists and read its content
-    if os.path.isfile(status_file_path):
-        with open(status_file_path, 'r') as file:
-            content = file.read()
-    else:
-        content = ""
-    
-    # Prepend the new message and write everything back
-    with open(status_file_path, 'w') as file:
-        file.write(full_message + content)
+    # Update if the user provided input 
+    if new_max_sessions:
+      try:
+        maxSessions = int(new_max_sessions)
+        with open("concurrent_sessions.txt", "w") as f:
+            f.write(str(maxSessions))
+        print("Max concurrent sessions updated.")
+      except ValueError:
+        print("Invalid input. Using previous or default value.")
 
-def log_next_claim_attempt(next_claim_time, wait_time_minutes):
-    """Log message about next claim attempt."""
-    next_claim_time_str = next_claim_time.strftime("%Y-%m-%d %H:%M:%S")
-    message = f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time_minutes} minutes."
-    add_status_message(message)
-    print(message)
 
 def get_session_id():
     """Prompts the user for a session ID or determines the next sequential ID.
@@ -125,8 +128,6 @@ if len(sys.argv) > 1:
         user_input = sys.argv[1]  # Get session ID from command-line argument
         print(f"Session ID provided: {user_input}")
         # Safely check for a second argument
-        if len(sys.argv) > 2 and sys.argv[2] == "verbose":
-            logPM2Messages = True
         if len(sys.argv) > 2 and sys.argv[2] == "debug":
             debugIsOn = True
 else:
@@ -141,8 +142,6 @@ os.makedirs(screenshots_path, exist_ok=True)
 backup_path = "./backups/{}".format(user_input)
 os.makedirs(backup_path, exist_ok=True)
 print(f"Our screenshot path is {screenshots_path}")
-status_file_name = "pm2_updates.txt"
-status_file_path = os.path.join(screenshots_path, status_file_name)
 
 # Define our base path for debugging screenshots
 screenshot_base = os.path.join(screenshots_path, "screenshot")
@@ -196,7 +195,44 @@ def quit_driver():
     global driver
     if driver:
         driver.quit()
-        driver = None 
+        driver = None
+        
+def manage_session():
+    current_session = session_path
+    current_timestamp = int(time.time())
+
+    while True:
+        try:
+            with open(status_file_path, "r+") as file:
+                status = json.load(file)
+
+                # Clean up expired sessions
+                for session_id, timestamp in list(status.items()):  # Important to iterate over a copy
+                    if current_timestamp - timestamp > 300:  # 5 minutes
+                        del status[session_id]
+                        print(f"Removed expired session: {session_id}")
+
+                # Check for available slots
+                if len(status) < maxSessions:
+                    status[current_session] = current_timestamp
+                    file.seek(0)  # Rewind to beginning
+                    json.dump(status, file)
+                    file.truncate()  # Ensure clean overwrite
+                    print(f"Session started: {current_session} in {status_file_path}")
+                    break  # Exit the loop once session is acquired
+
+            print(f"Waiting for slot. Current sessions: {len(status)}/{maxSessions}")
+            time.sleep(random.randint(20, 40))
+
+        except FileNotFoundError:
+            # Create file if it doesn't exist
+            with open(status_file_path, "w") as file:
+                json.dump({}, file)
+        except json.decoder.JSONDecodeError:
+            # Handle empty or corrupt JSON 
+            print("Corrupted status file. Resetting...")
+            with open(status_file_path, "w") as file:
+                json.dump({}, file)
  
 def log_into_telegram():
     global driver, target_element, debugIsOn, session_path, screenshots_path, backup_path, screenshotQRCode
@@ -331,46 +367,8 @@ def next_steps():
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def claim():
+def full_claim():
     global driver, target_element, debugIsOn, session_path
-
-    # Initialize variables
-    last_lock = None
-    retries = 1
-
-    while retries < 12:
-        # Check if file exists
-        if not os.path.exists("status.txt"):
-            break
-    
-        # Read current_lock from file
-        with open("status.txt", "r") as file:
-            current_lock = file.read().strip()
-
-        if last_lock == None:
-            last_lock = current_lock
-    
-        # Compare current and last lock
-        if current_lock == last_lock:
-            print(f"Waiting to start claim for: {current_lock}, attempt {retries}.")
-            retries += 1
-        else:
-            last_lock = current_lock
-            retries = 1
-            print(f"Waiting to start claim for: {current_lock}, attempt {retries}.")
-    
-        # Sleep for a random time between 20 to 40 seconds
-        random_timer = random.randint(20, 40)
-        time.sleep(random_timer)
-
-    if os.path.exists("status.txt"):
-        with open("status.txt", "r") as file:
-            current_lock = file.read().strip()
-        print (f"It seems that {current_lock} is stuck. Continuing anyway...")
-
-    with open("status.txt", "w") as file:
-        file.write(session_path)
-    print (f"Preventing other sessions from executing with 'status.txt' lock file for session: {session_path}...")
 
     driver = get_driver()
     print ("\nCHROME DRIVER INITIALISED: If the script exits before detaching, the session may need to be restored.")
@@ -424,6 +422,8 @@ def claim():
     move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable", True)
 
     wait_time_text = get_wait_time("108") 
+    if wait_time_text == "Unknown":
+      return 5
 
     try:
         print("Step 108 - The pre-claim wait time is : {}".format(wait_time_text))
@@ -498,10 +498,23 @@ def get_wait_time(step_number="108", max_attempts=2):
         try:
             xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
             wait_time_element = move_and_click(xpath, 20, True, "get the pre-claim wait timer", step_number, "visible", True)
+            # Check if wait_time_element is not None
+            if wait_time_element is not None:
+                return wait_time_element.text
+            else:
+                print(f"Step {step_number} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...")
+                storage_xpath = "//h4[text()='Storage']"
+                move_and_click(storage_xpath, 30, True, "click the 'storage' link", "108 recheck", "clickable", True)
+                print(f"Step {step_number} - Attempted to select strorage again...")
             return wait_time_element.text
 
         except TimeoutException:
-            print(f"Attempt {attempt}: Wait time element not found. Retrying...")
+            if attempt < max_attempts:  # Attempt failed, but retries remain
+                print(f"Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...")
+                storage_xpath = "//h4[text()='Storage']"
+                move_and_click(storage_xpath, 30, True, "click the 'storage' link", "107", "clickable", True)
+            else:  # No retries left after initial failure
+                print(f"Attempt {attempt}: Wait time element not found.")
 
         except Exception as e:
             print(f"An error occurred on attempt {attempt}: {e}")
@@ -618,7 +631,7 @@ def send_start(step):
         print(f"Step {step} - Attempting to restore from backup and retry.\n")
         if restore_from_backup():
             if not attempt_send_start():  # Retry after restoring backup
-                print(f"Step {step} - Retried after restoring backup, but still failed to send the '/start' command.\n")
+                print(f"Step {step} - Retried after restoring backup, but, s,till failed t,,o ,,send the '/start' command.\n")
         else:
             print(f"Step {step} - Backup restoration failed or backup directory does not exist.\n")
 
@@ -715,7 +728,7 @@ def move_and_click(xpath, wait_time, click, action_description, step, expectedCo
 
 
 def validate_seed_phrase():
-    # Let's take the user inputed seed phrase and carry out basic validation
+    # Let's take the user inputed seed phrase and carry o,,ut basic validation
     while True:
         # Prompt the user for their seed phrase
         if hideSensitiveInput:
@@ -739,10 +752,11 @@ def validate_seed_phrase():
             print(f"Error: {e},,")
 
 def main():
-    global forceNewSession, session_path
+    global forceNewSession, session_path, firstClaim, status_file_path, forceClaim
     driver = get_driver()
     quit_driver()
     clear_screen()
+    wait_time = 5
     cookies_path = os.path.join(session_path, 'cookies.json')
     if os.path.exists(cookies_path) and not forceNewSession:
         print("Resuming the previous session...")
@@ -752,39 +766,39 @@ def main():
         quit_driver()
         next_steps()
         quit_driver()
-        try: 
+        try:
             shutil.copytree(session_path, backup_path, dirs_exist_ok=True)
-            print ("We backed up the session data in case of a later crash!")
-        except TimeoutException:
-            print ("Opps, we weren't able to make a backup of the session data!")
+            print("We backed up the session data in case of a later crash!")
+        except Exception as e:
+            print("Oops, we weren't able to make a backup of the session data! Error:", e)
 
-        print ("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n")
-        # Let's now offer the option to stop here or carry on.
+        print("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n")
         user_choice = input("Enter 'y' to continue to 'claim' function or 'n' to exit and resume in PM2: ").lower()
         if user_choice == "n":
             print("Exiting script. You can resume the process using PM2.")
             sys.exit()
+
     while True:
-        wait_time = claim()
-        # Clear the lock
-        status_file_path = "status.txt"
+        manage_session()
+        wait_time = full_claim()
+
         if os.path.exists(status_file_path):
-            # Delete the file
-            os.remove(status_file_path)
-            print(f"Removing the processing lock for session: {session_path}.")
-        else:
-            print(f"The processing lock has already been removed.")
+            with open(status_file_path, "r+") as file:
+                status = json.load(file)
+                if session_path in status:
+                    del status[session_path]
+                    file.seek(0)
+                    json.dump(status, file)
+                    file.truncate()
+                    print(f"Session released: {session_path}")
+
         quit_driver()
-        print ("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n")
-        global forceClaim
-        forceClaim = False
+        print("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n")
+        
         now = datetime.now()
         next_claim_time = now + timedelta(minutes=wait_time)
         next_claim_time_str = next_claim_time.strftime("%H:%M")
-        if logPM2Messages:
-            log_next_claim_attempt(next_claim_time, wait_time)
-        else:
-            print(f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.")
+        print(f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.")
 
         while wait_time > 0:
             this_wait = min(wait_time, 15)
@@ -795,6 +809,7 @@ def main():
             wait_time -= this_wait
             if wait_time > 0:
                 print(f"Updated wait time: {wait_time} minutes left.")
+
 
 if __name__ == "__main__":
     main()
