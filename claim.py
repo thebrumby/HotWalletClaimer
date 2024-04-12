@@ -18,19 +18,90 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 
 # Initiate global variables:
-forceClaim = False
-debugIsOn = False
-hideSensitiveInput = True
-screenshotQRCode = True
 driver = None
 target_element = None
-forceNewSession = False
-firstClaim = False
-status_file_path = "status.txt"
-DEFAULT_MAX_SESSIONS = 1
 
+# Global variables
+settings = {
+    "forceClaim": False,
+    "debugIsOn": False,
+    "hideSensitiveInput": True,
+    "screenshotQRCode": True,
+    "maxSessions": 1,
+    "verboseLevel": 2,
+    "forceNewSession": False
+}
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
+
+settings_file = "variables.txt"
+status_file_path = "status.txt"
+
+def output(string, level):
+    if settings['verboseLevel'] >= level:
+        print(string)
+
+def load_settings():
+    global settings
+    if os.path.exists(settings_file):
+        with open(settings_file, "r") as f:
+            settings = json.load(f)
+        output("Settings loaded successfully.",3)
+    else:
+        save_settings()  # Create the file with default settings
+
+def save_settings():
+    global settings
+    with open(settings_file, "w") as f:
+        json.dump(settings, f, indent=4)
+    output("\nSettings saved successfully.",3)
+
+def update_settings():
+    global settings
+    load_settings()  # Assuming this function is defined to load settings from a file or similar source
+
+    output("\nCurrent settings:",1)
+    for key, value in settings.items():
+        output(f"{key}: {value}",1)
+
+    # Function to simplify the process of updating settings
+    def update_setting(setting_key, message, default_value):
+        current_value = settings.get(setting_key, default_value)
+        response = input(f"\n{message} (Y/N, press Enter to keep current [{current_value}]): ").strip().lower()
+        if response == "y":
+            settings[setting_key] = True
+        elif response == "n":
+            settings[setting_key] = False
+
+    update_setting("forceClaim", "Shall we force a claim on first run? Does not wait for the timer to be filled", settings["forceClaim"])
+    update_setting("debugIsOn", "Should we enable debugging? This will save screenshots in your local drive", settings["debugIsOn"])
+    update_setting("hideSensitiveInput", "Should we hide sensitive input? Your phone number and seed phrase will not be visible on the screen", settings["hideSensitiveInput"])
+    update_setting("screenshotQRCode", "Shall we allow log in by QR code? The alternative is by phone number and one-time password", settings["screenshotQRCode"])
+        
+    try:
+        new_max_sessions = int(input(f"\nEnter the number of max concurrent claim sessions. Additional claims will queue until a session slot is free.\n(current: {settings['maxSessions']}): "))
+        settings["maxSessions"] = new_max_sessions
+    except ValueError:
+        output("Invalid input. Number of sessions remains unchanged.",1)
+
+    try:
+        new_verbose_level = int(input(f"\nEnter the number for how much information you want displaying in the console.\n 3 = all messages, 2 = claim steps, 1 = minimal steps\n(current: {settings['verboseLevel']}): "))
+        if 1 <= new_verbose_level <= 3:
+            settings["verboseLevel"] = new_verbose_level
+            output("Verbose level updated successfully.",2)
+        else:
+            output("Invalid input. Please enter a number between 1 and 3. Verbose level remains unchanged.",2)
+    except ValueError:
+        output("Invalid input. Verbose level remains unchanged.",2)
+
+    save_settings()
+
+    update_setting("forceNewSession", "Overwrite existing session and Force New Login? Use this if your saved session has crashed\nOne-Time only (setting not saved): ", settings["forceNewSession"])
+
+    output("\nRevised settings:",1)
+    for key, value in settings.items():
+        output(f"{key}: {value}",1)
+    output("",1)
 
 # Set up paths and sessions:
 user_input = ""
@@ -38,67 +109,10 @@ session_path = "./selenium/{}".format(user_input)
 os.makedirs(session_path, exist_ok=True)
 screenshots_path = "./screenshots/{}".format(user_input)
 os.makedirs(screenshots_path, exist_ok=True)
-print(f"Our screenshot path is {screenshots_path}")
+output(f"Our screenshot path is {screenshots_path}",3)
 backup_path = "./backups/{}".format(user_input)
 os.makedirs(backup_path, exist_ok=True)
-print(f"Our screenshot path is {backup_path}")
-
-# Check if the settings file exists
-if os.path.exists("concurrent_sessions.txt"):
-    with open("concurrent_sessions.txt", "r") as f:
-        try:
-            maxSessions = int(f.read().strip())
-        except ValueError:
-            print("Invalid value found in 'concurrent_sessions.txt'. Using default.")
-else:
-    maxSessions = DEFAULT_MAX_SESSIONS  # No file, use the default
-
-# Prompt the user to modify settings
-def update_settings():
-    global forceClaim, debugIsOn, screenshotQRCode, forceNewSession, maxSessions
-
-    # Force a claim on first run
-    force_claim_response = input("Shall we force a claim on first run? (Y/N, default = N): ").strip().lower()
-    if force_claim_response == "y":
-        forceClaim = True
-    else:
-        forceClaim = False
-
-    # Enable debugging
-    debug_response = input("Should we enable debugging? (Y/N, default = N): ").strip().lower()
-    if debug_response == "y":
-        debugIsOn = True
-    else:
-        debugIsOn = False
-
-    # Allow log in by QR code
-    qr_code_response = input("Shall we allow log in by QR code? (Y/N, default = Y): ").strip().lower()
-    if qr_code_response == "n":
-        screenshotQRCode = False
-    else:
-        screenshotQRCode = True
-
-    # Allow force new session
-    new_session_response = input("Force New Login? If your existing session crashed (Y/N, default = N): ").strip().lower()
-    if new_session_response == "y":
-        forceNewSession = True
-    else:
-        forceNewSession = False
-        
-    print("\nSet the number of claim sessions that can be processed simultaneously. Any claims that exceed this limit will be queued until a session slot becomes available. Please note that each active session typically consumes approximately 450 MB of RAM and additional CPU resources during the startup and claim phases.\n")
-    
-    new_max_sessions = input(f"Current max concurrent sessions: {maxSessions} (Press Enter to keep, or enter a new value): ")
-
-    # Update if the user provided input 
-    if new_max_sessions:
-      try:
-        maxSessions = int(new_max_sessions)
-        with open("concurrent_sessions.txt", "w") as f:
-            f.write(str(maxSessions))
-        print("Max concurrent sessions updated.")
-      except ValueError:
-        print("Invalid input. Using previous or default value.")
-
+output(f"Our screenshot path is {backup_path}",3)
 
 def get_session_id():
     """Prompts the user for a session ID or determines the next sequential ID.
@@ -128,12 +142,14 @@ def get_session_id():
 # Update the settings based on user input
 if len(sys.argv) > 1:
         user_input = sys.argv[1]  # Get session ID from command-line argument
-        print(f"Session ID provided: {user_input}")
+        output(f"Session ID provided: {user_input}",2)
         # Safely check for a second argument
         if len(sys.argv) > 2 and sys.argv[2] == "debug":
-            debugIsOn = True
+            settings['debugIsOn'] = True
 else:
-    update_settings()
+    user_input = input("Should we update our settings? (Default:<enter> / Yes = y): ").strip().lower()
+    if user_input == "y":
+        update_settings()
     user_input = get_session_id()
 
 
@@ -143,7 +159,6 @@ screenshots_path = "./screenshots/{}".format(user_input)
 os.makedirs(screenshots_path, exist_ok=True)
 backup_path = "./backups/{}".format(user_input)
 os.makedirs(backup_path, exist_ok=True)
-print(f"Our screenshot path is {screenshots_path}")
 
 # Define our base path for debugging screenshots
 screenshot_base = os.path.join(screenshots_path, "screenshot")
@@ -168,10 +183,10 @@ def setup_driver(chromedriver_path):
         driver = webdriver.Chrome(service=service, options=chrome_options)
         return driver
     except Exception as e:
-        print(f"Initial ChromeDriver setup may have failed: {e}")
-        print("Please ensure you have the correct ChromeDriver version for your system.")
-        print("If you copied the GitHub commands, ensure all lines executed.")
-        print("Visit https://chromedriver.chromium.org/downloads to find the right version.")
+        output(f"Initial ChromeDriver setup may have failed: {e}",1)
+        output("Please ensure you have the correct ChromeDriver version for your system.",1)
+        output("If you copied the GitHub commands, ensure all lines executed.",1)
+        output("Visit https://chromedriver.chromium.org/downloads to find the right version.",1)
         exit(1)
 
 # Enter the correct the path to your ChromeDriver here
@@ -212,18 +227,18 @@ def manage_session():
                 for session_id, timestamp in list(status.items()):  # Important to iterate over a copy
                     if current_timestamp - timestamp > 300:  # 5 minutes
                         del status[session_id]
-                        print(f"Removed expired session: {session_id}")
+                        output(f"Removed expired session: {session_id}",3)
 
                 # Check for available slots
-                if len(status) < maxSessions:
+                if len(status) < settings['maxSessions']:
                     status[current_session] = current_timestamp
                     file.seek(0)  # Rewind to beginning
                     json.dump(status, file)
                     file.truncate()  # Ensure clean overwrite
-                    print(f"Session started: {current_session} in {status_file_path}")
+                    output(f"Session started: {current_session} in {status_file_path}",3)
                     break  # Exit the loop once session is acquired
 
-            print(f"Waiting for slot. Current sessions: {len(status)}/{maxSessions}")
+            output(f"Waiting for slot. Current sessions: {len(status)}/{settings['maxSessions']}",3)
             time.sleep(random.randint(20, 40))
 
         except FileNotFoundError:
@@ -232,12 +247,12 @@ def manage_session():
                 json.dump({}, file)
         except json.decoder.JSONDecodeError:
             # Handle empty or corrupt JSON 
-            print("Corrupted status file. Resetting...")
+            output("Corrupted status file. Resetting...",3)
             with open(status_file_path, "w") as file:
                 json.dump({}, file)
  
 def log_into_telegram():
-    global driver, target_element, debugIsOn, session_path, screenshots_path, backup_path, screenshotQRCode
+    global driver, target_element, session_path, screenshots_path, backup_path, settings
 
     if os.path.exists(session_path):
         shutil.rmtree(session_path)
@@ -252,12 +267,11 @@ def log_into_telegram():
     driver = get_driver()
     driver.get("https://web.telegram.org/k/#@herewalletbot")
 
-    print(f"Our screenshot path is {screenshots_path}\n")
-    print("*** Important: Having @HereWalletBot open in your Telegram App might stop this script loggin in! ***\n")
-    print(f"The QR code status is  {screenshotQRCode}\n")
+    output(f"Our screenshot path is {screenshots_path}\n",1)
+    output("*** Important: Having @HereWalletBot open in your Telegram App might stop this script loggin in! ***\n",1)
     
     # QR Code Method
-    if screenshotQRCode:
+    if settings['screenshotQRCode']:
         try:
           WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
           xpath = "//canvas[@class='qr-canvas']"
@@ -273,17 +287,17 @@ def log_into_telegram():
             wait = WebDriverWait(driver, 5)
             wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
             # Successful login using QR code
-            print("\nTimeout: Restart the script and retry the QR Code or wait for the OTP method.")
+            output("\nTimeout: Restart the script and retry the QR Code or wait for the OTP method.",2)
             
           except TimeoutException:
             return
             
 
         except TimeoutException:
-          print("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.")
+          output("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.",2)
 
     # OTP Login Method
-    print("Initiating the One-Time Password (OTP) method...\n")
+    output("Initiating the One-Time Password (OTP) method...\n",1)
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
     move_and_click(xpath, 30, True, "switch to log in by phone number", "01a", "clickable", False)
@@ -298,7 +312,7 @@ def log_into_telegram():
     # Phone Number Input
     xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
     target_element = move_and_click(xpath, 30, True, "request users phone number", "01c", "clickable", False)
-    if hideSensitiveInput:
+    if settings['hideSensitiveInput']:
         user_phone = getpass.getpass("Please enter your phone number without leading 0 (hidden input): ")
     else:
         user_phone = input("Please enter your phone number without leading 0 (visible input): ")
@@ -312,29 +326,29 @@ def log_into_telegram():
         # Attempt to locate and interact with the OTP field
         wait = WebDriverWait(driver, 20)
         password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='tel']")))
-        if debugIsOn:
+        if settings['debugIsOn']:
             time.sleep(3)
             driver.save_screenshot("{}/01e_Ready_for_OTP.png".format(screenshots_path))
         otp = input("Step 01e - What is the Telegram OTP from your app? ")
         password.click()
         password.send_keys(otp)
-        print("Step 01e - Let's try to log in using your Telegram OTP.\n")
+        output("Step 01e - Let's try to log in using your Telegram OTP.\n",3)
 
     except TimeoutException:
         # OTP field not found 
-        print("Step 01e - OTP entry has failed - maybe you entered the wrong code, or possible flood cooldown issue.")
+        output("Step 01e - OTP entry has failed - maybe you entered the wrong code, or possible flood cooldown issue.",1)
 
     except Exception as e:  # Catch any other unexpected errors
-        print("Login failed. Error:", e) 
-        if debugIsOn:
+        output("Login failed. Error: {e}", 1) 
+        if settings['debugIsOn']:
             driver.save_screenshot("{}/01-error_Something_Occured.png".format(screenshots_path))
     
-    if debugIsOn:
+    if settings['debugIsOn']:
         time.sleep(3)
         driver.save_screenshot("{}/01f_After_Entering_OTP.png".format(screenshots_path))
     
 def next_steps():
-    global driver, target_element, debugIsOn, backup_path, session_path
+    global driver, target_element, settings, backup_path, session_path
     driver = get_driver()
 
     try:
@@ -345,7 +359,7 @@ def next_steps():
         xpath = "//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
         input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", "09", "clickable", False)
         input_field.send_keys(validate_seed_phrase()) 
-        print("Step 09 - Was successfully able to enter the seed phrase...")
+        output("Step 09 - Was successfully able to enter the seed phrase...",3)
 
         # Click the continue button after seed phrase entry:
         xpath = "//button[contains(text(), 'Continue')]"
@@ -364,40 +378,39 @@ def next_steps():
             json.dump(cookies, file)
 
     except TimeoutException:
-        print("Failed to find or switch to the iframe within the timeout period.")
+        output("Failed to find or switch to the iframe within the timeout period.",1)
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        output(f"An error occurred: {e}",1)
 
 def full_claim():
-    global driver, target_element, debugIsOn, session_path
+    global driver, target_element, settings, session_path
 
     driver = get_driver()
-    print ("\nCHROME DRIVER INITIALISED: If the script exits before detaching, the session may need to be restored.")
-    print ("If it still fails after restore, restart the session and force fresh login.\n")
+    output("\nCHROME DRIVER INITIALISED: If the script exits before detaching, the session may need to be restored.",1)
 
     try:
         driver.get("https://web.telegram.org/k/#@herewalletbot")
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        print("Step 100 - Attempting to verify if we are logged in (hopefully QR code is not present).")
+        output("Step 100 - Attempting to verify if we are logged in (hopefully QR code is not present).",3)
         xpath = "//canvas[@class='qr-canvas']"
         wait = WebDriverWait(driver, 5)
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-        if debugIsOn:
+        if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/100-Test QR code after session is resumed.png"
             driver.save_screenshot(screenshot_path)
-        print("Chrome driver reports the QR code is visible: It appears we are no longer logged in.")
-        print("Most likely you will get a warning that the central input box is not found.")
-        print("System will try to restore session, or restart the script from CLI force a fresh log in.\n")
+        output("Chrome driver reports the QR code is visible: It appears we are no longer logged in.",1)
+        output("Most likely you will get a warning that the central input box is not found.",2)
+        output("System will try to restore session, or restart the script from CLI force a fresh log in.\n",1)
 
     except TimeoutException:
-        print("Step 100 - nothing found to action. The QR code test passed.\n")
+        output("Step 100 - nothing found to action. The QR code test passed.\n",3)
 
 
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
 
-    if debugIsOn:
+    if settings['debugIsOn']:
         time.sleep(3)
         driver.save_screenshot("{}/Step 100 Pre-Claim screenshot.png".format(screenshots_path))
 
@@ -423,21 +436,21 @@ def full_claim():
     xpath = "//h4[text()='Storage']"
     move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable", True)
 
-    wait_time_text = get_wait_time("108") 
+    wait_time_text = get_wait_time("108", "pre-claim") 
     if wait_time_text == "Unknown":
       return 5
 
     try:
-        print("Step 108 - The pre-claim wait time is : {}".format(wait_time_text))
-        if wait_time_text == "Filled" or forceClaim:
+        output("Step 108 - The pre-claim wait time is : {}".format(wait_time_text),1)
+        if wait_time_text == "Filled" or settings['forceClaim']:
             try:
                 original_window = driver.current_window_handle
                 xpath = "//button[contains(text(), 'Check NEWS')]"
                 move_and_click(xpath, 10, True, "check for NEWS.", "109", "clickable", True)
                 driver.switch_to.window(original_window)
             except TimeoutException:
-                if debugIsOn:
-                    print("No news to check or button not found.")
+                if settings['debugIsOn']:
+                    output("No news to check or button not found.",3)
 
             try:
                 # Let's double check if we have to reselect the iFrame after news
@@ -450,32 +463,32 @@ def full_claim():
 
                 # Now let's try again to get the time remaining until filled. 
                 # 4th April 24 - Let's wait for the spinner to disappear before trying to get the new time to fill.
-                print ("Step 111 - Let's wait for the pending Claim spinner to stop spinning...")
+                output("Step 111 - Let's wait for the pending Claim spinner to stop spinning...",2)
                 time.sleep(5)
                 wait = WebDriverWait(driver, 240)
                 spinner_xpath = "//*[contains(@class, 'spinner')]" 
                 try:
                     wait.until(EC.invisibility_of_element_located((By.XPATH, spinner_xpath)))
-                    print("Step 111 - Pending action spinner has stopped.\n")
+                    output("Step 111 - Pending action spinner has stopped.\n",3)
                 except TimeoutException:
-                    print("Step 111 - Looks like the site has lag- the Spinner did not disappear in time.\n")
-                wait_time_text = get_wait_time("112") 
+                    output("Step 111 - Looks like the site has lag- the Spinner did not disappear in time.\n",2)
+                wait_time_text = get_wait_time("112", "post-claim") 
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_wait_time += 1
                 if wait_time_text == "Filled":
-                    print("The wait timer is still showing: Filled.")
-                    print("This means either the claim failed, or there is >4 minutes lag in the game.")
-                    print("We'll check back in 1 hour to see if the claim processed and if not try again.")
+                    output("The wait timer is still showing: Filled.",1)
+                    output("This means either the claim failed, or there is >4 minutes lag in the game.",1)
+                    output("We'll check back in 1 hour to see if the claim processed and if not try again.",2)
                 else:
-                    print("Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time))
+                    output("Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time),1)
                 return max(60, total_wait_time)
 
             except TimeoutException:
-                print("The claim process timed out: Maybe the site has lag? Will retry after one hour.")
+                output("The claim process timed out: Maybe the site has lag? Will retry after one hour.",2)
                 return 60
             except Exception as e:
-                print(f"An error occurred while trying to claim: {e}\nLet's wait an hour and try again")
+                output(f"An error occurred while trying to claim: {e}\nLet's wait an hour and try again",1)
                 return 60
 
         else:
@@ -485,41 +498,41 @@ def full_claim():
                 total_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_time += 1
                 total_time = max(5, total_time) # Wait at least 5 minutes or the time
-                print("Not Time to claim this wallet yet. Wait for {} minutes until the storage is filled.".format(total_time))
+                output("Not Time to claim this wallet yet. Wait for {} minutes until the storage is filled.".format(total_time),2)
                 return total_time 
             else:
-                print("No wait time data found? Let's check again in one hour.")
+                output("No wait time data found? Let's check again in one hour.",2)
                 return 60  # Default wait time when no specific time until filled is found.
     except Exception as e:
-        print("An unexpected error occurred: {}".format(e))
+        output("An unexpected error occurred: {}".format(e),1)
         return 60  # Default wait time in case of an unexpected error
         
-def get_wait_time(step_number="108", max_attempts=2):
+def get_wait_time(step_number="108", beforeAfter = "pre-claim", max_attempts=2):
     
     for attempt in range(1, max_attempts + 1):
         try:
             xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-            wait_time_element = move_and_click(xpath, 20, True, "get the pre-claim wait timer", step_number, "visible", True)
+            wait_time_element = move_and_click(xpath, 20, True, f"get the {beforeAfter} wait timer", step_number, "visible", True)
             # Check if wait_time_element is not None
             if wait_time_element is not None:
                 return wait_time_element.text
             else:
-                print(f"Step {step_number} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...")
+                output(f"Step {step_number} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
                 storage_xpath = "//h4[text()='Storage']"
                 move_and_click(storage_xpath, 30, True, "click the 'storage' link", "108 recheck", "clickable", True)
-                print(f"Step {step_number} - Attempted to select strorage again...")
+                output(f"Step {step_number} - Attempted to select strorage again...",3)
             return wait_time_element.text
 
         except TimeoutException:
             if attempt < max_attempts:  # Attempt failed, but retries remain
-                print(f"Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...")
+                output(f"Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
                 storage_xpath = "//h4[text()='Storage']"
                 move_and_click(storage_xpath, 30, True, "click the 'storage' link", "107", "clickable", True)
             else:  # No retries left after initial failure
-                print(f"Attempt {attempt}: Wait time element not found.")
+                output(f"Attempt {attempt}: Wait time element not found.",3)
 
         except Exception as e:
-            print(f"An error occurred on attempt {attempt}: {e}")
+            output(f"An error occurred on attempt {attempt}: {e}",3)
 
     # If all attempts fail         
     return "Unknown"
@@ -534,34 +547,34 @@ def clear_screen():
         os.system('clear')
 
 def select_iframe(step):
-    global driver, screenshots_path, debugIsOn
-    print(f"Step {step} - Attempting to switch to the app's iFrame...")
+    global driver, screenshots_path, settings
+    output(f"Step {step} - Attempting to switch to the app's iFrame...",2)
 
     try:
         wait = WebDriverWait(driver, 20)
         popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
         iframe = popup_body.find_element(By.TAG_NAME, "iframe")
         driver.switch_to.frame(iframe)
-        print(f"Step {step} - Was successfully able to switch to the app's iFrame.\n")
+        output(f"Step {step} - Was successfully able to switch to the app's iFrame.\n",3)
 
-        if debugIsOn:
+        if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-iframe-switched.png"
             driver.save_screenshot(screenshot_path)
 
     except TimeoutException:
-        print(f"Step {step} - Failed to find or switch to the iframe within the timeout period.\n")
-        if debugIsOn:
+        output(f"Step {step} - Failed to find or switch to the iframe within the timeout period.\n",3)
+        if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-iframe-timeout.png"
             driver.save_screenshot(screenshot_path)
     except Exception as e:
-        print(f"Step {step} - An error occurred while attempting to switch to the iframe: {e}\n")
-        if debugIsOn:
+        output(f"Step {step} - An error occurred while attempting to switch to the iframe: {e}\n",3)
+        if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-iframe-error.png"
             driver.save_screenshot(screenshot_path)
 
 def find_working_link(step):
-    global driver, screenshots_path, debugIsOn
-    print(f"Step {step} - Attempting to open a link for the app...")
+    global driver, screenshots_path, settings
+    output(f"Step {step} - Attempting to open a link for the app...",2)
 
     start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
     try:
@@ -572,7 +585,7 @@ def find_working_link(step):
             actions = ActionChains(driver)
             actions.move_to_element(button).pause(0.2)
             try:
-                if debugIsOn:
+                if settings['debugIsOn']:
                     driver.save_screenshot(f"{screenshots_path}/{step} - Find working link.png".format(screenshots_path))
                 actions.perform()
                 driver.execute_script("arguments[0].click();", button)
@@ -584,30 +597,30 @@ def find_working_link(step):
                 continue
 
         if not clicked:
-            print(f"Step {step} - None of the 'Open Wallet' buttons were clickable.\n")
-            if debugIsOn:
+            output(f"Step {step} - None of the 'Open Wallet' buttons were clickable.\n",1)
+            if settings['debugIsOn']:
                 screenshot_path = f"{screenshots_path}/{step}-no-clickable-button.png"
                 driver.save_screenshot(screenshot_path)
         else:
-            print(f"Step {step} - Successfully able to open a link for the app..\n")
-            if debugIsOn:
+            output(f"Step {step} - Successfully able to open a link for the app..\n",3)
+            if settings['debugIsOn']:
                 screenshot_path = f"{screenshots_path}/{step}-app-opened.png"
                 driver.save_screenshot(screenshot_path)
 
     except TimeoutException:
-        print(f"Step {step} - Failed to find the 'Open Wallet' button within the expected timeframe.\n")
-        if debugIsOn:
+        output(f"Step {step} - Failed to find the 'Open Wallet' button within the expected timeframe.\n",1)
+        if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-timeout-finding-button.png"
             driver.save_screenshot(screenshot_path)
     except Exception as e:
-        print(f"Step {step} - An error occurred while trying to open the app: {e}\n")
-        if debugIsOn:
+        output(f"Step {step} - An error occurred while trying to open the app: {e}\n",1)
+        if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-unexpected-error-opening-app.png"
             driver.save_screenshot(screenshot_path)
 
 
 def send_start(step):
-    global driver, screenshots_path, backup_path, debugIsOn
+    global driver, screenshots_path, backup_path, settings
     xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
     
     def attempt_send_start():
@@ -616,26 +629,26 @@ def send_start(step):
         if chat_input:
             step_int = int(step) + 1
             new_step = f"{step_int:02}"
-            print(f"Step {new_step} - Attempting to send the '/start' command...")
+            output(f"Step {new_step} - Attempting to send the '/start' command...",2)
             chat_input.send_keys("/start")
             chat_input.send_keys(Keys.RETURN)
-            print(f"Step {new_step} - Successfully sent the '/start' command.\n")
-            if debugIsOn:
+            output(f"Step {new_step} - Successfully sent the '/start' command.\n",3)
+            if settings['debugIsOn']:
                 screenshot_path = f"{screenshots_path}/{new_step}-sent-start.png"
                 driver.save_screenshot(screenshot_path)
             return True
         else:
-            print(f"Step {step} - Failed to find the message input box.\n")
+            output(f"Step {step} - Failed to find the message input box.\n",1)
             return False
 
     if not attempt_send_start():
         # Attempt failed, try restoring from backup and retry
-        print(f"Step {step} - Attempting to restore from backup and retry.\n")
+        output(f"Step {step} - Attempting to restore from backup and retry.\n",2)
         if restore_from_backup():
             if not attempt_send_start():  # Retry after restoring backup
-                print(f"Step {step} - Retried after restoring backup, but, s,till failed t,,o ,,send the '/start' command.\n")
+                output(f"Step {step} - Retried after restoring backup, but still failed to send the '/start' command.\n",1)
         else:
-            print(f"Step {step} - Backup restoration failed or backup directory does not exist.\n")
+            output(f"Step {step} - Backup restoration failed or backup directory does not exist.\n",1)
 
 def restore_from_backup():
     if os.path.exists(backup_path):
@@ -646,94 +659,77 @@ def restore_from_backup():
             driver = get_driver()
             driver.get("https://web.telegram.org/k/#@herewalletbot")
             WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            print("Backup restored successfully.\n")
+            output("Backup restored successfully.\n",2)
             return True
         except Exception as e:
-            print(f"Error restoring backup: {e}\n")
+            output(f"Error restoring backup: {e}\n",1)
             return False
     else:
-        print("Backup directory does not exist.\n")
+        output("Backup directory does not exist.\n",1)
         return False
 
-def close_modal(step):
-    try:
-        if step == "107" or step == "108":
-          timer = 10
-        else:
-          timer = 5
-        print(f"Step {step} - Check if we need to close the modal (wait {timer} seconds)...")
-        try:  # Attempt to find the modal
-            modal = WebDriverWait(driver, timer).until(
-                EC.visibility_of_element_located((By.CLASS_NAME, "react-modal-sheet-content"))
-            )
-            driver.execute_script("arguments[0].style.display = 'none';", modal)
-            print(f"Step {step} - Closed Modal.")
-
-        except TimeoutException:
-            print(f"Step {step} - Modal not visible within timeout. Continuing...")
-
-    except NoSuchElementException:
-        print(f"Step {step} - Modal not found.")
-
 def move_and_click(xpath, wait_time, click, action_description, step, expectedCondition, closeModal):
-    global driver, screenshots_path, debugIsOn
-    if closeModal:
-        close_modal(step)
+    global driver, screenshots_path, settings
     target_element = None
     failed = False
-    print(f"Step {step} - Attempting to {action_description}...")
+
+    output(f"Step {step} - Attempting to {action_description}...", 2)
+
     try:
         wait = WebDriverWait(driver, wait_time)
+        # Check and prepare the element based on the expected condition
         if expectedCondition == "visible":
             target_element = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
         elif expectedCondition == "present":
             target_element = wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
         elif expectedCondition == "invisible":
             wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
-            # For 'invisible', there's no element to return, but the function signifies the element is gone.
+            return None  # Early return as there's no element to interact with
         elif expectedCondition == "clickable":
             target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
-        else:
-            print("The function wasn't called with a valid Expected Condition!")
-        
+
+        # Before interacting, check for and remove overlays if click is needed or visibility is essential
+        if click or expectedCondition in ["visible", "clickable"]:
+            clear_overlays(target_element, step)
+
         # Perform actions if the element is found and clicking is requested
         if click and target_element:
             try:
                 actions = ActionChains(driver)
                 actions.move_to_element(target_element).pause(0.2).click().perform()
-                if debugIsOn:
-                    print(f"Step {step} - Managed to {action_description} using ActionChains.")
-            except Exception as e:
-                if debugIsOn:
-                    print(f"Step {step} - ActionChains click failed. Attempting JavaScript click as fallback.")
+                output(f"Step {step} - Successfully clicked {action_description} using ActionChains.", 3)
+            except ElementClickInterceptedException:
+                output("Step {step} - Element click intercepted, attempting JavaScript click as fallback...", 3)
                 driver.execute_script("arguments[0].click();", target_element)
-                if debugIsOn:
-                    print(f"Step {step} - Managed to {action_description} using JavaScript fallback.")
-        if not failed:
-            print(f"Step {step} - Was successfully able to {action_description}.\n")
-        if debugIsOn:
-            screenshot_path = f"{screenshots_path}/{step}-{action_description}.png"
-            driver.save_screenshot(screenshot_path)
+                output(f"Step {step} - Successfully clicked {action_description} using JavaScript fallback.", 3)
+
     except TimeoutException:
-        print(f"Step {step} - nothing found to action.\n")
-        if debugIsOn:
+        output(f"Step {step} - Timeout while trying to {action_description}.", 3)
+    except Exception as e:
+        output(f"Step {step} - An error occurred while trying to {action_description}: {e}", 1)
+    finally:
+        if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-{action_description}.png"
             driver.save_screenshot(screenshot_path)
-    except Exception as e:
-        print(f"Step {step} - An error occurred while attempting to: {action_description}: {e}\n")
-        if debugIsOn:
-            screenshot_path = f"{screenshots_path}/{step}-ERROR-{action_description}.png"
-            driver.save_screenshot(screenshot_path)
-    finally:
-        # Always return target_element, even if it's None (indicating the element wasn't found or wasn't clickable)
         return target_element
 
+def clear_overlays(target_element, step):
+    # Get the location of the target element
+    element_location = target_element.location_once_scrolled_into_view
+    overlays = driver.find_elements(By.XPATH, "//*[contains(@style,'position: absolute') or contains(@style,'position: fixed')]")
+    for overlay in overlays:
+        overlay_rect = overlay.rect
+        # Check if overlay covers the target element
+        if (overlay_rect['x'] <= element_location['x'] <= overlay_rect['x'] + overlay_rect['width'] and
+            overlay_rect['y'] <= element_location['y'] <= overlay_rect['y'] + overlay_rect['height']):
+            driver.execute_script("arguments[0].style.display = 'none';", overlay)
+            output(f"Step {step} - Removed an overlay covering the target.", 3)
 
 def validate_seed_phrase():
     # Let's take the user inputed seed phrase and carry o,,ut basic validation
     while True:
         # Prompt the user for their seed phrase
-        if hideSensitiveInput:
+        if settings['hideSensitiveInput']:
             seed_phrase = getpass.getpass("Please enter your 12-word seed phrase (your input is hidden): ")
         else:
             seed_phrase = input("Please enter your 12-word seed phrase (your input is visible): ")
@@ -751,33 +747,34 @@ def validate_seed_phrase():
             return seed_phrase  # Return if valid
 
         except ValueError as e:
-            print(f"Error: {e},,")
+            output(f"Error: {e}",1)
 
 def main():
-    global forceNewSession, session_path, firstClaim, status_file_path, forceClaim
+    global session_path, settings
     driver = get_driver()
     quit_driver()
     clear_screen()
-    wait_time = 5
+    if not settings["forceNewSession"]:
+        load_settings()
     cookies_path = os.path.join(session_path, 'cookies.json')
-    if os.path.exists(cookies_path) and not forceNewSession:
-        print("Resuming the previous session...")
+    if os.path.exists(cookies_path) and not settings['forceNewSession']:
+        output("Resuming the previous session...",2)
     else:
-        print("Starting the Telegram & HereWalletBot login process...")
+        output("Starting the Telegram & HereWalletBot login process...",2)
         log_into_telegram()
         quit_driver()
         next_steps()
         quit_driver()
         try:
             shutil.copytree(session_path, backup_path, dirs_exist_ok=True)
-            print("We backed up the session data in case of a later crash!")
+            output("We backed up the session data in case of a later crash!",3)
         except Exception as e:
-            print("Oops, we weren't able to make a backup of the session data! Error:", e)
+            output("Oops, we weren't able to make a backup of the session data! Error:", 1)
 
-        print("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n")
+        output("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n",2)
         user_choice = input("Enter 'y' to continue to 'claim' function or 'n' to exit and resume in PM2: ").lower()
         if user_choice == "n":
-            print("Exiting script. You can resume the process using PM2.")
+            output("Exiting script. You can resume the process using PM2.",1)
             sys.exit()
 
     while True:
@@ -792,25 +789,25 @@ def main():
                     file.seek(0)
                     json.dump(status, file)
                     file.truncate()
-                    print(f"Session released: {session_path}")
+                    output(f"Session released: {session_path}",3)
 
         quit_driver()
-        print("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n")
+        output("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n",1)
         
         now = datetime.now()
         next_claim_time = now + timedelta(minutes=wait_time)
         next_claim_time_str = next_claim_time.strftime("%H:%M")
-        print(f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.")
+        output(f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.",1)
 
         while wait_time > 0:
             this_wait = min(wait_time, 15)
             now = datetime.now()
             timestamp = now.strftime("%H:%M")
-            print(f"[{timestamp}] Waiting for {this_wait} more minutes...")
+            output(f"[{timestamp}] Waiting for {this_wait} more minutes...",3)
             time.sleep(this_wait * 60)  # Convert minutes to seconds
             wait_time -= this_wait
             if wait_time > 0:
-                print(f"Updated wait time: {wait_time} minutes left.")
+                output(f"Updated wait time: {wait_time} minutes left.",3)
 
 
 if __name__ == "__main__":
