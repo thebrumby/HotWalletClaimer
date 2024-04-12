@@ -50,6 +50,7 @@ If you have a second account, from the command line (not within the first Screen
 2. **Download & Install the Chrome `.deb` package:**
 
    ```bash
+   sudo apt install -y wget
    wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb
    sudo apt install -y /tmp/chrome.deb
    rm /tmp/chrome.deb   
