@@ -90,27 +90,35 @@ If you have a second account, from the command line (not within the first Screen
    - By specifying an [optionalSessionName], it will attempt to resume that session (if it exists) or set it up without the option to change the default settings in the command line interface. 
 
 <a name="usage-notes"></a>
-## Usage Instructions
+## V1.4.1 Release Notes - Improved Claim Handling & Configurable Settings
 
-#### After executing the script with ```python3 claim.py```, the process flow is as follows:
+### Usage Instructions
+After executing the script with `python3 claim.py`, you will be prompted to update settings and configure the session:
 
-1. **Force Claim on First Run:** Enter `y` to force a claim even if the wallet isn't full; or press `<Enter>` to wait until full.
-2. **Enable Debugging:** Type `y` to activate debugging screenshots or press `<Enter>` to leave debugging off.
-3. **QR Code Login Option:** Press `<Enter>` to log in by scanning a QR code in the screenshots folder, or `n` for phone number and OTP.
-4. **Force log in again:** Enter 'y' to force restarting the log-in process (in case an existing session throws errors).
-5. **Maximum concurrent claims:** Set the number of claim sessions that can be processed simultaneously. Any claims that exceed this limit will be queued until a session slot becomes available. Please note that each active session typically consumes approximately 450 MB of RAM and additional CPU resources during the startup and claim phases.
-6. **Session Name Configuration:**
-   - Press `<Enter>` to assign a default session name of ascending numeric values (1, 2, 3, etc.).
-   - Alternatively, you can enter your own value (JohnDoe_Wallet, myWallet1, etc).
-   - Reusing an existing session name will attempt to resume that session unless you selected the option to force log in again.
-7. **Country Name for Telegram:**
-   - Input your Country Name exactly as listed on [Telegram's login page](https://web.telegram.org/k/), like "USA" or "UNITED KINGDOM".
-   - As a shortcut, pressing `<Enter>` attempts to select the corresponding Country Name based on your internet connection IP address.
-   - If your IP address location differs from your registered phone number location, you MUST explicitly specify the Country Name. 
-8. **Phone Number Entry:** Omit the initial "0" from your phone number when prompted.
-9. **One-Time Password (OTP)**: Enter the One-Time Password that has been sent to your Telegram Messaging Account.
-10. **Seed Phrase Input for HereWallet Login:** Your seed phrase remains private, with script transparency ensuring security. Ensure your phrase consists of exactly 12 words, spaced correctly without punctuation or numbers.
-11. **Exit script after login:** Before proceeding with the claim function, there is the option to save your progress for later use (such as starting an unattended claim in PM2)
+1. **Update Settings:**
+   - Decide if you want to update script parameters. You'll be prompted for the following:
+   - `forceClaim`: Force a claim even if the wallet isn't full; default is to wait until full.
+   - `debugIsOn`: Activate debugging to save screenshots; default is off.
+   - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON (True).
+   - `screenshotQRCode`: Log in by QR code; default is true, alternative is phone number and OTP.
+   - `maxSessions`: Number of simultaneous claim sessions; affects memory and CPU usage.
+   - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal) to 3 (all messages).
+   - `forceNewSession`: Overwrite existing session and force a new login; useful if an existing session has errors.
+2. **Session Name Configuration:**
+   - Auto-assigns a numeric value or accepts a custom session name. Reusing a name will attempt to resume that session.
+3. **Login Options:**
+   - The default is using scanning a QR Code screenshot. If that doesn't work, or you choose otherwise, follow the OTP login method in steps 4. & 5.
+4. **Country Name and Phone Number for Telegram:**
+   - Enter your Country Name as it appears on Telegram's login page or use the default based on your IP address.
+5. **One-Time Password (OTP):**
+   - Input the OTP sent to your Telegram account.
+6. **Seed Phrase Input for HereWallet Login:**
+   - Enter your 12-word seed phrase, ensuring it is spaced correctly without punctuation or numbers.
+7. **Exit or Continue:**
+   - Choose to exit the script and save progress for later or continue to the claim function.
+
+Remember to check and adjust your settings upon startup to optimize the script's performance to your server's capabilities.
+
 
 After following these steps, if all inputs are correctly entered, and assuming no flooding block is in place, you'll successfully logged into both Telegram and HereWallet.
 
