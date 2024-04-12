@@ -96,14 +96,14 @@ If you have a second account, from the command line (not within the first Screen
 After executing the script with `python3 claim.py`, you will be prompted to update settings and configure the session:
 
 1. **Update Settings:**
-   - Decide if you want to update script parameters. You'll be prompted for the following:
-   - `forceClaim`: Force a claim even if the wallet isn't full; default is to wait until full.
-   - `debugIsOn`: Activate debugging to save screenshots; default is off.
-   - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON (True).
-   - `screenshotQRCode`: Log in by QR code; default is true, alternative is phone number and OTP.
-   - `maxSessions`: Number of simultaneous claim sessions; affects memory and CPU usage.
-   - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal) to 3 (all messages).
-   - `forceNewSession`: Overwrite existing session and force a new login; useful if an existing session has errors.
+   - Decide if you want to update script parameters. If you choose "yes", you'll be prompted review/update the following:
+      - `forceClaim`: Force a claim even if the wallet isn't full; default is to wait until full.
+      - `debugIsOn`: Activate debugging to save screenshots; default is off.
+      - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON (True).
+      - `screenshotQRCode`: Log in by QR code; default is true, alternative is phone number and OTP.
+      - `maxSessions`: Number of simultaneous claim sessions; affects memory and CPU usage.
+      - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal) to 3 (all messages).
+      - `forceNewSession`: Overwrite existing session and force a new login; useful if an existing session has errors.
 2. **Session Name Configuration:**
    - Auto-assigns a numeric value or accepts a custom session name. Reusing a name will attempt to resume that session.
 3. **Login Options:**
@@ -114,7 +114,7 @@ After executing the script with `python3 claim.py`, you will be prompted to upda
    - Input the OTP sent to your Telegram account.
 6. **Seed Phrase Input for HereWallet Login:**
    - Enter your 12-word seed phrase, ensuring it is spaced correctly without punctuation or numbers.
-7. **Exit or Continue:**
+7. **Exit & resume later (possibly in PM2) or Continue in the CLI script:**
    - Choose to exit the script and save progress for later or continue to the claim function.
 
 Remember to check and adjust your settings upon startup to optimize the script's performance to your server's capabilities.
