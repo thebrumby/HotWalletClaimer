@@ -4,6 +4,9 @@
 sudo apt update
 sudo apt install -y python3 python3-pip || true
 
+# Double check wget is present
+sudo apt install -y wget || true
+
 # Install Chrome
 wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb
 sudo apt install -y /tmp/chrome.deb
