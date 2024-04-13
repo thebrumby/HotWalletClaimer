@@ -9,6 +9,7 @@ If you find this script useful, please consider [buying me a coffee](https://www
 #### Windows Users - Utilize WSL2 for a Seamless Experience:
 Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment directly on Windows, unmodified, without the overhead of a traditional virtual machine or dualboot setup. This makes it an excellent choice for running this script in a Linux-like environment on Windows machines, as the commands and drivers detailed below can be utilized directly. Alternatively, watch the video below and consider using a cloud-based Linux server (12-month free trials are often available).
 
+<a name="quick-start"></a>
 #### Linux Users - Quick Start (based on Ubuntu 20.04/22.04):
 Copy and paste the Quick Start command block into your terminal (or follow the manual steps below if you prefer).
 
@@ -157,6 +158,56 @@ Before using PM2 to manage your wallet sessions, you should open the script with
   </a><br>
    See a walkthrough of how to automate claims using PM, on <a href="https://www.youtube.com/watch?v=JUmczcdsaAw" title="YouTube Visual Instructions">YouTube</a>.
 </p>
+
+<a name="windows"></a>
+## Guide for Setting Up WSL2 in a Windows 10/11 Environment
+
+### Step 1: Enable WSL2 and Install Ubuntu 22.04
+
+1. **Open the Microsoft Store:**
+   - Click the Start menu and open the Microsoft Store. Search for "Ubuntu 22.04 LTS" and click on the install button. This will download and install the Ubuntu terminal environment.
+
+2. **Enable Windows Subsystem for Linux (WSL):**
+   - Before you can use Ubuntu, ensure that WSL is enabled and set up to use the newer WSL2 version. Open PowerShell as an administrator and run the following commands:
+
+     ```bash
+     dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+     ```
+
+     This command enables the WSL feature. Restart your computer after this step to ensure changes take effect.
+
+3. **Set WSL2 as Your Default Version:**
+   - After your system restarts, open PowerShell again as an administrator and set WSL2 as the default version with this command:
+
+     ```bash
+     wsl --set-default-version 2
+     ```
+
+     If this is your first time setting up WSL, you might be prompted to update the WSL2 kernel. Follow the link provided in the PowerShell window to download and install the WSL2 kernel update package.
+
+### Step 2: Launch Ubuntu 22.04
+
+1. **Start Ubuntu 22.04:**
+   - After installation, you can start Ubuntu by searching for "Ubuntu 22.04" in the Start menu and clicking on the app icon. The first launch will take a few minutes as it finalizes the setup.
+
+2. **Create a User Account and Password:**
+   - Upon first launch, you'll be prompted to enter a new username and password. This account will be your default user for Ubuntu and will have sudo (administrative) privileges.
+
+### Step 3: Update and Upgrade Ubuntu (Optional but Recommended)
+
+1. **Update Your System:**
+   - It's a good practice to update your package lists and upgrade the packages right after installation. In the Ubuntu terminal, run:
+
+     ```bash
+     sudo apt update && sudo apt upgrade
+     ```
+
+     This will ensure all your software is up to date.
+
+### Step 4: Resuming the main guide
+
+- Now that you have Ubuntu set up, you can go back to the [Quick Start](#quick-start) section at the top of the page.
+
 
 ## Inspiration and Enhancement
 
