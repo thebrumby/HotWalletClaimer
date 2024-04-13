@@ -12,8 +12,6 @@ Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment dir
 #### Linux Users - Quick Start (based on Ubuntu 20.04/22.04):
 Copy and paste the Quick Start command block into your terminal (or follow the manual steps below if you prefer).
 
-- VPS users should make an SSH connection via PuTTy or open the Command Window on your local machine.
-
    ```bash
    sudo apt install -y git || true && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh && ./install.sh
    ```
