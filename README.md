@@ -111,9 +111,11 @@ After executing the script with `python3 claim.py`, you will be prompted to upda
    - Enter your Country Name as it appears on Telegram's login page or use the default based on your IP address.
 5. **One-Time Password (OTP):**
    - Input the OTP sent to your Telegram account.
-6. **Seed Phrase Input for HereWallet Login:**
+6. **Two-Factor Authentication (2FA):**
+   - If your Telegram account has 2FA enabled, you'll be prompted to enter your password after scanning the QR code or entering the OTP. Input your 2FA password to continue the login process.
+7. **Seed Phrase Input for HereWallet Login:**
    - Enter your 12-word seed phrase, ensuring it is spaced correctly without punctuation or numbers.
-7. **Exit & resume later (possibly in PM2) or Continue in the CLI script:**
+8. **Exit & resume later (possibly in PM2) or Continue in the CLI script:**
    - Choose to exit the script and save progress for later or continue to the claim function.
 
 Remember to check and adjust your settings upon startup to optimize the script's performance to your server's capabilities.
