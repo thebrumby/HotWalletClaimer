@@ -6,10 +6,11 @@ This Python script simplifies claiming the cryptocurrency HOT, using the "HereWa
 
 If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot). The HereWallet game can be found [HERE](https://t.me/herewalletbot/app?startapp=3441967-village-85935).
 
-## 🚀 How To Use (installation based on Ubuntu 20.04/22.04)
+#### Windows Users - Utilize WSL2 for a Seamless Experience:
+Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment directly on Windows, unmodified, without the overhead of a traditional virtual machine or dualboot setup. This makes it an excellent choice for running this script in a Linux-like environment on Windows machines, as the commands and drivers detailed below can be utilized directly. Alternatively, watch the video below and consider using a cloud-based Linux server (12-month free trials are often available).
 
-### Linux Users - Quick Start (or follow the manual steps below)
-#### Install GitHub (if necessary), fetch this repository, run the install script!
+#### Linux Users - Quick Start (based on Ubuntu 20.04/22.04):
+Copy and paste the Quick Start command block into your terminal (or follow the manual steps below if you prefer).
 
 - VPS users should make an SSH connection via PuTTy or open the Command Window on your local machine.
 
