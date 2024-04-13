@@ -275,7 +275,7 @@ def log_into_telegram():
         try:
           WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
           xpath = "//canvas[@class='qr-canvas']"
-          move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible", False)
+          move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible")
           time.sleep(5)
           driver.save_screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
           print ("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path))
@@ -290,6 +290,7 @@ def log_into_telegram():
             output("\nTimeout: Restart the script and retry the QR Code or wait for the OTP method.",2)
             
           except TimeoutException:
+            test_for_2fa()
             return
             
 
@@ -300,18 +301,18 @@ def log_into_telegram():
     output("Initiating the One-Time Password (OTP) method...\n",1)
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
-    move_and_click(xpath, 30, True, "switch to log in by phone number", "01a", "clickable", False)
+    move_and_click(xpath, 30, True, "switch to log in by phone number", "01a", "clickable")
 
     # Country Code Selection
     xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
-    target_element = move_and_click(xpath, 30, True, "update users country", "01b", "clickable", False)
+    target_element = move_and_click(xpath, 30, True, "update users country", "01b", "clickable")
     user_input = input("Please enter your Country Name as it appears in the Telegram list: ").strip()  
     target_element.send_keys(user_input)
     target_element.send_keys(Keys.RETURN) 
 
     # Phone Number Input
     xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
-    target_element = move_and_click(xpath, 30, True, "request users phone number", "01c", "clickable", False)
+    target_element = move_and_click(xpath, 30, True, "request users phone number", "01c", "clickable")
     if settings['hideSensitiveInput']:
         user_phone = getpass.getpass("Please enter your phone number without leading 0 (hidden input): ")
     else:
@@ -320,7 +321,7 @@ def log_into_telegram():
 
     # Wait for the "Next" button to be clickable and click it    
     xpath = "//button[contains(@class, 'btn-primary') and .//span[contains(text(), 'Next')]]"
-    move_and_click(xpath, 30, True, "click next to proceed to OTP entry", "01d", "visible", False)
+    move_and_click(xpath, 30, True, "click next to proceed to OTP entry", "01d", "visible")
 
     try:
         # Attempt to locate and interact with the OTP field
@@ -343,10 +344,37 @@ def log_into_telegram():
         if settings['debugIsOn']:
             driver.save_screenshot("{}/01-error_Something_Occured.png".format(screenshots_path))
     
+    test_for_2fa()
+
     if settings['debugIsOn']:
         time.sleep(3)
         driver.save_screenshot("{}/01f_After_Entering_OTP.png".format(screenshots_path))
-    
+
+def test_for_2fa():
+    global settings, driver, screenshots_path
+    try:
+        xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
+        fa_input = move_and_click(xpath, 5, False, "check for 2FA requirement (for most users this will timeout)", "01g", "present")
+        if fa_input:
+            if settings['hideSensitiveInput']:
+                tg_password = getpass.getpass("Step 01g - Enter your Telegram 2FA password: ")
+            else:
+                tg_password = input("Step 01g - Enter your Telegram 2FA password: ")
+            fa_input.send_keys(tg_password + Keys.RETURN)
+            output("Step 01g - 2FA password entered successfully.\n", 3)
+        else:
+            output("Step 01g - 2FA input field not found.\n", 1)
+
+    except TimeoutException:
+        # 2FA field not found
+        output("Step 01g - No 2FA input field found. Continuing without it.\n", 3)
+
+    except Exception as e:  # Catch any other unexpected errors
+        output(f"Login failed. 2FA Error - you'll probably need to restart the script: {e}", 1)
+        if settings['debugIsOn']:
+            screenshot_path = f"{screenshots_path}/Step 01g - error: Something Bad Occured.png"
+            driver.save_screenshot(screenshot_path)
+
 def next_steps():
     global driver, target_element, settings, backup_path, session_path
     driver = get_driver()
@@ -357,21 +385,21 @@ def next_steps():
         
         # Then look for the seed phase textarea:
         xpath = "//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
-        input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", "09", "clickable", False)
+        input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", "09", "clickable")
         input_field.send_keys(validate_seed_phrase()) 
         output("Step 09 - Was successfully able to enter the seed phrase...",3)
 
         # Click the continue button after seed phrase entry:
         xpath = "//button[contains(text(), 'Continue')]"
-        move_and_click(xpath, 30, True, "click continue after seedphrase entry", "10", "clickable", False)
+        move_and_click(xpath, 30, True, "click continue after seedphrase entry", "10", "clickable")
 
         # Click the account selection button:
         xpath = "//button[contains(text(), 'Select account')]"
-        move_and_click(xpath, 120, True, "click continue at account selection screen", "11", "clickable", False)
+        move_and_click(xpath, 120, True, "click continue at account selection screen", "11", "clickable")
 
         # Click on the Storage link:
         xpath = "//h4[text()='Storage']"
-        move_and_click(xpath, 30, True, "click the 'storage' link", "12", "clickable", False)
+        move_and_click(xpath, 30, True, "click the 'storage' link", "12", "clickable")
         cookies_path = f"{session_path}/cookies.json"
         cookies = driver.get_cookies()
         with open(cookies_path, 'w') as file:
@@ -417,7 +445,7 @@ def full_claim():
     # There is a very unlikely scenario that the chat might have been cleared.
     # In this case, the "START" button needs pressing to expose the chat window!
     xpath = "//button[contains(., 'START')]"
-    move_and_click(xpath, 5, True, "check for the start button (should not be present)", "101", "clickable", False)
+    move_and_click(xpath, 5, True, "check for the start button (should not be present)", "101", "clickable")
 
     # Let's try to send the start command:
     send_start("102")
@@ -427,14 +455,14 @@ def full_claim():
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-    move_and_click(xpath, 30, True, "click the 'Launch' button", "105", "clickable", False)
+    move_and_click(xpath, 30, True, "click the 'Launch' button", "105", "clickable")
 
     # HereWalletBot Pop-up Handling
     select_iframe("106")
 
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
-    move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable", True)
+    move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable")
 
     wait_time_text = get_wait_time("108", "pre-claim") 
     if wait_time_text == "Unknown":
@@ -446,7 +474,7 @@ def full_claim():
             try:
                 original_window = driver.current_window_handle
                 xpath = "//button[contains(text(), 'Check NEWS')]"
-                move_and_click(xpath, 10, True, "check for NEWS.", "109", "clickable", True)
+                move_and_click(xpath, 10, True, "check for NEWS.", "109", "clickable")
                 driver.switch_to.window(original_window)
             except TimeoutException:
                 if settings['debugIsOn']:
@@ -459,7 +487,7 @@ def full_claim():
                 
                 # Click on the "Claim HOT" button:
                 xpath = "//button[contains(text(), 'Claim HOT')]"
-                move_and_click(xpath, 30, True, "click the claim button", "110", "clickable", True)
+                move_and_click(xpath, 30, True, "click the claim button", "110", "clickable")
 
                 # Now let's try again to get the time remaining until filled. 
                 # 4th April 24 - Let's wait for the spinner to disappear before trying to get the new time to fill.
@@ -512,14 +540,14 @@ def get_wait_time(step_number="108", beforeAfter = "pre-claim", max_attempts=2):
     for attempt in range(1, max_attempts + 1):
         try:
             xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-            wait_time_element = move_and_click(xpath, 20, True, f"get the {beforeAfter} wait timer", step_number, "visible", True)
+            wait_time_element = move_and_click(xpath, 20, True, f"get the {beforeAfter} wait timer", step_number, "visible")
             # Check if wait_time_element is not None
             if wait_time_element is not None:
                 return wait_time_element.text
             else:
                 output(f"Step {step_number} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
                 storage_xpath = "//h4[text()='Storage']"
-                move_and_click(storage_xpath, 30, True, "click the 'storage' link", "108 recheck", "clickable", True)
+                move_and_click(storage_xpath, 30, True, "click the 'storage' link", "108 recheck", "clickable")
                 output(f"Step {step_number} - Attempted to select strorage again...",3)
             return wait_time_element.text
 
@@ -527,7 +555,7 @@ def get_wait_time(step_number="108", beforeAfter = "pre-claim", max_attempts=2):
             if attempt < max_attempts:  # Attempt failed, but retries remain
                 output(f"Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
                 storage_xpath = "//h4[text()='Storage']"
-                move_and_click(storage_xpath, 30, True, "click the 'storage' link", "107", "clickable", True)
+                move_and_click(storage_xpath, 30, True, "click the 'storage' link", "107", "clickable")
             else:  # No retries left after initial failure
                 output(f"Attempt {attempt}: Wait time element not found.",3)
 
@@ -625,7 +653,7 @@ def send_start(step):
     
     def attempt_send_start():
         nonlocal step  # Allows us to modify the outer function's step variable
-        chat_input = move_and_click(xpath, 30, False, "find the chat window/message input box", step, "present", False)
+        chat_input = move_and_click(xpath, 30, False, "find the chat window/message input box", step, "present")
         if chat_input:
             step_int = int(step) + 1
             new_step = f"{step_int:02}"
@@ -668,7 +696,7 @@ def restore_from_backup():
         output("Backup directory does not exist.\n",1)
         return False
 
-def move_and_click(xpath, wait_time, click, action_description, step, expectedCondition, closeModal):
+def move_and_click(xpath, wait_time, click, action_description, step, expectedCondition):
     global driver, screenshots_path, settings
     target_element = None
     failed = False
@@ -697,11 +725,11 @@ def move_and_click(xpath, wait_time, click, action_description, step, expectedCo
             try:
                 actions = ActionChains(driver)
                 actions.move_to_element(target_element).pause(0.2).click().perform()
-                output(f"Step {step} - Successfully clicked {action_description} using ActionChains.", 3)
+                output(f"Step {step} - Was able to {action_description} using ActionChains.", 3)
             except ElementClickInterceptedException:
                 output("Step {step} - Element click intercepted, attempting JavaScript click as fallback...", 3)
                 driver.execute_script("arguments[0].click();", target_element)
-                output(f"Step {step} - Successfully clicked {action_description} using JavaScript fallback.", 3)
+                output(f"Step {step} - Was able to {action_description} using JavaScript fallback.", 3)
 
     except TimeoutException:
         output(f"Step {step} - Timeout while trying to {action_description}.", 3)
