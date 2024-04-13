@@ -98,13 +98,13 @@ After executing the script with `python3 claim.py`, you will be prompted to upda
 
 1. **Update Settings:**
    - Decide if you want to update script parameters. If you choose "yes", you'll be prompted review/update the following:
-      - `forceClaim`: Force a claim even if the wallet isn't full; default is to wait until full.
-      - `debugIsOn`: Activate debugging to save screenshots; default is off.
+      - `forceClaim`: Force a claim the first time the script runs, even if the wallet isn't full; default is to wait until full.
+      - `debugIsOn`: Activate debugging to save screenshots to your filesystem; default is off.
       - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON.
-      - `screenshotQRCode`: Log in by QR code; default is true, alternative is phone number and OTP.
+      - `screenshotQRCode`: Log in by QR code; default is true, the alternative is by phone number and OTP.
       - `maxSessions`: Defines the number of simultaneous claim sessions permitted. Even if only one session is allowed at a time, you can manage multiple wallets. Additional wallets will queue and wait for an available claim session slot.
-      - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal) to 3 (all messages).
-      - `forceNewSession`: Overwrite existing session and force a new login; useful if an existing session has errors.
+      - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal), 2 (main steps) 3 (all messages).
+      - `forceNewSession`: Overwrite an existing session and force a new login. Requires repeating both Telegram log-in & seed words entry - useful if an existing session has errors.
 2. **Session Name Configuration:**
    - Auto-assigns a numeric value or accepts a custom session name. Reusing a name will attempt to resume that session.
 3. **Login Options:**
