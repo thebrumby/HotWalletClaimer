@@ -102,7 +102,7 @@ After executing the script with `python3 claim.py`, you will be prompted to upda
       - `debugIsOn`: Activate debugging to save screenshots; default is off.
       - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON.
       - `screenshotQRCode`: Log in by QR code; default is true, alternative is phone number and OTP.
-      - `maxSessions`: Number of simultaneous claim sessions; affects memory and CPU usage.
+      - `maxSessions`: Defines the number of simultaneous claim sessions permitted. Even if only one session is allowed at a time, you can manage multiple wallets. Additional wallets will queue and wait for an available claim session slot.
       - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal) to 3 (all messages).
       - `forceNewSession`: Overwrite existing session and force a new login; useful if an existing session has errors.
 2. **Session Name Configuration:**
@@ -126,7 +126,7 @@ After following these steps, if all inputs are correctly entered, and assuming n
 <a name="pm2"></a>
 ## Use of PM2
 
-Install PM2 manually, or use the install script packaged here:
+Install PM2 manually, or use the install script packaged in the HotWalletBot directory:
 
    ```bash
    sudo chmod +x install_pm2.sh && sudo ./install_pm2.sh
