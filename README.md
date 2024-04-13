@@ -98,7 +98,7 @@ After executing the script with `python3 claim.py`, you will be prompted to upda
 
 1. **Update Settings:**
    - Decide if you want to update script parameters. If you choose "yes", you'll be prompted review/update the following:
-      - `forceClaim`: Force a claim the first time the script runs, even if the wallet isn't full; default is to wait until full.
+      - `forceClaim`: Force a claim the first time the script runs, even if the wallet isn't full. Default = wait until full.
       - `debugIsOn`: Activate debugging to save screenshots to your filesystem; default is off.
       - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON.
       - `screenshotQRCode`: Log in by QR code; default is true, the alternative is by phone number and OTP.
