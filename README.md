@@ -1,4 +1,4 @@
-# Near Protocol: Herewallet Hot Auto-Claim Bot
+# Near Protocol: Herewallet Hot Token Auto-Claim Bot
 
 This Python script simplifies claiming the cryptocurrency HOT, using the "HereWalletBot" app, a free-to-use application on Telegram that is also Web3 enabled on the NEAR Protocol blockchain. The app requires frequent logins to claim HOT tokens if you intend to accumulate the maximum rewards. This script automates the claim process, attempting to claim immediately after the wallet is full. Should the wallet not be filled, it calculates the time until completion and waits to claim, optimizing network usage and lowering your Gas Fees.
 
