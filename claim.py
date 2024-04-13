@@ -254,6 +254,38 @@ def manage_session():
 def log_into_telegram():
     global driver, target_element, session_path, screenshots_path, backup_path, settings
 
+    def screenshot_QR_code():
+        global driver, settings, screenshots_path
+        WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+        xpath = "//canvas[@class='qr-canvas']"
+        QR_code = move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible")
+        driver.execute_script("document.body.style.zoom = '120%'")  # Adjust zoom level as needed
+        driver.save_screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
+
+        print ("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path))
+        input('Hit enter after you scanned the QR code in Settings -> Devices -> Link Desktop Device:')
+
+
+    def test_for_QR_code():
+        global driver, settings, screenshots_path
+        max_attempts = 6
+        wait_time = 1  # Seconds
+        for _ in range(max_attempts):
+            try:
+                driver.get("https://web.telegram.org/k/#@herewalletbot")
+                WebDriverWait(driver, wait_time).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+                xpath = "//canvas[@class='qr-canvas']"
+                wait = WebDriverWait(driver, 2)  # Short wait for QR code
+                wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+                time.sleep(wait_time)
+                output("Step 00a - QR code still visible.",3)
+                
+            except TimeoutException:
+                return True
+
+        return False  # QR code not found after all attempts
+
+
     if os.path.exists(session_path):
         shutil.rmtree(session_path)
     os.makedirs(session_path, exist_ok=True)
@@ -273,29 +305,23 @@ def log_into_telegram():
     # QR Code Method
     if settings['screenshotQRCode']:
         try:
-          WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-          xpath = "//canvas[@class='qr-canvas']"
-          move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible")
-          driver.save_screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
-          print ("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path))
-          input('Hit enter after you scanned the QR code in Settings -> Devices -> Link Desktop Device:')
-          try:
-            driver.get("https://web.telegram.org/k/#@herewalletbot")
-            WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            time.sleep(3)
-            xpath = "//canvas[@class='qr-canvas']"
-            wait = WebDriverWait(driver, 5)
-            wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-            # Successful login using QR code
-            output("\nTimeout: Restart the script and retry the QR Code or wait for the OTP method.",2)
-            
-          except TimeoutException:
-            test_for_2fa()
-            return
-            
+            screenshot_QR_code()  # Take the initial screenshot
+
+            while True:
+                if test_for_QR_code():  # QR code not found
+                    test_for_2fa()
+                    return  # Exit the function entirely
+
+                # If we reach here, it means the QR code is still present:
+                choice = input("\nStep 00a - QR Code still present. Retry (r) with a new QR code or switch to the OTP method (enter): ")
+                print("")
+                if choice.lower() == 'r':
+                    screenshot_QR_code()
+                else:
+                    break
 
         except TimeoutException:
-          output("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.",2)
+            output("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.", 1)
 
     # OTP Login Method
     output("Initiating the One-Time Password (OTP) method...\n",1)
@@ -355,7 +381,7 @@ def test_for_2fa():
     try:
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
         xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
-        fa_input = move_and_click(xpath, 2, False, "check for 2FA requirement (for most users this will timeout)", "01g", "present")
+        fa_input = move_and_click(xpath, 5, False, "check for 2FA requirement (for most users this will timeout)", "01g", "present")
         if fa_input:
             if settings['hideSensitiveInput']:
                 tg_password = getpass.getpass("Step 01g - Enter your Telegram 2FA password: ")
