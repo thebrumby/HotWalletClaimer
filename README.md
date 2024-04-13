@@ -21,7 +21,7 @@ Start your first session with ```screen -S first_session```. If you are not in t
 
 If you have a second account, from the command line (not within the first Screen), start another session with ```screen -S second_session``` and execute the Python script ```python3 claim.py```. You may now run another instance of ```python3 claim.py``` to log into the second account. You can exit Screen and leave the script unattended by pressing ```CTRL+A+D```. ```screen -r second_session``` will resume the session for you to check on progress, or for errors. If you wish to start the Python script without the CLI setup and go straight into an existing session, use ```python3 claim.py 2```. Note: 2 is the default session name for the second session, if you changed it,  replace "[2]"  with the exact Session Name you specified when setting this session up. 
 
-💡 Tip: Each active claim session requires approximately 450 MB of memory and consumes a portion of CPU resources during login or when making a claim. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes).
+💡 Tip: Each active claim session requires approximately 450 MB of memory and consumes a portion of CPU resources during login or when making a claim. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Claiming on multiple wallets is still possible with only one allowed claim session; other pending claims will simply queue until the current session is completed.
 
 <p align="center">
   <table style="margin-left: auto; margin-right: auto; width: 100%;"><tr>
