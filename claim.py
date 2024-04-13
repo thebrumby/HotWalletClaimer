@@ -276,13 +276,13 @@ def log_into_telegram():
           WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
           xpath = "//canvas[@class='qr-canvas']"
           move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible")
-          time.sleep(5)
           driver.save_screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
           print ("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path))
           input('Hit enter after you scanned the QR code in Settings -> Devices -> Link Desktop Device:')
           try:
             driver.get("https://web.telegram.org/k/#@herewalletbot")
             WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            time.sleep(3)
             xpath = "//canvas[@class='qr-canvas']"
             wait = WebDriverWait(driver, 5)
             wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -353,8 +353,9 @@ def log_into_telegram():
 def test_for_2fa():
     global settings, driver, screenshots_path
     try:
+        WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
         xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
-        fa_input = move_and_click(xpath, 5, False, "check for 2FA requirement (for most users this will timeout)", "01g", "present")
+        fa_input = move_and_click(xpath, 2, False, "check for 2FA requirement (for most users this will timeout)", "01g", "present")
         if fa_input:
             if settings['hideSensitiveInput']:
                 tg_password = getpass.getpass("Step 01g - Enter your Telegram 2FA password: ")
