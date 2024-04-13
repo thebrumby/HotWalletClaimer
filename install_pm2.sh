@@ -32,8 +32,8 @@ echo "PM2 version:"
 pm2 --version
 
 echo "Start PM2 as a service: pm2 startup systemd"
-echo "Add a first session: pm2 start claim.py --name firstWallet -- 1 verbose"
-echo "Add a second session: pm2 start claim.py --name secondWallet -- 2 verbose"
+echo "Add a first session: pm2 start claim.py --name firstWallet -- 1"
+echo "Add a second session: pm2 start claim.py --name secondWallet -- 2"
 echo "Save the PM2 list, it will persist through reboots: pm2 save"
 echo "See the current list of processes managed by PM2: pm2 list"
 echo "Remove a wallet from PM2: pm2 delete firstWallet"
