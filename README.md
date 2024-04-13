@@ -6,8 +6,8 @@ This Python script simplifies claiming the cryptocurrency HOT, using the "HereWa
 
 If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot). You can join the HereWallet game using [this link](https://t.me/herewalletbot/app?startapp=3441967-village-85935). If you'd like to support me, use this link to make me your referrer, which helps me earn extra tokens. Thanks in advance for any support!
 
-#### Windows Users - Utilize WSL2 for a Seamless Experience:
-Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment directly on Windows, unmodified, without the overhead of a traditional virtual machine or dualboot setup. This makes it an excellent choice for running this script in a Linux-like environment on Windows machines, as the commands and drivers detailed below can be utilized directly. Alternatively, watch the video below and consider using a cloud-based Linux server (12-month free trials are often available).
+#### Windows 10 & 11 Users - Utilize WSL2 for a Seamless Experience:
+For detailed instructions on setting up your environment using Windows Subsystem for Linux 2 (WSL2), please refer to our [Windows Setup](#windows) section.
 
 <a name="quick-start"></a>
 #### Linux Users - Quick Start (based on Ubuntu 20.04/22.04):
@@ -162,6 +162,8 @@ Before using PM2 to manage your wallet sessions, you should open the script with
 <a name="windows"></a>
 ## Guide for Setting Up WSL2 in a Windows 10/11 Environment
 
+Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment directly on Windows, unmodified, without the overhead of a traditional virtual machine or dualboot setup. This makes it an excellent choice for running this script in a Linux-like environment on Windows machines, as the commands and drivers detailed below can be utilized directly. Alternatively, watch the video below and consider using a cloud-based Linux server (12-month free trials are often available).
+
 ### Step 1: Enable WSL2 and Install Ubuntu 22.04
 
 1. **Open the Microsoft Store:**
@@ -204,10 +206,20 @@ Before using PM2 to manage your wallet sessions, you should open the script with
 
      This will ensure all your software is up to date.
 
-### Step 4: Resuming the main guide
+### Step 4: Follow the Setup and Initialization as per the Ubuntu/Linux Instructions
 
-- Now that you have Ubuntu set up, you can go back to the [Quick Start](#quick-start) section at the top of the page.
+- Now that you have Ubuntu set up, you can return to the [Quick Start](#quick-start) section at the top of the page for further instructions.
 
+### Step 5: Configure WSL & PM2 to Start When Your Machine Starts (Optional)
+
+- Press `Win + R` to open the Run dialog box. Type `shell:startup` to open the Startup folder. Then, copy the `windows_pm2_restart.bat` file from your HotWalletBot directory into the Startup folder.
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=2MCemn70ysI" title="Setting up Ubuntu within Windows using WSL.">
+    <img src="https://img.youtube.com/vi/2MCemn70ysI/0.jpg" alt="Setting up Ubuntu within Windows using WSL.">
+  </a><br>
+   See a walkthrough of how to setup Ubuntu within Windows using WSL with our <a href="https://www.youtube.com/watch?v=2MCemn70ysI" title="YouTube Visual Instructions">YouTube</a>.
+</p>
 
 ## Inspiration and Enhancement
 
