@@ -100,7 +100,7 @@ After executing the script with `python3 claim.py`, you will be prompted to upda
    - Decide if you want to update script parameters. If you choose "yes", you'll be prompted review/update the following:
       - `forceClaim`: Force a claim even if the wallet isn't full; default is to wait until full.
       - `debugIsOn`: Activate debugging to save screenshots; default is off.
-      - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON (True).
+      - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON.
       - `screenshotQRCode`: Log in by QR code; default is true, alternative is phone number and OTP.
       - `maxSessions`: Number of simultaneous claim sessions; affects memory and CPU usage.
       - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal) to 3 (all messages).
