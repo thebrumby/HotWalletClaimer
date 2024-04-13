@@ -4,7 +4,7 @@ This Python script simplifies claiming the cryptocurrency HOT, using the "HereWa
 
 💡 **TIP:** While you cannot register more than one wallet to a single Telegram user account, this script enables you to manage multiple pre-existing HereWallet accounts using just one Telegram account by initiating multiple individual sessions. For straightforward setup, consider using **SCREEN** (refer to the quick start guide below). For more advanced users, [PM2](#pm2) is recommended.
 
-If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot). The HereWallet game can be found [HERE](https://t.me/herewalletbot/app?startapp=3441967-village-85935).
+If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot). You can join the HereWallet game using [this link](https://t.me/herewalletbot/app?startapp=3441967-village-85935). If you'd like to support me, use this link to make me your referrer, which helps me earn extra tokens. Thanks in advance for any support!
 
 #### Windows Users - Utilize WSL2 for a Seamless Experience:
 Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment directly on Windows, unmodified, without the overhead of a traditional virtual machine or dualboot setup. This makes it an excellent choice for running this script in a Linux-like environment on Windows machines, as the commands and drivers detailed below can be utilized directly. Alternatively, watch the video below and consider using a cloud-based Linux server (12-month free trials are often available).
