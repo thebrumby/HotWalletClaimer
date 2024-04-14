@@ -90,7 +90,7 @@ If you have a second account, from the command line (not within the first Screen
    - By specifying an [optionalSessionName], it will attempt to resume that session (if it exists) or set it up without the option to change the default settings in the command line interface. 
 
 <a name="usage-notes"></a>
-## V1.4.1 Release Notes - Improved Claim Handling & Configurable Settings
+## V1.4.2 Release Notes - Improved Claim Handling & Configurable Settings
 
 ### Usage Instructions
 After executing the script with `python3 claim.py`, you will be prompted to update settings and configure the session:
