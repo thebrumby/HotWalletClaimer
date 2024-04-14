@@ -6,6 +6,7 @@ import re
 import json
 import getpass
 import random
+import subprocess
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
@@ -29,7 +30,7 @@ settings = {
     "screenshotQRCode": True,
     "maxSessions": 1,
     "verboseLevel": 2,
-    "forceNewSession": False
+    "forceNewSession": False,
 }
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
@@ -115,6 +116,7 @@ os.makedirs(backup_path, exist_ok=True)
 output(f"Our screenshot path is {backup_path}",3)
 
 def get_session_id():
+    global settings
     """Prompts the user for a session ID or determines the next sequential ID.
 
     Returns:
@@ -136,7 +138,6 @@ def get_session_id():
     # Use the next sequential ID if no user input was provided
     if not user_input:
         user_input = next_session_id
-
     return user_input
 
 # Update the settings based on user input
@@ -259,10 +260,8 @@ def log_into_telegram():
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
         xpath = "//canvas[@class='qr-canvas']"
         QR_code = move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible")
-        driver.execute_script("document.body.style.zoom = '120%'")  # Adjust zoom level as needed
-        driver.save_screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
-
-        print ("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path))
+        QR_code.screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
+        output("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path),1)
         input('Hit enter after you scanned the QR code in Settings -> Devices -> Link Desktop Device:')
 
 
@@ -339,15 +338,27 @@ def log_into_telegram():
     # Phone Number Input
     xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
     target_element = move_and_click(xpath, 30, True, "request users phone number", "01c", "clickable")
-    if settings['hideSensitiveInput']:
-        user_phone = getpass.getpass("Please enter your phone number without leading 0 (hidden input): ")
-    else:
-        user_phone = input("Please enter your phone number without leading 0 (visible input): ")
+    def validate_phone_number(phone):
+        # Regex for validating an international phone number without leading 0 and typically 7 to 15 digits long
+        pattern = re.compile(r"^[1-9][0-9]{6,14}$")
+        return pattern.match(phone)
+
+    while True:
+        if settings['hideSensitiveInput']:
+            user_phone = getpass.getpass("Please enter your phone number without leading 0 (hidden input): ")
+        else:
+            user_phone = input("Please enter your phone number without leading 0 (visible input): ")
+    
+        if validate_phone_number(user_phone):
+            output("Step 01c - Valid phone number entered.",3)
+            break
+        else:
+            output("Step 01c - Invalid phone number, must be 7 to 15 digits long and without leading 0.",1)
     target_element.send_keys(user_phone)
 
     # Wait for the "Next" button to be clickable and click it    
     xpath = "//button[contains(@class, 'btn-primary') and .//span[contains(text(), 'Next')]]"
-    move_and_click(xpath, 30, True, "click next to proceed to OTP entry", "01d", "visible")
+    move_and_click(xpath, 5, True, "click next to proceed to OTP entry", "01d", "visible")
 
     try:
         # Attempt to locate and interact with the OTP field
@@ -394,7 +405,7 @@ def test_for_2fa():
 
     except TimeoutException:
         # 2FA field not found
-        output("Step 01g - No 2FA input field found. Continuing without it.\n", 3)
+        output("Step 01g - Two-factor Authorization not required.\n", 3)
 
     except Exception as e:  # Catch any other unexpected errors
         output(f"Login failed. 2FA Error - you'll probably need to restart the script: {e}", 1)
@@ -804,6 +815,17 @@ def validate_seed_phrase():
         except ValueError as e:
             output(f"Error: {e}",1)
 
+# Start a new PM2 process
+def start_pm2_app(script_path, app_name, session_name):
+    command = f"pm2 start {script_path} --name {app_name} -- {session_name}"
+    subprocess.run(command, shell=True, check=True)
+
+# List all PM2 processes
+def save_pm2():
+    command = "pm2 save"
+    result = subprocess.run(command, shell=True, text=True, capture_output=True)
+    print(result.stdout)
+
 def main():
     global session_path, settings
     driver = get_driver()
@@ -827,9 +849,18 @@ def main():
             output("Oops, we weren't able to make a backup of the session data! Error:", 1)
 
         output("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n",2)
-        user_choice = input("Enter 'y' to continue to 'claim' function or 'n' to exit and resume in PM2: ").lower()
+        pm2_session = session_path.replace("./selenium/", "")
+        output(f"You could add the new/updated session to PM use: pm2 start claim.py --name {pm2_session} -- {pm2_session}",1)
+        user_choice = input("Enter 'y' to continue to 'claim' function, 'n' to exit or 'a' to add in PM2: ").lower()
         if user_choice == "n":
-            output("Exiting script. You can resume the process using PM2.",1)
+            output("Exiting script. You can resume the process later.",1)
+            sys.exit()
+        if user_choice == "a":
+            start_pm2_app("claim.py", pm2_session, pm2_session)
+            user_choice = input("Should we save your PM2 processes? (y, or enter to skip): ").lower()
+            if user_choice == "y":
+                save_pm2()
+            output(f"You can now watch the session log into PM2 with: pm2 logs {pm2_session}",2)
             sys.exit()
 
     while True:
