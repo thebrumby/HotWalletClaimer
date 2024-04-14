@@ -96,7 +96,7 @@ If you have a second account, from the command line (not within the first Screen
 After executing the script with `python3 claim.py`, you will be prompted to update settings and configure the session:
 
 1. **Update Settings:**
-   - Decide if you want to update script parameters. If you choose "yes", you'll be prompted review/update the following:
+   - Decide if you want to update script parameters. If you choose "y", you'll be prompted review/update the following:
       - `forceClaim`: Force a claim the first time the script runs, even if the wallet isn't full, or wait until full.
       - `debugIsOn`: Activate debugging to save screenshots to your filesystem; default is off.
       - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON.
