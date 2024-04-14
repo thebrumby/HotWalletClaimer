@@ -137,10 +137,12 @@ Install PM2 manually, or use the install script packaged in the HotWalletBot dir
 
 - If you are on a linux/ubuntu machine, initialize PM2 with systemd to ensure your applications start on boot:
    - ```pm2 startup systemd``` (follow the on-screen prompt to enable resume on reboot if you are not superuser)
-- Use the following command to add your Python script as a PM2 session. This example adds a session named firstWallet:
-   - ```pm2 start claim.py --name firstWallet -- 1``` (if you named your session folder something else during setup, replace 1 with your session name)
-- To add a second session, you can use a similar command with a different name and session identifier:
-   - ```pm2 start claim.py --name secondWallet -- 2``` (if you named your session folder something else during setup, replace 2 with your session name)
+- Use the following command to add your Python script as a PM2 session. This example adds a PM2 session named firstWallet, which will try to load a saved ```python3 claim.py``` session named ```1```:
+   - ```pm2 start claim.py --name firstWallet -- 1```
+   - Note: If you named your session folder something else during setup, replace 1 with your actual Session name from ```python3 claim.py```.
+- To add a second session, you can use a similar command with a different name and session identifier. This example adds a PM2 session named secondWallet, which will try to load a saved ```python3 claim.py``` session named ```2```:
+   - ```pm2 start claim.py --name secondWallet -- 2```
+   - Note: If you named your session folder something else during setup, replace 2 with your actual Session name from ```python3 claim.py```.
 - After adding/updating your sessions, save them with the command below. This makes sure your session configuration persists through system reboots:
    - ```pm2 save```
 - To view the current list of processes managed by PM2:
