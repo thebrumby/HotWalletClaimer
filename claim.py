@@ -399,7 +399,25 @@ def test_for_2fa():
             else:
                 tg_password = input("Step 01g - Enter your Telegram 2FA password: ")
             fa_input.send_keys(tg_password + Keys.RETURN)
-            output("Step 01g - 2FA password entered successfully.\n", 3)
+            output("Step 01g - 2FA password sent.\n", 3)
+            output("Step 01h - Checking if the 2FA password is marked as incorrect.\n", 2)
+            xpath = "//*[contains(text(), 'Incorrect password')]"
+            try:
+                incorrect_password = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+                output("Step 01h - 2FA password is marked as incorrect by Telegram - check your debug screenshot if active.", 1)
+                if settings['debugIsOn']:
+                    screenshot_path = f"{screenshots_path}/01h-Test QR code after session is resumed.png"
+                    driver.save_screenshot(screenshot_path)
+                sys.exit()  # Exit if incorrect password is detected
+            except TimeoutException:
+                output("Step 01h - No password error found.", 3)
+
+            xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
+            fa_input = move_and_click(xpath, 5, False, "final check to make sure we are correctly logged in", "01i", "present")
+            if fa_input:
+                output("Step 01i - 2FA password entry is still showing, check your debug screenshots for further information.\n", 1)
+                sys.exit()
+            output("Step 01i - 2FA password check appears to have passed OK.\n", 3)
         else:
             output("Step 01g - 2FA input field not found.\n", 1)
 
