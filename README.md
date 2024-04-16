@@ -10,7 +10,7 @@ If you find this script useful, please consider [buying me a coffee](https://www
 For detailed instructions on setting up your environment using Windows Subsystem for Linux 2 (WSL2), please refer to our [Windows Setup](#windows) section.
 
 <a name="quick-start"></a>
-#### Linux Users - Quick Start (based on Ubuntu 20.04/22.04):
+#### Quick Start Installation (based on Ubuntu 20.04/22.04):
 Copy and paste the Quick Start command block into your terminal (or follow the manual steps below if you prefer).
 
    ```bash
