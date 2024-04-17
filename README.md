@@ -224,10 +224,6 @@ Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment dir
    See a walkthrough of how to setup Ubuntu within Windows using WSL with our <a href="https://www.youtube.com/watch?v=2MCemn70ysI" title="YouTube Visual Instructions">YouTube</a>.
 </p>
 
-## Inspiration and Enhancement
-
-The idea of using Selenium to interact with the HereWalletBot was inspired by the project [vannszs/HotWalletBot](https://github.com/vannszs/HotWalletBot.git). However, the code in this repository has been completely rewritten, with many additional features, so I do not consider it a fork. However, Kudos to the original project for the concept. 
-
 # Security Considerations for HotWalletClaimer Usage
 
 💡 Communication: The only external communication is with the Telegram Web App, which occurs over HTTPS, providing a secure channel.
