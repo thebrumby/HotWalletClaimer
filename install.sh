@@ -24,7 +24,7 @@ sudo chmod +x /usr/local/bin/chromedriver
 cd HotWalletBot
 
 # And install the Python Dependencies
-pip install selenium Pillow
+pip install selenium Pillow pyzbar qrcode-terminal
 
 # And make sure we have screen!
 sudo apt install -y screen || true
