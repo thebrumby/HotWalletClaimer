@@ -41,11 +41,12 @@ If you have a second account, from the command line (not within the first Screen
 
 ### Linux Manual installation - Ensure each command in the code block executes. 
 
-1. **Install Python & PIP:**
+1. **Install Python, Zbar & PIP:**
 
    ```bash
    sudo apt update
    sudo apt install -y python3 python3-pip
+   sudo apt-get install -y libzbar0
    python3 --version   
    ```
 2. **Download & Install the Chrome `.deb` package:**
