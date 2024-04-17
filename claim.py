@@ -7,6 +7,9 @@ import json
 import getpass
 import random
 import subprocess
+from PIL import Image
+from pyzbar.pyzbar import decode
+import qrcode_terminal
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
@@ -255,35 +258,38 @@ def manage_session():
 def log_into_telegram():
     global driver, target_element, session_path, screenshots_path, backup_path, settings
 
-    def screenshot_QR_code():
-        global driver, settings, screenshots_path
-        WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        xpath = "//canvas[@class='qr-canvas']"
-        QR_code = move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible")
-        QR_code.screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
-        output("The screenshot has now been saved in your screenshots folder: {}".format(screenshots_path),1)
-        input('Hit enter after you scanned the QR code in Settings -> Devices -> Link Desktop Device:')
-
-
-    def test_for_QR_code():
-        global driver, settings, screenshots_path
-        max_attempts = 6
-        wait_time = 1  # Seconds
-        for _ in range(max_attempts):
-            try:
-                driver.get("https://web.telegram.org/k/#@herewalletbot")
-                WebDriverWait(driver, wait_time).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-                xpath = "//canvas[@class='qr-canvas']"
-                wait = WebDriverWait(driver, 2)  # Short wait for QR code
-                wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-                time.sleep(wait_time)
-                output("Step 00a - QR code still visible.",3)
-                
-            except TimeoutException:
-                return True
-
-        return False  # QR code not found after all attempts
-
+    def visible_QR_code():
+        global driver, screenshots_path
+        try:
+            # Load the page
+            driver.get("https://web.telegram.org/k/#@herewalletbot")
+            # Wait for the page to be fully loaded
+            WebDriverWait(driver, 10).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            
+            # Define the XPath and interact with the QR code
+            xpath = "//canvas[@class='qr-canvas']"
+            QR_code = move_and_click(xpath, 5, False, "obtain QR code", "00", "visible")
+            # Take a screenshot of the QR code
+            QR_code.screenshot('{}/00 - Generate QR code.png'.format(screenshots_path))
+            
+            # Load the image and decode the QR
+            image = Image.open('{}/00 - Generate QR code.png'.format(screenshots_path))
+            decoded_objects = decode(image)
+            
+            # Print decoded data to console
+            if decoded_objects:
+                # Display the first decoded QR code data in the console as ASCII art
+                data = decoded_objects[0].data.decode()
+                qrcode_terminal.draw(data)
+            
+            # Test to see if QR code disappears
+            wait = WebDriverWait(driver, 25)
+            wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
+            output ("Step 00 - Successfully scanned QR code.", 2)
+            return True
+        
+        except TimeoutException:
+            return False
 
     if os.path.exists(session_path):
         shutil.rmtree(session_path)
@@ -296,18 +302,16 @@ def log_into_telegram():
     os.makedirs(backup_path, exist_ok=True)
 
     driver = get_driver()
-    driver.get("https://web.telegram.org/k/#@herewalletbot")
 
     output(f"Our screenshot path is {screenshots_path}\n",1)
-    output("*** Important: Having @HereWalletBot open in your Telegram App might stop this script loggin in! ***\n",1)
+    output("*** Important: Having @HereWalletBot open in your Telegram App might stop this script loggin in! ***\n",2)
     
     # QR Code Method
     if settings['screenshotQRCode']:
         try:
-            screenshot_QR_code()  # Take the initial screenshot
 
             while True:
-                if test_for_QR_code():  # QR code not found
+                if visible_QR_code():  # QR code not found
                     test_for_2fa()
                     return  # Exit the function entirely
 
@@ -315,7 +319,7 @@ def log_into_telegram():
                 choice = input("\nStep 00a - QR Code still present. Retry (r) with a new QR code or switch to the OTP method (enter): ")
                 print("")
                 if choice.lower() == 'r':
-                    screenshot_QR_code()
+                    visible_QR_code()
                 else:
                     break
 
@@ -410,8 +414,9 @@ def test_for_2fa():
                     driver.save_screenshot(screenshot_path)
                 sys.exit()  # Exit if incorrect password is detected
             except TimeoutException:
-                output("Step 01h - No password error found.", 3)
+                pass
 
+            output("Step 01h - No password error found.", 3)
             xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
             fa_input = move_and_click(xpath, 5, False, "final check to make sure we are correctly logged in", "01i", "present")
             if fa_input:
@@ -519,6 +524,25 @@ def full_claim():
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
     move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable")
+
+    try:
+        element = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located(
+                (By.XPATH, "//p[contains(text(), 'HOT Balance:')]/following-sibling::p[1]")
+            )
+        )
+    
+        # Retrieve the entire block of text within the parent div of the found <p> element
+        if element is not None:
+            parent_div = element.find_element(By.XPATH, "./..")
+            text_content = parent_div.text 
+            balance_part = text_content.split("HOT Balance:\n")[1].strip() if "HOT Balance:\n" in text_content else "No balance info"
+            output(f"Step 107 - HOT balance prior to claim: {balance_part}", 2)
+
+    except NoSuchElementException:
+        output("107 - Element containing 'HOT Balance:' was not found.", 3)
+    except Exception as e:
+        print("107 - An error occurred:", e)
 
     wait_time_text = get_wait_time("108", "pre-claim") 
     if wait_time_text == "Unknown":
