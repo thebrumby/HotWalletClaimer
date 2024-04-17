@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Update packages list & Install Python 3
+# Update packages list, Install Python 3, PIP & ZBar
 sudo apt update
-sudo apt install -y python3 python3-pip || true
+sudo apt install -y python3 python3-pip libzbar0 || true
 
 # Double check wget is present
 sudo apt install -y wget || true
