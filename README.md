@@ -79,7 +79,7 @@ If you have a second account, from the command line (not within the first Screen
    ```
 6. **Install the dependencies:**
    ```bash
-   pip install selenium Pillow   
+   pip install selenium Pillow pyzbar qrcode-terminal
    ```
 
 <a name="usage-notes"></a>
