@@ -259,30 +259,41 @@ def log_into_telegram():
     global driver, target_element, session_path, screenshots_path, backup_path, settings
 
     def visible_QR_code():
-        global driver, screenshots_path
-        try:
-            # Load the page
+        global driver, settings, screenshots_path
+        def get_QR_code():
+            global driver, settings, screenshots_path
             driver.get("https://web.telegram.org/k/#@herewalletbot")
-            # Wait for the page to be fully loaded
-            WebDriverWait(driver, 10).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            
-            # Define the XPath and interact with the QR code
+            WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
             xpath = "//canvas[@class='qr-canvas']"
-            QR_code = move_and_click(xpath, 5, False, "obtain QR code", "00", "visible")
-            # Take a screenshot of the QR code
-            QR_code.screenshot('{}/00 - Generate QR code.png'.format(screenshots_path))
-            
-            # Load the image and decode the QR
-            image = Image.open('{}/00 - Generate QR code.png'.format(screenshots_path))
+            QR_code = move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible")
+            QR_code.screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
+
+        
+        try:
+            # Load the page        
+            WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            xpath = "//canvas[@class='qr-canvas']"
+            get_QR_code()
+            # Define the XPath and interact with the QR code
+            image = Image.open("{}/00 - Initial QR code.png".format(screenshots_path))
+
+            # Resize the image
+            width, height = image.size
+            resized_image = image.resize((int(width * 0.5), int(height * 0.5)), resample=Image.LANCZOS)
+
+            # Save the resized screenshot with a different filename
+            resized_image.save("{}/00 - Initial QR code (resized).png".format(screenshots_path))
+
+            # Load the resized image and decode the QR
+            image = Image.open("{}/00 - Initial QR code (resized).png".format(screenshots_path))
             decoded_objects = decode(image)
-            
-            # Print decoded data to console
             if decoded_objects:
                 # Display the first decoded QR code data in the console as ASCII art
                 data = decoded_objects[0].data.decode()
                 qrcode_terminal.draw(data)
             
             # Test to see if QR code disappears
+            xpath = "//canvas[@class='qr-canvas']"
             wait = WebDriverWait(driver, 25)
             wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
             output ("Step 00 - Successfully scanned QR code.", 2)
