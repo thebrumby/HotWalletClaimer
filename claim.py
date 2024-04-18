@@ -35,6 +35,11 @@ settings = {
     "verboseLevel": 2,
     "forceNewSession": False,
 }
+step = "00"
+def increase_step():
+    global step
+    step_int = int(step) + 1
+    step = f"{step_int:02}"
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
 
@@ -86,7 +91,7 @@ def update_settings():
         new_max_sessions = int(input(f"\nEnter the number of max concurrent claim sessions. Additional claims will queue until a session slot is free.\n(current: {settings['maxSessions']}): "))
         settings["maxSessions"] = new_max_sessions
     except ValueError:
-        output("Invalid input. Number of sessions remains unchanged.",1)
+        output("Number of sessions remains unchanged.",1)
 
     try:
         new_verbose_level = int(input(f"\nEnter the number for how much information you want displaying in the console.\n 3 = all messages, 2 = claim steps, 1 = minimal steps\n(current: {settings['verboseLevel']}): "))
@@ -94,7 +99,7 @@ def update_settings():
             settings["verboseLevel"] = new_verbose_level
             output("Verbose level updated successfully.",2)
         else:
-            output("Invalid input. Please enter a number between 1 and 3. Verbose level remains unchanged.",2)
+            output("Verbose level remains unchanged.",2)
     except ValueError:
         output("Invalid input. Verbose level remains unchanged.",2)
 
@@ -257,51 +262,48 @@ def manage_session():
                 json.dump({}, file)
  
 def log_into_telegram():
-    global driver, target_element, session_path, screenshots_path, backup_path, settings
+    global driver, target_element, session_path, screenshots_path, backup_path, settings, step
+    step = "01"
 
     def visible_QR_code():
-        global driver, settings, screenshots_path
-        def get_QR_code():
-            global driver, settings, screenshots_path
-            driver.get("https://web.telegram.org/k/#@herewalletbot")
-            WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            xpath = "//canvas[@class='qr-canvas']"
-            QR_code = move_and_click(xpath, 30, False, "check for visibility of QR code canvas (Validate QR code)", "00a", "visible")
-            QR_code.screenshot("{}/00 - Initial QR code.png".format(screenshots_path))
+        global driver, screenshots_path, step
+        max_attempts = 5
+        attempt_count = 0
+        last_url = "not a url"  # Placeholder for the last detected QR code URL
 
+        xpath = "//canvas[@class='qr-canvas']"
+        driver.get("https://web.telegram.org/k/#@herewalletbot")
+
+        while attempt_count < max_attempts:
+            try:
+
+                wait = WebDriverWait(driver, 5)
+                QR_code = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+                QR_code.screenshot(f"{screenshots_path}/Step {step} - Initial QR code.png")
+                image = Image.open(f"{screenshots_path}/Step {step} - Initial QR code.png")
+                decoded_objects = decode(image)
+                if decoded_objects:
+                    this_url = decoded_objects[0].data.decode('utf-8')
+                    if this_url != last_url:
+                        last_url = this_url  # Update the last seen URL
+                        clear_screen()
+                        attempt_count += 1
+                        output("*** Important: Having @HereWalletBot open in your Telegram App might stop this script from logging in! ***\n", 2)
+                        output(f"Step {step} - Our screenshot path is {screenshots_path}\n", 1)
+                        output(f"Step {step} - Generating screenshot {attempt_count} of {max_attempts}\n", 2)
+                        qrcode_terminal.draw(this_url)
+                    if attempt_count >= max_attempts:
+                        output(f"Step {step} - Max attempts reached with no new QR code.", 1)
+                        return False
+                    time.sleep(2)  # Wait before the next check
+                else:
+                    time.sleep(2)  # No QR code decoded, wait before retrying
+            except TimeoutException:
+                output(f"Step {step} - QR Code is no longer visible.", 2)
+                return True  # Indicates the QR code has been scanned or disappeared
         
-        try:
-            # Load the page        
-            WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            xpath = "//canvas[@class='qr-canvas']"
-            get_QR_code()
-            # Define the XPath and interact with the QR code
-            image = Image.open("{}/00 - Initial QR code.png".format(screenshots_path))
-
-            # Resize the image
-            width, height = image.size
-            resized_image = image.resize((int(width * 0.5), int(height * 0.5)), resample=Image.LANCZOS)
-
-            # Save the resized screenshot with a different filename
-            resized_image.save("{}/00 - Initial QR code (resized).png".format(screenshots_path))
-
-            # Load the resized image and decode the QR
-            image = Image.open("{}/00 - Initial QR code (resized).png".format(screenshots_path))
-            decoded_objects = decode(image)
-            if decoded_objects:
-                # Display the first decoded QR code data in the console as ASCII art
-                data = decoded_objects[0].data.decode()
-                qrcode_terminal.draw(data)
-            
-            # Test to see if QR code disappears
-            xpath = "//canvas[@class='qr-canvas']"
-            wait = WebDriverWait(driver, 25)
-            wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
-            output ("Step 00 - Successfully scanned QR code.", 2)
-            return True
-        
-        except TimeoutException:
-            return False
+        output(f"Step {step} - Failed to generate a valid QR code after multiple attempts.", 1)
+        return False  # If loop completes without a successful scan
 
     if os.path.exists(session_path):
         shutil.rmtree(session_path)
@@ -314,9 +316,6 @@ def log_into_telegram():
     os.makedirs(backup_path, exist_ok=True)
 
     driver = get_driver()
-
-    output(f"Our screenshot path is {screenshots_path}\n",1)
-    output("*** Important: Having @HereWalletBot open in your Telegram App might stop this script loggin in! ***\n",2)
     
     # QR Code Method
     if settings['screenshotQRCode']:
@@ -328,7 +327,7 @@ def log_into_telegram():
                     return  # Exit the function entirely
 
                 # If we reach here, it means the QR code is still present:
-                choice = input("\nStep 00a - QR Code still present. Retry (r) with a new QR code or switch to the OTP method (enter): ")
+                choice = input(f"\nStep {step} - QR Code still present. Retry (r) with a new QR code or switch to the OTP method (enter): ")
                 print("")
                 if choice.lower() == 'r':
                     visible_QR_code()
@@ -336,24 +335,27 @@ def log_into_telegram():
                     break
 
         except TimeoutException:
-            output("Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.", 1)
+            output(f"Step {step} - Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.", 1)
 
     # OTP Login Method
-    output("Initiating the One-Time Password (OTP) method...\n",1)
+    increase_step()
+    output(f"Step {step} - Initiating the One-Time Password (OTP) method...\n",1)
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
-    move_and_click(xpath, 30, True, "switch to log in by phone number", "01a", "clickable")
+    move_and_click(xpath, 30, True, "switch to log in by phone number", step, "clickable")
+    increase_step()
 
     # Country Code Selection
     xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
-    target_element = move_and_click(xpath, 30, True, "update users country", "01b", "clickable")
-    user_input = input("Please enter your Country Name as it appears in the Telegram list: ").strip()  
+    target_element = move_and_click(xpath, 30, True, "update users country", step, "clickable")
+    user_input = input(f"Step {step} - Please enter your Country Name as it appears in the Telegram list: ").strip()  
     target_element.send_keys(user_input)
-    target_element.send_keys(Keys.RETURN) 
+    target_element.send_keys(Keys.RETURN)
+    increase_step()
 
     # Phone Number Input
     xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
-    target_element = move_and_click(xpath, 30, True, "request users phone number", "01c", "clickable")
+    target_element = move_and_click(xpath, 30, True, "request users phone number", step, "clickable")
     def validate_phone_number(phone):
         # Regex for validating an international phone number without leading 0 and typically 7 to 15 digits long
         pattern = re.compile(r"^[1-9][0-9]{6,14}$")
@@ -361,20 +363,22 @@ def log_into_telegram():
 
     while True:
         if settings['hideSensitiveInput']:
-            user_phone = getpass.getpass("Please enter your phone number without leading 0 (hidden input): ")
+            user_phone = getpass.getpass(f"Step {step} - Please enter your phone number without leading 0 (hidden input): ")
         else:
-            user_phone = input("Please enter your phone number without leading 0 (visible input): ")
+            user_phone = input(f"Step {step} - Please enter your phone number without leading 0 (visible input): ")
     
         if validate_phone_number(user_phone):
-            output("Step 01c - Valid phone number entered.",3)
+            output(f"Step {step} - Valid phone number entered.",3)
             break
         else:
-            output("Step 01c - Invalid phone number, must be 7 to 15 digits long and without leading 0.",1)
+            output(f"Step {step} - Invalid phone number, must be 7 to 15 digits long and without leading 0.",1)
     target_element.send_keys(user_phone)
+    increase_step()
 
     # Wait for the "Next" button to be clickable and click it    
     xpath = "//button[contains(@class, 'btn-primary') and .//span[contains(text(), 'Next')]]"
-    move_and_click(xpath, 5, True, "click next to proceed to OTP entry", "01d", "visible")
+    move_and_click(xpath, 5, True, "click next to proceed to OTP entry", step, "visible")
+    increase_step()
 
     try:
         # Attempt to locate and interact with the OTP field
@@ -382,160 +386,171 @@ def log_into_telegram():
         password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='tel']")))
         if settings['debugIsOn']:
             time.sleep(3)
-            driver.save_screenshot("{}/01e_Ready_for_OTP.png".format(screenshots_path))
-        otp = input("Step 01e - What is the Telegram OTP from your app? ")
+            driver.save_screenshot(f"{screenshots_path}/Step {step} - Ready_for_OTP.png")
+        otp = input(f"Step {step} - What is the Telegram OTP from your app? ")
         password.click()
         password.send_keys(otp)
-        output("Step 01e - Let's try to log in using your Telegram OTP.\n",3)
+        output(f"Step {step} - Let's try to log in using your Telegram OTP.\n",3)
 
     except TimeoutException:
         # OTP field not found 
-        output("Step 01e - OTP entry has failed - maybe you entered the wrong code, or possible flood cooldown issue.",1)
+        output(f"Step {step} - OTP entry has failed - maybe you entered the wrong code, or possible flood cooldown issue.",1)
 
     except Exception as e:  # Catch any other unexpected errors
-        output("Login failed. Error: {e}", 1) 
+        output(f"Step {step} - Login failed. Error: {e}", 1) 
         if settings['debugIsOn']:
-            driver.save_screenshot("{}/01-error_Something_Occured.png".format(screenshots_path))
-    
+            driver.save_screenshot(f"{screenshots_path}/Step {step} - error_Something_Occured.png")
+
+    increase_step()
     test_for_2fa()
 
     if settings['debugIsOn']:
         time.sleep(3)
-        driver.save_screenshot("{}/01f_After_Entering_OTP.png".format(screenshots_path))
+        driver.save_screenshot(f"{screenshots_path}/Step {step} - After_Entering_OTP.png")
 
 def test_for_2fa():
-    global settings, driver, screenshots_path
+    global settings, driver, screenshots_path, step
     try:
+        increase_step()
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
         xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
-        fa_input = move_and_click(xpath, 5, False, "check for 2FA requirement (for most users this will timeout)", "01g", "present")
+        fa_input = move_and_click(xpath, 5, False, "check for 2FA requirement (will timeout if you don't have 2FA)", step, "present")
         if fa_input:
             if settings['hideSensitiveInput']:
-                tg_password = getpass.getpass("Step 01g - Enter your Telegram 2FA password: ")
+                tg_password = getpass.getpass(f"Step {step} - Enter your Telegram 2FA password: ")
             else:
-                tg_password = input("Step 01g - Enter your Telegram 2FA password: ")
+                tg_password = input(f"Step {step} - Enter your Telegram 2FA password: ")
             fa_input.send_keys(tg_password + Keys.RETURN)
-            output("Step 01g - 2FA password sent.\n", 3)
-            output("Step 01h - Checking if the 2FA password is marked as incorrect.\n", 2)
+            output(f"Step {step} - 2FA password sent.\n", 3)
+            output(f"Step {step} - Checking if the 2FA password is correct.\n", 2)
             xpath = "//*[contains(text(), 'Incorrect password')]"
             try:
                 incorrect_password = WebDriverWait(driver, 5).until(EC.visibility_of_element_located((By.XPATH, xpath)))
-                output("Step 01h - 2FA password is marked as incorrect by Telegram - check your debug screenshot if active.", 1)
+                output(f"Step {step} - 2FA password is marked as incorrect by Telegram - check your debug screenshot if active.", 1)
                 if settings['debugIsOn']:
-                    screenshot_path = f"{screenshots_path}/01h-Test QR code after session is resumed.png"
+                    screenshot_path = f"{screenshots_path}/Step {step} - Test QR code after session is resumed.png"
                     driver.save_screenshot(screenshot_path)
                 sys.exit()  # Exit if incorrect password is detected
             except TimeoutException:
                 pass
 
-            output("Step 01h - No password error found.", 3)
+            output(f"Step {step} - No password error found.", 3)
             xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
-            fa_input = move_and_click(xpath, 5, False, "final check to make sure we are correctly logged in", "01i", "present")
+            fa_input = move_and_click(xpath, 5, False, "final check to make sure we are correctly logged in", step, "present")
             if fa_input:
-                output("Step 01i - 2FA password entry is still showing, check your debug screenshots for further information.\n", 1)
+                output(f"Step {step} - 2FA password entry is still showing, check your debug screenshots for further information.\n", 1)
                 sys.exit()
-            output("Step 01i - 2FA password check appears to have passed OK.\n", 3)
+            output(f"Step {step} - 2FA password check appears to have passed OK.\n", 3)
         else:
-            output("Step 01g - 2FA input field not found.\n", 1)
+            output(f"Step {step} - 2FA input field not found.\n", 1)
 
     except TimeoutException:
         # 2FA field not found
-        output("Step 01g - Two-factor Authorization not required.\n", 3)
+        output(f"Step {step} - Two-factor Authorization not required.\n", 3)
 
     except Exception as e:  # Catch any other unexpected errors
-        output(f"Login failed. 2FA Error - you'll probably need to restart the script: {e}", 1)
+        output(f"Step {step} - Login failed. 2FA Error - you'll probably need to restart the script: {e}", 1)
         if settings['debugIsOn']:
-            screenshot_path = f"{screenshots_path}/Step 01g - error: Something Bad Occured.png"
+            screenshot_path = f"{screenshots_path}/Step {step} - error: Something Bad Occured.png"
             driver.save_screenshot(screenshot_path)
 
 def next_steps():
-    global driver, target_element, settings, backup_path, session_path
+    global driver, target_element, settings, backup_path, session_path, step
     driver = get_driver()
-
+    increase_step()
     try:
         driver.get("https://tgapp.herewallet.app/auth/import")
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
         
         # Then look for the seed phase textarea:
         xpath = "//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
-        input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", "09", "clickable")
+        input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", step, "clickable")
         input_field.send_keys(validate_seed_phrase()) 
-        output("Step 09 - Was successfully able to enter the seed phrase...",3)
+        output(f"Step {step} - Was successfully able to enter the seed phrase...",3)
+        increase_step()
 
         # Click the continue button after seed phrase entry:
         xpath = "//button[contains(text(), 'Continue')]"
-        move_and_click(xpath, 30, True, "click continue after seedphrase entry", "10", "clickable")
+        move_and_click(xpath, 30, True, "click continue after seedphrase entry", step, "clickable")
+        increase_step()
 
         # Click the account selection button:
         xpath = "//button[contains(text(), 'Select account')]"
-        move_and_click(xpath, 120, True, "click continue at account selection screen", "11", "clickable")
+        move_and_click(xpath, 120, True, "click continue at account selection screen", step, "clickable")
+        increase_step()
 
         # Click on the Storage link:
         xpath = "//h4[text()='Storage']"
-        move_and_click(xpath, 30, True, "click the 'storage' link", "12", "clickable")
+        move_and_click(xpath, 30, True, "click the 'storage' link", step, "clickable")
         cookies_path = f"{session_path}/cookies.json"
         cookies = driver.get_cookies()
         with open(cookies_path, 'w') as file:
             json.dump(cookies, file)
 
     except TimeoutException:
-        output("Failed to find or switch to the iframe within the timeout period.",1)
+        output(f"Step {step} - Failed to find or switch to the iframe within the timeout period.",1)
 
     except Exception as e:
-        output(f"An error occurred: {e}",1)
+        output(f"Step {step} - An error occurred: {e}",1)
 
 def full_claim():
-    global driver, target_element, settings, session_path
-
+    global driver, target_element, settings, session_path, step
+    step = "100"
     driver = get_driver()
     output("\nCHROME DRIVER INITIALISED: If the script exits before detaching, the session may need to be restored.",1)
 
     try:
         driver.get("https://web.telegram.org/k/#@herewalletbot")
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        output("Step 100 - Attempting to verify if we are logged in (hopefully QR code is not present).",3)
+        output(f"Step {step} - Attempting to verify if we are logged in (hopefully QR code is not present).",3)
         xpath = "//canvas[@class='qr-canvas']"
         wait = WebDriverWait(driver, 5)
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
         if settings['debugIsOn']:
-            screenshot_path = f"{screenshots_path}/100-Test QR code after session is resumed.png"
+            screenshot_path = f"{screenshots_path}/Step {step} - Test QR code after session is resumed.png"
             driver.save_screenshot(screenshot_path)
-        output("Chrome driver reports the QR code is visible: It appears we are no longer logged in.",1)
-        output("Most likely you will get a warning that the central input box is not found.",2)
-        output("System will try to restore session, or restart the script from CLI force a fresh log in.\n",1)
+        output(f"Step {step} - Chrome driver reports the QR code is visible: It appears we are no longer logged in.",1)
+        output(f"Step {step} - Most likely you will get a warning that the central input box is not found.",2)
+        output(f"Step {step} - System will try to restore session, or restart the script from CLI force a fresh log in.\n",1)
 
     except TimeoutException:
-        output("Step 100 - nothing found to action. The QR code test passed.\n",3)
-
+        output(f"Step {step} - nothing found to action. The QR code test passed.\n",3)
+    increase_step()
 
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
 
     if settings['debugIsOn']:
         time.sleep(3)
-        driver.save_screenshot("{}/Step 100 Pre-Claim screenshot.png".format(screenshots_path))
+        driver.save_screenshot(f"{screenshots_path}/Step {step} Pre-Claim screenshot.png")
 
     # There is a very unlikely scenario that the chat might have been cleared.
     # In this case, the "START" button needs pressing to expose the chat window!
     xpath = "//button[contains(., 'START')]"
-    move_and_click(xpath, 5, True, "check for the start button (should not be present)", "101", "clickable")
+    move_and_click(xpath, 5, True, "check for the start button (should not be present)", step, "clickable")
+    increase_step()
 
     # Let's try to send the start command:
-    send_start("102")
+    send_start(step)
+    increase_step()
 
     # Now let's try to find a working link to open the launch button
-    find_working_link("104")
+    find_working_link(step)
+    increase_step()
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-    move_and_click(xpath, 30, True, "click the 'Launch' button", "105", "clickable")
+    move_and_click(xpath, 30, True, "click the 'Launch' button", step, "clickable")
+    increase_step()
 
     # HereWalletBot Pop-up Handling
-    select_iframe("106")
+    select_iframe(step)
+    increase_step()
 
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
-    move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable")
+    move_and_click(xpath, 30, True, "click the 'storage' link", step, "clickable")
+    increase_step
 
     try:
         element = WebDriverWait(driver, 10).until(
@@ -549,53 +564,60 @@ def full_claim():
             parent_div = element.find_element(By.XPATH, "./..")
             text_content = parent_div.text 
             balance_part = text_content.split("HOT Balance:\n")[1].strip() if "HOT Balance:\n" in text_content else "No balance info"
-            output(f"Step 107 - HOT balance prior to claim: {balance_part}", 3)
+            output(f"Step {step} - HOT balance prior to claim: {balance_part}", 3)
 
     except NoSuchElementException:
-        output("107 - Element containing 'HOT Balance:' was not found.", 3)
+        output(f"Step {step} - Element containing 'HOT Balance:' was not found.", 3)
     except Exception as e:
-        print("107 - An error occurred:", e)
+        print(f"Step {step} - An error occurred:", e)
+    increase_step()
 
-    wait_time_text = get_wait_time("108", "pre-claim") 
+    wait_time_text = get_wait_time(step, "pre-claim") 
     if wait_time_text == "Unknown":
       return 5
 
     try:
-        output("Step 108 - The pre-claim wait time is : {}".format(wait_time_text),1)
+        output(f"Step {step} - The pre-claim wait time is : {wait_time_text}",1)
+        increase_step()
         if wait_time_text == "Filled" or settings['forceClaim']:
             try:
                 original_window = driver.current_window_handle
                 xpath = "//button[contains(text(), 'Check NEWS')]"
-                move_and_click(xpath, 10, True, "check for NEWS.", "109", "clickable")
+                move_and_click(xpath, 10, True, "check for NEWS.", step, "clickable")
                 driver.switch_to.window(original_window)
             except TimeoutException:
                 if settings['debugIsOn']:
-                    output("No news to check or button not found.",3)
+                    output(f"Step {step} - No news to check or button not found.",3)
+            increase_step()
 
             try:
                 # Let's double check if we have to reselect the iFrame after news
                 # HereWalletBot Pop-up Handling
-                select_iframe("109")
+                select_iframe(step)
+                increase_step()
                 
                 # Click on the "Claim HOT" button:
                 xpath = "//button[contains(text(), 'Claim HOT')]"
-                move_and_click(xpath, 30, True, "click the claim button", "110", "clickable")
+                move_and_click(xpath, 30, True, "click the claim button", step, "clickable")
+                increase_step()
 
                 # Now let's try again to get the time remaining until filled. 
                 # 4th April 24 - Let's wait for the spinner to disappear before trying to get the new time to fill.
-                output("Step 111 - Let's wait for the pending Claim spinner to stop spinning...",2)
+                output(f"Step {step} - Let's wait for the pending Claim spinner to stop spinning...",2)
                 time.sleep(5)
                 wait = WebDriverWait(driver, 240)
                 spinner_xpath = "//*[contains(@class, 'spinner')]" 
                 try:
                     wait.until(EC.invisibility_of_element_located((By.XPATH, spinner_xpath)))
-                    output("Step 111 - Pending action spinner has stopped.\n",3)
+                    output(f"Step {step} - Pending action spinner has stopped.\n",3)
                 except TimeoutException:
-                    output("Step 111 - Looks like the site has lag- the Spinner did not disappear in time.\n",2)
-                wait_time_text = get_wait_time("112", "post-claim") 
+                    output(f"Step {step} - Looks like the site has lag - the Spinner did not disappear in time.\n",2)
+                increase_step()
+                wait_time_text = get_wait_time(step, "post-claim") 
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_wait_time += 1
+                increase_step()
 
                 try:
                   element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'HOT Balance:')]/following-sibling::p[1]")))
@@ -603,25 +625,25 @@ def full_claim():
                     parent_div = element.find_element(By.XPATH, "./..")
                     text_content = parent_div.text 
                     balance_part = text_content.split("HOT Balance:\n")[1].strip() if "HOT Balance:\n" in text_content else "No balance info"
-                    output(f"Step 113 - HOT balance after claim: {balance_part}", 1)
+                    output(f"Step {step} - HOT balance after claim: {balance_part}", 1)
                 except NoSuchElementException:
-                    output("113 - Element containing 'HOT Balance:' was not found.", 3)
+                    output(f"Step {step} - Element containing 'HOT Balance:' was not found.", 3)
                 except Exception as e:
-                    print("113 - An error occurred:", e)
+                    print(f"Step {step} - An error occurred:", e)
 
                 if wait_time_text == "Filled":
-                    output("The wait timer is still showing: Filled.",1)
-                    output("This means either the claim failed, or there is >4 minutes lag in the game.",1)
-                    output("We'll check back in 1 hour to see if the claim processed and if not try again.",2)
+                    output(f"Step {step} - The wait timer is still showing: Filled.",1)
+                    output(f"Step {step} - This means either the claim failed, or there is >4 minutes lag in the game.",1)
+                    output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.",2)
                 else:
-                    output("Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time),1)
+                    output(f"Step {step} - Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time),1)
                 return max(60, total_wait_time)
 
             except TimeoutException:
-                output("The claim process timed out: Maybe the site has lag? Will retry after one hour.",2)
+                output(f"Step {step} - The claim process timed out: Maybe the site has lag? Will retry after one hour.",2)
                 return 60
             except Exception as e:
-                output(f"An error occurred while trying to claim: {e}\nLet's wait an hour and try again",1)
+                output(f"Step {step} - An error occurred while trying to claim: {e}\nLet's wait an hour and try again",1)
                 return 60
 
         else:
@@ -631,13 +653,13 @@ def full_claim():
                 total_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_time += 1
                 total_time = max(5, total_time) # Wait at least 5 minutes or the time
-                output("Not Time to claim this wallet yet. Wait for {} minutes until the storage is filled.".format(total_time),2)
+                output(f"Step {step} - Not Time to claim this wallet yet. Wait for {total_time} minutes until the storage is filled.",2)
                 return total_time 
             else:
-                output("No wait time data found? Let's check again in one hour.",2)
+                output(f"Step {step} - No wait time data found? Let's check again in one hour.",2)
                 return 60  # Default wait time when no specific time until filled is found.
     except Exception as e:
-        output("An unexpected error occurred: {}".format(e),1)
+        output(f"Step {step} - An unexpected error occurred: {e}",1)
         return 60  # Default wait time in case of an unexpected error
         
 def get_wait_time(step_number="108", beforeAfter = "pre-claim", max_attempts=2):
@@ -645,27 +667,27 @@ def get_wait_time(step_number="108", beforeAfter = "pre-claim", max_attempts=2):
     for attempt in range(1, max_attempts + 1):
         try:
             xpath = "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]"
-            wait_time_element = move_and_click(xpath, 20, True, f"get the {beforeAfter} wait timer", step_number, "visible")
+            wait_time_element = move_and_click(xpath, 20, True, f"get the {beforeAfter} wait timer", step, "visible")
             # Check if wait_time_element is not None
             if wait_time_element is not None:
                 return wait_time_element.text
             else:
-                output(f"Step {step_number} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
+                output(f"Step {step} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
                 storage_xpath = "//h4[text()='Storage']"
-                move_and_click(storage_xpath, 30, True, "click the 'storage' link", "108 recheck", "clickable")
-                output(f"Step {step_number} - Attempted to select strorage again...",3)
+                move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{step} recheck", "clickable")
+                output(f"Step {step} - Attempted to select strorage again...",3)
             return wait_time_element.text
 
         except TimeoutException:
             if attempt < max_attempts:  # Attempt failed, but retries remain
-                output(f"Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
+                output(f"Step {step} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
                 storage_xpath = "//h4[text()='Storage']"
-                move_and_click(storage_xpath, 30, True, "click the 'storage' link", "107", "clickable")
+                move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{step} recheck", "clickable")
             else:  # No retries left after initial failure
-                output(f"Attempt {attempt}: Wait time element not found.",3)
+                output(f"Step {step} - Attempt {attempt}: Wait time element not found.",3)
 
         except Exception as e:
-            output(f"An error occurred on attempt {attempt}: {e}",3)
+            output(f"Step {step} - An error occurred on attempt {attempt}: {e}",3)
 
     # If all attempts fail         
     return "Unknown"
@@ -679,8 +701,8 @@ def clear_screen():
     else:
         os.system('clear')
 
-def select_iframe(step):
-    global driver, screenshots_path, settings
+def select_iframe(old_step):
+    global driver, screenshots_path, settings, step
     output(f"Step {step} - Attempting to switch to the app's iFrame...",2)
 
     try:
@@ -702,11 +724,11 @@ def select_iframe(step):
     except Exception as e:
         output(f"Step {step} - An error occurred while attempting to switch to the iframe: {e}\n",3)
         if settings['debugIsOn']:
-            screenshot_path = f"{screenshots_path}/{step}-iframe-error.png"
+            screenshot_pat,h = f"{screenshots_path}/{step}-iframe-error.png"
             driver.save_screenshot(screenshot_path)
 
-def find_working_link(step):
-    global driver, screenshots_path, settings
+def find_working_link(old_step):
+    global driver, screenshots_path, settings, step
     output(f"Step {step} - Attempting to open a link for the app...",2)
 
     start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
@@ -752,22 +774,20 @@ def find_working_link(step):
             driver.save_screenshot(screenshot_path)
 
 
-def send_start(step):
-    global driver, screenshots_path, backup_path, settings
+def send_start(old_step):
+    global driver, screenshots_path, backup_path, settings, step
     xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
     
     def attempt_send_start():
-        nonlocal step  # Allows us to modify the outer function's step variable
         chat_input = move_and_click(xpath, 30, False, "find the chat window/message input box", step, "present")
         if chat_input:
-            step_int = int(step) + 1
-            new_step = f"{step_int:02}"
-            output(f"Step {new_step} - Attempting to send the '/start' command...",2)
+            increase_step()
+            output(f"Step {step} - Attempting to send the '/start' command...",2)
             chat_input.send_keys("/start")
             chat_input.send_keys(Keys.RETURN)
-            output(f"Step {new_step} - Successfully sent the '/start' command.\n",3)
+            output(f"Step {step} - Successfully sent the '/start' command.\n",3)
             if settings['debugIsOn']:
-                screenshot_path = f"{screenshots_path}/{new_step}-sent-start.png"
+                screenshot_path = f"{screenshots_path}/{step}-sent-start.png"
                 driver.save_screenshot(screenshot_path)
             return True
         else:
@@ -792,17 +812,17 @@ def restore_from_backup():
             driver = get_driver()
             driver.get("https://web.telegram.org/k/#@herewalletbot")
             WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            output("Backup restored successfully.\n",2)
+            output(f"Step {step} - Backup restored successfully.\n",2)
             return True
         except Exception as e:
-            output(f"Error restoring backup: {e}\n",1)
+            output(f"Step {step} - Error restoring backup: {e}\n",1)
             return False
     else:
-        output("Backup directory does not exist.\n",1)
+        output(f"Step {step} - Backup directory does not exist.\n",1)
         return False
 
-def move_and_click(xpath, wait_time, click, action_description, step, expectedCondition):
-    global driver, screenshots_path, settings
+def move_and_click(xpath, wait_time, click, action_description, old_step, expectedCondition):
+    global driver, screenshots_path, settings, step
     target_element = None
     failed = False
 
@@ -830,7 +850,7 @@ def move_and_click(xpath, wait_time, click, action_description, step, expectedCo
             try:
                 actions = ActionChains(driver)
                 actions.move_to_element(target_element).pause(0.2).click().perform()
-                output(f"Step {step} - Was able to {action_description} using ActionChains.", 3)
+                output(f"Step {step} - Successfully able to {action_description} using ActionChains.", 3)
             except ElementClickInterceptedException:
                 output("Step {step} - Element click intercepted, attempting JavaScript click as fallback...", 3)
                 driver.execute_script("arguments[0].click();", target_element)
@@ -846,7 +866,7 @@ def move_and_click(xpath, wait_time, click, action_description, step, expectedCo
             driver.save_screenshot(screenshot_path)
         return target_element
 
-def clear_overlays(target_element, step):
+def clear_overlays(target_element, old_step):
     # Get the location of the target element
     element_location = target_element.location_once_scrolled_into_view
     overlays = driver.find_elements(By.XPATH, "//*[contains(@style,'position: absolute') or contains(@style,'position: fixed')]")
@@ -863,20 +883,20 @@ def validate_seed_phrase():
     while True:
         # Prompt the user for their seed phrase
         if settings['hideSensitiveInput']:
-            seed_phrase = getpass.getpass("Please enter your 12-word seed phrase (your input is hidden): ")
+            seed_phrase = getpass.getpass(f"Step {step} - Please enter your 12-word seed phrase (your input is hidden): ")
         else:
-            seed_phrase = input("Please enter your 12-word seed phrase (your input is visible): ")
+            seed_phrase = input(f"Step {step} - Please enter your 12-word seed phrase (your input is visible): ")
         try:
             if not seed_phrase:
-              raise ValueError("Seed phrase cannot be empty.")
+              raise ValueError(f"Step {step} - Seed phrase cannot be empty.")
 
             words = seed_phrase.split()
             if len(words) != 12:
-                raise ValueError("Seed phrase must contain exactly 12 words.")
+                raise ValueError(f"Step {step} - Seed phrase must contain exactly 12 words.")
 
             pattern = r"^[a-z ]+$"
             if not all(re.match(pattern, word) for word in words):
-                raise ValueError("Seed phrase can only contain lowercase letters and spaces.")
+                raise ValueError(f"Step {step} - Seed phrase can only contain lowercase letters and spaces.")
             return seed_phrase  # Return if valid
 
         except ValueError as e:
@@ -894,7 +914,7 @@ def save_pm2():
     print(result.stdout)
 
 def main():
-    global session_path, settings
+    global session_path, settings, step
     driver = get_driver()
     quit_driver()
     clear_screen()
