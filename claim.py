@@ -699,7 +699,7 @@ def select_iframe(step):
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-iframe-timeout.png"
             driver.save_scre,enshot(screenshot_path)
-,    except Exception as e:
+    except Exception as e:
         output(f"Step {step} - An error occurred while attempting to switch to the iframe: {e}\n",3)
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-iframe-error.png"
