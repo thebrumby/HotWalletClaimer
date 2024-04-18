@@ -2,18 +2,18 @@
 
 This Python script aids in mining (claiming) the cryptocurrency "HOT" through the "HereWalletBot", a free-to-use, Telegram-based Web3-enabled app operating on the NEAR Protocol blockchain. To maximize rewards, users need to frequently visit the app to claim tokens. The script automates this process by initiating claims immediately once the wallet is full. If the wallet isn't yet filled, it calculates the time until completion and waits for the optimal moment to claim, minimizing network load and reducing Gas Fees.
 
-💡 **TIP:** Although you cannot register multiple wallets to a single Telegram account, this script enables you to manage multiple pre-existing HereWallet accounts with just one Telegram login by handling each account in its own separate virtual browser session. Alternatively, you can manage each wallet with its own individual Telegram login if preferred.
+💡 **TIP:** Although you cannot register multiple wallets to a single Telegram account, this script enables you to manage multiple pre-existing HereWallet accounts with just one Telegram login by handling each Wallet in a separate virtual browser session. Alternatively, you can manage each Wallet with its own Telegram login if preferred.
 
 If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation. To join the HereWallet game and further support my efforts, you can use [this link](https://t.me/herewalletbot/app?startapp=3441967-village-85935) to make me your referrer, which helps me earn extra tokens. Thank you in advance for any support!
 
-💡 **TIP:** For straightforward unattended claim management, novice users may find [SCREEN](#screen) invaluable. Alternatively, more experienced Linux users will appreciate the additional features provided by [PM2](#pm2).
+💡 **TIP:** For a straightforward, easily visualized, unattended claim process, novice users may find [SCREEN](#screen) a helpful tool. Alternatively, more confident Linux users will benefit from the additional features provided by [PM2](#pm2).
 
 #### Windows 10 & 11 Users - Utilize WSL2 for a Seamless Experience:
 For detailed instructions on setting up your environment using Windows Subsystem for Linux 2 (WSL2), please refer to our [Windows Setup](#windows) section.
 
 <a name="quick-start"></a>
 #### Quick Start Installation (based on Ubuntu 20.04/22.04):
-Copy and paste the Quick Start command block into your terminal (or follow the manual steps below if you prefer).
+Copy and paste the Quick Start command block into your terminal (or follow the [Manual Steps](#manual-steps) below if you prefer).
 
    ```bash
    sudo apt install -y git || true && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh && ./install.sh
@@ -21,19 +21,19 @@ Copy and paste the Quick Start command block into your terminal (or follow the m
 <a name="screen"></a>
 ## Use of ```SCREEN``` to Manage Unattended Claim Sessions (Sessions are lost after reboot)
 - **Starting Your First Session:**
-  - Start with `screen -S first_session`. If you are not in the HotWalletBot directory, navigate there with `cd HotWalletBot`.
+  - Start with `screen -S first_session`. If you are not in the HotWalletBot directory, navigate there first with `cd HotWalletBot`.
   - Execute the script with `python3 claim.py` and follow the [Usage Notes](#usage-notes) to set up the session and automate the claiming process.
   - Detach from the screen session and keep it running in the background by pressing `CTRL+A+D`.
   - To resume the session and check progress or for errors, use `screen -r first_session`.
-  - If you wish to start the script without the CLI setup and directly enter an existing session, use `python3 claim.py 1`. Note: "1" is the default session name for the first session; if you changed it, replace "1" with your specified session name.
+  - If you wish to start the script without the CLI setup and directly enter an existing session, use `python3 claim.py Wallet1`. Note: "Wallet1" is the default session name for the first session; if you changed it, replace "Wallet1" with your specified session name.
 
 - **Starting a Second Account Session:**
   - From the command line (outside the first screen session), start another session with `screen -S second_session` and execute `python3 claim.py`.
   - Detach from this second screen session by pressing `CTRL+A+D`.
   - To resume the session and check progress or for errors, use `screen -r second_session`.
-  - If you wish to start the script without the CLI setup and directly enter an existing session, use `python3 claim.py 2`. Note: "2" is the default session name for the second session; if you changed it, replace "2" with your specified session name.
+  - If you wish to start the script without the CLI setup and directly enter an existing session, use `python3 claim.py Wallet2`. Note: "Wallet2" is the default session name for the second session; if you changed it, replace "Wallet2" with your specified session name.
 
-💡 **TIP:** Each session in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default 1) helps limit the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is possible; additional claims will queue until a session slot becomes available.
+💡 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 
 <p align="center">
   <table style="margin-left: auto; margin-right: auto; width: 100%;"><tr>
@@ -61,7 +61,7 @@ Copy and paste the Quick Start command block into your terminal (or follow the m
     ```
 
 - **Setup Before Using PM2:**
-  - Open the script using `python3 claim.py` and complete the setup for each wallet. Follow the process to log into Telegram and enter your seed phrase. After setup, you will be prompted whether to exit before moving on to the claim function. Choose 'n' to exit the script and resume the session with PM2.
+  - Open the script using `python3 claim.py` and complete the setup for each wallet. Follow the process to log into Telegram and enter your seed phrase. After setup, you will be prompted whether to exit before moving on to the claim function. Choose 'n' to exit the script and resume the session with PM2, or 'a' to automatically add the session name as a PM2 session.
 
 - **Initialize PM2 with Systemd (Linux/Ubuntu):**
   - Ensure that PM2 starts on boot:
@@ -71,17 +71,12 @@ Copy and paste the Quick Start command block into your terminal (or follow the m
     Follow the on-screen prompt to execute the suggested command if you are not superuser.
 
 - **Adding Sessions to PM2:**
-  - To add a Python script as a PM2 session, use the command below. This example starts a session named `firstWallet` which loads a previously saved `claim.py` session named `1`:
-    ```bash
-    pm2 start claim.py --name firstWallet -- 1
-    ```
-    Note: Replace `1` with the actual Session name you set during setup if different.
+  - To add a Python script as a PM2 session, use the command below. This example starts a session named `firstWallet` which loads a previously saved `claim.py` session named `Wallet1`:
 
-  - To add a second session named `secondWallet`:
     ```bash
-    pm2 start claim.py --name secondWallet -- 2
+    pm2 start claim.py --name firstWallet -- Wallet1
     ```
-    Note: Replace `2` with the actual Session name.
+    Note: Replace `Wallet1` with the actual Session name given during setup if different.
 
 - **Manage PM2 Sessions:**
   - Save configuration to persist through reboots:
@@ -208,6 +203,7 @@ Remember to check and adjust your settings upon startup to optimize the script's
 
 After following these steps, if all inputs are correctly entered, and assuming no flooding block is in place, you'll successfully logged into both Telegram and HereWallet.
 
+<a name="manual-steps"></a>
 ### Linux Manual installation - Ensure each command in the code block executes. 
 
 1. **Install Python, Zbar & PIP:**
