@@ -39,85 +39,6 @@ If you have a second account, from the command line (not within the first Screen
   </tr></table>
 </p>
 
-### Linux Manual installation - Ensure each command in the code block executes. 
-
-1. **Install Python, Zbar & PIP:**
-
-   ```bash
-   sudo apt update
-   sudo apt install -y python3 python3-pip
-   sudo apt-get install -y libzbar0
-   python3 --version   
-   ```
-2. **Download & Install the Chrome `.deb` package:**
-
-   ```bash
-   sudo apt install -y wget
-   wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb
-   sudo apt install -y /tmp/chrome.deb
-   rm /tmp/chrome.deb   
-   ```
-3. **Download & Install Chromedriver:**
-
-   ```bash
-   sudo apt install -y unzip
-   wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
-   unzip chromedriver_linux64.zip
-   rm chromedriver_linux64.zip
-   sudo mv chromedriver /usr/local/bin/
-   sudo chmod +x /usr/local/bin/chromedriver
-   chromedriver --version   
-   ```
-4. **Clone this repository:**
-
-   ```bash
-   sudo apt install -y git
-   git clone https://github.com/thebrumby/HotWalletBot.git   
-   ```
-5. **Switch to the repository directory:**
-   ```bash
-   cd HotWalletBot   
-   ```
-6. **Install the dependencies:**
-   ```bash
-   pip install selenium Pillow pyzbar qrcode-terminal
-   ```
-
-<a name="usage-notes"></a>
-## V1.4.2 Release Notes - Improved Claim Handling & Configurable Settings
-
-### Usage Instructions
-After executing the script with `python3 claim.py`, you will be prompted to update settings and configure the session:
-
-1. **Update Settings:**
-   - Decide if you want to update script parameters. If you choose "y", you'll be prompted review/update the following:
-      - `forceClaim`: Force a claim the first time the script runs, even if the wallet isn't full, or wait until full.
-      - `debugIsOn`: Activate debugging to save screenshots to your filesystem; default is off.
-      - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON.
-      - `screenshotQRCode`: Log in by QR code; default is true, the alternative is by phone number and OTP.
-      - `maxSessions`: Defines the number of simultaneous claim sessions permitted. Even if only one session is allowed at a time, you can manage multiple wallets. Additional wallets will queue and wait for an available claim session slot.
-      - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal), 2 (main steps) 3 (all messages).
-      - `forceNewSession`: Overwrite an existing session and force a new login. Requires repeating both Telegram log-in & seed words entry - useful if an existing session has errors.
-2. **Session Name Configuration:**
-   - Auto-assigns a numeric value or accepts a custom session name. Reusing a name will attempt to resume that session.
-3. **Login Options:**
-   - The default is using scanning a QR Code screenshot. If that doesn't work, or you choose otherwise, follow the OTP login method in steps 4. & 5.
-4. **Country Name and Phone Number for Telegram:**
-   - Enter your Country Name as it appears on Telegram's login page or use the default based on your IP address.
-5. **One-Time Password (OTP):**
-   - Input the OTP sent to your Telegram account.
-6. **Two-Factor Authentication (2FA):**
-   - If your Telegram account has 2FA enabled, you'll be prompted to enter your password after scanning the QR code or entering the OTP. Input your 2FA password to continue the login process.
-7. **Seed Phrase Input for HereWallet Login:**
-   - Enter your 12-word seed phrase, ensuring it is spaced correctly without punctuation or numbers.
-8. **Exit & resume later (possibly in PM2) or Continue in the CLI script:**
-   - Choose to exit the script and save progress for later or continue to the claim function.
-
-Remember to check and adjust your settings upon startup to optimize the script's performance to your server's capabilities.
-
-
-After following these steps, if all inputs are correctly entered, and assuming no flooding block is in place, you'll successfully logged into both Telegram and HereWallet.
-
 <a name="pm2"></a>
 ## Use of PM2
 
@@ -216,6 +137,84 @@ Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment dir
   </a><br>
    See a walkthrough of how to setup Ubuntu within Windows using WSL with our <a href="https://www.youtube.com/watch?v=2MCemn70ysI" title="YouTube Visual Instructions">YouTube</a>.
 </p>
+
+<a name="usage-notes"></a>
+## V1.4.2 Release Notes - Improved Claim Handling & Configurable Settings
+
+### Usage Instructions
+After executing the script with `python3 claim.py`, you will be prompted to update settings and configure the session:
+
+1. **Update Settings:**
+   - Decide if you want to update script parameters. If you choose "y", you'll be prompted review/update the following:
+      - `forceClaim`: Force a claim the first time the script runs, even if the wallet isn't full, or wait until full.
+      - `debugIsOn`: Activate debugging to save screenshots to your filesystem; default is off.
+      - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON.
+      - `screenshotQRCode`: Log in by QR code; default is true, the alternative is by phone number and OTP.
+      - `maxSessions`: Defines the number of simultaneous claim sessions permitted. Even if only one session is allowed at a time, you can manage multiple wallets. Additional wallets will queue and wait for an available claim session slot.
+      - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal), 2 (main steps) 3 (all messages).
+      - `forceNewSession`: Overwrite an existing session and force a new login. Requires repeating both Telegram log-in & seed words entry - useful if an existing session has errors.
+2. **Session Name Configuration:**
+   - Auto-assigns a numeric value or accepts a custom session name. Reusing a name will attempt to resume that session.
+3. **Login Options:**
+   - The default is using scanning a QR Code screenshot. If that doesn't work, or you choose otherwise, follow the OTP login method in steps 4. & 5.
+4. **Country Name and Phone Number for Telegram:**
+   - Enter your Country Name as it appears on Telegram's login page or use the default based on your IP address.
+5. **One-Time Password (OTP):**
+   - Input the OTP sent to your Telegram account.
+6. **Two-Factor Authentication (2FA):**
+   - If your Telegram account has 2FA enabled, you'll be prompted to enter your password after scanning the QR code or entering the OTP. Input your 2FA password to continue the login process.
+7. **Seed Phrase Input for HereWallet Login:**
+   - Enter your 12-word seed phrase, ensuring it is spaced correctly without punctuation or numbers.
+8. **Exit & resume later (possibly in PM2) or Continue in the CLI script:**
+   - Choose to exit the script and save progress for later or continue to the claim function.
+
+Remember to check and adjust your settings upon startup to optimize the script's performance to your server's capabilities.
+
+After following these steps, if all inputs are correctly entered, and assuming no flooding block is in place, you'll successfully logged into both Telegram and HereWallet.
+
+### Linux Manual installation - Ensure each command in the code block executes. 
+
+1. **Install Python, Zbar & PIP:**
+
+   ```bash
+   sudo apt update
+   sudo apt install -y python3 python3-pip
+   sudo apt-get install -y libzbar0
+   python3 --version   
+   ```
+2. **Download & Install the Chrome `.deb` package:**
+
+   ```bash
+   sudo apt install -y wget
+   wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb
+   sudo apt install -y /tmp/chrome.deb
+   rm /tmp/chrome.deb   
+   ```
+3. **Download & Install Chromedriver:**
+
+   ```bash
+   sudo apt install -y unzip
+   wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
+   unzip chromedriver_linux64.zip
+   rm chromedriver_linux64.zip
+   sudo mv chromedriver /usr/local/bin/
+   sudo chmod +x /usr/local/bin/chromedriver
+   chromedriver --version   
+   ```
+4. **Clone this repository:**
+
+   ```bash
+   sudo apt install -y git
+   git clone https://github.com/thebrumby/HotWalletBot.git   
+   ```
+5. **Switch to the repository directory:**
+   ```bash
+   cd HotWalletBot   
+   ```
+6. **Install the dependencies:**
+   ```bash
+   pip install selenium Pillow pyzbar qrcode-terminal
+   ```
 
 # Security Considerations for HotWalletClaimer Usage
 
