@@ -1,6 +1,6 @@
 # Near Protocol: HereWallet HOT Token Claim Assistant
 
-This Python script aids in mining (claiming) the cryptocurrency "HOT" through the "HereWalletBot" app, a free-to-use, Telegram-based platform operating on the Web3-enabled NEAR Protocol blockchain. To maximize rewards, users need to frequently visit the app to claim tokens. The script automates this process by initiating claims immediately once the wallet is full. If the wallet isn't yet filled, it calculates the time until completion and waits for the optimal moment to claim, minimizing network load and reducing Gas Fees.
+This Python script aids in mining (claiming) the cryptocurrency "HOT" through the "HereWalletBot", a free-to-use, Telegram-based Web3-enabled app operating on the NEAR Protocol blockchain. To maximize rewards, users need to frequently visit the app to claim tokens. The script automates this process by initiating claims immediately once the wallet is full. If the wallet isn't yet filled, it calculates the time until completion and waits for the optimal moment to claim, minimizing network load and reducing Gas Fees.
 
 💡 **TIP:** Although you cannot register multiple wallets to a single Telegram account, this script enables you to manage multiple pre-existing HereWallet accounts with just one Telegram login by handling each account in its own separate virtual browser session. Alternatively, you can manage each wallet with its own individual Telegram login if preferred.
 
