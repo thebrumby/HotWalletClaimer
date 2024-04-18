@@ -120,27 +120,28 @@ output(f"Our screenshot path is {backup_path}",3)
 
 def get_session_id():
     global settings
-    """Prompts the user for a session ID or determines the next sequential ID.
+    """Prompts the user for a session ID or determines the next sequential ID based on a 'Wallet' prefix.
 
     Returns:
-        str: The entered session ID or the generated sequential ID.
+        str: The entered session ID or the automatically generated sequential ID.
     """
 
-    user_input = input("Enter your unique Session Name here, or hit <enter> for the next sequential folder: ")
+    user_input = input("Enter your unique Session Name here, or hit <enter> for the next sequential wallet: ")
     user_input = user_input.strip()
 
     # Check for existing session folders
     screenshots_dir = "./screenshots/"
     dir_contents = os.listdir(screenshots_dir)
-    numeric_dirs = [dir_name for dir_name in dir_contents if dir_name.isdigit() and os.path.isdir(os.path.join(screenshots_dir, dir_name))]
-    next_session_id = "1"
-    if numeric_dirs:
-        highest_numeric_dir = max(map(int, numeric_dirs))
-        next_session_id = str(highest_numeric_dir + 1)
+    # Filter directories with the 'Wallet' prefix and extract the numeric parts
+    wallet_dirs = [int(dir_name.replace('Wallet', '')) for dir_name in dir_contents if dir_name.startswith('Wallet') and dir_name[6:].isdigit()]
+    next_wallet_id = 1
+    if wallet_dirs:
+        highest_wallet_id = max(wallet_dirs)
+        next_wallet_id = highest_wallet_id + 1
 
-    # Use the next sequential ID if no user input was provided
+    # Use the next sequential wallet ID if no user input was provided
     if not user_input:
-        user_input = next_session_id
+        user_input = f"Wallet{next_wallet_id}"
     return user_input
 
 # Update the settings based on user input
@@ -548,7 +549,7 @@ def full_claim():
             parent_div = element.find_element(By.XPATH, "./..")
             text_content = parent_div.text 
             balance_part = text_content.split("HOT Balance:\n")[1].strip() if "HOT Balance:\n" in text_content else "No balance info"
-            output(f"Step 107 - HOT balance prior to claim: {balance_part}", 2)
+            output(f"Step 107 - HOT balance prior to claim: {balance_part}", 3)
 
     except NoSuchElementException:
         output("107 - Element containing 'HOT Balance:' was not found.", 3)
@@ -595,6 +596,22 @@ def full_claim():
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_wait_time += 1
+	             	# Click on the Storage link:
+                xpath = "//h4[text()='Storage']"
+                move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable")
+
+                try:
+                  element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'HOT Balance:')]/following-sibling::p[1]")))
+                  if element is not None:
+                    parent_div = element.find_element(By.XPATH, "./..")
+                    text_content = parent_div.text 
+                    balance_part = text_content.split("HOT Balance:\n")[1].strip() if "HOT Balance:\n" in text_content else "No balance info"
+                    output(f"Step 113 - HOT balance after claim: {balance_part}", 1)
+                except NoSuchElementException:
+                    output("113 - Element containing 'HOT Balance:' was not found.", 3)
+                except Exception as e:
+                    print("113 - An error occurred:", e)
+
                 if wait_time_text == "Filled":
                     output("The wait timer is still showing: Filled.",1)
                     output("This means either the claim failed, or there is >4 minutes lag in the game.",1)
@@ -681,10 +698,10 @@ def select_iframe(step):
             driver.save_screenshot(screenshot_path)
 
     except TimeoutException:
-        output(f"Step {step} - Failed to find or switch to the iframe within the timeout period.\n",3)
+        output(f"Step {step} - Failed to find or switch to the iframe wit,h,in, the timeout period.\n",3)
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-iframe-timeout.png"
-            driver.save_screenshot(screenshot_path)
+            driver.save_scre,enshot(screenshot_path)
     except Exception as e:
         output(f"Step {step} - An error occurred while attempting to switch to the iframe: {e}\n",3)
         if settings['debugIsOn']:
@@ -858,7 +875,7 @@ def validate_seed_phrase():
 
             words = seed_phrase.split()
             if len(words) != 12:
-                raise ValueError("Seed phrase mus,,,,t contain exactly 12 words.")
+                raise ValueError("Seed phrase must contain exactly 12 words.")
 
             pattern = r"^[a-z ]+$"
             if not all(re.match(pattern, word) for word in words):
