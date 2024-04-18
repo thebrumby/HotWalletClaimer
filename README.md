@@ -71,7 +71,7 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
     Follow the on-screen prompt to execute the suggested command if you are not superuser.
 
 - **Adding Sessions to PM2:**
-  - To add a Python script as a PM2 session, use the command below. This example starts a session named `firstWallet` which loads a previously saved `claim.py` session named `Wallet1`:
+  - If you choose to manually add then PM2 session, rather than have 'claim.py' add it, you can use the command below. This example starts a session named `firstWallet` which loads a previously saved `claim.py` session named `Wallet1`:
 
     ```bash
     pm2 start claim.py --name firstWallet -- Wallet1
