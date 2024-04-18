@@ -596,9 +596,6 @@ def full_claim():
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 total_wait_time += 1
-	             	# Click on the Storage link:
-                xpath = "//h4[text()='Storage']"
-                move_and_click(xpath, 30, True, "click the 'storage' link", "107", "clickable")
 
                 try:
                   element = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, "//p[contains(text(), 'HOT Balance:')]/following-sibling::p[1]")))
@@ -702,7 +699,7 @@ def select_iframe(step):
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-iframe-timeout.png"
             driver.save_scre,enshot(screenshot_path)
-    except Exception as e:
+,    except Exception as e:
         output(f"Step {step} - An error occurred while attempting to switch to the iframe: {e}\n",3)
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-iframe-error.png"
