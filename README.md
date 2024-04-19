@@ -38,7 +38,7 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
 
 | YouTube Walkthrough| PM2 Output |
 |-----------------------------|------------|
-| [![YouTube Visual Instructions](https://img.youtube.com/vi/MjUquyLWPGw/0.jpg)](https://www.youtube.com/watch?v=MjUquyLWPGw)<br>See a walkthrough of all the steps, from server setup to installing the script, on [YouTube](https://www.youtube.com/watch?v=MjUquyLWPGw). | ![image](https://github.com/thebrumby/HotWalletClaimer/assets/29182343/8f2f9fe6-4e61-4cd1-a229-6d92879e10a0)
+| [![YouTube Visual Instructions](https://img.youtube.com/vi/MjUquyLWPGw/0.jpg)](https://www.youtube.com/watch?v=MjUquyLWPGw)<br>See a walkthrough of all the steps, from server setup to installing the script, on [YouTube](https://www.youtube.com/watch?v=MjUquyLWPGw). | ![image](https://github.com/thebrumby/HotWalletClaimer/assets/29182343/551cdd67-e966-45b2-a35a-8a1d1104a8b6)
 
 <a name="pm2"></a>
 ## Use of ```PM2``` to Execute Unattended Claim Sessions (Persist After Reboot)
