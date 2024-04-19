@@ -19,7 +19,7 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
    sudo apt install -y git || true && git clone https://github.com/thebrumby/HotWalletBot.git && cd HotWalletBot && chmod +x install.sh && ./install.sh
    ```
 <a name="screen"></a>
-## Use of ```SCREEN``` to Manage Unattended Claim Sessions (Sessions are lost after reboot)
+## Use of ```SCREEN``` to Manage Unattended Claim Sessions<br>(Sessions are lost after reboot)
 - **Starting Your First Session:**
   - If you are not in the HotWalletBot directory, navigate there first with `cd HotWalletBot`.
   - Start your first independent session with `screen -S first_session`. 
