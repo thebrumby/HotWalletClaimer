@@ -23,7 +23,7 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
 - **Starting Your First Session:**
   - If you are not in the HotWalletBot directory, navigate there first with `cd HotWalletBot`.
   - Start your first independent session with `screen -S first_session`. 
-  - Execute the script with `python3 claim.py` and follow the [Usage Notes](#usage-notes) to set up the session and automate the claiming process.
+  - Execute the script with `python3 claim.py` and follow the [Usage Notes](#usage-notes) to set up the session.
   - Detach from the screen session and keep it running in the background by pressing `CTRL+A+D`.
   - To resume the session and check progress or for errors, use `screen -r first_session`.
   - If you wish to start the script without the CLI setup and directly enter an existing session, use `python3 claim.py Wallet1`. Note: "Wallet1" is the default session name for the first session; if you changed it, replace "Wallet1" with your specified session name.
