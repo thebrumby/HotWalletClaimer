@@ -21,14 +21,14 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
 <a name="screen"></a>
 ## Use of ```SCREEN``` to Manage Unattended Claim Sessions (Sessions are lost after reboot)
 - **Starting Your First Session:**
-  - Start with `screen -S first_session`. If you are not in the HotWalletBot directory, navigate there first with `cd HotWalletBot`.
+  - If you are not in the HotWalletBot directory, navigate there first with `cd HotWalletBot`. Start with `screen -S first_session`. 
   - Execute the script with `python3 claim.py` and follow the [Usage Notes](#usage-notes) to set up the session and automate the claiming process.
   - Detach from the screen session and keep it running in the background by pressing `CTRL+A+D`.
   - To resume the session and check progress or for errors, use `screen -r first_session`.
   - If you wish to start the script without the CLI setup and directly enter an existing session, use `python3 claim.py Wallet1`. Note: "Wallet1" is the default session name for the first session; if you changed it, replace "Wallet1" with your specified session name.
 
 - **Starting a Second Account Session:**
-  - From the command line (outside the first screen session), start another session with `screen -S second_session` and execute `python3 claim.py`.
+  - From the command line (outside the first screen session), ensure you are in the HotWallet Bot directory (`cd HotWalletBot`) and start another session with `screen -S second_session` and execute `python3 claim.py`.
   - Detach from this second screen session by pressing `CTRL+A+D`.
   - To resume the session and check progress or for errors, use `screen -r second_session`.
   - If you wish to start the script without the CLI setup and directly enter an existing session, use `python3 claim.py Wallet2`. Note: "Wallet2" is the default session name for the second session; if you changed it, replace "Wallet2" with your specified session name.
