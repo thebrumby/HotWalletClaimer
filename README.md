@@ -29,7 +29,7 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
   - If you wish to resume a previously set-up session without having to repeat the CLI setup, enter the command `python3 claim.py Wallet1`. Note: 'Wallet1' is the default session name for the first session. If you have changed it, replace 'Wallet1' with your specified session name."
 
 - **Starting a Second Account Session:**
-  - From the command line (outside the first screen session), ensure you are in the HotWallet Bot directory (`cd HotWalletBot`) and start another session with `screen -S second_session` and execute `python3 claim.py`.
+  - From the command line (outside the first screen session), ensure you are in the HotWalletBot directory `cd HotWalletBot` and start a second session with `screen -S second_session` and execute `python3 claim.py`.
   - Detach from this second screen session by pressing `CTRL+A+D`.
   - To resume the session and check progress or for errors, use `screen -r second_session`.
   - If you wish to resume a previously set-up session without having to repeat the CLI setup, enter the command `python3 claim.py Wallet2`. Note: 'Wallet2' is the default session name for the first session. If you have changed it, replace 'Wallet2' with your specified session name."
