@@ -26,13 +26,13 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
   - Execute the script with `python3 claim.py` and follow the [Usage Notes](#usage-notes) to set up the session.
   - Detach from the screen session and keep it running in the background by pressing `CTRL+A+D`.
   - To resume the session and check progress or for errors, use `screen -r first_session`.
-  - If you wish to start the script without the CLI setup and directly enter an existing session, use `python3 claim.py Wallet1`. Note: "Wallet1" is the default session name for the first session; if you changed it, replace "Wallet1" with your specified session name.
+  - If you wish to resume a previously set-up session without having to repeat the CLI setup, enter the command `python3 claim.py Wallet1`. Note: 'Wallet1' is the default session name for the first session. If you have changed it, replace 'Wallet1' with your specified session name."
 
 - **Starting a Second Account Session:**
   - From the command line (outside the first screen session), ensure you are in the HotWallet Bot directory (`cd HotWalletBot`) and start another session with `screen -S second_session` and execute `python3 claim.py`.
   - Detach from this second screen session by pressing `CTRL+A+D`.
   - To resume the session and check progress or for errors, use `screen -r second_session`.
-  - If you wish to start the script without the CLI setup and directly enter an existing session, use `python3 claim.py Wallet2`. Note: "Wallet2" is the default session name for the second session; if you changed it, replace "Wallet2" with your specified session name.
+  - If you wish to resume a previously set-up session without having to repeat the CLI setup, enter the command `python3 claim.py Wallet2`. Note: 'Wallet2' is the default session name for the first session. If you have changed it, replace 'Wallet2' with your specified session name."
 
 💡 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 
