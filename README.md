@@ -35,21 +35,9 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
 
 💡 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 
-<p align="center">
-  <table style="margin-left: auto; margin-right: auto; width: 100%;"><tr>
-    <td style="width: 50%; vertical-align: top;">
-      <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">
-        <img src="https://img.youtube.com/vi/MjUquyLWPGw/0.jpg" alt="YouTube Visual Instructions" style="max-width: 100%; height: auto;">
-      </a>
-      <div style="text-align: center; margin-top: 10px;">
-        See a walkthrough of all the steps, from server setup to installing the script, on <a href="https://www.youtube.com/watch?v=MjUquyLWPGw" title="YouTube Visual Instructions">YouTube</a>.
-      </div>
-    </td>
-    <td style="width: 50%; vertical-align: top;">
-      <img src="https://github.com/thebrumby/HotWalletClaimer/assets/29182343/f3c2f57c-282a-4d3c-be9a-15113a466c44" alt="image" style="max-width: 100%; height: auto;">
-    </td>
-  </tr></table>
-</p>
+| YouTube Walkthrough| PM2 Output |
+|-----------------------------|------------|
+| [![YouTube Visual Instructions](https://img.youtube.com/vi/MjUquyLWPGw/0.jpg)](https://www.youtube.com/watch?v=MjUquyLWPGw)<br>See a walkthrough of all the steps, from server setup to installing the script, on [YouTube](https://www.youtube.com/watch?v=MjUquyLWPGw). | ![image](https://github.com/thebrumby/HotWalletClaimer/assets/29182343/8f2f9fe6-4e61-4cd1-a229-6d92879e10a0)
 
 <a name="pm2"></a>
 ## Use of ```PM2``` to Execute Unattended Claim Sessions (Persist After Reboot)
