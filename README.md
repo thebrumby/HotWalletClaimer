@@ -1,6 +1,6 @@
 # Near Protocol: HereWallet HOT Token Claim Assistant
 
-This Python script aids in mining (claiming) the cryptocurrency "HOT" through the "HereWalletBot", a free-to-use, Telegram-based Web3-enabled app operating on the NEAR Protocol blockchain. To maximize rewards, users need to frequently visit the app to claim tokens. The script automates this process by initiating claims immediately once the wallet is full. If the wallet isn't yet filled, it calculates the time until completion and waits for the optimal moment to claim, minimizing network load and reducing Gas Fees.
+This Python script aids in mining (claiming) the cryptocurrency "HOT" through the "HereWalletBot", a free-to-use, Telegram-based Web3-enabled app operating on the NEAR Protocol blockchain. To maximize rewards, users need to frequently visit the app to claim tokens. The script automates this process by initiating a claim at a random interval close to when the wallet is full. If the wallet isn't yet filled, it calculates the time until completion and waits for the optimal moment—adjusted by your preferred random offset—to claim, thereby minimizing network load and reducing gas fees.
 
 💡 **TIP:** Although you cannot register multiple wallets to a single Telegram account, this script enables you to manage multiple pre-existing HereWallet accounts with just one Telegram login by handling each Wallet in a separate virtual browser session. Alternatively, you can manage each Wallet with its own Telegram login if preferred.
 
@@ -159,20 +159,25 @@ Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment dir
 </p>
 
 <a name="usage-notes"></a>
-## V1.4.2 Release Notes - Improved Claim Handling & Configurable Settings
+## V2.0.2 Release Notes - Improved Claim Handling & Configurable Settings
 
 ### Usage Instructions
 After executing the script with `python3 claim.py`, you will be prompted to update settings and configure the session:
 
 1. **Update Settings:**
-   - Decide if you want to update script parameters. If you choose "y", you'll be prompted review/update the following:
+   - Decide if you want to update script parameters. If you choose "y", you'll be prompted to review/update the following:
       - `forceClaim`: Force a claim the first time the script runs, even if the wallet isn't full, or wait until full.
       - `debugIsOn`: Activate debugging to save screenshots to your filesystem; default is off.
       - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON.
       - `screenshotQRCode`: Log in by QR code; default is true, the alternative is by phone number and OTP.
-      - `maxSessions`: Defines the number of simultaneous claim sessions permitted. Even if only one session is allowed at a time, you can manage multiple wallets. Additional wallets will queue and wait for an available claim session slot.
-      - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal), 2 (main steps) 3 (all messages).
-      - `forceNewSession`: Overwrite an existing session and force a new login. Requires repeating both Telegram log-in & seed words entry - useful if an existing session has errors.
+      - `maxSessions`: Defines the number of simultaneous claim sessions permitted. Additional wallets will queue and wait for an available session slot.
+      - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal), 2 (main steps) to 3 (all messages).
+      - `forceNewSession`: Overwrite an existing session and force a new login. Useful if an existing session has errors.
+      - `lowestClaimOffset` and `highestClaimOffset`: Set the range for random claim timing. Adjust these to control when the claim is triggered relative to the pot being filled.
+      - **Examples of Claim Timing:**
+         - `-30, -15`: Claims occur between 30 and 15 minutes before the pot is full.
+         - `30, 60`: Claims occur between 30 minutes to 1 hour after the pot is full.
+         - `-15, 15`: Claims can occur in the 15-minute window before or after the pot is full.
 2. **Session Name Configuration:**
    - Auto-assigns a numeric value or accepts a custom session name. Reusing a name will attempt to resume that session.
 3. **Login Options:**
