@@ -21,49 +21,56 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException
 from datetime import datetime, timedelta
 
-# Initiate global variables:
+def load_settings():
+    global settings, settings_file
+    # Default settings with all necessary keys
+    default_settings = {
+        "forceClaim": False,
+        "debugIsOn": False,
+        "hideSensitiveInput": True,
+        "screenshotQRCode": True,
+        "maxSessions": 1,
+        "verboseLevel": 2,
+        "lowestClaimOffset": 0, # One/both be a negative figure to claim before reaches filled status.
+        "highestClaimOffset": 15, # Or one/both can be positive to claim after the pot is filled.
+        "forceNewSession": False,
+    }
+
+    if os.path.exists(settings_file):
+        with open(settings_file, "r") as f:
+            loaded_settings = json.load(f)
+        # Update default settings with any settings loaded from the file
+        settings = {**default_settings, **loaded_settings}
+        output("Settings loaded successfully.", 3)
+    else:
+        settings = default_settings
+        save_settings()  # Save the default settings if the file does not exist
+
+def save_settings():
+    global settings, settings_file
+    with open(settings_file, "w") as f:
+        json.dump(settings, f)
+    output("Settings saved successfully.", 3)
+
+def output(string, level):
+    if settings['verboseLevel'] >= level:
+        print(string)
+
+# Define sessions and settings files
+settings_file = "variables.txt"
+status_file_path = "status.txt"
+settings = {}
+load_settings()
 driver = None
 target_element = None
+random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
 
-# Global variables
-settings = {
-    "forceClaim": False,
-    "debugIsOn": False,
-    "hideSensitiveInput": True,
-    "screenshotQRCode": True,
-    "maxSessions": 1,
-    "verboseLevel": 2,
-    "forceNewSession": False,
-}
-step = "00"
 def increase_step():
     global step
     step_int = int(step) + 1
     step = f"{step_int:02}"
 
 print("Initialising the HOT Wallet Auto-claim Python Script - Good Luck!")
-
-settings_file = "variables.txt"
-status_file_path = "status.txt"
-
-def output(string, level):
-    if settings['verboseLevel'] >= level:
-        print(string)
-
-def load_settings():
-    global settings
-    if os.path.exists(settings_file):
-        with open(settings_file, "r") as f:
-            settings = json.load(f)
-        output("Settings loaded successfully.",3)
-    else:
-        save_settings()  # Create the file with default settings
-
-def save_settings():
-    global settings
-    with open(settings_file, "w") as f:
-        json.dump(settings, f, indent=4)
-    output("\nSettings saved successfully.",3)
 
 def update_settings():
     global settings
@@ -94,14 +101,39 @@ def update_settings():
         output("Number of sessions remains unchanged.",1)
 
     try:
-        new_verbose_level = int(input(f"\nEnter the number for how much information you want displaying in the console.\n 3 = all messages, 2 = claim steps, 1 = minimal steps\n(current: {settings['verboseLevel']}): "))
+        new_verbose_level = int(input("\nEnter the number for how much information you want displaying in the console.\n 3 = all messages, 2 = claim steps, 1 = minimal steps\n(current: {}): ".format(settings['verboseLevel'])))
         if 1 <= new_verbose_level <= 3:
             settings["verboseLevel"] = new_verbose_level
-            output("Verbose level updated successfully.",2)
+            output("Verbose level updated successfully.", 2)
         else:
-            output("Verbose level remains unchanged.",2)
+            output("Verbose level remains unchanged.", 2)
     except ValueError:
-        output("Invalid input. Verbose level remains unchanged.",2)
+        output("Invalid input. Verbose level remains unchanged.", 2)
+
+    try:
+        new_lowest_offset = int(input("\nEnter the lowest possible offset for the claim timer (valid values are -30 to +30 minutes)\n(current: {}): ".format(settings['lowestClaimOffset'])))
+        if -30 <= new_lowest_offset <= 30:
+            settings["lowestClaimOffset"] = new_lowest_offset
+            output("Lowest claim offset updated successfully.", 2)
+        else:
+            output("Invalid range for lowest claim offset. Please enter a value between -30 and +30.", 2)
+    except ValueError:
+        output("Invalid input. Lowest claim offset remains unchanged.", 2)
+
+    try:
+        new_highest_offset = int(input("\nEnter the highest possible offset for the claim timer (valid values are 0 to 60 minutes)\n(current: {}): ".format(settings['highestClaimOffset'])))
+        if 0 <= new_highest_offset <= 60:
+            settings["highestClaimOffset"] = new_highest_offset
+            output("Highest claim offset updated successfully.", 2)
+        else:
+            output("Invalid range for highest claim offset. Please enter a value between 0 and 60.", 2)
+    except ValueError:
+        output("Invalid input. Highest claim offset remains unchanged.", 2)
+
+    # Ensure lowestClaimOffset is not greater than highestClaimOffset
+    if settings["lowestClaimOffset"] > settings["highestClaimOffset"]:
+        settings["lowestClaimOffset"] = settings["highestClaimOffset"]
+        output("Adjusted lowest claim offset to match the highest as it was greater.", 2)
 
     save_settings()
 
@@ -494,10 +526,18 @@ def next_steps():
         output(f"Step {step} - An error occurred: {e}",1)
 
 def full_claim():
-    global driver, target_element, settings, session_path, step
+    global driver, target_element, settings, session_path, step, random_offset
     step = "100"
     driver = get_driver()
     output("\nCHROME DRIVER INITIALISED: If the script exits before detaching, the session may need to be restored.",1)
+
+    def apply_random_offset(unmodifiedTimer):
+        global settings, step, random_offset
+        if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
+            random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
+            modifiedTimer = unmodifiedTimer + random_offset
+            output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
+            return modifiedTimer
 
     try:
         driver.get("https://web.telegram.org/k/#@herewalletbot")
@@ -573,12 +613,21 @@ def full_claim():
     increase_step()
 
     wait_time_text = get_wait_time(step, "pre-claim") 
+
+    if wait_time_text != "Filled":
+        matches = re.findall(r'(\d+)([hm])', wait_time_text)
+        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + random_offset
+        if remaining_wait_time < 5:
+            settings['forceClaim'] = True
+            output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
+
     if wait_time_text == "Unknown":
-      return 5
+      return 15
 
     try:
-        output(f"Step {step} - The pre-claim wait time is : {wait_time_text}",1)
+        output(f"Step {step} - The pre-claim wait time is : {wait_time_text} and random offset is {random_offset} minutes.",1)
         increase_step()
+
         if wait_time_text == "Filled" or settings['forceClaim']:
             try:
                 original_window = driver.current_window_handle
@@ -615,8 +664,7 @@ def full_claim():
                 increase_step()
                 wait_time_text = get_wait_time(step, "post-claim") 
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                total_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
-                total_wait_time += 1
+                total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                 increase_step()
 
                 try:
@@ -971,6 +1019,8 @@ def main():
         next_claim_time = now + timedelta(minutes=wait_time)
         next_claim_time_str = next_claim_time.strftime("%H:%M")
         output(f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.",1)
+        if settings["forceClaim"]:
+            settings["forceClaim"] = False
 
         while wait_time > 0:
             this_wait = min(wait_time, 15)
