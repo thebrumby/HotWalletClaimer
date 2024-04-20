@@ -36,9 +36,9 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
 
 💡 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 
-| YouTube Walkthrough| PM2 Output |
-|-----------------------------|------------|
-| [![YouTube Visual Instructions](https://img.youtube.com/vi/MjUquyLWPGw/0.jpg)](https://www.youtube.com/watch?v=MjUquyLWPGw)<br>See a walkthrough of all the steps, from server setup to installing the script, on [YouTube](https://www.youtube.com/watch?v=MjUquyLWPGw). | ![image](https://github.com/thebrumby/HotWalletClaimer/assets/29182343/551cdd67-e966-45b2-a35a-8a1d1104a8b6)
+| YouTube Walkthrough | PM2 Output |
+|---------------------|------------|
+| [![YouTube Visual Instructions](https://img.youtube.com/vi/MjUquyLWPGw/0.jpg)](https://www.youtube.com/watch?v=MjUquyLWPGw)<br>See a walkthrough of all the steps, from server setup to installing the script, on [YouTube](https://www.youtube.com/watch?v=MjUquyLWPGw). | ![PM2 Output](https://github.com/thebrumby/HotWalletClaimer/blob/main/PM2%20output.png?raw=true) |
 
 <a name="pm2"></a>
 ## Use of ```PM2``` to Execute Unattended Claim Sessions (Persist After Reboot)
