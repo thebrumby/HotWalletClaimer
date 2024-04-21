@@ -2,14 +2,14 @@
 
 This Python script aids in mining (claiming) the cryptocurrency "HOT" through the "HereWalletBot", a free-to-use, Telegram-based Web3-enabled app operating on the NEAR Protocol blockchain. To maximize rewards, users need to frequently visit the app to claim tokens. The script automates this process by initiating a claim at a random interval close to when the wallet is full. If the wallet isn't yet filled, it calculates the time until completion and waits for the optimal moment—adjusted by your preferred random offset—to claim, thereby minimizing network load and reducing gas fees.
 
-💡 **TIP:** Although you cannot register multiple wallets to a single Telegram account, this script enables you to manage multiple pre-existing HereWallet accounts with just one Telegram login by handling each Wallet in a separate virtual browser session. Alternatively, you can manage each Wallet with its own Telegram login if preferred.
+☕ If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation. Thank you in advance for any support!  ☕
 
-If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation. Thank you in advance for any support!
+🔍 **HINT:** Although you cannot register multiple wallets to a single Telegram account, this script enables you to manage multiple pre-existing HereWallet accounts with just one Telegram login by handling each Wallet in a separate virtual browser session. Alternatively, you can manage each Wallet with its own Telegram login if preferred.
 
-💡 **TIP:** For a straightforward, easily visualized, unattended claim process, novice users may find [SCREEN](#screen) a helpful tool. Alternatively, more confident Linux users will benefit from the additional features provided by [PM2](#pm2).
+💡 **PRO-TIP:** For a straightforward, easily visualized, unattended claim process, novice users may find [SCREEN](#screen) a helpful tool. Alternatively, more confident Linux users will benefit from the additional features provided by the [PM2](#pm2) process manager.
 
 #### Windows 10 & 11 Users - Utilize WSL2 for a Seamless Experience:
-For detailed instructions on setting up your environment using Windows Subsystem for Linux 2 (WSL2), please refer to our [Windows Setup](#windows) section.
+For detailed instructions on setting up your environment using Windows Subsystem for Linux 2 (WSL2), please take a look at our [Windows Setup](#windows) section.
 
 <a name="quick-start"></a>
 #### Quick Start Installation (based on Ubuntu 20.04/22.04):
@@ -26,15 +26,15 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
   - Execute the script with `python3 claim.py` and follow the [Usage Notes](#usage-notes) to set up the session.
   - Detach from the screen session and keep it running in the background by pressing `CTRL+A+D`.
   - To resume the session and check progress or for errors, use `screen -r first_session`.
-  - If you wish to resume a previously set-up session without having to repeat the CLI setup, enter the command `python3 claim.py Wallet1`. Note: 'Wallet1' is the default session name for the first session. If you have changed it, replace 'Wallet1' with your specified session name."
+  - To resume a previously set-up session use the command `python3 claim.py Wallet1`. Remember, 'Wallet1' is the default session name. If you've used a different name, replace 'Wallet1' with your actual session name.
 
 - **Starting a Second Account Session:**
   - From the command line (outside the first screen session), ensure you are in the HotWalletBot directory with `cd HotWalletBot` and start a second session with `screen -S second_session` and execute `python3 claim.py`.
   - Detach from this second screen session by pressing `CTRL+A+D`.
   - To resume the session and check progress or for errors, use `screen -r second_session`.
-  - If you wish to resume a previously set-up session without having to repeat the CLI setup, enter the command `python3 claim.py Wallet2`. Note: 'Wallet2' is the default session name for the first session. If you have changed it, replace 'Wallet2' with your specified session name."
+  - To resume a previously set-up session use the command `python3 claim.py Wallet2`. Remember, 'Wallet2' is the default session name. If you've used a different name, replace 'Wallet2' with your actual session name.
 
-💡 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
+💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 
 | YouTube Walkthrough | PM2 Output |
 |---------------------|------------|
@@ -52,12 +52,15 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
 - **Setup Before Using PM2:**
   - Open the script using `python3 claim.py` and complete the setup for each wallet. Follow the process to log into Telegram and enter your seed phrase. After setup, you will be prompted whether to exit before moving on to the claim function. Choose 'n' to exit the script and resume the session with PM2, or 'a' to automatically add the session name as a PM2 session.
 
-- **Initialize PM2 with Systemd (Linux/Ubuntu):**
-  - Ensure that PM2 starts on boot:
-    ```bash
-    pm2 startup systemd
-    ```
-    Follow the on-screen prompt to execute the suggested command if you are not superuser.
+- **Configure PM2 to start automatically on boot/reboot:**
+  - **Linux/Ubuntu:**
+    - For dedicated Linux/Ubuntu machines, initialize PM2 with systemd to ensure it starts on boot:
+      ```bash
+      pm2 startup systemd
+      ```
+      If the active user lacks administrative privileges, PM2 will provide a command to execute with sudo to complete the systemd activation.
+  - **Windows:**
+    - For setups that require persistent reboots, please refer to the Windows Installation Guide provided below.
 
 - **Adding Sessions to PM2:**
   - If you choose to manually add then PM2 session, rather than have 'claim.py' add it, you can use the command below. This example starts a session named `firstWallet` which loads a previously saved `claim.py` session named `Wallet1`:
@@ -99,24 +102,24 @@ Copy and paste the Quick Start command block into your terminal (or follow the [
 <a name="windows"></a>
 ## Guide for Setting Up WSL2 in a Windows 10/11 Environment
 
-Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment directly on Windows, unmodified, without the overhead of a traditional virtual machine or dualboot setup. This makes it an excellent choice for running this script in a Linux-like environment on Windows machines, as the commands and drivers detailed below can be utilized directly. Alternatively, watch the video below and consider using a cloud-based Linux server (12-month free trials are often available).
+Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment directly on Windows, unmodified, without the overhead of a traditional virtual machine or dualboot setup. This makes it an excellent choice for running this script in a Linux-like environment on Windows machines, as the quick start commands and drivers detailed in the Ubuntu installation section can be utilized directly.
 
 ### Step 1: Enable WSL2 and Install Ubuntu 22.04
 
 1. **Open the Microsoft Store:**
-   - Click the Start menu and open the Microsoft Store. Search for "Ubuntu 22.04 LTS" and click on the install button. This will download and install the Ubuntu terminal environment.
+   - Click the Start menu and open the Microsoft Store. Search for "Ubuntu 22.04 LTS" and click on the "Get" button. This will download and install the Ubuntu terminal environment.
 
 2. **Enable Windows Subsystem for Linux (WSL):**
-   - Before you can use Ubuntu, ensure that WSL is enabled and set up to use the newer WSL2 version. Open PowerShell as an administrator and run the following commands:
+   - Before using Ubuntu, ensure that WSL is enabled and set up to use the newer WSL2 version. Open PowerShell as an **administrator** and run the following commands:
 
      ```bash
      dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
      ```
 
-     This command enables the WSL feature. Restart your computer after this step to ensure changes take effect.
+     This command enables the WSL feature. **Restart your computer** after this step to ensure changes take effect.
 
 3. **Set WSL2 as Your Default Version:**
-   - After your system restarts, open PowerShell again as an administrator and set WSL2 as the default version with this command:
+   - After your system restarts, open PowerShell again as an **administrator** and set WSL2 as the default version with this command:
 
      ```bash
      wsl --set-default-version 2
@@ -130,7 +133,7 @@ Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment dir
    - After installation, you can start Ubuntu by searching for "Ubuntu 22.04" in the Start menu and clicking on the app icon. The first launch will take a few minutes as it finalizes the setup.
 
 2. **Create a User Account and Password:**
-   - Upon first launch, you'll be prompted to enter a new username and password. This account will be your default user for Ubuntu and will have sudo (administrative) privileges.
+   - Upon first launch, you may be prompted to enter a new username and password. This account will be your default Ubuntu user and have sudo (administrative) privileges.
 
 ### Step 3: Update and Upgrade Ubuntu (Optional but Recommended)
 
@@ -159,7 +162,7 @@ Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment dir
 </p>
 
 <a name="usage-notes"></a>
-## V2.0.2 Release Notes - Improved Claim Handling & Configurable Settings
+## V2.0.2 Release Notes - Random Offset to the Claim Wait Timer
 
 ### Usage Instructions
 After executing the script with `python3 claim.py`, you will be prompted to update settings and configure the session:
