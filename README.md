@@ -4,7 +4,7 @@ This Python script aids in mining (claiming) the cryptocurrency "HOT" through th
 
 💡 **TIP:** Although you cannot register multiple wallets to a single Telegram account, this script enables you to manage multiple pre-existing HereWallet accounts with just one Telegram login by handling each Wallet in a separate virtual browser session. Alternatively, you can manage each Wallet with its own Telegram login if preferred.
 
-If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation. To join the HereWallet game and further support my efforts, you can use [this link](https://t.me/herewalletbot/app?startapp=3441967) to make me your referrer, which helps me earn extra tokens. Thank you in advance for any support!
+If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation. Thank you in advance for any support!
 
 💡 **TIP:** For a straightforward, easily visualized, unattended claim process, novice users may find [SCREEN](#screen) a helpful tool. Alternatively, more confident Linux users will benefit from the additional features provided by [PM2](#pm2).
 
