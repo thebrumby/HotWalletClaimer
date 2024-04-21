@@ -621,7 +621,7 @@ def full_claim():
             settings['forceClaim'] = True
             output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
-            output(f"Step {step} - the remaining time is {remaining_wait_time}, so going back to wait.", 2)
+            output(f"Step {step} - the remaining time is {remaining_wait_time} minutes, so going back to wait.", 2)
             return remaining_wait_time
 
     if wait_time_text == "Unknown":
