@@ -107,52 +107,46 @@ Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment dir
 ### Step 1: Enable WSL2 and Install Ubuntu 22.04
 
 1. **Open the Microsoft Store:**
-   - Click the Start menu and open the Microsoft Store. Search for "Ubuntu 22.04 LTS" and click on the "Get" button. This will download and install the Ubuntu terminal environment.
+   - Search and install "Ubuntu 22.04 LTS" from the Microsoft Store.
 
 2. **Enable Windows Subsystem for Linux (WSL):**
-   - Before using Ubuntu, ensure that WSL is enabled and set up to use the newer WSL2 version. Open PowerShell as an **administrator** and run the following commands:
-
+   - Open PowerShell **as an administrator** and run:
      ```bash
      dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
      ```
-
-     This command enables the WSL feature. **Restart your computer** after this step to ensure changes take effect.
+   - Restart your computer to apply changes.
 
 3. **Set WSL2 as Your Default Version:**
-   - After your system restarts, open PowerShell again as an **administrator** and set WSL2 as the default version with this command:
-
+   - After restarting, open PowerShell **as an administrator** and execute:
      ```bash
      wsl --set-default-version 2
      ```
-
-     If this is your first time setting up WSL, you might be prompted to update the WSL2 kernel. Follow the link provided in the PowerShell window to download and install the WSL2 kernel update package.
+   - If prompted, update the WSL2 kernel using the provided link.
 
 ### Step 2: Launch Ubuntu 22.04
 
 1. **Start Ubuntu 22.04:**
-   - After installation, you can start Ubuntu by searching for "Ubuntu 22.04" in the Start menu and clicking on the app icon. The first launch will take a few minutes as it finalizes the setup.
+   - Open the Ubuntu app from the Start menu. Initial setup may take a few minutes.
 
 2. **Create a User Account and Password:**
-   - Upon first launch, you may be prompted to enter a new username and password. This account will be your default Ubuntu user and have sudo (administrative) privileges.
+   - Set up your default Ubuntu user with sudo privileges upon first launch.
 
 ### Step 3: Update and Upgrade Ubuntu (Optional but Recommended)
 
 1. **Update Your System:**
-   - It's a good practice to update your package lists and upgrade the packages right after installation. In the Ubuntu terminal, run:
-
+   - In the Ubuntu terminal, run:
      ```bash
      sudo apt update && sudo apt upgrade
      ```
 
-     This will ensure all your software is up to date.
+### Step 4: Follow the Setup and Initialization Instructions
 
-### Step 4: Follow the Setup and Initialization as per the Ubuntu/Linux Instructions
+- Refer back to the [Quick Start](#quick-start) section for further instructions.
 
-- Now that you have Ubuntu set up, you can return to the [Quick Start](#quick-start) section at the top of the page for further instructions.
+### Step 5: Configure WSL & PM2 to Start with Windows (Optional)
 
-### Step 5: Configure WSL & PM2 to Start When Your Machine Starts (Optional)
+- Open the Run dialog (`Win + R`), type `shell:startup`, and move the `windows_pm2_restart.bat` file into the Startup folder.
 
-- Press `Win + R` to open the Run dialog box. Type `shell:startup` to open the Startup folder. Then, copy the `windows_pm2_restart.bat` file from your HotWalletBot directory into the Startup folder.
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=2MCemn70ysI" title="Setting up Ubuntu within Windows using WSL.">
@@ -162,39 +156,49 @@ Windows Subsystem for Linux (WSL2) allows you to run a GNU/Linux environment dir
 </p>
 
 <a name="usage-notes"></a>
-## V2.0.2 Release Notes - Random Offset to the Claim Wait Timer
+## V2.0.3 Release Notes - Option to save Telegram log in. 
 
-### Usage Instructions
+## Usage Instructions
 After executing the script with `python3 claim.py`, you will be prompted to update settings and configure the session:
 
 1. **Update Settings:**
-   - Decide if you want to update script parameters. If you choose "y", you'll be prompted to review/update the following:
-      - `forceClaim`: Force a claim the first time the script runs, even if the wallet isn't full, or wait until full.
-      - `debugIsOn`: Activate debugging to save screenshots to your filesystem; default is off.
-      - `hideSensitiveInput`: Hide sensitive input such as phone numbers and seed phrases; default is ON.
-      - `screenshotQRCode`: Log in by QR code; default is true, the alternative is by phone number and OTP.
-      - `maxSessions`: Defines the number of simultaneous claim sessions permitted. Additional wallets will queue and wait for an available session slot.
-      - `verboseLevel`: Control verbosity of console messages; ranges from 1 (minimal), 2 (main steps) to 3 (all messages).
-      - `forceNewSession`: Overwrite an existing session and force a new login. Useful if an existing session has errors.
-      - `lowestClaimOffset` and `highestClaimOffset`: Set the range for random claim timing. Adjust these to control when the claim is triggered relative to the pot being filled.
-      - **Examples of Claim Timing:**
-         - `-30, -15`: Claims occur between 30 and 15 minutes before the pot is full.
-         - `30, 60`: Claims occur between 30 minutes to 1 hour after the pot is full.
-         - `-15, 15`: Claims can occur in the 15-minute window before or after the pot is full.
+   - If you choose "yes" when prompted, you will review and possibly update the following settings:
+      - `forceClaim`: Choose to force a claim the first time the script runs, regardless of whether the wallet is full.
+      - `debugIsOn`: Activate debugging to save screenshots locally; default is off.
+      - `hideSensitiveInput`: Ensures sensitive information like phone numbers and seed phrases remain hidden; default is ON.
+      - `screenshotQRCode`: Prefer to log in via QR code; the alternative is manual login via phone number and OTP.
+      - `maxSessions`: Set the maximum number of concurrent claim sessions; additional wallets will wait for an available slot.
+      - `verboseLevel`: Adjust the verbosity of console messages; options range from 1 (minimal) to 3 (all messages).
+      - `forceNewSession`: Forces a new login, useful if the existing session encounters errors.
+      - `lowestClaimOffset` and `highestClaimOffset`: Define the range for randomized claim timing relative to when the pot is filled.
+         - **Examples of Claim Timing:**
+            - `-30, -15`: Early claims 30 to 15 minutes before the pot is full.
+            - `30, 60`: Late claims 30 minutes to 1 hour after the pot is full.
+            - `-15, 15`: Random claims within a 15-minute window around the pot being filled.
+
 2. **Session Name Configuration:**
-   - Auto-assigns a numeric value or accepts a custom session name. Reusing a name will attempt to resume that session.
+   - Sessions are auto-named numerically or can be customized. Reusing a name attempts to resume that session.
+
 3. **Login Options:**
-   - The default is using scanning a QR Code screenshot. If that doesn't work, or you choose otherwise, follow the OTP login method in steps 4. & 5.
+     - If the script detects you have a saved Telegram session, you can choose 'y' when prompted to continue with it and proceed directly to step 7. 
+     - If you prefer to log into a new account, selecting 'n' proceeds to a new Telegram login. The default method is to log in by scanning a QR Code screenshot and moving to step 6.
+     - Should this method be unsuccessful, or if another method is preferred, follow the OTP login procedure outlined in steps 4 and 5.
+
 4. **Country Name and Phone Number for Telegram:**
-   - Enter your Country Name as it appears on Telegram's login page or use the default based on your IP address.
+   - Enter your Country Name as displayed on Telegram's login page or accept the default, which is auto-detected based on your IP.
+
 5. **One-Time Password (OTP):**
-   - Input the OTP sent to your Telegram account.
+   - Enter the OTP sent to your registered Telegram account.
+
 6. **Two-Factor Authentication (2FA):**
-   - If your Telegram account has 2FA enabled, you'll be prompted to enter your password after scanning the QR code or entering the OTP. Input your 2FA password to continue the login process.
-7. **Seed Phrase Input for HereWallet Login:**
-   - Enter your 12-word seed phrase, ensuring it is spaced correctly without punctuation or numbers.
-8. **Exit & resume later (possibly in PM2) or Continue in the CLI script:**
-   - Choose to exit the script and save progress for later or continue to the claim function.
+   - If 2FA is enabled on your Telegram account, enter your 2FA password following the QR code scan or OTP entry.
+
+7. **Seed Phrase Input for HereWalletBot Login:**
+   - Carefully input your 12-word seed phrase, ensuring correct spacing without any punctuation or numbers.
+
+8. **Exit & Resume Options:**
+   - Opt to exit and save the session for later resumption, possibly using PM2, or continue with claims directly in the CLI script.
+
 
 Remember to check and adjust your settings upon startup to optimize the script's performance to your server's capabilities.
 
