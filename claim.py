@@ -108,7 +108,7 @@ def update_settings():
         else:
             output("Verbose level remains unchanged.", 2)
     except ValueError:
-        output("Invalid input. Verbose level remains unchanged.", 2)
+        output("Verbose level remains unchanged.", 2)
 
     try:
         new_lowest_offset = int(input("\nEnter the lowest possible offset for the claim timer (valid values are -30 to +30 minutes)\n(current: {}): ".format(settings['lowestClaimOffset'])))
@@ -118,7 +118,7 @@ def update_settings():
         else:
             output("Invalid range for lowest claim offset. Please enter a value between -30 and +30.", 2)
     except ValueError:
-        output("Invalid input. Lowest claim offset remains unchanged.", 2)
+        output("Lowest claim offset remains unchanged.", 2)
 
     try:
         new_highest_offset = int(input("\nEnter the highest possible offset for the claim timer (valid values are 0 to 60 minutes)\n(current: {}): ".format(settings['highestClaimOffset'])))
@@ -128,7 +128,7 @@ def update_settings():
         else:
             output("Invalid range for highest claim offset. Please enter a value between 0 and 60.", 2)
     except ValueError:
-        output("Invalid input. Highest claim offset remains unchanged.", 2)
+        output("Highest claim offset remains unchanged.", 2)
 
     # Ensure lowestClaimOffset is not greater than highestClaimOffset
     if settings["lowestClaimOffset"] > settings["highestClaimOffset"]:
@@ -201,6 +201,7 @@ screenshots_path = "./screenshots/{}".format(user_input)
 os.makedirs(screenshots_path, exist_ok=True)
 backup_path = "./backups/{}".format(user_input)
 os.makedirs(backup_path, exist_ok=True)
+step = "01"
 
 # Define our base path for debugging screenshots
 screenshot_base = os.path.join(screenshots_path, "screenshot")
@@ -488,12 +489,22 @@ def test_for_2fa():
 
 def next_steps():
     global driver, target_element, settings, backup_path, session_path, step
-    driver = get_driver()
-    increase_step()
+    if step:
+        increase_step()
+    else:
+        step = "01"
+
     try:
-        driver.get("https://tgapp.herewallet.app/auth/import")
-        WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        
+        launch_iframe()
+        increase_step()
+
+        # Attempt to interact with elements within the iframe.
+        # Let's click the login button first:
+        xpath = "//button[p[contains(text(), 'Log in')]]"
+        target_element = move_and_click(xpath, 30, False, "find the HereWallet log-in button", "08", "visible")
+        driver.execute_script("arguments[0].click();", target_element)
+        increase_step()
+
         # Then look for the seed phase textarea:
         xpath = "//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
         input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", step, "clickable")
@@ -525,19 +536,10 @@ def next_steps():
     except Exception as e:
         output(f"Step {step} - An error occurred: {e}",1)
 
-def full_claim():
-    global driver, target_element, settings, session_path, step, random_offset
-    step = "100"
+def launch_iframe():
+    global driver, target_element, settings, step
     driver = get_driver()
-    output("\nCHROME DRIVER INITIALISED: If the script exits before detaching, the session may need to be restored.",1)
-
-    def apply_random_offset(unmodifiedTimer):
-        global settings, step, random_offset
-        if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
-            random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-            modifiedTimer = unmodifiedTimer + random_offset
-            output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
-            return modifiedTimer
+    output("\nCHROME DRIVER INITIALISED: Try not to exit the script before it detaches.",1)
 
     try:
         driver.get("https://web.telegram.org/k/#@herewalletbot")
@@ -559,10 +561,6 @@ def full_claim():
 
     driver.get("https://web.telegram.org/k/#@herewalletbot")
     WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-
-    if settings['debugIsOn']:
-        time.sleep(3)
-        driver.save_screenshot(f"{screenshots_path}/Step {step} Pre-Claim screenshot.png")
 
     # There is a very unlikely scenario that the chat might have been cleared.
     # In this case, the "START" button needs pressing to expose the chat window!
@@ -586,6 +584,20 @@ def full_claim():
     # HereWalletBot Pop-up Handling
     select_iframe(step)
     increase_step()
+
+def full_claim():
+    global driver, target_element, settings, session_path, step, random_offset
+    step = "100"
+
+    def apply_random_offset(unmodifiedTimer):
+        global settings, step, random_offset
+        if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
+            random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
+            modifiedTimer = unmodifiedTimer + random_offset
+            output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
+            return modifiedTimer
+
+    launch_iframe()
 
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
@@ -621,7 +633,7 @@ def full_claim():
             settings['forceClaim'] = True
             output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
-            output(f"Step {step} - the remaining time is {remaining_wait_time} minutes, so going back to wait.", 2)
+            output(f"Step {step} - Considering {wait_time_text} and a {random_offset} minute offset, we'll go back to sleep for {remaining_wait_time} minutes.", 2)
             return remaining_wait_time
 
     if wait_time_text == "Unknown":
@@ -830,6 +842,7 @@ def send_start(old_step):
     xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
     
     def attempt_send_start():
+        global backup_path
         chat_input = move_and_click(xpath, 30, False, "find the chat window/message input box", step, "present")
         if chat_input:
             increase_step()
@@ -848,18 +861,19 @@ def send_start(old_step):
     if not attempt_send_start():
         # Attempt failed, try restoring from backup and retry
         output(f"Step {step} - Attempting to restore from backup and retry.\n",2)
-        if restore_from_backup():
+        if restore_from_backup(backup_path):
             if not attempt_send_start():  # Retry after restoring backup
                 output(f"Step {step} - Retried after restoring backup, but still failed to send the '/start' command.\n",1)
         else:
             output(f"Step {step} - Backup restoration failed or backup directory does not exist.\n",1)
 
-def restore_from_backup():
-    if os.path.exists(backup_path):
+def restore_from_backup(path):
+    global step, session_path
+    if os.path.exists(path):
         try:
             quit_driver()
             shutil.rmtree(session_path)
-            shutil.copytree(backup_path, session_path, dirs_exist_ok=True)
+            shutil.copytree(path, session_path, dirs_exist_ok=True)
             driver = get_driver()
             driver.get("https://web.telegram.org/k/#@herewalletbot")
             WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
@@ -964,8 +978,27 @@ def save_pm2():
     result = subprocess.run(command, shell=True, text=True, capture_output=True)
     print(result.stdout)
 
+def backup_telegram():
+    global session_path, step
+    # Ask the user if they want to backup their Telegram directory
+    backup_prompt = input("Would you like to backup your Telegram directory? (Y/n): ").strip().lower()
+    if backup_prompt == 'n':
+        output(f"Step {step} - Backup skipped by user choice.", 3)
+    else:
+        # Define the backup destination path
+        backup_directory = os.path.join(os.path.dirname(session_path), "Telegram")
+        try:
+            # Ensure the backup directory exists and copy the contents
+            if not os.path.exists(backup_directory):
+                os.makedirs(backup_directory)
+            shutil.copytree(session_path, backup_directory, dirs_exist_ok=True)
+            output(f"Step {step} - We backed up the session data in case of a later crash!", 3)
+        except Exception as e:
+            output(f"Step {step} - Oops, we weren't able to make a backup of the session data! Error: {e}", 1)
+
 def main():
     global session_path, settings, step
+    telegram_backup_dir = os.path.join(os.path.dirname(session_path), "Telegram")
     driver = get_driver()
     quit_driver()
     clear_screen()
@@ -975,11 +1008,22 @@ def main():
     if os.path.exists(cookies_path) and not settings['forceNewSession']:
         output("Resuming the previous session...",2)
     else:
-        output("Starting the Telegram & HereWalletBot login process...",2)
-        log_into_telegram()
-        quit_driver()
+        if os.path.exists(telegram_backup_dir):
+            user_input = input("A previous Telegram login session was detected. Do you want to try to resume it? (Y/n): ").strip().lower()
+            if user_input != 'n':
+                restore_from_backup(telegram_backup_dir)
+            else:
+                log_into_telegram()
+                quit_driver()
+                backup_telegram()
+        else:
+            log_into_telegram()
+            quit_driver()
+            backup_telegram()
+    
         next_steps()
         quit_driver()
+
         try:
             shutil.copytree(session_path, backup_path, dirs_exist_ok=True)
             output("We backed up the session data in case of a later crash!",3)
