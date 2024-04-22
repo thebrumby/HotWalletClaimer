@@ -1002,9 +1002,6 @@ def main():
     random_sleep_time = round(random.uniform(0, 9), 1)
     time.sleep(random_sleep_time)
     telegram_backup_dir = os.path.join(os.path.dirname(session_path), "Telegram")
-    driver = get_driver()
-    quit_driver()
-    clear_screen()
     if not settings["forceNewSession"]:
         load_settings()
     cookies_path = os.path.join(session_path, 'cookies.json')
