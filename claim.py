@@ -998,6 +998,9 @@ def backup_telegram():
 
 def main():
     global session_path, settings, step
+    # Until we decide whether to implement FLOCK for session management. Let's generate a random float from 0 to 9 with increments of 0.1
+    random_sleep_time = round(random.uniform(0, 9), 1)
+    time.sleep(random_sleep_time)
     telegram_backup_dir = os.path.join(os.path.dirname(session_path), "Telegram")
     driver = get_driver()
     quit_driver()
