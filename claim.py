@@ -568,13 +568,18 @@ def launch_iframe():
     move_and_click(xpath, 5, True, "check for the start button (should not be present)", step, "clickable")
     increase_step()
 
-    # Let's try to send the start command:
-    send_start(step)
-    increase_step()
 
-    # Now let's try to find a working link to open the launch button
-    find_working_link(step)
-    increase_step()
+    # New link logic to avoid finding and expired link
+    try:
+        find_working_link(step)
+        increase_step()
+    except TimeoutException:
+        send_start(step)
+        increase_step()
+        find_working_link(step)
+        increase_step()
+    except Exception as e:
+        output(f"Step {step} - Oops, we weren't able to make a backup of the session data! Error: {e}", 1)
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
