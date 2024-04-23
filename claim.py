@@ -570,16 +570,10 @@ def launch_iframe():
 
 
     # New link logic to avoid finding and expired link
-    try:
-        find_working_link(step)
-        increase_step()
-    except TimeoutException:
-        send_start(step)
-        increase_step()
-        find_working_link(step)
-        increase_step()
-    except Exception as e:
-        output(f"Step {step} - The attempt to open the pop-up for the game failed: {e}", 1)
+    send_start(step)
+    increase_step()
+    find_working_link(step)
+    increase_step()
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
@@ -824,22 +818,26 @@ def find_working_link(old_step):
             if settings['debugIsOn']:
                 screenshot_path = f"{screenshots_path}/{step}-no-clickable-button.png"
                 driver.save_screenshot(screenshot_path)
+            return False
         else:
             output(f"Step {step} - Successfully able to open a link for the app..\n",3)
             if settings['debugIsOn']:
                 screenshot_path = f"{screenshots_path}/{step}-app-opened.png"
                 driver.save_screenshot(screenshot_path)
+            return True
 
     except TimeoutException:
         output(f"Step {step} - Failed to find the 'Open Wallet' button within the expected timeframe.\n",1)
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-timeout-finding-button.png"
             driver.save_screenshot(screenshot_path)
+        return False
     except Exception as e:
         output(f"Step {step} - An error occurred while trying to open the app: {e}\n",1)
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-unexpected-error-opening-app.png"
             driver.save_screenshot(screenshot_path)
+        return False
 
 
 def send_start(old_step):
