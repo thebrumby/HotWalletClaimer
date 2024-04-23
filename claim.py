@@ -33,7 +33,8 @@ def load_settings():
         "verboseLevel": 2,
         "lowestClaimOffset": 0, # One/both be a negative figure to claim before reaches filled status.
         "highestClaimOffset": 15, # Or one/both can be positive to claim after the pot is filled.
-        "forceNewSession": False,
+        "fromTG": False,
+        "forceNewSession": False
     }
 
     if os.path.exists(settings_file):
@@ -443,6 +444,7 @@ def log_into_telegram():
 
 def test_for_2fa():
     global settings, driver, screenshots_path, step
+    settings['fromTG'] = True
     try:
         increase_step()
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
@@ -570,10 +572,13 @@ def launch_iframe():
 
 
     # New link logic to avoid finding and expired link
-    send_start(step)
-    increase_step()
-    find_working_link(step)
-    increase_step()
+    if find_working_link(step) and not settings['fromTG']:
+        increase_step()
+    else:
+        send_start(step)
+        increase_step()
+        find_working_link(step)
+        increase_step()
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
@@ -795,7 +800,7 @@ def find_working_link(old_step):
 
     start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
     try:
-        start_app_buttons = WebDriverWait(driver, 30).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
+        start_app_buttons = WebDriverWait(driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
         clicked = False
 
         for button in reversed(start_app_buttons):
