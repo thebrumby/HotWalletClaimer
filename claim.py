@@ -579,7 +579,7 @@ def launch_iframe():
         find_working_link(step)
         increase_step()
     except Exception as e:
-        output(f"Step {step} - Oops, we weren't able to make a backup of the session data! Error: {e}", 1)
+        output(f"Step {step} - The attempt to open the pop-up for the game failed: {e}", 1)
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
