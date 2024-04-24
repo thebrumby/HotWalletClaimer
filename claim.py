@@ -851,7 +851,7 @@ def send_start(old_step):
     
     def attempt_send_start():
         global backup_path
-        chat_input = move_and_click(xpath, 30, False, "find the chat window/message input box", step, "present")
+        chat_input = move_and_click(xpath, 5, False, "find the chat window/message input box", step, "present")
         if chat_input:
             increase_step()
             output(f"Step {step} - Attempting to send the '/start' command...",2)
@@ -884,7 +884,7 @@ def restore_from_backup(path):
             shutil.copytree(path, session_path, dirs_exist_ok=True)
             driver = get_driver()
             driver.get("https://web.telegram.org/k/#@herewalletbot")
-            WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            WebDriverWait(driver, 10).until(lambda d: d.execute_script('return document.readyState') == 'complete')
             output(f"Step {step} - Backup restored successfully.\n",2)
             return True
         except Exception as e:
@@ -988,38 +988,51 @@ def save_pm2():
 
 def backup_telegram():
     global session_path, step
+
     # Ask the user if they want to backup their Telegram directory
     backup_prompt = input("Would you like to backup your Telegram directory? (Y/n): ").strip().lower()
     if backup_prompt == 'n':
         output(f"Step {step} - Backup skipped by user choice.", 3)
+        return
+
+    # Ask the user for a custom filename
+    custom_filename = input("Enter a custom filename for the backup (leave blank for default): ").strip()
+
+    # Define the backup destination path
+    if custom_filename:
+        backup_directory = os.path.join(os.path.dirname(session_path), f"Telegram:{custom_filename}")
     else:
-        # Define the backup destination path
         backup_directory = os.path.join(os.path.dirname(session_path), "Telegram")
-        try:
-            # Ensure the backup directory exists and copy the contents
-            if not os.path.exists(backup_directory):
-                os.makedirs(backup_directory)
-            shutil.copytree(session_path, backup_directory, dirs_exist_ok=True)
-            output(f"Step {step} - We backed up the session data in case of a later crash!", 3)
-        except Exception as e:
-            output(f"Step {step} - Oops, we weren't able to make a backup of the session data! Error: {e}", 1)
+
+    try:
+        # Ensure the backup directory exists and copy the contents
+        if not os.path.exists(backup_directory):
+            os.makedirs(backup_directory)
+        shutil.copytree(session_path, backup_directory, dirs_exist_ok=True)
+        output(f"Step {step} - We backed up the session data in case of a later crash!", 3)
+    except Exception as e:
+        output(f"Step {step} - Oops, we weren't able to make a backup of the session data! Error: {e}", 1)
 
 def main():
     global session_path, settings, step
     # Until we decide whether to implement FLOCK for session management. Let's generate a random float from 0 to 9 with increments of 0.1
     random_sleep_time = round(random.uniform(0, 9), 1)
     time.sleep(random_sleep_time)
-    telegram_backup_dir = os.path.join(os.path.dirname(session_path), "Telegram")
+    # telegram_backup_dir = os.path.join(os.path.dirname(session_path), "Telegram")
     if not settings["forceNewSession"]:
         load_settings()
     cookies_path = os.path.join(session_path, 'cookies.json')
     if os.path.exists(cookies_path) and not settings['forceNewSession']:
         output("Resuming the previous session...",2)
     else:
-        if os.path.exists(telegram_backup_dir):
-            user_input = input("A previous Telegram login session was detected. Do you want to try to resume it? (Y/n): ").strip().lower()
-            if user_input != 'n':
-                restore_from_backup(telegram_backup_dir)
+        telegram_backup_dirs = [d for d in os.listdir(os.path.dirname(session_path)) if d.startswith("Telegram")]
+        if telegram_backup_dirs:
+            print("Previous Telegram login sessions found:")
+            for i, dir_name in enumerate(telegram_backup_dirs):
+                print(f"{i + 1}. {dir_name}")
+            user_input = input("Enter the number of the session you want to restore, or 'n' to create a new session: ").strip().lower()
+            if user_input.isdigit() and 0 < int(user_input) <= len(telegram_backup_dirs):
+                restore_from_backup(os.path.join(os.path.dirname(session_path), telegram_backup_dirs[int(user_input) - 1]))
             else:
                 log_into_telegram()
                 quit_driver()
