@@ -10,6 +10,8 @@ import subprocess
 from PIL import Image
 from pyzbar.pyzbar import decode
 import qrcode_terminal
+import fcntl
+from fcntl import flock, LOCK_EX, LOCK_UN, LOCK_NB
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
@@ -34,6 +36,8 @@ def load_settings():
         "lowestClaimOffset": 0, # One/both be a negative figure to claim before reaches filled status.
         "highestClaimOffset": 15, # Or one/both can be positive to claim after the pot is filled.
         "fromTG": False,
+        "script": "claim.py",
+        "prefix": "HereWalletBot:",
         "forceNewSession": False
     }
 
@@ -156,31 +160,46 @@ backup_path = "./backups/{}".format(user_input)
 os.makedirs(backup_path, exist_ok=True)
 output(f"Our screenshot path is {backup_path}",3)
 
+import os
+
 def get_session_id():
-    global settings
     """Prompts the user for a session ID or determines the next sequential ID based on a 'Wallet' prefix.
 
     Returns:
         str: The entered session ID or the automatically generated sequential ID.
     """
+    global settings
+    output(f"Your session will be prefixed with: {settings.get('prefix', '')}", 1)
+    user_input = input("Enter your unique Session Name here, or hit <enter> for the next sequential wallet: ").strip()
 
-    user_input = input("Enter your unique Session Name here, or hit <enter> for the next sequential wallet: ")
-    user_input = user_input.strip()
-
-    # Check for existing session folders
+    # Set the directory where session folders are stored
     screenshots_dir = "./screenshots/"
-    dir_contents = os.listdir(screenshots_dir)
+
+    # Ensure the directory exists to avoid FileNotFoundError
+    if not os.path.exists(screenshots_dir):
+        os.makedirs(screenshots_dir)
+
+    # List contents of the directory
+    try:
+        dir_contents = os.listdir(screenshots_dir)
+    except Exception as e:
+        output(f"Error accessing the directory: {e}", 1)
+        return None  # or handle the error differently
+
     # Filter directories with the 'Wallet' prefix and extract the numeric parts
-    wallet_dirs = [int(dir_name.replace('Wallet', '')) for dir_name in dir_contents if dir_name.startswith('Wallet') and dir_name[6:].isdigit()]
-    next_wallet_id = 1
-    if wallet_dirs:
-        highest_wallet_id = max(wallet_dirs)
-        next_wallet_id = highest_wallet_id + 1
+    wallet_dirs = [int(dir_name.replace(settings.get('prefix', '') + 'Wallet', ''))
+                   for dir_name in dir_contents
+                   if dir_name.startswith(settings.get('prefix', '') + 'Wallet') and dir_name[len(settings.get('prefix', '') + 'Wallet'):].isdigit()]
+
+    # Calculate the next wallet ID
+    next_wallet_id = max(wallet_dirs) + 1 if wallet_dirs else 1
 
     # Use the next sequential wallet ID if no user input was provided
     if not user_input:
-        user_input = f"Wallet{next_wallet_id}"
-    return user_input
+        user_input = f"Wallet{next_wallet_id}"  # Remove the prefix here as it will be added later
+
+    return settings.get('prefix', '') + user_input
+
 
 # Update the settings based on user input
 if len(sys.argv) > 1:
@@ -239,6 +258,7 @@ chromedriver_path = "/usr/local/bin/chromedriver"
 def get_driver():
     global driver
     if driver is None:  # Check if driver needs to be initialized
+        manage_session()  # Ensure we can start a session
         driver = setup_driver(chromedriver_path)
         load_cookies()
     return driver
@@ -257,7 +277,8 @@ def quit_driver():
     if driver:
         driver.quit()
         driver = None
-        
+        release_session()  # Mark the session as closed
+
 def manage_session():
     current_session = session_path
     current_timestamp = int(time.time())
@@ -265,35 +286,58 @@ def manage_session():
     while True:
         try:
             with open(status_file_path, "r+") as file:
+                flock(file, LOCK_EX)
                 status = json.load(file)
 
                 # Clean up expired sessions
-                for session_id, timestamp in list(status.items()):  # Important to iterate over a copy
+                for session_id, timestamp in list(status.items()):
                     if current_timestamp - timestamp > 300:  # 5 minutes
                         del status[session_id]
-                        output(f"Removed expired session: {session_id}",3)
+                        output(f"Removed expired session: {session_id}", 3)
 
-                # Check for available slots
-                if len(status) < settings['maxSessions']:
+                # Check for available slots, exclude current session from count
+                active_sessions = {k: v for k, v in status.items() if k != current_session}
+                if len(active_sessions) < settings['maxSessions']:
                     status[current_session] = current_timestamp
-                    file.seek(0)  # Rewind to beginning
+                    file.seek(0)
                     json.dump(status, file)
-                    file.truncate()  # Ensure clean overwrite
-                    output(f"Session started: {current_session} in {status_file_path}",3)
-                    break  # Exit the loop once session is acquired
+                    file.truncate()
+                    output(f"Session started: {current_session} in {status_file_path}", 3)
+                    flock(file, LOCK_UN)
+                    break
+                flock(file, LOCK_UN)
 
-            output(f"Waiting for slot. Current sessions: {len(status)}/{settings['maxSessions']}",3)
+            output(f"Waiting for slot. Current sessions: {len(active_sessions)}/{settings['maxSessions']}", 3)
             time.sleep(random.randint(20, 40))
 
         except FileNotFoundError:
             # Create file if it doesn't exist
             with open(status_file_path, "w") as file:
+                flock(file, LOCK_EX)
                 json.dump({}, file)
+                flock(file, LOCK_UN)
         except json.decoder.JSONDecodeError:
-            # Handle empty or corrupt JSON 
-            output("Corrupted status file. Resetting...",3)
+            # Handle empty or corrupt JSON
             with open(status_file_path, "w") as file:
+                flock(file, LOCK_EX)
+                output("Corrupted status file. Resetting...", 3)
                 json.dump({}, file)
+                flock(file, LOCK_UN)
+
+def release_session():
+    current_session = session_path
+    current_timestamp = int(time.time())
+
+    with open(status_file_path, "r+") as file:
+        flock(file, LOCK_EX)
+        status = json.load(file)
+        if current_session in status:
+            del status[current_session]
+            file.seek(0)
+            json.dump(status, file)
+            file.truncate()
+        flock(file, LOCK_UN)
+        output(f"Session released: {current_session}", 3)
  
 def log_into_telegram():
     global driver, target_element, session_path, screenshots_path, backup_path, settings, step
@@ -1015,10 +1059,6 @@ def backup_telegram():
 
 def main():
     global session_path, settings, step
-    # Until we decide whether to implement FLOCK for session management. Let's generate a random float from 0 to 9 with increments of 0.1
-    random_sleep_time = round(random.uniform(0, 9), 1)
-    time.sleep(random_sleep_time)
-    # telegram_backup_dir = os.path.join(os.path.dirname(session_path), "Telegram")
     if not settings["forceNewSession"]:
         load_settings()
     cookies_path = os.path.join(session_path, 'cookies.json')
@@ -1053,13 +1093,13 @@ def main():
 
         output("\nCHROME DRIVER DETACHED: It is safe to stop the script if you want to.\n",2)
         pm2_session = session_path.replace("./selenium/", "")
-        output(f"You could add the new/updated session to PM use: pm2 start claim.py --name {pm2_session} -- {pm2_session}",1)
+        output(f"You could add the new/updated session to PM use: pm2 start {settings['script']} --name {pm2_session} -- {pm2_session}",1)
         user_choice = input("Enter 'y' to continue to 'claim' function, 'n' to exit or 'a' to add in PM2: ").lower()
         if user_choice == "n":
             output("Exiting script. You can resume the process later.",1)
             sys.exit()
         if user_choice == "a":
-            start_pm2_app("claim.py", pm2_session, pm2_session)
+            start_pm2_app(settings['script'], pm2_session, pm2_session)
             user_choice = input("Should we save your PM2 processes? (y, or enter to skip): ").lower()
             if user_choice == "y":
                 save_pm2()
