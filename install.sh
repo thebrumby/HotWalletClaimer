@@ -32,7 +32,7 @@ install_chromedriver() {
     wget https://storage.googleapis.com/chrome-for-testing-public/124.0.6367.91/linux64/chromedriver-linux64.zip
     unzip chromedriver-linux64.zip
     rm chromedriver-linux64.zip
-    sudo mv chromedriver /usr/local/bin/
+    sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
     sudo chmod +x /usr/local/bin/chromedriver
 }
 
