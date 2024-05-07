@@ -114,9 +114,9 @@ After executing the script with ```./launch.sh```, you will be prompted to updat
       - `forceNewSession`: Forces a new login, useful if the existing session encounters errors.
       - `lowestClaimOffset` and `highestClaimOffset`: Define the range for randomized claim timing relative to when the pot is filled.
          - **Examples of Random Claim Timing based on Claim Offset:**
-            - `-30, -15`: Early claims 30 to 15 minutes before the pot is full.
-            - `30, 60`: Late claims 30 minutes to 1 hour after the pot is full.
-            - `-15, 15`: Random claims within a 15-minute window around the pot being filled.
+            - `-30, -15`: Early claims randomly between 30 and 15 minutes before the pot is full.
+            - `30, 60`: Late claims randomly 30 minutes to 1 hour after the pot is full.
+            - `-15, 15`: Random claims within a 15-minute window either side of the pot being filled.
 
 ### Session Name Configuration
    - Sessions are auto-named numerically in the format "Wallet1", or can be customized to your own choice. Reusing a name attempts to resume that session.
