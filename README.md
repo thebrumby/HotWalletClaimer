@@ -113,7 +113,7 @@ After executing the script with ```./launch.sh```, you will be prompted to updat
       - `verboseLevel`: Adjust the verbosity of console messages; options range from 1 (minimal) to 3 (all messages).
       - `forceNewSession`: Forces a new login, useful if the existing session encounters errors.
       - `lowestClaimOffset` and `highestClaimOffset`: Define the range for randomized claim timing relative to when the pot is filled.
-         - **Examples of Claim Timing:**
+         - **Examples of Random Claim Timing based on Claim Offset:**
             - `-30, -15`: Early claims 30 to 15 minutes before the pot is full.
             - `30, 60`: Late claims 30 minutes to 1 hour after the pot is full.
             - `-15, 15`: Random claims within a 15-minute window around the pot being filled.
