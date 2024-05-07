@@ -1,17 +1,17 @@
 # Telegram Claim Assistant - Mine HOT & More!
 
-Many popular Telegram apps demand frequent logins to optimize rewards. This Python script runs on your local computer or VPS and streamlines the claim process by monitoring your account status within the app and claims rewards at the most opportune moments. When correctly configured, the script is fully automated and features an optional random timer offset to emulate human behavior.
+Many popular Telegram apps demand frequent logins to optimize rewards. This Python script runs on your local computer or VPS and streamlines the claim process by monitoring your account status within the app and claiming rewards at the most opportune moments. When correctly configured, the script is fully automated and features an optional random timer offset to emulate human behavior.
 
-Take, for instance, the cryptocurrency "HOT," available on the Near Protocol. Mining happens through the "@HereWalletBot" - a Telegram-based Web3-enabled app operating on the NEAR Protocol blockchain. Maximizing rewards entails regular visits to claim tokens. The script tracks the time until the storage pot fills, initiating a claim when full. Alternatively, it calculates the time until completion if the storage remains unfilled. It then waits for the optimal moment—adjusted by your preferred random offset—to claim, thereby minimizing network load and reducing gas fees.
+Take, for instance, the cryptocurrency "HOT," available on the Near Protocol. Mining happens through the "@HereWalletBot" - a Telegram-based, Web3-enabled app operating on the NEAR Protocol blockchain. Maximizing rewards entails regular visits to claim tokens. The script tracks the time until the storage pot fills, initiating a claim when full. Alternatively, it calculates the time until completion if the storage remains unfilled. It then waits for the optimal moment—adjusted by your preferred random offset—to claim, thereby minimizing network load and reducing gas fees.
 
 We aim to expand this script to include other projects suggested by our users in the coming weeks and months. However, we do not endorse any projects, some of which may have little to no real-world value and may try to upsell additional features for a price.
 
-## ☕ If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot). Your support is much appreciated and encourages the effort to make everything public. 
+## ☕ If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot). Your support is much appreciated and encourages the effort to make everything public.
 
-💡 **HINT:** Some apps allow only one game account per Telegram account. Regarding **HOT**: You can only register **one** blockchain account for **each** Telegram account. However, once the seed phrase has been created and you have made your first claim, you can then log into any game account, using any Telegram account, by using the 12-word seed phrase. This allows you to manage multiple game accounts from a single Telegram or manage each wallet with its own Telegram login if you prefer.
+💡 **HINT:** Some apps allow only one game account per Telegram account. For **HOT**: You can only register **one** blockchain account for **each** Telegram account. However, once the seed phrase has been created and you have made your first claim, you can then log into any game account, using any Telegram account, by using the 12-word seed phrase. This allows you to manage multiple game accounts from a single Telegram or manage each wallet with its own Telegram login if you prefer.
 
 ## Windows 10 & 11 Users - Utilize WSL2 (tested OK on 20.04 to 24.04):
-- Download [Ubuntu 24.04](https://www.microsoft.com/store/productId/9NZ3KLHXDJP5) from the microsoft store.
+- Download [Ubuntu 24.04](https://www.microsoft.com/store/productId/9NZ3KLHXDJP5) from the Microsoft Store.
 - Open PowerShell as an **Administrator** and enable WSL2 with these commands:
    - ```bash
      dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
