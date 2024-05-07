@@ -23,7 +23,7 @@ We aim to expand this script to include other projects suggested by our users in
 - To make PM2 restart after reboot (optional): Open the Run dialog (```Win + R```), type ```shell:startup```, and copy the ```windows_pm2_restart.bat``` file from the GitHub repository folder into your Windows startup folder. For further details, take a look at the video walkthroughs below.
 
 <a name="quick-start"></a>
-## Quick Start Installation (tested on Ubuntu 18.04 to 24.04):
+## Quick Start Installation (tested on Ubuntu 20.04 to 24.04):
 
 Ensure your Operating System is up-to-date by running these commands:
 
