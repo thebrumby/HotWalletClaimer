@@ -1,34 +1,68 @@
 #!/bin/bash
 
-# Update packages list, Install Python 3, PIP & ZBar
+# Update package list
 sudo apt update
-sudo apt install -y python3 python3-pip libzbar0 || true
 
-# Double check wget is present
-sudo apt install -y wget || true
+# Install basic dependencies
+sudo apt install -y snapd curl wget python3 python3-pip libzbar0 unzip python3-venv || true
+sudo systemctl daemon-reload
 
-# Install Chrome
-wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_114.0.5735.198-1_amd64.deb
-sudo apt install -y /tmp/chrome.deb
-rm /tmp/chrome.deb
+# Create a virtual environment and install dependencies
+python3 -m venv venv
+source venv/bin/activate
+pip install wheel selenium Pillow pyzbar qrcode-terminal
+deactivate
 
-# Install ChromeDriver
-sudo apt install -y unzip || true
-wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
-unzip chromedriver_linux64.zip
-rm chromedriver_linux64.zip
-sudo mv chromedriver /usr/local/bin/
-sudo chmod +x /usr/local/bin/chromedriver
+# Installing Node.js and npm
+curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
+sudo apt-get install -y nodejs || true
 
-# Let's step into our folder
-cd HotWalletBot
+# Install pm2 globally
+sudo npm install pm2@latest -g
 
-# And install the Python Dependencies
-pip install selenium Pillow pyzbar qrcode-terminal
+install_chrome() {
+    wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_124.0.6367.91-1_amd64.deb
+    sudo dpkg -i /tmp/chrome.deb
+    sudo apt-get install -f -y  # Fix any dependency issues
+    rm /tmp/chrome.deb
+}
 
-# And make sure we have screen!
-sudo apt install -y screen || true
+install_chromedriver() {
+    sudo apt install -y unzip || true  # Ensure unzip is installed
+    wget https://storage.googleapis.com/chrome-for-testing-public/124.0.6367.91/linux64/chromedriver-linux64.zip
+    unzip chromedriver-linux64.zip
+    rm chromedriver-linux64.zip
+    sudo mv chromedriver /usr/local/bin/
+    sudo chmod +x /usr/local/bin/chromedriver
+}
 
-# Finish by showing the versions
-python3 --version
-chromedriver --version
+# Check if Google Chrome is installed (any version)
+if google-chrome --version &>/dev/null; then
+    CHROME_VERSION=$(google-chrome --version | grep -oP '(?<=Google Chrome\s)[\d.]+')
+    echo "Google Chrome is already installed. Version: $CHROME_VERSION"
+else
+    echo "Google Chrome is not installed. Installing now..."
+    install_chrome
+fi
+
+# Check if ChromeDriver is installed (any version)
+if chromedriver --version &>/dev/null; then
+    CHROMEDRIVER_VERSION=$(chromedriver --version | grep -oP '(?<=ChromeDriver\s)[\d.]+')
+    echo "ChromeDriver is already installed. Version: $CHROMEDRIVER_VERSION"
+else
+    echo "ChromeDriver is not installed. Installing now..."
+    install_chromedriver
+fi
+
+# Fetch and show the installed versions
+CHROME_VERSION=$(google-chrome --version | grep -oP '(?<=Google Chrome\s)[\d.]+')
+CHROMEDRIVER_VERSION=$(chromedriver --version | grep -oP '(?<=ChromeDriver\s)[\d.]+')
+
+echo ""
+echo "Installed Versions:"
+echo "PM2 version: $(pm2 --version)"
+echo "Python version: $(python3 --version 2>/dev/null || echo 'Python 3 not found')"
+echo "Node.js version: $(node --version 2>/dev/null || echo 'Node.js not found')"
+echo "npm version: $(npm --version 2>/dev/null || echo 'npm not found')"
+echo "Google Chrome version: $CHROME_VERSION"
+echo "ChromeDriver version: $CHROMEDRIVER_VERSION"
