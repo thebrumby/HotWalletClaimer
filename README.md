@@ -53,7 +53,7 @@ If you do not have superuser rights, you look at the PM2 output for the prompt t
 
 ## Games/apps currently working with this script:
 **Note:** All these scripts assume you have manually started the game, completed the initial screens you are required to read, and made at least 1 claim manually. 
-- ``` ./launch.sh hot``` Launches HOT: https://t.me/herewalletbot/app?startapp=3577382-village-85935
+- ``` ./launch.sh hot``` Launches HOT: https://t.me/herewalletbot
 - ``` ./launch.sh cold``` Launches Cold: https://t.me/Newcoldwallet_bot
 - ``` ./launch.sh vertus``` Launches Vertus: https://t.me/vertus_app_bot
 - ``` ./launch.sh tree``` Launches Tree: [https://t.me/treeminebot/app?startapp=6743230454](https://t.me/treeminebot/app?startapp=6783218884)
