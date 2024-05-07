@@ -54,9 +54,9 @@ If you do not have superuser rights, you look at the PM2 output for the prompt t
 ## Games/apps currently working with this script:
 **Note:** All these scripts assume you have manually started the game, completed the initial screens you are required to read, and made at least 1 claim manually. 
 - ``` ./launch.sh hot``` Launches HOT: https://t.me/herewalletbot/app?startapp=3577382-village-85935
-- ``` ./launch.sh cold``` Launches Cold: https://t.me/Newcoldwallet_bot/app?startapp=R6743230454
-- ``` ./launch.sh vertus``` Launches Vertus: https://t.me/vertus_app_bot/app?startapp=6743230454
-- ``` ./launch.sh tree``` Launches Tree: https://t.me/treeminebot/app?startapp=6743230454
+- ``` ./launch.sh cold``` Launches Cold: https://t.me/Newcoldwallet_bot
+- ``` ./launch.sh vertus``` Launches Vertus: https://t.me/vertus_app_bot
+- ``` ./launch.sh tree``` Launches Tree: [https://t.me/treeminebot/app?startapp=6743230454](https://t.me/treeminebot/app?startapp=6783218884)
 
 💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 
