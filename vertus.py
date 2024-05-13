@@ -740,10 +740,10 @@ def select_iframe(old_step):
             driver.save_screenshot(screenshot_path)
 
     except TimeoutException:
-        output(f"Step {step} - Failed to find or switch to the iframe wit,h,in, the timeout period.\n",3)
+        output(f"Step {step} - Failed to find or switch to the iframe within the timeout period.\n",3)
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-iframe-timeout.png"
-            driver.save_scre,enshot(screenshot_path)
+            driver.save_screenshot(screenshot_path)
     except Exception as e:
         output(f"Step {step} - An error occurred while attempting to switch to the iframe: {e}\n",3)
         if settings['debugIsOn']:
