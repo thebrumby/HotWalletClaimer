@@ -566,8 +566,9 @@ def full_claim():
     launch_iframe()
 
     # Click on the Storage link:
-    xpath = "//h4[text()='Storage']"
-    move_and_click(xpath, 30, True, "click the 'storage' link", step, "clickable")
+    xpath = "//p[text()='Mining']"
+    button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "present")
+    driver.execute_script("arguments[0].click();", button)
     increase_step
 
     try:
@@ -858,6 +859,9 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
     def timer():
         return random.randint(0, 2) / 10
 
+    def offset():
+        return random.randint(1, 5)
+
     output(f"Step {step} - Attempting to {action_description}...", 2)
 
     try:
@@ -881,19 +885,38 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
         if click and target_element:
             try:
                 actions = ActionChains(driver)
-                actions.pause(timer()).move_to_element(target_element).pause(timer()).click().perform()
+                actions.pause(timer()) \
+                       .move_to_element(target_element) \
+                        .pause(timer()) \
+                       .move_by_offset(0, 0 - offset()) \
+                       .pause(timer()) \
+                       .move_by_offset(0, offset()) \
+                       .pause(timer()) \
+                       .click() \
+                       .perform()
                 output(f"Step {step} - Successfully able to {action_description} using ActionChains.", 3)
             except ElementClickInterceptedException:
-                output("Step {step} - Element click intercepted, attempting JavaScript click as fallback...", 3)
+                output(f"Step {step} - Element click intercepted, attempting JavaScript click as fallback...", 3)
                 driver.execute_script("arguments[0].click();", target_element)
                 output(f"Step {step} - Was able to {action_description} using JavaScript fallback.", 3)
 
     except TimeoutException:
         output(f"Step {step} - Timeout while trying to {action_description}.", 3)
+        if settings['debugIsOn']:
+            # Capture the page source and save it to a file
+            page_source = driver.page_source
+            with open(f"{screenshots_path}/{prefix} page_source.html", "w", encoding="utf-8") as f:
+                f.write(page_source)
+            logs = driver.get_log("browser")
+            with open(f"{screenshots_path}/{prefix} browser_console_logs.txt", "w", encoding="utf-8") as f:
+                for log in logs:
+                    f.write(f"{log['level']}: {log['message']}\n")
+
     except Exception as e:
         output(f"Step {step} - An error occurred while trying to {action_description}: {e}", 1)
     finally:
         if settings['debugIsOn']:
+            time.sleep(5)
             screenshot_path = f"{screenshots_path}/{step}-{action_description}.png"
             driver.save_screenshot(screenshot_path)
         return target_element

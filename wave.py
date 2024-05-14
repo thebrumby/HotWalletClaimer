@@ -66,9 +66,9 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "hot.py"
-prefix = "HOT:"
-url = "https://web.telegram.org/k/#@herewalletbot"
+script = "wave.py"
+prefix = "Wave:"
+url = "https://web.telegram.org/k/#@waveonsuibot"
 pot_full = "Filled"
 pot_filling = "to fill"
 
@@ -510,31 +510,55 @@ def next_steps():
 
         # Attempt to interact with elements within the iframe.
         # Let's click the login button first:
-        xpath = "//button[p[contains(text(), 'Log in')]]"
-        target_element = move_and_click(xpath, 30, False, "find the HereWallet log-in button", "08", "visible")
-        driver.execute_script("arguments[0].click();", target_element)
-        increase_step()
+        try:
+            xpath = "//button[contains(text(), 'Login')]"
+            login_button = WebDriverWait(driver, 30).until(
+                EC.visibility_of_element_located((By.XPATH, xpath))
+            )
+    
+            # Click the textarea to focus
+            driver.execute_script("arguments[0].click();", login_button)
+    
+            # Output success message
+            output(f"Step {step} - Was successfully able to click on the login button...", 2)
+    
+            # Increase the step counter
+            increase_step()
+
+        except Exception as e:
+            output(f"Step {step} - Failed to enter the seed phrase: {str(e)}", 2)
+
 
         # Then look for the seed phase textarea:
-        xpath = "//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
-        input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", step, "clickable")
-        input_field.send_keys(validate_seed_phrase()) 
-        output(f"Step {step} - Was successfully able to enter the seed phrase...",3)
-        increase_step()
+        try:
+            xpath = "//p[contains(text(), 'Seed phrase or Private key')]/following-sibling::textarea[1]"
+            input_field = WebDriverWait(driver, 30).until(
+                EC.visibility_of_element_located((By.XPATH, xpath))
+            )
+    
+            # Click the textarea to focus
+            driver.execute_script("arguments[0].click();", input_field)
+    
+            # Send the seed phrase to the textarea
+            input_field.send_keys(validate_seed_phrase())
+    
+            # Output success message
+            output(f"Step {step} - Was successfully able to enter the seed phrase...", 3)
+    
+            # Increase the step counter
+            increase_step()
+
+        except Exception as e:
+            output(f"Step {step} - Failed to enter the seed phrase: {str(e)}", 2)
 
         # Click the continue button after seed phrase entry:
         xpath = "//button[contains(text(), 'Continue')]"
         move_and_click(xpath, 30, True, "click continue after seedphrase entry", step, "clickable")
         increase_step()
 
-        # Click the account selection button:
-        xpath = "//button[contains(text(), 'Select account')]"
-        move_and_click(xpath, 180, True, "click continue at account selection screen", step, "clickable")
-        increase_step()
-
         # Click on the Storage link:
-        xpath = "//h4[text()='Storage']"
-        move_and_click(xpath, 30, True, "click the 'storage' link", step, "clickable")
+        xpath = "//button[.//span[contains(text(), 'Claim Now')]]"
+        move_and_click(xpath, 30, True, "click the 'Claim Now' link", step, "clickable")
         cookies_path = f"{session_path}/cookies.json"
         cookies = driver.get_cookies()
         with open(cookies_path, 'w') as file:
@@ -602,8 +626,11 @@ def full_claim():
 
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
+        # Ensure the offsets are not less than 0
+        lowest_claim_offset = max(0, settings['lowestClaimOffset'])
+        highest_claim_offset = max(0, settings['highestClaimOffset'])
         if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
-            random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
+            random_offset = random.randint(lowest_claim_offset, highest_claim_offset)
             modifiedTimer = unmodifiedTimer + random_offset
             output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
             return modifiedTimer
@@ -611,9 +638,10 @@ def full_claim():
     launch_iframe()
 
     # Click on the Storage link:
-    xpath = "//h4[text()='Storage']"
-    move_and_click(xpath, 30, True, "click the 'storage' link", step, "clickable")
-    increase_step
+    xpath = "//button//span[contains(text(), 'Claim Now')]"
+    button = move_and_click(xpath, 10, False, "click the 'Ocean Game' link", step, "visible")
+    driver.execute_script("arguments[0].click();", button)
+    increase_step()
 
     get_balance(False)
 
@@ -621,11 +649,12 @@ def full_claim():
 
     if wait_time_text != "Filled":
         matches = re.findall(r'(\d+)([hm])', wait_time_text)
-        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + random_offset
+        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
         if remaining_wait_time < 5 or settings["forceClaim"]:
             settings['forceClaim'] = True
-            output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
+            output(f"Step {step} - the remaining time to claim is short so let's claim anyway, so applying: settings['forceClaim'] = True", 3)
         else:
+            remaining_wait_time += random_offset
             output(f"Step {step} - Considering {wait_time_text} and a {random_offset} minute offset, we'll go back to sleep for {remaining_wait_time} minutes.", 2)
             return remaining_wait_time
 
@@ -636,27 +665,17 @@ def full_claim():
         output(f"Step {step} - The pre-claim wait time is : {wait_time_text} and random offset is {random_offset} minutes.",1)
         increase_step()
 
-        if wait_time_text == "Filled" or settings['forceClaim']:
+        if wait_time_text == pot_full or settings['forceClaim']:
+            
             try:
-                original_window = driver.current_window_handle
-                xpath = "//button[contains(text(), 'Check NEWS')]"
-                move_and_click(xpath, 3, True, "check for NEWS.", step, "clickable")
-                driver.switch_to.window(original_window)
-            except TimeoutException:
-                if settings['debugIsOn']:
-                    output(f"Step {step} - No news to check or button not found.",3)
-            increase_step()
-
-            try:
-                # Let's double check if we have to reselect the iFrame after news
-                # HereWalletBot Pop-up Handling
-                select_iframe(step)
-                increase_step()
-                
                 # Click on the "Claim HOT" button:
-                xpath = "//button[contains(text(), 'Claim HOT')]"
-                move_and_click(xpath, 30, True, "click the claim button", step, "clickable")
-                increase_step()
+                xpath = "//div[contains(text(), 'Claim Now')]"
+                button = move_and_click(xpath, 10, False, "click the claim button", step, "present")
+                try:
+                    driver.execute_script("arguments[0].click();", button)
+                    increase_step()
+                except Exception:
+                    pass
 
                 # Now let's try again to get the time remaining until filled. 
                 # 4th April 24 - Let's wait for the spinner to disappear before trying to get the new time to fill.
@@ -718,18 +737,20 @@ def get_balance(claimed=False):
 
     # Construct the specific balance XPath
     balance_text = f'{prefix} Balance after claiming:' if claimed else f'{prefix} Balance before claiming:'
-    balance_xpath = f"//p[contains(text(), 'HOT Balance:')]/following-sibling::p[1]"
+    xpath = "//p[contains(@class, 'wave-balance')]"
 
     try:
-        # Wait for the element to be visible based on the XPath
-        element = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.XPATH, balance_xpath))
+        # Wait for the element to be present based on the XPath
+        element = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, xpath))
         )
 
-        # Check if element is not None and process the balance
-        if element:
-            balance_part = element.text.strip()
+        # Use JavaScript to get the text content of the element
+        balance_part = driver.execute_script("return arguments[0].textContent.trim();", element)
+        
+        if balance_part:
             output(f"Step {step} - {balance_text} {balance_part}", priority)
+            return balance_part  # Return the balance part
 
     except NoSuchElementException:
         output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", priority)
@@ -739,33 +760,21 @@ def get_balance(claimed=False):
     # Increment step function, assumed to handle next step logic
     increase_step()
 
-
 def get_wait_time(step_number="108", beforeAfter = "pre-claim", max_attempts=2):
     
-    for attempt in range(1, max_attempts + 1):
-        try:
-            xpath = f"//div[contains(., 'Storage')]//p[contains(., '{pot_full}') or contains(., '{pot_filling}')]"
-            wait_time_element = move_and_click(xpath, 20, True, f"get the {beforeAfter} wait timer", step, "visible")
-            # Check if wait_time_element is not None
-            if wait_time_element is not None:
-                return wait_time_element.text
-            else:
-                output(f"Step {step} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
-                storage_xpath = "//h4[text()='Storage']"
-                move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{step} recheck", "clickable")
-                output(f"Step {step} - Attempted to select strorage again...",3)
+    try:
+        xpath = "//span[contains(@class, 'boat_balance')]"
+        wait_time_element = move_and_click(xpath, 5, True, f"get the {beforeAfter} wait timer (time elapsing method)", step, "present")
+        # Check if wait_time_element is not None
+        if wait_time_element is not None:
             return wait_time_element.text
-
-        except TimeoutException:
-            if attempt < max_attempts:  # Attempt failed, but retries remain
-                output(f"Step {step} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
-                storage_xpath = "//h4[text()='Storage']"
-                move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{step} recheck", "clickable")
-            else:  # No retries left after initial failure
-                output(f"Step {step} - Attempt {attempt}: Wait time element not found.",3)
-
-        except Exception as e:
-            output(f"Step {step} - An error occurred on attempt {attempt}: {e}",3)
+        xpath = "//div[contains(text(), 'Claim Now')]"
+        wait_time_element = move_and_click(xpath, 10, False, f"get the {beforeAfter} wait timer (pot full method)", step, "present")
+        if wait_time_element is not None:
+            return "Filled"
+            
+    except Exception as e:
+        output(f"Step {step} - An error occurred on attempt {attempt}: {e}",3)
 
     # If all attempts fail         
     return "Unknown"
@@ -809,7 +818,7 @@ def find_working_link(old_step):
     global driver, screenshots_path, settings, step
     output(f"Step {step} - Attempting to open a link for the app...",2)
 
-    start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
+    start_app_xpath = "//a[@href='https://t.me/waveonsuibot/walletapp']"
     try:
         start_app_buttons = WebDriverWait(driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
         clicked = False
@@ -940,14 +949,14 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
             try:
                 actions = ActionChains(driver)
                 actions.pause(timer()) \
-                        .move_by_offset(0, 0 - offset()) \
+                       .move_to_element(target_element) \
                         .pause(timer()) \
-                        .move_by_offset(0, offset()) \
-                        .pause(timer()) \
-                        .move_to_element(target_element) \
-                        .pause(timer()) \
-                        .click() \
-                        .perform()
+                       .move_by_offset(0, 0 - offset()) \
+                       .pause(timer()) \
+                       .move_by_offset(0, offset()) \
+                       .pause(timer()) \
+                       .click() \
+                       .perform()
                 output(f"Step {step} - Successfully able to {action_description} using ActionChains.", 3)
             except ElementClickInterceptedException:
                 output(f"Step {step} - Element click intercepted, attempting JavaScript click as fallback...", 3)
@@ -974,6 +983,7 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
             screenshot_path = f"{screenshots_path}/{step}-{action_description}.png"
             driver.save_screenshot(screenshot_path)
         return target_element
+
 
 def clear_overlays(target_element, old_step):
     # Get the location of the target element
