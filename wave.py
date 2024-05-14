@@ -65,7 +65,9 @@ settings = {}
 load_settings()
 driver = None
 target_element = None
-random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
+lowest_claim_offset = max(0, settings['lowestClaimOffset'])
+highest_claim_offset = max(0, settings['highestClaimOffset'])
+random_offset = random.randint(lowest_claim_offset, highest_claim_offset) + 1
 script = "wave.py"
 prefix = "Wave:"
 url = "https://web.telegram.org/k/#@waveonsuibot"
@@ -630,7 +632,7 @@ def full_claim():
         lowest_claim_offset = max(0, settings['lowestClaimOffset'])
         highest_claim_offset = max(0, settings['highestClaimOffset'])
         if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
-            random_offset = random.randint(lowest_claim_offset, highest_claim_offset)
+            random_offset = random.randint(lowest_claim_offset, highest_claim_offset) + 1
             modifiedTimer = unmodifiedTimer + random_offset
             output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
             return modifiedTimer
