@@ -140,8 +140,10 @@ After executing the script with ```./launch.sh```, you will be prompted to updat
    - If your selected game requires a seed phrase to log in, carefully input your 12-word seed phrase, ensuring correct spacing without any punctuation or numbers.
    - Alternatively, if the game's login is based on the Telegram account, ensure you are logging into the correct account.
 
-### Exit & Resume Options
-   - Opt to exit and save the session for later resumption, possibly using PM2, or continue with claims directly in the CLI script.
+### Final options once the PM2 session is configured.
+   - Select "a" or press <enter> to automatically add the session to PM2.
+   - Select "e" to exit to the Command Line Interface without adding to PM2
+   - Select "y" to continue and attempt to make a claim. 
 
 Remember to check and adjust your settings upon startup to optimize the script's performance to your server's capabilities.
 
