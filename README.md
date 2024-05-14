@@ -52,7 +52,7 @@ If you do not have superuser rights, you look at the PM2 output for the prompt t
 ```sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu```
 
 ## Games/apps currently working with this script:
-**Note:** All these scripts assume you have manually started the game, completed the initial screens you are required to read, and made at least 1 claim manually. 
+**Note: All these scripts assume you have already manually started your selected game, completed any one-time screens that require reading, and made at least 1 claim manually - ensuring you have coins for Gas Fee if necessary**
 - ``` ./launch.sh hot``` Launches HOT on Near Protocol: https://t.me/herewalletbot
 - ``` ./launch.sh cold``` Launches Cold on BNB Wallet: https://t.me/Newcoldwallet_bot
 - ``` ./launch.sh vertus``` Launches Vertus on TON: https://t.me/vertus_app_bot
