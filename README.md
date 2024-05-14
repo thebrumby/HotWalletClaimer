@@ -6,6 +6,10 @@ Take, for instance, the cryptocurrency "HOT," available on the Near Protocol. Mi
 
 We aim to expand this script to include other projects suggested by our users in the coming weeks and months. However, we do not endorse any projects, some of which may have little to no real-world value and may try to upsell additional features for a price.
 
+## 🎥 Step-by-Step Video Walkthrough 🎬
+
+Follow each step, from server setup, downloading and installing the script, configuring the options, and initiating your own automated claims with the [Video Walkthrough](#videos).
+
 ## ☕ If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot). Your support is much appreciated and encourages the effort to make everything public.
 
 💡 **HINT:** Some apps allow only one game account per Telegram account. For **HOT**: You can only register **one** blockchain account for **each** Telegram account. However, once the seed phrase has been created and you have made your first claim, you can then log into any game account, using any Telegram account, by using the 12-word seed phrase. This allows you to manage multiple game accounts from a single Telegram or manage each wallet with its own Telegram login if you prefer.
@@ -60,7 +64,7 @@ If you do not have superuser rights, you look at the PM2 output for the prompt t
 - ``` ./launch.sh wave``` Launches Wave Wallet on Sui: [https://t.me/waveonsuibot/walletapp?startapp=1809774](https://t.me/waveonsuibot/walletapp?startapp=1809774)
 
 💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
-
+<a name="videos"></a>
 | Step-by-Step Video Walkthrough                                                                                                   | YouTube Link                                                                                                                                                                                                                                     | Video Length |
 |----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
 | **Introduction: Play2Earn - Automating Claims in Telegram Games with Python - Hot, Cold, Vertus, and Tree**  
