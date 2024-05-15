@@ -213,26 +213,32 @@ step = "01"
 screenshot_base = os.path.join(screenshots_path, "screenshot")
 
 def setup_driver():
+    chrome_options = Options()
+    chrome_options.add_argument(f"user-data-dir={session_path}")
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--log-level=3")  # Set log level to suppress INFO and WARNING messages
+    chrome_options.add_argument("--disable-bluetooth")
+    chrome_options.add_argument("--mute-audio")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    chrome_options.add_experimental_option("detach", True)
 
-  chrome_options = webdriver.ChromeOptions()
-  chrome_options.add_argument("user-data-dir={}".format(session_path))
-  chrome_options.add_argument("--headless")
-  chrome_options.add_argument("--log-level=3")  # Set log level to suppress INFO and WARNING messages
-  chrome_options.add_argument("--disable-bluetooth")
-  chrome_options.add_argument("--mute-audio")
-  chrome_options.add_argument("--no-sandbox")
-  chrome_options.add_argument("--disable-dev-shm-usage")
-  chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-  chrome_options.add_experimental_option("detach", True)
+    # Find the path to chromedriver
+    chromedriver_path = shutil.which("chromedriver")
+    if chromedriver_path is None:
+        output("ChromeDriver not found in PATH. Please ensure it is installed.", 1)
+        exit(1)
 
-  # Compatibility Handling and error testing:
-  try:
-    driver = webdriver.Chrome(options=chrome_options)
-    return driver
-  except Exception as e:
-    output(f"Initial ChromeDriver setup may have failed: {e}",1)
-    output("Please ensure you have the correct ChromeDriver version for your system.",1)
-    exit(1)
+    # Initialize WebDriver
+    try:
+        service = Service(chromedriver_path)
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        return driver
+    except Exception as e:
+        output(f"Initial ChromeDriver setup may have failed: {e}", 1)
+        output("Please ensure you have the correct ChromeDriver version for your system.", 1)
+        exit(1)
 
 def get_driver():
     global driver
@@ -473,6 +479,7 @@ def test_for_2fa():
                 if settings['debugIsOn']:
                     screenshot_path = f"{screenshots_path}/Step {step} - Test QR code after session is resumed.png"
                     driver.save_screenshot(screenshot_path)
+                quit_driver()
                 sys.exit()  # Exit if incorrect password is detected
             except TimeoutException:
                 pass

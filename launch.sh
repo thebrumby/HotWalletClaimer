@@ -12,17 +12,18 @@ deactivate_venv() {
     deactivate
 }
 
-# Function to run the python script
+# Function to run the Python script with additional arguments
 run_script() {
     local script=$1
-    echo "Running script: $script"
-    python3 "$script"
+    shift  # Shift past the script name to get any additional parameters
+    echo "Running script: $script with arguments: $@"
+    python3 "$script" "$@"
 }
 
 # Function to list and choose a script
 list_and_choose_script() {
     echo "Listing available Telegram Claim Assistant scripts:"
-    # List all python scripts in the current directory
+    # List all Python scripts in the current directory
     IFS=$'\n' read -d '' -r -a scripts < <(find . -maxdepth 1 -name "*.py" -print && printf '\0')
     
     if [ ${#scripts[@]} -eq 0 ]; then
@@ -63,7 +64,7 @@ else
     # Check if the script exists in the current directory
     if [ -f "$script_name" ]; then
         activate_venv
-        run_script "$script_name"
+        run_script "$script_name" "${@:2}"
         deactivate_venv
     else
         echo "Specified script not found."
