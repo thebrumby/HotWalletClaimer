@@ -430,6 +430,7 @@ def full_claim():
 
     driver.get("https://www.treemine.app/miner")
     get_balance(False)
+    increase_step()
 
     wait_time_text = get_wait_time(step, "pre-claim") 
 
@@ -440,6 +441,14 @@ def full_claim():
             settings['forceClaim'] = True
             output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
+            if remaining_wait_time > 90:
+                output(f"Step {step} - Initial wait time returned as {remaining_wait_time}.",3)
+                increase_step()
+                remaining_wait_time = 90
+                random_offset = 0
+                wait_time_text = "1h30m"
+                output(f"Step {step} - As there are no gas fees with Tree coin - claim forced to 90 minutes.",3)
+                increase_step()
             output(f"Step {step} - Considering {wait_time_text} and a {random_offset} minute offset, we'll go back to sleep for {remaining_wait_time} minutes.", 2)
             return remaining_wait_time
 
@@ -484,6 +493,11 @@ def full_claim():
                 total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                 increase_step()
 
+                if total_wait_time > 90:
+                    total_wait_time = 90
+                    output(f"Step {step} - As there are no gas fees with Tree coin - claim forced to 90 minutes.",2)
+                    increase_step()
+
                 get_balance(True)
 
                 if wait_time_text == "Filled":
@@ -491,7 +505,7 @@ def full_claim():
                     output(f"Step {step} - This means either the claim failed, or there is >4 minutes lag in the game.",1)
                     output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.",2)
                 else:
-                    output(f"Step {step} - Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time),1)
+                    output(f"Step {step} - Post claim raw wait time: {wait_time_text} & proposed new wait timer = {total_wait_time} minutes.",1)
                 return max(60, total_wait_time)
 
             except TimeoutException:
@@ -765,6 +779,9 @@ def main():
     while True:
         manage_session()
         wait_time = full_claim()
+        if wait_time > 90:
+            output (f"**Notice**: High wait time returned of {wait_time}. Limiting it to 90 minutes.")
+            wait_time = 90
 
         if os.path.exists(status_file_path):
             with open(status_file_path, "r+") as file:
