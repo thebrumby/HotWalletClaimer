@@ -14,7 +14,7 @@ Follow each step, from server setup, downloading and installing the script, conf
 
 💡 **HINT:** Some apps allow only one game account per Telegram account. For **HOT**: You can only register **one** blockchain account for **each** Telegram account. However, once the seed phrase has been created and you have made your first claim, you can then log into any game account, using any Telegram account, by using the 12-word seed phrase. This allows you to manage multiple game accounts from a single Telegram or manage each wallet with its own Telegram login if you prefer.
 
-## Windows/Ubuntu Install via Docker:
+## Windows/Ubuntu Install via Docker (currently Beta Testing):
 - See the [DOCKER.md](DOCKER.md) file for further instructions. 
 
 ## Windows 10 & 11 Alternative - Utilize WSL2 (Ubuntu 20.04 - 24.04):
