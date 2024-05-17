@@ -260,6 +260,8 @@ def manage_session():
     current_session = session_path
     current_timestamp = int(time.time())
     session_started = False
+    new_message = True
+    output_priority = 1
 
     while True:
         try:
@@ -287,7 +289,10 @@ def manage_session():
                 flock(file, LOCK_UN)
 
             if not session_started:
-                output(f"Waiting for slot. Current sessions: {len(active_sessions)}/{settings['maxSessions']}", 3)
+                output(f"Waiting for slot. Current sessions: {len(active_sessions)}/{settings['maxSessions']}", output_priority)
+                if new_message:
+                    new_message = False
+                    output_priority = 3
                 time.sleep(random.randint(5, 15))
             else:
                 break
