@@ -565,7 +565,8 @@ def launch_iframe():
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-    move_and_click(xpath, 5, True, "click the 'Launch' button", step, "clickable")
+    button = move_and_click(xpath, 5, True, "click the 'Launch' button", step, "visible")
+    driver.execute_script("arguments[0].click();", button)
     increase_step()
 
     # HereWalletBot Pop-up Handling
