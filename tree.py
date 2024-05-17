@@ -785,7 +785,7 @@ def main():
         manage_session()
         wait_time = full_claim()
         if wait_time > 90:
-            output (f"**Notice**: High wait time returned of {wait_time}. Limiting it to 90 minutes.")
+            output (f"**Notice**: High wait time returned of {wait_time}. Limiting it to 90 minutes.", 2)
             wait_time = 90
 
         if os.path.exists(status_file_path):
