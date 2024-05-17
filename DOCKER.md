@@ -57,7 +57,7 @@ sudo service docker start
 sudo usermod -a -G docker ec2-user
 exit
 ```
-### Open the Terminal again and start the Claim Bot
+### Open the Terminal again and start the Claim Bot - will restart on reboot!
 ```sh
 sudo docker run -d --ulimit nofile=32768 --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:1.0
 ```
