@@ -565,8 +565,7 @@ def launch_iframe():
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-    button = move_and_click(xpath, 5, True, "click the 'Launch' button", step, "visible")
-    driver.execute_script("arguments[0].click();", button)
+    move_and_click(xpath, 5, True, "click the 'Launch' button", step, "clickable")
     increase_step()
 
     # HereWalletBot Pop-up Handling
@@ -589,8 +588,23 @@ def full_claim():
 
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
-    move_and_click(xpath, 30, True, "click the 'storage' link", step, "clickable")
-    increase_step
+
+    def click_storage_link(xpath):
+        attempts = 0
+        while attempts < 3:
+            try:
+                button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "clickable")
+                if button:
+                    driver.execute_script("arguments[0].click();", button)
+                    output(f"Step {step} - Successfully clicked the 'storage' link",3)
+                    break
+                else:
+                    output(f"Step {step} - Button not found or not clickable",3)
+            except StaleElementReferenceException:
+                output(f"Step {step} - Encountered StaleElementReferenceException, retrying...",3)
+            attempts += 1
+
+    click_storage_link(xpath)
 
     try:
         element = WebDriverWait(driver, 10).until(
