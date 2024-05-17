@@ -587,7 +587,7 @@ def full_claim():
     launch_iframe()
 
     # Click on the Storage link:
-    xpath = "//h4[text()='Storage']"
+    xpath = "//p[text()='Mining']"
 
     def click_storage_link(xpath):
         attempts = 0
