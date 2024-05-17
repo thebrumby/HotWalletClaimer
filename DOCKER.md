@@ -68,6 +68,8 @@ To interact with the script, including adding accounts or monitoring, use:
 ```sh
 sudo docker exec -it telegram-claim-bot /bin/bash
 ```
+### Follow the instructions at the top of the page for details on how to interact with the script.
+
 ### To Exit the Docker and Return to the Amazon Linux CLI:
 Press `Ctrl + D` or type:
 `exit`
