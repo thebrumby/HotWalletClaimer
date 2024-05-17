@@ -43,5 +43,6 @@ docker exec -it telegram-claim-bot /bin/bash
 docker stop telegram-claim-bot
 docker rm telegram-claim-bot
 ```
-All other instructions are in line with the main [README.md](README.md).
+All other instructions are in line with the main [README.md](https://github.com/thebrumby/HotWalletClaimer).
+
 
