@@ -57,7 +57,8 @@ sudo service docker start
 sudo usermod -a -G docker ec2-user
 exit
 ```
-### Open the Terminal again and start the Claim Bot - will restart on reboot!
+### Open the Terminal again and start the Claim Bot
+#### Note: `--restart unless-stopped` is set in this example, to restart the container on reboot etc
 ```sh
 sudo docker run -d --ulimit nofile=32768 --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:1.0
 ```
@@ -68,8 +69,7 @@ To interact with the script, including adding accounts or monitoring, use:
 ```sh
 sudo docker exec -it telegram-claim-bot /bin/bash
 ```
-### Follow the instructions at the top of the page for details on how to interact with the script.
-
 ### To Exit the Docker and Return to the Amazon Linux CLI:
 Press `Ctrl + D` or type:
 `exit`
+### Follow the instructions at the top of the page for details on how to interact with the script.
