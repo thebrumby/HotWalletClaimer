@@ -506,6 +506,27 @@ def test_for_2fa():
             screenshot_path = f"{screenshots_path}/Step {step} - error: Something Bad Occured.png"
             driver.save_screenshot(screenshot_path)
 
+def click_storage_link(xpath):
+    attempts = 0
+    while attempts < 3:
+        try:
+            button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "clickable")
+            if button:
+                driver.execute_script("arguments[0].click();", button)
+                output(f"Step {step} - Successfully clicked the 'storage' link", 3)
+                break
+            else:
+                output(f"Step {step} - Button not found or not clickable", 3)
+                page_source = driver.page_source
+                with open(f"{screenshots_path}/{prefix} page_source.html{attempts}", "w", encoding="utf-8") as f:
+                    f.write(page_source)
+        except StaleElementReferenceException:
+            output(f"Step {step} - Encountered StaleElementReferenceException, retrying...", 3)
+            page_source = driver.page_source
+            with open(f"{screenshots_path}/{prefix} page_source.html{attempts}", "w", encoding="utf-8") as f:
+                f.write(page_source)
+        attempts += 1
+
 def next_steps():
 
     launch_iframe()
@@ -587,22 +608,7 @@ def full_claim():
     launch_iframe()
 
     # Click on the Storage link:
-    xpath = "//p[text()='Mining']"
-
-    def click_storage_link(xpath):
-        attempts = 0
-        while attempts < 3:
-            try:
-                button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "clickable")
-                if button:
-                    driver.execute_script("arguments[0].click();", button)
-                    output(f"Step {step} - Successfully clicked the 'storage' link",3)
-                    break
-                else:
-                    output(f"Step {step} - Button not found or not clickable",3)
-            except StaleElementReferenceException:
-                output(f"Step {step} - Encountered StaleElementReferenceException, retrying...",3)
-            attempts += 1
+    xpath = "//h4[text()='Storage']"
 
     click_storage_link(xpath)
 
