@@ -17,7 +17,7 @@ Follow each step, from server setup, downloading and installing the script, conf
 ## Windows/Ubuntu Install via Docker (currently Beta Testing):
 Using Docker simplifies the setup of the Telegram Claim Bot by containerizing the application and its dependencies. This ensures a consistent environment across different architectures (X86/ARM64) and operating systems (Linux-based/Windows) and eliminates issues related to dependency management and version conflicts. Please take a look at the [DOCKER.md](DOCKER.md) file for more instructions. 
 
-## Windows 10 & 11 Alternative - Utilize WSL2 (Ubuntu 20.04 - 24.04):
+## Windows 10 & 11 Alternative Installation - Utilize WSL2:
 - Download [Ubuntu 24.04](https://www.microsoft.com/store/productId/9NZ3KLHXDJP5) from the Microsoft Store.
 - Open PowerShell as an **Administrator** and enable WSL2 with these commands:
    - ```bash
@@ -30,7 +30,7 @@ Using Docker simplifies the setup of the Telegram Claim Bot by containerizing th
 - To make PM2 restart after reboot (optional): Open the Run dialog (```Win + R```), type ```shell:startup```, and copy the ```windows_pm2_restart.bat``` file from the GitHub repository folder into your Windows startup folder. For further details, take a look at the video walkthroughs below.
 
 <a name="quick-start"></a>
-## Stand-alone Linux (Ubuntu 20.04 to 24.04):
+## Stand-alone Linux Installation (Ubuntu 20.04 to 24.04):
 
 Ensure your Operating System is up-to-date by running these commands:
 
