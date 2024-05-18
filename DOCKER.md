@@ -45,31 +45,39 @@ docker rm telegram-claim-bot
 ```
 All other instructions are in line with the main [README.md](https://github.com/thebrumby/HotWalletClaimer).
 
-# Amazon Linux Setup Example:
+# Linux Setup Examples:
 
-## First run only: Open the Amazon Linux Terminal via SSH and run these commands.
+## First run only: Open the Terminal via SSH and run these commands.
 
-### Install Docker and Add `ec2-user` to the Docker group:
+### Step 1 (Amazon Linux) - Install Docker and Add the current user to the Docker group:
 ```sh
 sudo yum update -y
 sudo yum install docker -y
 sudo service docker start
-sudo usermod -a -G docker ec2-user
+sudo usermod -aG docker $USER
 exit
 ```
-### Open the Terminal again and start the Claim Bot
+### Step 1 (Ubuntu) - Install Docker and Add the current user to the Docker group:
+```sh
+sudo apt-get update -y
+sudo apt-get install docker.io -y
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+exit
+```
+### Step 2 - Open the Terminal again and start the Claim Bot
 #### Note: `--restart unless-stopped` is set in this example, to restart the container on reboot etc
 ```sh
-sudo docker run -d --ulimit nofile=32768 --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:1.0
+docker run -d --ulimit nofile=32768 --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:1.0
 ```
-## Next Steps: From inside the terminal:
-
-### Interact with the Docker Container
+### Step 3 - Interact with the Docker Container
 To interact with the script, including adding accounts or monitoring, use:
 ```sh
-sudo docker exec -it telegram-claim-bot /bin/bash
+docker exec -it telegram-claim-bot /bin/bash
 ```
 ### To Exit the Docker and Return to the Amazon Linux CLI:
 Press `Ctrl + D` or type:
 `exit`
+
 ### Follow the instructions at the top of the page for details on how to interact with the script.
