@@ -430,7 +430,20 @@ def full_claim():
     move_and_click(xpath, 30, True, "click the AXE button", step, "clickable")
     increase_step()
 
-    find_working_link(step)
+    def extract_minutes_from_string(text):
+        match = re.search(r'(\d+)', text)
+        if match:
+            return int(match.group(1))
+        return None
+
+    xpath = "//span[contains(., 'minutes after')]"
+    axe_time = move_and_click(xpath, 5, False, "check the axe time", step, "visible")
+    if axe_time:
+        minutes = extract_minutes_from_string(axe_time.text)
+        if minutes is not None:
+            output(f"Step {step} - The axe can not be claimed for another {minutes} minutes.", 2)
+    else:
+        find_working_link(step)
     increase_step()
 
     driver.get("https://www.treemine.app/miner")
