@@ -1,6 +1,6 @@
 # Docker Setup for Telegram Claim Bot
 
-Prerequisite: You must have Docker installed on your intended device.
+Prerequisite: You must have Docker installed on your intended device, or see the Example installation commands below.
 
 ## To Install:
 ```sh
