@@ -350,7 +350,7 @@ def check_login():
                 with open(seed_file_path, 'w') as file:
                     file.write(seed_phrase)
                 output(f"Seed phrase saved to {seed_file_path}", 3)
-        if not seed_phrase and int(step) => 100:
+        if not seed_phrase and int(step) > 99:
             session = session_path.replace("./selenium/", "")
             output (f"Step {step} - You have become logged out: use './launch.sh tree {session} reset' from the Command Line to configure",1)
             while True:
