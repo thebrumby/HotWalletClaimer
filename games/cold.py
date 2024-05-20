@@ -66,7 +66,7 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "cold.py"
+script = "games/cold.py"
 prefix = "BNB-Cold:"
 url = "https://web.telegram.org/k/#@Newcoldwallet_bot"
 
