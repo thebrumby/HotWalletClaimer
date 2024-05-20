@@ -66,7 +66,7 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "games/tree.py"
+script = "tree.py"
 prefix = "Tree:"
 url = "https://www.treemine.app/login"
 pot_full = "0h 0m to fill"
@@ -190,8 +190,8 @@ if len(sys.argv) > 1:
         user_input = sys.argv[1]  # Get session ID from command-line argument
         output(f"Session ID provided: {user_input}",2)
         # Safely check for a second argument
-        if len(sys.argv) > 2 and sys.argv[2] == "debug":
-            settings['debugIsOn'] = True
+        if len(sys.argv) > 2 and sys.argv[2] == "reset":
+            settings['forceNewSession'] = True
 else:
     output("\nCurrent settings:",1)
     for key, value in settings.items():
@@ -325,6 +325,48 @@ def release_session():
             file.truncate()
         flock(file, LOCK_UN)
         output(f"Session released: {current_session}", 3)
+
+def get_seed_phrase_from_file(screenshots_path):
+    seed_file_path = os.path.join(screenshots_path, 'seed.txt')
+    if os.path.exists(seed_file_path):
+        with open(seed_file_path, 'r') as file:
+            return file.read().strip()
+    return None
+
+def check_login():
+    global screenshot_path, step, session_path
+    xpath = "//p[contains(text(), 'Seed phrase')]/ancestor-or-self::*/textarea"
+    input_field = move_and_click(xpath, 5, True, "locate seedphrase textbox", step, "clickable")
+    
+    if input_field:
+        seed_phrase = get_seed_phrase_from_file(screenshots_path)
+        
+        if not seed_phrase and int(step) < 100:
+            seed_phrase = validate_seed_phrase()
+            output("WARNING: Your seedphrase will be saved as an unencrypted file on your local filesystem if you choose 'y'!",1)
+            save_to_file = input("Would you like to save the validated seed phrase to a text file? (y/N): ")
+            if save_to_file.lower() == 'y':
+                seed_file_path = os.path.join(screenshots_path, 'seed.txt')
+                with open(seed_file_path, 'w') as file:
+                    file.write(seed_phrase)
+                output(f"Seed phrase saved to {seed_file_path}", 3)
+        if not seed_phrase and int(step) > 99:
+            session = session_path.replace("./selenium/", "")
+            output (f"Step {step} - You have become logged out: use './launch.sh tree {session} reset' from the Command Line to configure",1)
+            while True:
+                input("Restart this PM2 once you have logged in again. Press Enter to continue...")
+
+
+        input_field.send_keys(seed_phrase)
+        output(f"Step {step} - Was successfully able to enter the seed phrase...", 3)
+        increase_step()
+
+        # Click the continue button after seed phrase entry:
+        xpath = "//button[not(@disabled)]//span[contains(text(), 'Continue')]"
+        move_and_click(xpath, 30, True, "click continue after seedphrase entry", step, "clickable")
+        increase_step()
+    else:
+        output("Seed phrase textarea not found within the timeout period.", 2)
  
 def next_steps():
     global driver, target_element, settings, backup_path, session_path, step
@@ -335,24 +377,7 @@ def next_steps():
     else:
         step = "01"
 
-    try:
-        # Then look for the seed phase textarea:
-        xpath = "//p[contains(text(), 'Seed phrase')]/ancestor-or-self::*/textarea"
-        input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", step, "clickable")
-        input_field.send_keys(validate_seed_phrase()) 
-        output(f"Step {step} - Was successfully able to enter the seed phrase...",3)
-        increase_step()
-
-        # Click the continue button after seed phrase entry:
-        xpath = "//button[not(@disabled)]//span[contains(text(), 'Continue')]"
-        move_and_click(xpath, 30, True, "click continue after seedphrase entry", step, "clickable")
-        increase_step()
-
-    except TimeoutException:
-        output(f"Step {step} - Failed to Login within the expected timeframe.",1)
-
-    except Exception as e:
-        output(f"Step {step} - An error occurred: {e}",1)
+    check_login()
 
     cookies_path = f"{session_path}/cookies.json"
     cookies = driver.get_cookies()
@@ -415,6 +440,15 @@ def full_claim():
     driver = get_driver()
     
     step = "100"
+    
+    def get_seed_phrase(screenshots_path):
+        seed_file_path = os.path.join(screenshots_path, 'seed.txt')
+        if os.path.exists(seed_file_path):
+            with open(seed_file_path, 'r') as file:
+                seed_phrase = file.read().strip()
+            return seed_phrase
+        else:
+            return None
 
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
@@ -424,6 +458,11 @@ def full_claim():
             output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
             return modifiedTimer
     
+    driver.get("https://www.treemine.app/missions")
+    
+    check_login()
+    increase_step()
+
     driver.get("https://www.treemine.app/missions")
 
     xpath = "//button[contains(text(), 'AXE')]"
@@ -726,7 +765,7 @@ def validate_seed_phrase():
 # Start a new PM2 process
 def start_pm2_app(script_path, app_name, session_name):
     interpreter_path = "venv/bin/python3" 
-    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} -- {session_name} --watch"
+    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} -- {session_name}"
     subprocess.run(command, shell=True, check=True)
 
 # List all PM2 processes

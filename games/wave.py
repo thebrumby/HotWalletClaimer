@@ -68,7 +68,7 @@ target_element = None
 lowest_claim_offset = max(0, settings['lowestClaimOffset'])
 highest_claim_offset = max(0, settings['highestClaimOffset'])
 random_offset = random.randint(lowest_claim_offset, highest_claim_offset) + 1
-script = "games/wave.py"
+script = "wave.py"
 prefix = "Wave:"
 url = "https://web.telegram.org/k/#@waveonsuibot"
 pot_full = "Filled"
@@ -1037,7 +1037,7 @@ def validate_seed_phrase():
 # Start a new PM2 process
 def start_pm2_app(script_path, app_name, session_name):
     interpreter_path = "venv/bin/python3" 
-    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} -- {session_name} --watch"
+    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} -- {session_name}"
     subprocess.run(command, shell=True, check=True)
 
 # List all PM2 processes

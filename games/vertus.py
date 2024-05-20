@@ -66,7 +66,7 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "games/vertus.py"
+script = "vertus.py"
 prefix = "Vertus:"
 url = "https://web.telegram.org/k/#@vertus_app_bot"
 
@@ -971,7 +971,7 @@ def validate_seed_phrase():
 # Start a new PM2 process
 def start_pm2_app(script_path, app_name, session_name):
     interpreter_path = "venv/bin/python3" 
-    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} -- {session_name} --watch"
+    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} -- {session_name}"
     subprocess.run(command, shell=True, check=True)
 
 # List all PM2 processes
