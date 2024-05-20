@@ -64,8 +64,8 @@ If you do not have superuser rights, you look at the PM2 output for the prompt t
 | Command                       | Mining Game Link in Telegram                    | Ubuntu | Docker |
 |-------------------------------|-------------------------------------------------|--------|--------|
 | `./launch.sh hot`             | Launch HOT on Near Protocol: [herewalletbot](https://t.me/herewalletbot) | ✅     | ✅     |
-| `./launch.sh cold`            | Launch Cold on BNB Wallet: [Newcoldwallet_bot](https://t.me/Newcoldwallet_bot) | ✅     | ❌     |
-| `./launch.sh vertus`          | Launch Vertus on TON: [vertus_app_bot](https://t.me/vertus_app_bot) | ✅     | ✅     |
+| `./launch.sh cold`            | Launch Cold on BNB Wallet: [Newcoldwallet_bot](https://t.me/Newcoldwallet_bot) | ✅     | ✅     |
+| `./launch.sh vertus`          | Launch Vertus on TON: [vertus_app_bot](https://t.me/vertus_app_bot) | ❌     | ❌     |
 | `./launch.sh tree`            | Launch Tree on BNB Wallet: [treeminebot](https://t.me/treeminebot/app?startapp=6783218884) | ✅     | ✅     |
 | `./launch.sh wave`            | Launch Wave Wallet on Sui: [waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774) | ✅     | ✅     |
 
