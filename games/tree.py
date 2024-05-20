@@ -66,7 +66,7 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "tree.py"
+script = "games/tree.py"
 prefix = "Tree:"
 url = "https://www.treemine.app/login"
 pot_full = "0h 0m to fill"
