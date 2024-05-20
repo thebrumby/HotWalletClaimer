@@ -15,7 +15,7 @@ Follow each step, from server setup, downloading and installing the script, conf
 💡 **HINT:** Some apps allow only one game account per Telegram account. For **HOT**: You can only register **one** blockchain account for **each** Telegram account. However, once the seed phrase has been created and you have made your first claim, you can then log into any game account, using any Telegram account, by using the 12-word seed phrase. This allows you to manage multiple game accounts from a single Telegram or manage each wallet with its own Telegram login if you prefer.
 
 ## Windows/Ubuntu Install via Docker (currently Beta Testing):
-Using Docker simplifies the setup of the Telegram Claim Bot by containerizing the application and its dependencies. This ensures a consistent environment across different architectures (X86/ARM64) and operating systems (Linux-based/Windows) and eliminates issues related to dependency management and version conflicts. Please take a look at the [DOCKER.md](DOCKER.md) file for more instructions. 
+Using Docker simplifies the setup of the Telegram Claim Bot by containerizing the application and its dependencies. This ensures a consistent environment across different architectures (X86/ARM64) and operating systems (Linux-based/Windows) and eliminates issues related to dependency management and version conflicts. Please take a look at the [DOCKER.md](docs/DOCKER.md) file for more instructions. 
 
 ## Windows 10 & 11 Alternative Installation - Utilize WSL2:
 - Download [Ubuntu 24.04](https://www.microsoft.com/store/productId/9NZ3KLHXDJP5) from the Microsoft Store.
