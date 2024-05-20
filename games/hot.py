@@ -185,17 +185,33 @@ def get_session_id():
     return prefix+user_input
 
 
+imported_seedphrase = None
 # Update the settings based on user input
 if len(sys.argv) > 1:
-        user_input = sys.argv[1]  # Get session ID from command-line argument
-        output(f"Session ID provided: {user_input}",2)
-        # Safely check for a second argument
-        if len(sys.argv) > 2 and sys.argv[2] == "debug":
-            settings['debugIsOn'] = True
+    user_input = sys.argv[1]  # Get session ID from command-line argument
+    output(f"Session ID provided: {user_input}", 2)
+    
+    # Safely check for a second argument
+    if len(sys.argv) > 2 and sys.argv[2] == "reset":
+        settings['forceNewSession'] = True
+
+    # Check for the --seed-phrase flag and validate it
+    if '--seed-phrase' in sys.argv:
+        seed_index = sys.argv.index('--seed-phrase') + 1
+        if seed_index < len(sys.argv):
+            seed_phrase = ' '.join(sys.argv[seed_index:])
+            seed_words = seed_phrase.split()
+            if len(seed_words) == 12:
+                output(f"Seed phrase accepted:", 2)
+                imported_seedphrase = seed_phrase
+            else:
+                output("Invalid seed phrase. Ignoring.", 2)
+        else:
+            output("No seed phrase provided after --seed-phrase flag. Ignoring.", 2)
 else:
-    output("\nCurrent settings:",1)
+    output("\nCurrent settings:", 1)
     for key, value in settings.items():
-        output(f"{key}: {value}",1)
+        output(f"{key}: {value}", 1)
     user_input = input("\nShould we update our settings? (Default:<enter> / Yes = y): ").strip().lower()
     if user_input == "y":
         update_settings()
