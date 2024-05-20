@@ -66,7 +66,7 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "hot.py"
+script = "games/hot.py"
 prefix = "HOT:"
 url = "https://web.telegram.org/k/#@herewalletbot"
 pot_full = "Filled"
