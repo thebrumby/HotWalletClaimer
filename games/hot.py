@@ -526,7 +526,7 @@ def test_for_2fa():
             driver.save_screenshot(screenshot_path)
 
 def next_steps():
-    global driver, target_element, settings, backup_path, session_path, step
+    global driver, target_element, settings, backup_path, session_path, step, imported_seedphrase
     if step:
         pass
     else:
@@ -546,7 +546,9 @@ def next_steps():
         # Then look for the seed phase textarea:
         xpath = "//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
         input_field = move_and_click(xpath, 30, True, "locate seedphrase textbox", step, "clickable")
-        input_field.send_keys(validate_seed_phrase()) 
+        if not imported_seedphrase:
+            imported_seedphrase = validate_seed_phrase()
+        input_field.send_keys(imported_seedphrase) 
         output(f"Step {step} - Was successfully able to enter the seed phrase...",3)
         increase_step()
 
@@ -1041,8 +1043,8 @@ def validate_seed_phrase():
 
 # Start a new PM2 process
 def start_pm2_app(script_path, app_name, session_name):
-    interpreter_path = "venv/bin/python3" 
-    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} -- {session_name}"
+    interpreter_path = "venv/bin/python3"
+    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} --watch -- {session_name}"
     subprocess.run(command, shell=True, check=True)
 
 # List all PM2 processes
