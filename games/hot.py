@@ -419,12 +419,14 @@ def log_into_telegram():
     output(f"Step {step} - Initiating the One-Time Password (OTP) method...\n",1)
     driver.get(url)
     xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
-    move_and_click(xpath, 30, True, "switch to log in by phone number", step, "clickable")
+    target_element=move_and_click(xpath, 30, False, "switch to log in by phone number", step, "clickable")
+    target_element.click()
     increase_step()
 
     # Country Code Selection
-    xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
-    target_element = move_and_click(xpath, 30, True, "update users country", step, "clickable")
+    xpath = "//div[@class='input-field-input']"    
+    target_element = move_and_click(xpath, 30, False, "update users country", step, "clickable")
+    target_element.click()
     user_input = input(f"Step {step} - Please enter your Country Name as it appears in the Telegram list: ").strip()  
     target_element.send_keys(user_input)
     target_element.send_keys(Keys.RETURN)
@@ -432,7 +434,8 @@ def log_into_telegram():
 
     # Phone Number Input
     xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
-    target_element = move_and_click(xpath, 30, True, "request users phone number", step, "clickable")
+    target_element = move_and_click(xpath, 30, False, "request users phone number", step, "clickable")
+    driver.execute_script("arguments[0].click();", target_element)
     def validate_phone_number(phone):
         # Regex for validating an international phone number without leading 0 and typically 7 to 15 digits long
         pattern = re.compile(r"^[1-9][0-9]{6,14}$")
@@ -453,25 +456,42 @@ def log_into_telegram():
     increase_step()
 
     # Wait for the "Next" button to be clickable and click it    
-    xpath = "//button[contains(@class, 'btn-primary') and .//span[contains(text(), 'Next')]]"
-    move_and_click(xpath, 15, True, "click next to proceed to OTP entry", step, "visible")
+    xpath = "//button//span[contains(text(), 'Next')]"
+    target_element = move_and_click(xpath, 15, False, "click next to proceed to OTP entry", step, "clickable")
+    driver.execute_script("arguments[0].click();", target_element)
     increase_step()
 
     try:
         # Attempt to locate and interact with the OTP field
         wait = WebDriverWait(driver, 20)
-        password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='tel']")))
         if settings['debugIsOn']:
             time.sleep(3)
             driver.save_screenshot(f"{screenshots_path}/Step {step} - Ready_for_OTP.png")
+        password = wait.until(EC.visibility_of_element_located((By.XPATH, "//input[@type='tel']")))
         otp = input(f"Step {step} - What is the Telegram OTP from your app? ")
         password.click()
         password.send_keys(otp)
         output(f"Step {step} - Let's try to log in using your Telegram OTP.\n",3)
+        increase_step()
 
     except TimeoutException:
-        # OTP field not found 
-        output(f"Step {step} - OTP entry has failed - maybe you entered the wrong code, or possible flood cooldown issue.",1)
+        # Check for Storage Offline
+        xpath = "//button[contains(text(), 'STORAGE_OFFLINE')]"
+        target_element = move_and_click(xpath, 8, False, "check for 'STORAGE_OFFLINE'", step, "visible")
+        if target_element:
+            output(f"Step {step} - ***Progress is blocked by a 'STORAGE_OFFLINE' button",1)
+            output(f"Step {step} - If you are re-using an old Wallet session; try to delete or create a new session.",1)
+            found_error = True
+        # Check for flood wait
+        xpath = "//button[contains(text(), 'FLOOD_WAIT')]"
+        target_element = move_and_click(xpath, 8, False, "check for 'FLOOD_WAIT'", step, "visible")
+        if target_element:
+            output(f"Step {step} - ***Progress is blocked by a 'FLOOD_WAIT' button", 1)
+            output(f"Step {step} - You need to wait for the specified number of seconds before retrying.", 1)
+            output(f"Step {step} - {target_element.text}")
+            found_error = True
+        if not found_error:
+            output(f"Step {step} - Selenium was unable to interact with the OTP screen for an unknown reason.")
 
     except Exception as e:  # Catch any other unexpected errors
         output(f"Step {step} - Login failed. Error: {e}", 1) 
