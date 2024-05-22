@@ -354,7 +354,15 @@ def log_into_telegram():
 
         xpath = "//canvas[@class='qr-canvas']"
         driver.get(url)
-        wait = WebDriverWait(driver, 5)
+        wait = WebDriverWait(driver, 30)
+        output(f"Step {step} - Waiting for the first QR code - may take up to 30 seconds.", 1)
+        increase_step()
+        QR_code = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+
+        if not QR_code:
+            return False
+
+        wait = WebDriverWait(driver, 2)
 
         while attempt_count < max_attempts:
             try:
@@ -366,7 +374,6 @@ def log_into_telegram():
                     this_url = decoded_objects[0].data.decode('utf-8')
                     if this_url != last_url:
                         last_url = this_url  # Update the last seen URL
-                        clear_screen()
                         attempt_count += 1
                         output("*** Important: Having @HereWalletBot open in your Telegram App might stop this script from logging in! ***\n", 2)
                         output(f"Step {step} - Our screenshot path is {screenshots_path}\n", 1)
