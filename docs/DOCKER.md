@@ -75,7 +75,7 @@ exit
 ### Step 2 - Open the Terminal again and start the Claim Bot
 #### Note: `--restart unless-stopped` is set in this example, to restart the container on reboot etc
 ```sh
-docker run -d --ulimit nofile=32768 --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:1.1
+docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:1.1
 ```
 ### Step 3 - Interact with the Docker Container
 To interact with the script, including adding accounts or monitoring, use:
