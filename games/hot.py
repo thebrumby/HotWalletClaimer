@@ -248,7 +248,7 @@ def setup_driver():
         try:
             service = FirefoxService(geckodriver_path)
             driver = webdriver.Firefox(service=service, options=firefox_options)
-            output("Using Firefox with Geckodriver")
+            output("Using Firefox with Geckodriver",3)
             return driver
         except Exception as e:
             output(f"Initial Geckodriver setup may have failed: {e}", 1)
@@ -277,7 +277,7 @@ def setup_driver():
     try:
         service = ChromeService(chromedriver_path)
         driver = webdriver.Chrome(service=service, options=chrome_options)
-        output("Using Chrome with Chromedriver")
+        output("Using Chrome with Chromedriver",3)
         return driver
     except Exception as e:
         output(f"Initial ChromeDriver setup may have failed: {e}", 2)
