@@ -537,6 +537,7 @@ def test_for_2fa():
             driver.save_screenshot(screenshot_path)
 
 def next_steps():
+    driver = get_driver()
     cookies_path = f"{session_path}/cookies.json"
     cookies = driver.get_cookies()
     with open(cookies_path, 'w') as file:
