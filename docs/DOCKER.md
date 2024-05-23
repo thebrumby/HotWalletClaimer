@@ -1,4 +1,4 @@
-# Docker Setup for Telegram Claim Bot
+# Docker Setup for Telegram Claim Bot (now X86 + ARM64 Compatible) 
 
 Using Docker simplifies the setup of the Telegram Claim Bot by containerizing the application and its dependencies. This ensures a consistent environment across different architectures (X86/ARM64) and operating systems (Linux-based/Windows), and eliminates issues related to dependency management and version conflicts. Docker also provides an easy way to deploy, scale, and manage the application, making it an ideal choice for running the Telegram Claim Bot efficiently.
 
@@ -6,7 +6,7 @@ To get started with Docker, you need to have Docker installed on your device. Se
 
 ## To Install:
 ```sh
-docker run -d --ulimit nofile=32768 --name telegram-claim-bot thebrumby/telegram-claim-bot:1:0
+docker run -d --ulimit nofile=32768 --name telegram-claim-bot thebrumby/telegram-claim-bot:1:1
 ```
 ## To Interact with the Script, Including Adding Accounts or Monitoring:
 ```sh
@@ -22,6 +22,10 @@ docker exec -it telegram-claim-bot /bin/bash
 ## To Update for the Latest Code or New Games:
 ```sh
 ./pull-games.sh
+```
+## To Delete Unwanted Processes or Folders:
+```sh
+./remove-process.sh
 ```
 ## To See the Currently Running Games (if any):
 ```sh
