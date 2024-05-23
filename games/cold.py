@@ -551,7 +551,7 @@ def test_for_2fa():
 
 def click_storage_link(xpath):
     attempts = 0
-    while attempts < 3:
+    while attempts < 1:
         try:
             button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "clickable")
             if button:
