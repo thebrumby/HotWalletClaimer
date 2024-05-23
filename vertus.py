@@ -66,7 +66,7 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "games/vertus.py"
+script = "vertus.py"
 prefix = "Vertus:"
 url = "https://web.telegram.org/k/#@vertus_app_bot"
 
