@@ -232,14 +232,17 @@ screenshot_base = os.path.join(screenshots_path, "screenshot")
 def setup_driver():
     chrome_options = Options()
     chrome_options.add_argument(f"user-data-dir={session_path}")
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--log-level=3")  # Set log level to suppress INFO and WARNING messages
-    chrome_options.add_argument("--disable-bluetooth")
-    chrome_options.add_argument("--mute-audio")
+    chrome_options.add_argument("--headless")  # Ensure headless is enabled
+    chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    chrome_options.add_experimental_option("detach", True)
+    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15A372 Safari/604.1"
+    chrome_options.add_argument(f"user-agent={user_agent}")
+
+    # Disable various features to make headless mode less detectable
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option('useAutomationExtension', False)
 
     # Find the path to chromedriver
     chromedriver_path = shutil.which("chromedriver")

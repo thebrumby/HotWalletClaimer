@@ -23,9 +23,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 def load_settings():
     global settings, settings_file
@@ -233,27 +230,35 @@ step = "01"
 screenshot_base = os.path.join(screenshots_path, "screenshot")
 
 def setup_driver():
-    # Check if Geckodriver is available
-    geckodriver_path = shutil.which("geckodriver")
-    if geckodriver_path:
-        firefox_options = FirefoxOptions()
-        firefox_options.add_argument(f"user-data-dir={session_path}")
-        firefox_options.add_argument("--headless")
-        firefox_options.add_argument("--log-level=3")  # Set log level to suppress INFO and WARNING messages
-        firefox_options.add_argument("--disable-bluetooth")
-        firefox_options.add_argument("--mute-audio")
-        firefox_options.add_argument("--no-sandbox")
-        firefox_options.add_argument("--disable-dev-shm-usage")
+    chrome_options = Options()
+    chrome_options.add_argument(f"user-data-dir={session_path}")
+    chrome_options.add_argument("--headless")  # Ensure headless is enabled
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15A372 Safari/604.1"
+    chrome_options.add_argument(f"user-agent={user_agent}")
 
-        try:
-            service = FirefoxService(geckodriver_path)
-            driver = webdriver.Firefox(service=service, options=firefox_options)
-            output("Using Firefox with Geckodriver",3)
-            return driver
-        except Exception as e:
-            output(f"Initial Geckodriver setup may have failed: {e}", 1)
-            output("Please ensure you have the correct Geckodriver version for your system.", 1)
-            sys.exit(1)
+    # Disable various features to make headless mode less detectable
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option('useAutomationExtension', False)
+
+    # Find the path to chromedriver
+    chromedriver_path = shutil.which("chromedriver")
+    if chromedriver_path is None:
+        output("ChromeDriver not found in PATH. Please ensure it is installed.", 1)
+        exit(1)
+
+    # Initialize WebDriver
+    try:
+        service = Service(chromedriver_path)
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        return driver
+    except Exception as e:
+        output(f"Initial ChromeDriver setup may have failed: {e}", 1)
+        output("Please ensure you have the correct ChromeDriver version for your system.", 1)
+        exit(1)
     
     # Fallback to Chromedriver if Geckodriver is not available
     chrome_options = ChromeOptions()
