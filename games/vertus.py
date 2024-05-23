@@ -537,6 +537,7 @@ def test_for_2fa():
             driver.save_screenshot(screenshot_path)
 
 def next_steps():
+    driver = get_driver()
     cookies_path = f"{session_path}/cookies.json"
     cookies = driver.get_cookies()
     with open(cookies_path, 'w') as file:
@@ -1000,8 +1001,8 @@ def validate_seed_phrase():
 
 # Start a new PM2 process
 def start_pm2_app(script_path, app_name, session_name):
-    interpreter_path = "venv/bin/python3" 
-    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} -- {session_name}"
+    interpreter_path = "venv/bin/python3"
+    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} --watch {script_path} -- {session_name}"
     subprocess.run(command, shell=True, check=True)
 
 # List all PM2 processes
