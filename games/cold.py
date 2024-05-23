@@ -568,6 +568,9 @@ def click_storage_link(xpath):
             page_source = driver.page_source
             with open(f"{screenshots_path}/{prefix} page_source.html{attempts}", "w", encoding="utf-8") as f:
                 f.write(page_source)
+        except Exception as e:
+            if settings["debugIsOn"]:
+                output(f"Step {step} - Click Glitch.", 3)
         attempts += 1
 
 def next_steps():
@@ -649,19 +652,17 @@ def full_claim():
             return modifiedTimer
 
     launch_iframe()
+    increase_step()
 
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
 
     click_storage_link(xpath)
+    increase_step()
 
     try:
-        element = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located(
-                (By.XPATH, "//p[contains(text(), 'COLD Balance:')]/following-sibling::p")
-            )
-        )
-
+        xpath = "//div[contains(., 'Balance')]//p[contains(text(), 'Balance')]/following-sibling::p[last()]"
+        element = move_and_click(xpath, 5, False, "get pre-claim balance", step, "visible")
         # Retrieve the text content of the balance element
         if element is not None:
             balance_part = element.text.strip()  # Get the text content and strip any leading/trailing whitespace
@@ -670,7 +671,7 @@ def full_claim():
     except NoSuchElementException:
         output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", 3)
     except Exception as e:
-        print(f"Step {step} - An error occurred:", e)
+        output(f"Step {step} - An error occurred:",3)
     increase_step()
 
     try:
@@ -711,12 +712,8 @@ def full_claim():
                 increase_step()
 
                 try:
-                    element = WebDriverWait(driver, 10).until(
-                        EC.visibility_of_element_located(
-                            (By.XPATH, "//p[contains(text(), 'COLD Balance:')]/following-sibling::p")
-                        )
-                    )
-
+                    xpath = "//div[contains(., 'Balance')]//p[contains(text(), 'Balance')]/following-sibling::p[last()]"
+                    element = move_and_click(xpath, 5, False, "get pre-claim balance", step, "visible")
                     # Retrieve the text content of the balance element
                     if element is not None:
                         balance_part = element.text.strip()  # Get the text content and strip any leading/trailing whitespace
@@ -725,7 +722,7 @@ def full_claim():
                 except NoSuchElementException:
                     output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", 3)
                 except Exception as e:
-                    print(f"Step {step} - An error occurred:", e)
+                    output(f"Step {step} - Click Glitch:",3)
                 increase_step()
 
                 return 120
