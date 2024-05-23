@@ -553,7 +553,7 @@ def click_storage_link(xpath):
     attempts = 0
     while attempts < 1:
         try:
-            button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "clickable")
+            button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "visible")
             if button:
                 driver.execute_script("arguments[0].click();", button)
                 output(f"Step {step} - Successfully clicked the 'storage' link", 3)
