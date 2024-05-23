@@ -6,7 +6,7 @@ To get started with Docker, you need to have Docker installed on your device. Se
 
 ## To Install:
 ```sh
-docker run -d --ulimit nofile=32768 --name telegram-claim-bot thebrumby/telegram-claim-bot:1:1
+docker run -d --name telegram-claim-bot thebrumby/telegram-claim-bot:1:1
 ```
 ## To Interact with the Script, Including Adding Accounts or Monitoring:
 ```sh
