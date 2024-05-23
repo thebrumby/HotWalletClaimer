@@ -655,7 +655,7 @@ def full_claim():
     increase_step()
 
     # Click on the Storage link:
-    xpath = "//h4[text()='Storage']"
+    xpath = "//p[text()='Mining']"
 
     click_storage_link(xpath)
     increase_step()
