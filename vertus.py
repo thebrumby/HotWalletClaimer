@@ -66,9 +66,9 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "cold.py"
-prefix = "BNB-Cold:"
-url = "https://web.telegram.org/k/#@Newcoldwallet_bot"
+script = "vertus.py"
+prefix = "Vertus:"
+url = "https://web.telegram.org/k/#@vertus_app_bot"
 
 def increase_step():
     global step
@@ -339,15 +339,7 @@ def log_into_telegram():
 
         xpath = "//canvas[@class='qr-canvas']"
         driver.get(url)
-        wait = WebDriverWait(driver, 30)
-        output(f"Step {step} - Waiting for the first QR code - may take up to 30 seconds.", 1)
-        increase_step()
-        QR_code = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-
-        if not QR_code:
-            return False
-
-        wait = WebDriverWait(driver, 2)
+        wait = WebDriverWait(driver, 5)
 
         while attempt_count < max_attempts:
             try:
@@ -359,6 +351,7 @@ def log_into_telegram():
                     this_url = decoded_objects[0].data.decode('utf-8')
                     if this_url != last_url:
                         last_url = this_url  # Update the last seen URL
+                        clear_screen()
                         attempt_count += 1
                         output("*** Important: Having @HereWalletBot open in your Telegram App might stop this script from logging in! ***\n", 2)
                         output(f"Step {step} - Our screenshot path is {screenshots_path}\n", 1)
@@ -404,14 +397,12 @@ def log_into_telegram():
     output(f"Step {step} - Initiating the One-Time Password (OTP) method...\n",1)
     driver.get(url)
     xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
-    target_element=move_and_click(xpath, 30, False, "switch to log in by phone number", step, "clickable")
-    target_element.click()
+    move_and_click(xpath, 30, True, "switch to log in by phone number", step, "clickable")
     increase_step()
 
     # Country Code Selection
-    xpath = "//div[@class='input-field-input']"    
-    target_element = move_and_click(xpath, 30, False, "update users country", step, "clickable")
-    target_element.click()
+    xpath = "//div[@class='input-field-input']//span[@class='i18n']"    
+    target_element = move_and_click(xpath, 30, True, "update users country", step, "clickable")
     user_input = input(f"Step {step} - Please enter your Country Name as it appears in the Telegram list: ").strip()  
     target_element.send_keys(user_input)
     target_element.send_keys(Keys.RETURN)
@@ -419,8 +410,7 @@ def log_into_telegram():
 
     # Phone Number Input
     xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
-    target_element = move_and_click(xpath, 30, False, "request users phone number", step, "clickable")
-    driver.execute_script("arguments[0].click();", target_element)
+    target_element = move_and_click(xpath, 30, True, "request users phone number", step, "clickable")
     def validate_phone_number(phone):
         # Regex for validating an international phone number without leading 0 and typically 7 to 15 digits long
         pattern = re.compile(r"^[1-9][0-9]{6,14}$")
@@ -441,42 +431,25 @@ def log_into_telegram():
     increase_step()
 
     # Wait for the "Next" button to be clickable and click it    
-    xpath = "//button//span[contains(text(), 'Next')]"
-    target_element = move_and_click(xpath, 15, False, "click next to proceed to OTP entry", step, "clickable")
-    driver.execute_script("arguments[0].click();", target_element)
+    xpath = "//button[contains(@class, 'btn-primary') and .//span[contains(text(), 'Next')]]"
+    move_and_click(xpath, 15, True, "click next to proceed to OTP entry", step, "visible")
     increase_step()
 
     try:
         # Attempt to locate and interact with the OTP field
         wait = WebDriverWait(driver, 20)
+        password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='tel']")))
         if settings['debugIsOn']:
             time.sleep(3)
             driver.save_screenshot(f"{screenshots_path}/Step {step} - Ready_for_OTP.png")
-        password = wait.until(EC.visibility_of_element_located((By.XPATH, "//input[@type='tel']")))
         otp = input(f"Step {step} - What is the Telegram OTP from your app? ")
         password.click()
         password.send_keys(otp)
         output(f"Step {step} - Let's try to log in using your Telegram OTP.\n",3)
-        increase_step()
 
     except TimeoutException:
-        # Check for Storage Offline
-        xpath = "//button[contains(text(), 'STORAGE_OFFLINE')]"
-        target_element = move_and_click(xpath, 8, False, "check for 'STORAGE_OFFLINE'", step, "visible")
-        if target_element:
-            output(f"Step {step} - ***Progress is blocked by a 'STORAGE_OFFLINE' button",1)
-            output(f"Step {step} - If you are re-using an old Wallet session; try to delete or create a new session.",1)
-            found_error = True
-        # Check for flood wait
-        xpath = "//button[contains(text(), 'FLOOD_WAIT')]"
-        target_element = move_and_click(xpath, 8, False, "check for 'FLOOD_WAIT'", step, "visible")
-        if target_element:
-            output(f"Step {step} - ***Progress is blocked by a 'FLOOD_WAIT' button", 1)
-            output(f"Step {step} - You need to wait for the specified number of seconds before retrying.", 1)
-            output(f"Step {step} - {target_element.text}")
-            found_error = True
-        if not found_error:
-            output(f"Step {step} - Selenium was unable to interact with the OTP screen for an unknown reason.")
+        # OTP field not found 
+        output(f"Step {step} - OTP entry has failed - maybe you entered the wrong code, or possible flood cooldown issue.",1)
 
     except Exception as e:  # Catch any other unexpected errors
         output(f"Step {step} - Login failed. Error: {e}", 1) 
@@ -536,41 +509,7 @@ def test_for_2fa():
             screenshot_path = f"{screenshots_path}/Step {step} - error: Something Bad Occured.png"
             driver.save_screenshot(screenshot_path)
 
-def click_storage_link(xpath):
-    attempts = 0
-    while attempts < 3:
-        try:
-            button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "clickable")
-            if button:
-                driver.execute_script("arguments[0].click();", button)
-                output(f"Step {step} - Successfully clicked the 'storage' link", 3)
-                break
-            else:
-                output(f"Step {step} - Button not found or not clickable", 3)
-                page_source = driver.page_source
-                with open(f"{screenshots_path}/{prefix} page_source.html{attempts}", "w", encoding="utf-8") as f:
-                    f.write(page_source)
-        except StaleElementReferenceException:
-            output(f"Step {step} - Encountered StaleElementReferenceException, retrying...", 3)
-            page_source = driver.page_source
-            with open(f"{screenshots_path}/{prefix} page_source.html{attempts}", "w", encoding="utf-8") as f:
-                f.write(page_source)
-        except Exception as e:
-            if settings["debugIsOn"]:
-                output(f"Step {step} - Click Glitch.", 3)
-        attempts += 1
-
 def next_steps():
-
-    launch_iframe()
-    increase_step()
-
-    # Let's click the login button:
-    xpath = "//button[contains(text(), 'Log in')]"
-    target_element = move_and_click(xpath, 30, False, "find the log-in button", "08", "visible")
-    driver.execute_script("arguments[0].click();", target_element)
-    increase_step()
-
     cookies_path = f"{session_path}/cookies.json"
     cookies = driver.get_cookies()
     with open(cookies_path, 'w') as file:
@@ -639,49 +578,59 @@ def full_claim():
             return modifiedTimer
 
     launch_iframe()
-    increase_step()
 
     # Click on the Storage link:
-    xpath = "//h4[text()='Storage']"
-
-    click_storage_link(xpath)
-    increase_step()
+    xpath = "//p[text()='Mining']"
+    button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "present")
+    driver.execute_script("arguments[0].click();", button)
+    increase_step
 
     try:
-        xpath = "//div[contains(., 'Balance')]//p[contains(text(), 'Balance')]/following-sibling::p[last()]"
-        element = move_and_click(xpath, 5, False, "get pre-claim balance", step, "visible")
+        element = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located(
+                (By.XPATH, "//p[contains(text(), 'VERT Balance:')]/following-sibling::div/p[@class='_value_1jcpd_16']")
+            )
+        )
+
         # Retrieve the text content of the balance element
         if element is not None:
             balance_part = element.text.strip()  # Get the text content and strip any leading/trailing whitespace
-            output(f"Step {step} - {prefix} balance prior to claim: {balance_part}", 3)
+            output(f"Step {step} - VERT balance prior to claim: {balance_part}", 3)
 
     except NoSuchElementException:
-        output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", 3)
+        output(f"Step {step} - Element containing 'VERT Balance:' was not found.", 3)
     except Exception as e:
-        output(f"Step {step} - An error occurred:",3)
+        print(f"Step {step} - An error occurred:", e)
     increase_step()
 
-    try:
-        original_window = driver.current_window_handle
-        xpath = "//button[contains(text(), 'Check News')]"
-        move_and_click(xpath, 3, True, "check for NEWS.", step, "clickable")
-        driver.switch_to.window(original_window)
-        increase_step()
-    except TimeoutException:
-        if settings['debugIsOn']:
-            output(f"Step {step} - No news to check or button not found.",3)
+    wait_time_text = get_wait_time(step, "pre-claim") 
+
+    if wait_time_text != "Ready to collect":
+        matches = re.findall(r'(\d+)([hm])', wait_time_text)
+        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + random_offset
+        if remaining_wait_time < 5 or settings["forceClaim"]:
+            settings['forceClaim'] = True
+            output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
+        else:
+            output(f"Step {step} - Considering {wait_time_text} and a {random_offset} minute offset, we'll go back to sleep for {remaining_wait_time} minutes.", 2)
+            return remaining_wait_time
+
+    if wait_time_text == "Unknown":
+      return 15
 
     try:
-        
-        if True:
+        output(f"Step {step} - The pre-claim wait time is : {wait_time_text} and random offset is {random_offset} minutes.",1)
+        increase_step()
+
+        if wait_time_text == "Ready to collect" or settings['forceClaim']:
             try:
                 # Let's double check if we have to reselect the iFrame after news
                 # HereWalletBot Pop-up Handling
-                select_iframe(step)
-                increase_step()
+                # select_iframe(step)
+                # increase_step()
                 
                 # Click on the "Claim HOT" button:
-                xpath = "//button[contains(text(), 'Claim')]"
+                xpath = "//div[p[text()='Collect']]"
                 move_and_click(xpath, 30, True, "click the claim button", step, "clickable")
                 increase_step()
 
@@ -697,22 +646,36 @@ def full_claim():
                 except TimeoutException:
                     output(f"Step {step} - Looks like the site has lag - the Spinner did not disappear in time.\n",2)
                 increase_step()
+                wait_time_text = get_wait_time(step, "post-claim") 
+                matches = re.findall(r'(\d+)([hm])', wait_time_text)
+                total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                increase_step()
 
                 try:
-                    xpath = "//div[contains(., 'Balance')]//p[contains(text(), 'Balance')]/following-sibling::p[last()]"
-                    element = move_and_click(xpath, 5, False, "get pre-claim balance", step, "visible")
+                    element = WebDriverWait(driver, 10).until(
+                        EC.visibility_of_element_located(
+                            (By.XPATH, "//p[contains(text(), 'VERT Balance:')]/following-sibling::div/p")
+                        )
+                    )
+
                     # Retrieve the text content of the balance element
                     if element is not None:
                         balance_part = element.text.strip()  # Get the text content and strip any leading/trailing whitespace
-                        output(f"Step {step} - {prefix} balance after claim: {balance_part}", 2)
+                        output(f"Step {step} - VERT balance after claim: {balance_part}", 2)
 
                 except NoSuchElementException:
-                    output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", 3)
+                    output(f"Step {step} - Element containing 'VERT Balance:' was not found.", 3)
                 except Exception as e:
-                    output(f"Step {step} - Click Glitch:",3)
+                    print(f"Step {step} - An error occurred:", e)
                 increase_step()
 
-                return 120
+                if wait_time_text == "Ready to collect":
+                    output(f"Step {step} - The wait timer is still showing: Filled.",1)
+                    output(f"Step {step} - This means either the claim failed, or there is >4 minutes lag in the game.",1)
+                    output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.",2)
+                else:
+                    output(f"Step {step} - Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time),1)
+                return max(60, total_wait_time)
 
             except TimeoutException:
                 output(f"Step {step} - The claim process timed out: Maybe the site has lag? Will retry after one hour.",2)
@@ -806,15 +769,18 @@ def find_working_link(old_step):
     global driver, screenshots_path, settings, step
     output(f"Step {step} - Attempting to open a link for the app...",2)
 
-    start_app_xpath = "//button[contains(., 'Open Wallet')]"
+    start_app_xpath = "//button//span[text()='Open app']"
     try:
         start_app_buttons = WebDriverWait(driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
         clicked = False
 
         for button in reversed(start_app_buttons):
+            actions = ActionChains(driver)
+            actions.move_to_element(button).pause(0.2)
             try:
                 if settings['debugIsOn']:
                     driver.save_screenshot(f"{screenshots_path}/{step} - Find working link.png".format(screenshots_path))
+                actions.perform()
                 driver.execute_script("arguments[0].click();", button)
                 clicked = True
                 break
@@ -907,6 +873,9 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
     def timer():
         return random.randint(0, 2) / 10
 
+    def offset():
+        return random.randint(1, 5)
+
     output(f"Step {step} - Attempting to {action_description}...", 2)
 
     try:
@@ -930,19 +899,38 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
         if click and target_element:
             try:
                 actions = ActionChains(driver)
-                actions.pause(timer()).move_to_element(target_element).pause(timer()).click().perform()
+                actions.pause(timer()) \
+                       .move_to_element(target_element) \
+                        .pause(timer()) \
+                       .move_by_offset(0, 0 - offset()) \
+                       .pause(timer()) \
+                       .move_by_offset(0, offset()) \
+                       .pause(timer()) \
+                       .click() \
+                       .perform()
                 output(f"Step {step} - Successfully able to {action_description} using ActionChains.", 3)
             except ElementClickInterceptedException:
-                output("Step {step} - Element click intercepted, attempting JavaScript click as fallback...", 3)
+                output(f"Step {step} - Element click intercepted, attempting JavaScript click as fallback...", 3)
                 driver.execute_script("arguments[0].click();", target_element)
                 output(f"Step {step} - Was able to {action_description} using JavaScript fallback.", 3)
 
     except TimeoutException:
         output(f"Step {step} - Timeout while trying to {action_description}.", 3)
+        if settings['debugIsOn']:
+            # Capture the page source and save it to a file
+            page_source = driver.page_source
+            with open(f"{screenshots_path}/{prefix} page_source.html", "w", encoding="utf-8") as f:
+                f.write(page_source)
+            logs = driver.get_log("browser")
+            with open(f"{screenshots_path}/{prefix} browser_console_logs.txt", "w", encoding="utf-8") as f:
+                for log in logs:
+                    f.write(f"{log['level']}: {log['message']}\n")
+
     except Exception as e:
         output(f"Step {step} - An error occurred while trying to {action_description}: {e}", 1)
     finally:
         if settings['debugIsOn']:
+            time.sleep(5)
             screenshot_path = f"{screenshots_path}/{step}-{action_description}.png"
             driver.save_screenshot(screenshot_path)
         return target_element
@@ -960,7 +948,7 @@ def clear_overlays(target_element, old_step):
             output(f"Step {step} - Removed an overlay covering the target.", 3)
 
 def validate_seed_phrase():
-    # Let's take the user inputed seed phrase and carry o,,ut basic validation
+    # Let's take the user inputed seed phrase and carry out basic validation
     while True:
         # Prompt the user for their seed phrase
         if settings['hideSensitiveInput']:
@@ -988,7 +976,6 @@ def start_pm2_app(script_path, app_name, session_name):
     interpreter_path = "venv/bin/python3" 
     command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} -- {session_name}"
     subprocess.run(command, shell=True, check=True)
-
 
 # List all PM2 processes
 def save_pm2():
