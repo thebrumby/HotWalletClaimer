@@ -29,7 +29,7 @@ With this command, the container will run in the background even when you are no
 ```sh
 docker exec -it telegram-claim-bot /bin/bash
 ```
-#### Some Examples to Add a Game or Remove a Game.
+#### Some Examples to Add a Game or Remove a Game
 ```sh
 ./launch.sh
 ./remove-process.sh
@@ -37,6 +37,10 @@ docker exec -it telegram-claim-bot /bin/bash
 ./launch.sh cold BNB-Cold:Wallet1
 # Advanced example - specifying the seed phrase in the command line only works with HOT so far:
 ./launch.sh hot HOT:Wallet1 --seed-phrase wordone wordtwo wordthree wordfour wordfive wordsix wordseven wordeight wordnine wordten wordeleven wordtwelve
+```
+#### To return to the command-line interface type "exit or press ctrl+d
+```sh
+exit
 ```
 #### Stop the System from Auto-Updating from GitHub
 
