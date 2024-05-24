@@ -16,7 +16,7 @@ Watch along while I perform each step, from server setup, downloading and instal
 
 ## Quick Start Install via Docker
 
-Using Docker is the preferred method for setting up the Telegram Claim Bot. Docker simplifies the setup by containerizing the application and its dependencies, ensuring a consistent environment across different architectures (X86/ARM64) and operating systems (Linux-based/Windows). This approach eliminates issues related to dependency management and version conflicts.
+Using Docker is the preferred method for setting up the Telegram Claim Bot. Docker simplifies the setup by "containerizing" the application and its dependencies, keeping it separate from your main operating system, and ensuring a consistent environment across different architectures (X86/ARM64) and operating systems (Linux-based/Windows). This approach eliminates issues related to dependency management and version conflicts.
 
 Install Docker Desktop on your PC or CLI Docker on a VPS and then type the following commands into a terminal. Refer to the [DOCKER.md](docs/DOCKER.md) or video walkthrough for full details.
 
