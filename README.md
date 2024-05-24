@@ -24,13 +24,22 @@ Install Docker Desktop on your PC or CLI Docker on a VPS and then type the follo
 ```sh
 docker run -d --name telegram-claim-bot thebrumby/telegram-claim-bot:1.1
 ```
-#### To Interact with the Script, Including Adding Accounts or Monitoring
+With this command, the container will run in the background even when you are not interacting with it.
+#### To Interact with the Script, Including Adding New Game Accounts or Monitoring for Errors
 ```sh
 docker exec -it telegram-claim-bot /bin/bash
 ```
-#### To Add a Game
+#### Some Examples to Add a Game or Remove a Game.
 ```sh
-./launch.sh
+./launch.sh hot
+./remove-process.sh
+```
+#### Stop the System from Auto-Updating from GitHub
+
+By default, the system will pull any changes from GitHub twice a day and restart any affected running scripts with the latest code. You can stop this with the following command, but only **AFTER** you have another process (e.g., a game) running in PM2:
+
+```sh
+pm2 stop daily-update
 ```
 
 ## Windows 10 & 11 Alternative Installation - Utilize WSL2:
