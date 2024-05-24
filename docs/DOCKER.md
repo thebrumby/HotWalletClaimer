@@ -4,7 +4,7 @@ Using Docker simplifies the setup of the Telegram Claim Bot by containerizing th
 
 To get started with Docker, you need to have Docker installed on your device. See the Linux Installation examples for Amazon Linux and Ubuntu below. For Windows machines, you can download and install Docker Desktop from [Docker's official website](https://www.docker.com/products/docker-desktop/).
 
-## To Install:
+## To Setup a container with the script and dependencies:
 ```sh
 docker run -d --name telegram-claim-bot thebrumby/telegram-claim-bot:1.1
 ```
