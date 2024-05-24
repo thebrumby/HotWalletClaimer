@@ -1,62 +1,44 @@
 # Telegram Claim Assistant - Mine HOT & More!
 
-Many popular Telegram apps demand frequent logins to optimize rewards. This Python script runs on your local computer or VPS and streamlines the claim process by monitoring your account status within the app and claiming rewards at the most opportune moments. When correctly configured, the script is fully automated and features an optional random timer offset to emulate human behavior.
+Many popular Telegram apps require frequent logins to maximize rewards. This Python script, designed to run on your local computer or VPS, automates the claim process by monitoring your account status within the app and claiming rewards at the most opportune moments. When properly configured, the script operates fully automatically, with an optional random timer offset to mimic human behavior.
 
-Take, for instance, the cryptocurrency "HOT," available on the Near Protocol. Mining happens through the "@HereWalletBot" - a Telegram-based, Web3-enabled app operating on the NEAR Protocol blockchain. Maximizing rewards entails regular visits to claim tokens. The script tracks the time until the storage pot fills, initiating a claim when full. Alternatively, it calculates the time until completion if the storage remains unfilled. It then waits for the optimal moment—adjusted by your preferred random offset—to claim, thereby minimizing network load and reducing gas fees.
+For example, consider the cryptocurrency "HOT" on the Near Protocol. Mining occurs through the "@HereWalletBot" - a Telegram-based, Web3-enabled app on the NEAR Protocol blockchain. To maximize rewards, users must regularly visit to claim tokens. This script tracks the time until the storage pot fills and initiates a claim when it's full. If the storage is not full, it calculates the time until completion and waits for the optimal moment—adjusted by your preferred random offset—to claim, thereby minimizing network load and reducing gas fees.
 
-We aim to expand this script to include other projects suggested by our users in the coming weeks and months. However, we do not endorse any projects, some of which may have little to no real-world value and may try to upsell additional features for a price.
+Similarly, you can automate interactions with "Ocean" on SUI, "Vertus" on TON, and both "Cold" and "Tree" on BSC using their respective Telegram bots. Each bot allows users to claim tokens and manage their rewards efficiently by automating the timing of claims, ensuring that you maximize your mining potential while minimizing transaction costs.
+
+We aim to expand this script to include other projects suggested by our users in the coming weeks and months. However, we do not endorse any projects, some of which may take time and effort to mine but ultimately might yield little to no real-world value and may try to upsell additional features or incur gas fees. As always in cryptocurrency, doing your own research is essential.
 
 ## 🎥 Step-by-Step Video Walkthrough 🎬
 
-Follow each step, from server setup, downloading and installing the script, configuring the options, and initiating your own automated claims with the [Video Walkthrough](#videos).
+Watch along while I perform each step, from server setup, downloading and installing the script, configuring the options, and initiating your automated claims with the [Video Walkthrough](#videos).
 
 ## ☕ If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot). Your support is much appreciated and encourages the effort to make everything public.
 
-💡 **HINT:** Some apps allow only one game account per Telegram account. For **HOT**: You can only register **one** blockchain account for **each** Telegram account. However, once the seed phrase has been created and you have made your first claim, you can then log into any game account, using any Telegram account, by using the 12-word seed phrase. This allows you to manage multiple game accounts from a single Telegram or manage each wallet with its own Telegram login if you prefer.
+## Quick Start Install via Docker
 
-## Windows/Ubuntu Install via Docker (currently Beta Testing):
-Using Docker simplifies the setup of the Telegram Claim Bot by containerizing the application and its dependencies. This ensures a consistent environment across different architectures (X86/ARM64) and operating systems (Linux-based/Windows) and eliminates issues related to dependency management and version conflicts. Please take a look at the [DOCKER.md](docs/DOCKER.md) file for more instructions. 
+Using Docker is the preferred method for setting up the Telegram Claim Bot. Docker simplifies the setup by containerizing the application and its dependencies, ensuring a consistent environment across different architectures (X86/ARM64) and operating systems (Linux-based/Windows). This approach eliminates issues related to dependency management and version conflicts.
+
+Install Docker Desktop on your PC or CLI Docker on a VPS and then type the following commands into a terminal. Refer to the [DOCKER.md](docs/DOCKER.md) or video walkthrough for full details.
+
+#### To Setup a Container with the Script and Dependencies from the Latest Image
+```sh
+docker run -d --name telegram-claim-bot thebrumby/telegram-claim-bot:1.1
+```
+#### To Interact with the Script, Including Adding Accounts or Monitoring
+```sh
+docker exec -it telegram-claim-bot /bin/bash
+```
+#### To Add a Game
+```sh
+./launch.sh
+```
 
 ## Windows 10 & 11 Alternative Installation - Utilize WSL2:
-- Download [Ubuntu 24.04](https://www.microsoft.com/store/productId/9NZ3KLHXDJP5) from the Microsoft Store.
-- Open PowerShell as an **Administrator** and enable WSL2 with these commands:
-   - ```bash
-     dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-     ```
-  - ```bash
-    wsl --set-default-version 2
-    ```
-   - Reboot your computer and open the Ubuntu 24.04 app before following the **Ubuntu** instructions below.
-- To make PM2 restart after reboot (optional): Open the Run dialog (```Win + R```), type ```shell:startup```, and copy the ```windows_pm2_restart.bat``` file from the GitHub repository folder into your Windows startup folder. For further details, take a look at the video walkthroughs below.
+You can check out the [WINDOWS.md](docs/WINDOWS.md) guide for further instructions.
 
 <a name="quick-start"></a>
 ## Stand-alone Linux Installation (Ubuntu 20.04 to 24.04):
-
-Ensure your Operating System is up-to-date by running these commands:
-
-   ```bash
-   sudo apt-get update
-   sudo apt-get upgrade -y
-   sudo reboot
-   ```
-
-Execute the QuickStart command block to clone this GitHub, set the Virtual Environment and install all the dependencies: 
-
-   ```bash
-   sudo apt install -y git
-   git clone https://github.com/thebrumby/HotWalletBot.git
-   cd HotWalletBot
-   sudo chmod +x install.sh launch.sh
-   ./install.sh
-   ```
-**Ubuntu users only:** Enable PM2 to persist through reboots with the following command (Windows users follow the Windows Guide). 
-   ```bash
-   pm2 startup systemd
-   ```
-
-If you do not have superuser rights, you look at the PM2 output for the prompt to run as a superuser. An example might be:
-
-```sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu```
+To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.md](docs/LINUX.md) or watch the video walkthrough. 
 
 ## Games/apps currently working with this script:
 **Note: All these scripts assume you have already manually started your selected game, completed any one-time screens that require reading, and made at least 1 claim manually - ensuring you have coins for Gas Fee if necessary**
