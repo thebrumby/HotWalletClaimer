@@ -20,11 +20,11 @@ Using Docker is the preferred method for setting up the Telegram Claim Bot. Dock
 
 Install Docker Desktop on your PC or CLI Docker on a VPS and then type the following commands into a terminal. Refer to the [DOCKER.md](docs/DOCKER.md) or video walkthrough for full details.
 
-#### To Setup a Container with the Script and Dependencies from the Latest Image
+#### To Set Up a Container with the Script and Dependencies from the Latest Image
 ```sh
-docker run -d --name telegram-claim-bot thebrumby/telegram-claim-bot:1.1
+docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot
 ```
-With this command, the container will run in the background even when you are not interacting with it.
+With this command, the container will run in the background even when you are not interacting with it. If your machine restarts, the container will automatically restart the script with Docker.
 #### To Interact with the Script, Including Adding New Game Accounts or Monitoring for Errors
 ```sh
 docker exec -it telegram-claim-bot /bin/bash
