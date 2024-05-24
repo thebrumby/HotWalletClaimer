@@ -31,8 +31,12 @@ docker exec -it telegram-claim-bot /bin/bash
 ```
 #### Some Examples to Add a Game or Remove a Game.
 ```sh
-./launch.sh hot
+./launch.sh
 ./remove-process.sh
+# Predefining the game name and your wallet name
+./launch.sh cold BNB-Cold:Wallet1
+# Advanced example - specifying the seed phrase in the command line only works with HOT so far:
+./launch.sh hot HOT:Wallet1 --seed-phrase wordone wordtwo wordthree wordfour wordfive wordsix wordseven wordeight wordnine wordten wordeleven wordtwelve
 ```
 #### Stop the System from Auto-Updating from GitHub
 
