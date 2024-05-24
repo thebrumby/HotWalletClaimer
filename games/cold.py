@@ -716,7 +716,7 @@ def full_claim():
 
                 try:
                     xpath = "//div[contains(., 'Balance')]//p[contains(text(), 'Balance')]/following-sibling::p[last()]"
-                    element = move_and_click(xpath, 5, False, "get pre-claim balance", step, "visible")
+                    element = move_and_click(xpath, 5, False, "get post-claim balance", step, "visible")
                     # Retrieve the text content of the balance element
                     if element is not None:
                         balance_part = element.text.strip()  # Get the text content and strip any leading/trailing whitespace
