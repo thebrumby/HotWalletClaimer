@@ -6,7 +6,7 @@ To get started with Docker, you need to have Docker installed on your device. Se
 
 ## To Setup a container with the script and dependencies:
 ```sh
-docker run -d --name telegram-claim-bot thebrumby/telegram-claim-bot:1.1
+docker run -d --name telegram-claim-bot thebrumby/telegram-claim-bot:latest
 ```
 ## To Interact with the Script, Including Adding Accounts or Monitoring:
 ```sh
@@ -75,7 +75,7 @@ exit
 ### Step 2 - Open the Terminal again and start the Claim Bot
 #### Note: `--restart unless-stopped` is set in this example, to restart the container on reboot etc
 ```sh
-docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:1.1
+docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:latest
 ```
 ### Step 3 - Interact with the Docker Container
 To interact with the script, including adding accounts or monitoring, use:
