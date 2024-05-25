@@ -236,7 +236,7 @@ def setup_driver():
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15A372 Safari/604.1"
+    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
     chrome_options.add_argument(f"user-agent={user_agent}")
 
     # Disable various features to make headless mode less detectable
@@ -259,35 +259,6 @@ def setup_driver():
         output(f"Initial ChromeDriver setup may have failed: {e}", 1)
         output("Please ensure you have the correct ChromeDriver version for your system.", 1)
         exit(1)
-    
-    # Fallback to Chromedriver if Geckodriver is not available
-    chrome_options = ChromeOptions()
-    chrome_options.add_argument(f"user-data-dir={session_path}")
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--log-level=3")  # Set log level to suppress INFO and WARNING messages
-    chrome_options.add_argument("--disable-bluetooth")
-    chrome_options.add_argument("--mute-audio")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    chrome_options.add_experimental_option("detach", True)
-
-    # Find the path to Chromedriver
-    chromedriver_path = shutil.which("chromedriver")
-    if chromedriver_path is None:
-        output("ChromeDriver not found in PATH. Please ensure it is installed.", 2)
-        sys.exit(1)
-
-    # Initialize WebDriver
-    try:
-        service = ChromeService(chromedriver_path)
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        output("Using Chrome with Chromedriver",3)
-        return driver
-    except Exception as e:
-        output(f"Initial ChromeDriver setup may have failed: {e}", 2)
-        output("Please ensure you have the correct ChromeDriver version for your system.", 2)
-        sys.exit(1)
 
 def get_driver():
     global driver
