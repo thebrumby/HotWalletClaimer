@@ -583,7 +583,7 @@ def next_steps():
 
     # Let's click the login button:
     xpath = "//button[contains(text(), 'Log in')]"
-    target_element = move_and_click(xpath, 30, False, "find the log-in button", "08", "visible")
+    target_element = move_and_click(xpath, 30, False, "find the log-in button", step, "visible")
     driver.execute_script("arguments[0].click();", target_element)
     increase_step()
 
@@ -655,7 +655,13 @@ def full_claim():
             return modifiedTimer
 
     launch_iframe()
-    increase_step()
+
+    # Let's double check if we got signed out and need to click the login button:
+    xpath = "//button[contains(text(), 'Log in')]"
+    target_element = move_and_click(xpath, 8, False, "find the log-in button (may not be present)", step, "visible")
+    if target_element:
+        driver.execute_script("arguments[0].click();", target_element)
+        increase_step()
 
     # Click on the Storage link:
     xpath = "//h4[text()='Storage']"
