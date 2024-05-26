@@ -616,7 +616,7 @@ def launch_iframe():
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
         output(f"Step {step} - Attempting to verify if we are logged in (hopefully QR code is not present).",3)
         xpath = "//canvas[@class='qr-canvas']"
-        wait = WebDriverWait(driver, 3)
+        wait = WebDriverWait(driver, 5)
         wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/Step {step} - Test QR code after session is resumed.png"
@@ -635,7 +635,9 @@ def launch_iframe():
     # There is a very unlikely scenario that the chat might have been cleared.
     # In this case, the "START" button needs pressing to expose the chat window!
     xpath = "//button[contains(., 'START')]"
-    move_and_click(xpath, 3, True, "check for the start button (should not be present)", step, "clickable")
+    button = move_and_click(xpath, 3, False, "check for the start button (should not be present)", step, "clickable")
+    if button:
+        button.click()
     increase_step()
 
 
@@ -650,7 +652,9 @@ def launch_iframe():
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-    move_and_click(xpath, 30, True, "click the 'Launch' button", step, "clickable")
+    button = move_and_click(xpath, 8, False, "click the 'Launch' button", step, "clickable")
+    if button:
+        button.click()
     increase_step()
 
     # HereWalletBot Pop-up Handling
