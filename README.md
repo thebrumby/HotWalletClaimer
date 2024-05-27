@@ -14,7 +14,7 @@ Watch along while I perform each step, from server setup, downloading and instal
 
 ## ☕ If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot). Your support is much appreciated and encourages the effort to make everything public.
 
-## Quick Start Install via Docker
+## Quick Start Install via Docker (best option for non-technical users)
 
 Using Docker is the preferred method for setting up the Telegram Claim Bot. Docker simplifies the setup by "containerizing" the application and its dependencies, keeping it separate from your main operating system, and ensuring a consistent environment across different architectures (X86/ARM64) and operating systems (Linux-based/Windows). This approach eliminates issues related to dependency management and version conflicts.
 
@@ -54,8 +54,8 @@ pm2 stop daily-update
 You can check out the [WINDOWS.md](docs/WINDOWS.md) guide for further instructions.
 
 <a name="quick-start"></a>
-## Stand-alone Linux Installation (Ubuntu 20.04 to 24.04):
-To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.md](docs/LINUX.md) or watch the video walkthrough. 
+## Stand-alone Linux Installation (best option for technically-minded users):
+To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.md](docs/LINUX.md) or watch the video walkthrough. This method is compatible with Ubuntu-style operating systems and tested on Ubuntu 20.04 - 24.04. 
 
 ## Games/apps currently working with this script:
 **Note: All these scripts assume you have already manually started your selected game, completed any one-time screens that require reading, and made at least 1 claim manually - ensuring you have coins for Gas Fee if necessary**
