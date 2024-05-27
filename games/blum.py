@@ -22,6 +22,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException
 from datetime import datetime, timedelta
+from selenium.webdriver.chrome.service import Service as ChromeService
 
 def load_settings():
     global settings, settings_file
@@ -65,12 +66,10 @@ settings = {}
 load_settings()
 driver = None
 target_element = None
-lowest_claim_offset = max(0, settings['lowestClaimOffset'])
-highest_claim_offset = max(0, settings['highestClaimOffset'])
-random_offset = random.randint(lowest_claim_offset, highest_claim_offset) + 1
-script = "games/wave.py"
-prefix = "Wave:"
-url = "https://web.telegram.org/k/#@waveonsuibot"
+random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
+script = "games/blum.py"
+prefix = "Blum:"
+url = "https://web.telegram.org/k/#@BlumCryptoBot"
 pot_full = "Filled"
 pot_filling = "to fill"
 
@@ -185,6 +184,7 @@ def get_session_id():
         user_input = f"Wallet{next_wallet_id}"  # Ensuring the full ID is prefixed correctly
 
     return prefix+user_input
+
 
 imported_seedphrase = None
 # Update the settings based on user input
@@ -557,7 +557,7 @@ def test_for_2fa():
             driver.save_screenshot(screenshot_path)
             
 def next_steps():
-    global driver, target_element, settings, backup_path, session_path, step
+    global driver, target_element, settings, backup_path, session_path, step, imported_seedphrase
     if step:
         pass
     else:
@@ -567,57 +567,6 @@ def next_steps():
         launch_iframe()
         increase_step()
 
-        # Attempt to interact with elements within the iframe.
-        # Let's click the login button first:
-        try:
-            xpath = "//button[contains(text(), 'Login')]"
-            login_button = WebDriverWait(driver, 30).until(
-                EC.visibility_of_element_located((By.XPATH, xpath))
-            )
-    
-            # Click the textarea to focus
-            driver.execute_script("arguments[0].click();", login_button)
-    
-            # Output success message
-            output(f"Step {step} - Was successfully able to click on the login button...", 2)
-    
-            # Increase the step counter
-            increase_step()
-
-        except Exception as e:
-            output(f"Step {step} - Failed to enter the seed phrase: {str(e)}", 2)
-
-
-        # Then look for the seed phase textarea:
-        try:
-            xpath = "//p[contains(text(), 'Seed phrase or Private key')]/following-sibling::textarea[1]"
-            input_field = WebDriverWait(driver, 30).until(
-                EC.visibility_of_element_located((By.XPATH, xpath))
-            )
-    
-            # Click the textarea to focus
-            driver.execute_script("arguments[0].click();", input_field)
-    
-            # Send the seed phrase to the textarea
-            input_field.send_keys(validate_seed_phrase())
-    
-            # Output success message
-            output(f"Step {step} - Was successfully able to enter the seed phrase...", 3)
-    
-            # Increase the step counter
-            increase_step()
-
-        except Exception as e:
-            output(f"Step {step} - Failed to enter the seed phrase: {str(e)}", 2)
-
-        # Click the continue button after seed phrase entry:
-        xpath = "//button[contains(text(), 'Continue')]"
-        move_and_click(xpath, 30, True, "click continue after seedphrase entry", step, "clickable")
-        increase_step()
-
-        # Click on the Storage link:
-        xpath = "//button[.//span[contains(text(), 'Claim Now')]]"
-        move_and_click(xpath, 30, True, "click the 'Claim Now' link", step, "clickable")
         cookies_path = f"{session_path}/cookies.json"
         cookies = driver.get_cookies()
         with open(cookies_path, 'w') as file:
@@ -657,7 +606,7 @@ def launch_iframe():
     # There is a very unlikely scenario that the chat might have been cleared.
     # In this case, the "START" button needs pressing to expose the chat window!
     xpath = "//button[contains(., 'START')]"
-    button = move_and_click(xpath, 3, False, "check for the start button (should not be present)", step, "clickable")
+    button = move_and_click(xpath, 8, False, "check for the start button (should not be present)", step, "visible")
     if button:
         button.click()
     increase_step()
@@ -674,7 +623,7 @@ def launch_iframe():
 
     # Now let's move to and JS click the "Launch" Button
     xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-    button = move_and_click(xpath, 8, False, "click the 'Launch' button", step, "clickable")
+    button = move_and_click(xpath, 8, False, "click the 'Launch' button (may not be present)", step, "visible")
     if button:
         button.click()
     increase_step()
@@ -689,21 +638,16 @@ def full_claim():
 
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
-        # Ensure the offsets are not less than 0
-        lowest_claim_offset = max(0, settings['lowestClaimOffset'])
-        highest_claim_offset = max(0, settings['highestClaimOffset'])
         if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
-            random_offset = random.randint(lowest_claim_offset, highest_claim_offset) + 1
+            random_offset = random.randint(max(settings['lowestClaimOffset'],0), settings['highestClaimOffset'])
             modifiedTimer = unmodifiedTimer + random_offset
             output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
             return modifiedTimer
 
     launch_iframe()
 
-    # Click on the Storage link:
-    xpath = "//button//span[contains(text(), 'Claim Now')]"
-    button = move_and_click(xpath, 10, False, "click the 'Ocean Game' link", step, "visible")
-    driver.execute_script("arguments[0].click();", button)
+    xpath = "//div[@class='farming-buttons-wrapper']//button"
+    move_and_click(xpath, 10, True, "click the 'Start farming' button (may already be running)", step, "clickable")
     increase_step()
 
     get_balance(False)
@@ -712,12 +656,11 @@ def full_claim():
 
     if wait_time_text != "Filled":
         matches = re.findall(r'(\d+)([hm])', wait_time_text)
-        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + random_offset
         if remaining_wait_time < 5 or settings["forceClaim"]:
             settings['forceClaim'] = True
-            output(f"Step {step} - the remaining time to claim is short so let's claim anyway, so applying: settings['forceClaim'] = True", 3)
+            output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
-            remaining_wait_time += random_offset
             output(f"Step {step} - Considering {wait_time_text} and a {random_offset} minute offset, we'll go back to sleep for {remaining_wait_time} minutes.", 2)
             return remaining_wait_time
 
@@ -728,30 +671,21 @@ def full_claim():
         output(f"Step {step} - The pre-claim wait time is : {wait_time_text} and random offset is {random_offset} minutes.",1)
         increase_step()
 
-        if wait_time_text == pot_full or settings['forceClaim']:
+        if wait_time_text == "Filled" or settings['forceClaim']:
             
             try:
-                # Click on the "Claim HOT" button:
-                xpath = "//div[contains(text(), 'Claim Now')]"
-                button = move_and_click(xpath, 10, False, "click the claim button", step, "present")
-                try:
-                    driver.execute_script("arguments[0].click();", button)
-                    increase_step()
-                except Exception:
-                    pass
+                xpath ="//button[.//div[contains(text(), 'Claim')]]"
+                move_and_click(xpath, 10, True, "click the 'Launch' button", step, "clickable")
 
-                # Now let's try again to get the time remaining until filled. 
-                # 4th April 24 - Let's wait for the spinner to disappear before trying to get the new time to fill.
-                output(f"Step {step} - Let's wait for the pending Claim spinner to stop spinning...",2)
                 time.sleep(5)
-                wait = WebDriverWait(driver, 240)
-                spinner_xpath = "//*[contains(@class, 'spinner')]" 
-                try:
-                    wait.until(EC.invisibility_of_element_located((By.XPATH, spinner_xpath)))
-                    output(f"Step {step} - Pending action spinner has stopped.\n",3)
-                except TimeoutException:
-                    output(f"Step {step} - Looks like the site has lag - the Spinner did not disappear in time.\n",2)
-                increase_step()
+
+                xpath = "//div[@class='farming-buttons-wrapper']//button"
+                move_and_click(xpath, 10, True, "click the 'Start farming' button", step, "clickable")
+
+                # Now let's give the site a few seconds to update.
+                output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...",3) 
+                time.sleep(10)
+                
                 wait_time_text = get_wait_time(step, "post-claim") 
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
@@ -800,20 +734,23 @@ def get_balance(claimed=False):
 
     # Construct the specific balance XPath
     balance_text = f'{prefix} Balance after claiming:' if claimed else f'{prefix} Balance before claiming:'
-    xpath = "//p[contains(@class, 'wave-balance')]"
+    balance_xpath = f"//div[@class='balance']//div[@class='kit-counter-animation value']"
 
     try:
-        # Wait for the element to be present based on the XPath
-        element = WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, xpath))
+        # Wait for the element to be visible based on the XPath
+        balance_element = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located((By.XPATH, balance_xpath))
         )
 
-        # Use JavaScript to get the text content of the element
-        balance_part = driver.execute_script("return arguments[0].textContent.trim();", element)
-        
-        if balance_part:
+        # Check if balance_element is not None and process the balance
+        if balance_element:
+            # Find all the individual character elements
+            char_elements = balance_element.find_elements(By.XPATH, ".//div[@class='el-char']")
+
+            # Concatenate their text to form the complete balance value
+            balance_part = ''.join([char.text for char in char_elements]).strip()
+            
             output(f"Step {step} - {balance_text} {balance_part}", priority)
-            return balance_part  # Return the balance part
 
     except NoSuchElementException:
         output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", priority)
@@ -823,21 +760,55 @@ def get_balance(claimed=False):
     # Increment step function, assumed to handle next step logic
     increase_step()
 
-def get_wait_time(step_number="108", beforeAfter = "pre-claim", max_attempts=2):
-    
-    try:
-        xpath = "//span[contains(@class, 'boat_balance')]"
-        wait_time_element = move_and_click(xpath, 5, True, f"get the {beforeAfter} wait timer (time elapsing method)", step, "present")
-        # Check if wait_time_element is not None
-        if wait_time_element is not None:
-            return wait_time_element.text
-        xpath = "//div[contains(text(), 'Claim Now')]"
-        wait_time_element = move_and_click(xpath, 10, False, f"get the {beforeAfter} wait timer (pot full method)", step, "present")
-        if wait_time_element is not None:
-            return "Filled"
-            
-    except Exception as e:
-        output(f"Step {step} - An error occurred on attempt {attempt}: {e}",3)
+def click_element(xpath, timeout=20):
+    end_time = time.time() + timeout
+    while time.time() < end_time:
+        try:
+            element = driver.find_element(By.XPATH, xpath)
+            # Attempt to click the element
+            element.click()
+            return True
+        except (StaleElementReferenceException, TimeoutException, NoSuchElementException):
+            pass
+        except Exception as e:
+            output(f"An error occurred: {e}", 3)
+        time.sleep(0.05)  # Short sleep to avoid busy-waiting
+    return False
+
+def monitor_element(xpath, timeout=8):
+    end_time = time.time() + timeout
+    while time.time() < end_time:
+        try:
+            element = driver.find_element(By.XPATH, xpath)
+            # Get the text content of the element
+            text = element.text
+            if text:
+                return text
+        except (StaleElementReferenceException, TimeoutException, NoSuchElementException):
+            pass
+        time.sleep(0.05)  # Short sleep to avoid busy-waiting
+    return "Unknown"
+
+def get_wait_time(step_number="108", beforeAfter="pre-claim", max_attempts=1):
+    global driver, step
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            output(f"Step {step} - First check if the time is still elapsing...", 3)
+            xpath = "//div[@class='time-left']"
+            wait_time_value = monitor_element(xpath, 8)
+            if wait_time_value != "Unknown":
+                return wait_time_value
+
+            output(f"Step {step} - Then check if the pot is full...", 3)
+            xpath = "//button[.//div[contains(text(), 'Claim')]]"
+            pot_full_value = monitor_element(xpath, 8)
+            if pot_full_value != "Unknown":
+                return "Filled"
+            return "Unknown"
+        except Exception as e:
+            output(f"Step {step} - An error occurred on attempt {attempt}: {e}", 3)
+            return "Unknown"
 
     # If all attempts fail         
     return "Unknown"
@@ -881,7 +852,7 @@ def find_working_link(old_step):
     global driver, screenshots_path, settings, step
     output(f"Step {step} - Attempting to open a link for the app...",2)
 
-    start_app_xpath = "//a[@href='https://t.me/waveonsuibot/walletapp']"
+    start_app_xpath = "//button[span[contains(text(), 'Launch Blum')]]"
     try:
         start_app_buttons = WebDriverWait(driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
         clicked = False
@@ -927,6 +898,62 @@ def find_working_link(old_step):
             driver.save_screenshot(screenshot_path)
         return False
 
+def find_claim_link(old_step):
+    global driver, screenshots_path, settings, step
+    output(f"Step {step} - Attempting to open a link for the app...", 2)
+
+    # Updated to use a more generic CSS selector
+    start_app_css_selector = ".farming-buttons-wrapper .kit-button"
+    try:
+        # Fetching all spans inside buttons
+        start_app_buttons = WebDriverWait(driver, 5).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, start_app_css_selector))
+        )
+        # Filter buttons to find the one with specific text
+        start_app_buttons = [btn for btn in start_app_buttons if 'Launch Blum' in btn.text]
+
+        clicked = False
+
+        for button in reversed(start_app_buttons):
+            actions = ActionChains(driver)
+            actions.move_to_element(button).pause(0.2)
+            try:
+                if settings['debugIsOn']:
+                    driver.save_screenshot(f"{screenshots_path}/{step} - Find working link.png")
+                actions.perform()
+                driver.execute_script("arguments[0].click();", button)
+                clicked = True
+                break
+            except StaleElementReferenceException:
+                continue
+            except ElementClickInterceptedException:
+                continue
+
+        if not clicked:
+            output(f"Step {step} - None of the 'Launch Blum' buttons were clickable.\n", 1)
+            if settings['debugIsOn']:
+                screenshot_path = f"{screenshots_path}/{step}-no-clickable-button.png"
+                driver.save_screenshot(screenshot_path)
+            return False
+        else:
+            output(f"Step {step} - Successfully able to open a link for the app..\n", 3)
+            if settings['debugIsOn']:
+                screenshot_path = f"{screenshots_path}/{step}-app-opened.png"
+                driver.save_screenshot(screenshot_path)
+            return True
+
+    except TimeoutException:
+        output(f"Step {step} - Failed to find the 'Launch Blum' button within the expected timeframe.\n", 1)
+        if settings['debugIsOn']:
+            screenshot_path = f"{screenshots_path}/{step}-timeout-finding-button.png"
+            driver.save_screenshot(screenshot_path)
+        return False
+    except Exception as e:
+        output(f"Step {step} - An error occurred while trying to open the app: {e}\n", 1)
+        if settings['debugIsOn']:
+            screenshot_path = f"{screenshots_path}/{step}-unexpected-error-opening-app.png"
+            driver.save_screenshot(screenshot_path)
+        return False
 
 def send_start(old_step):
     global driver, screenshots_path, backup_path, settings, step
@@ -980,10 +1007,9 @@ def restore_from_backup(path):
 def move_and_click(xpath, wait_time, click, action_description, old_step, expectedCondition):
     global driver, screenshots_path, settings, step
     target_element = None
-    failed = False
 
     def timer():
-        return random.randint(0, 2) / 10
+        return random.randint(1, 3) / 10
 
     def offset():
         return random.randint(1, 5)
@@ -1003,50 +1029,59 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
         elif expectedCondition == "clickable":
             target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
 
+        # Check if the target_element is found
+        if target_element is None:
+            output(f"Step {step} - The element was not found for {action_description}.", 2)
+            return None
+
         # Before interacting, check for and remove overlays if click is needed or visibility is essential
         if click or expectedCondition in ["visible", "clickable"]:
             clear_overlays(target_element, step)
 
         # Perform actions if the element is found and clicking is requested
-        if click and target_element:
-            try:
+        if target_element:
+            if expectedCondition == "clickable":
                 actions = ActionChains(driver)
-                actions.pause(timer()) \
-                       .move_to_element(target_element) \
+                actions.move_by_offset(0, 0 - offset()) \
                         .pause(timer()) \
-                       .move_by_offset(0, 0 - offset()) \
-                       .pause(timer()) \
-                       .move_by_offset(0, offset()) \
-                       .pause(timer()) \
-                       .click() \
-                       .perform()
-                output(f"Step {step} - Successfully able to {action_description} using ActionChains.", 3)
-            except ElementClickInterceptedException:
-                output(f"Step {step} - Element click intercepted, attempting JavaScript click as fallback...", 3)
-                driver.execute_script("arguments[0].click();", target_element)
-                output(f"Step {step} - Was able to {action_description} using JavaScript fallback.", 3)
+                        .move_by_offset(0, offset()) \
+                        .pause(timer()) \
+                        .move_to_element(target_element) \
+                        .pause(timer()) \
+                        .perform()
+                output(f"Step {step} - Successfully moved to the element using ActionChains.", 3)
+
+            if click:
+                click_result = click_element(xpath, wait_time)
+                if click_result:
+                    output(f"Step {step} - Successfully clicked {action_description} using click_element.", 3)
+                else:
+                    output(f"Step {step} - Failed to click {action_description} using click_element.", 2)
 
     except TimeoutException:
         output(f"Step {step} - Timeout while trying to {action_description}.", 3)
         if settings['debugIsOn']:
             # Capture the page source and save it to a file
             page_source = driver.page_source
-            with open(f"{screenshots_path}/{prefix} page_source.html", "w", encoding="utf-8") as f:
+            with open(f"{screenshots_path}/{step}_page_source.html", "w", encoding="utf-8") as f:
                 f.write(page_source)
             logs = driver.get_log("browser")
-            with open(f"{screenshots_path}/{prefix} browser_console_logs.txt", "w", encoding="utf-8") as f:
+            with open(f"{screenshots_path}/{step}_browser_console_logs.txt", "w", encoding="utf-8") as f:
                 for log in logs:
                     f.write(f"{log['level']}: {log['message']}\n")
 
+    except StaleElementReferenceException:
+        output(f"Step {step} - StaleElementReferenceException caught for {action_description}.", 2)
+
     except Exception as e:
         output(f"Step {step} - An error occurred while trying to {action_description}: {e}", 1)
+
     finally:
         if settings['debugIsOn']:
             time.sleep(5)
             screenshot_path = f"{screenshots_path}/{step}-{action_description}.png"
             driver.save_screenshot(screenshot_path)
         return target_element
-
 
 def clear_overlays(target_element, old_step):
     # Get the location of the target element
@@ -1095,7 +1130,7 @@ def save_pm2():
     command = f"NODE_NO_WARNINGS=1 pm2 save"
     result = subprocess.run(command, shell=True, text=True, capture_output=True)
     print(result.stdout)
-
+    
 def backup_telegram():
     global session_path, step
 

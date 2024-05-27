@@ -423,13 +423,13 @@ def log_into_telegram():
     output(f"Step {step} - Initiating the One-Time Password (OTP) method...\n",1)
     driver.get(url)
     xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
-    target_element=move_and_click(xpath, 30, False, "switch to log in by phone number", step, "clickable")
+    target_element=move_and_click(xpath, 30, False, "switch to log in by phone number", step, "visible")
     target_element.click()
     increase_step()
 
     # Country Code Selection
     xpath = "//div[@class='input-field-input']"    
-    target_element = move_and_click(xpath, 30, False, "update users country", step, "clickable")
+    target_element = move_and_click(xpath, 30, False, "update users country", step, "visible")
     target_element.click()
     user_input = input(f"Step {step} - Please enter your Country Name as it appears in the Telegram list: ").strip()  
     target_element.send_keys(user_input)
@@ -438,7 +438,7 @@ def log_into_telegram():
 
     # Phone Number Input
     xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
-    target_element = move_and_click(xpath, 30, False, "request users phone number", step, "clickable")
+    target_element = move_and_click(xpath, 30, False, "request users phone number", step, "visible")
     driver.execute_script("arguments[0].click();", target_element)
     def validate_phone_number(phone):
         # Regex for validating an international phone number without leading 0 and typically 7 to 15 digits long
@@ -461,7 +461,7 @@ def log_into_telegram():
 
     # Wait for the "Next" button to be clickable and click it    
     xpath = "//button//span[contains(text(), 'Next')]"
-    target_element = move_and_click(xpath, 15, False, "click next to proceed to OTP entry", step, "clickable")
+    target_element = move_and_click(xpath, 15, False, "click next to proceed to OTP entry", step, "visible")
     driver.execute_script("arguments[0].click();", target_element)
     increase_step()
 
@@ -515,7 +515,7 @@ def test_for_2fa():
         increase_step()
         WebDriverWait(driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
         xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
-        fa_input = move_and_click(xpath, 3, False, "check for 2FA requirement (will timeout if you don't have 2FA)", step, "present")
+        fa_input = move_and_click(xpath, 10, False, "check for 2FA requirement (will timeout if you don't have 2FA)", step, "present")
         if fa_input:
             if settings['hideSensitiveInput']:
                 tg_password = getpass.getpass(f"Step {step} - Enter your Telegram 2FA password: ")
@@ -555,7 +555,7 @@ def test_for_2fa():
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/Step {step} - error: Something Bad Occured.png"
             driver.save_screenshot(screenshot_path)
-
+            
 def next_steps():
     global driver, target_element, settings, backup_path, session_path, step, imported_seedphrase
     if step:
