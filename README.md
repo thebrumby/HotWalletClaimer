@@ -53,11 +53,11 @@ pm2 stop daily-update
 ```
 
 ## Windows 10 & 11 Alternative Installation - Utilize WSL2:
-You can check out the [WINDOWS.md](docs/WINDOWS.md) guide for further instructions.
+You can check out the [WINDOWS.md](docs/WINDOWS.md) guide or checkout this [video](https://www.youtube.com/watch?v=wOajWwO32P4) for further instructions.
 
 <a name="quick-start"></a>
 ## Stand-alone Linux Installation (best option for technically-minded users):
-To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.md](docs/LINUX.md) or watch the video walkthrough. This method is compatible with Ubuntu-style operating systems and tested on Ubuntu 20.04 - 24.04. 
+To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.md](docs/LINUX.md) or watch the [video](https://www.youtube.com/watch?v=aXwg8U4Qlvc) walkthrough. This method is compatible with Ubuntu-style operating systems and tested on Ubuntu 20.04 - 24.04. 
 
 ## Games/apps currently working with this script:
 **Note: All these scripts assume you have already manually started your selected game, completed any one-time screens that require reading, and made at least 1 claim manually - ensuring you have coins for Gas Fee if necessary**
@@ -114,7 +114,7 @@ Automate your Tree mining efforts using the BNB Wallet with this straightforward
     ```
 
 <a name="usage-notes"></a>
-## V3.0.0 Release Notes. 
+## V3.0.3 Release Notes. 
 
 ## Usage Instructions
 After executing the script with ```./launch.sh```, you will be prompted to update settings and configure the session:
