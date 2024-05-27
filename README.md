@@ -1,6 +1,6 @@
 # Telegram Claim Assistant - Mine HOT & More!
 
-Many popular Telegram apps require frequent logins to maximize rewards. This Python script, designed to run on your local computer or VPS, automates the claim process by monitoring your account status within the app and claiming rewards at the most opportune moments. When properly configured, the script operates fully automatically, with an optional random timer offset to mimic human behavior.
+Many popular Telegram apps require frequent logins to maximize rewards. This Python script utilizes Selenium and a virtual web browser to mimic human-like interaction with the games without using programmatically triggered API calls, which might arouse suspicion. Designed to run on your local computer or VPS, it automates the claim process by monitoring your account status within the app and claiming rewards at the most opportune moments. When properly configured, it operates fully automatically, with an optional random timer offset to further emulate human behavior.
 
 For example, consider the cryptocurrency "HOT" on the Near Protocol. Mining occurs through the "@HereWalletBot" - a Telegram-based, Web3-enabled app on the NEAR Protocol blockchain. To maximize rewards, users must regularly visit to claim tokens. This script tracks the time until the storage pot fills and initiates a claim when it's full. If the storage is not full, it calculates the time until completion and waits for the optimal moment—adjusted by your preferred random offset—to claim, thereby minimizing network load and reducing gas fees.
 
