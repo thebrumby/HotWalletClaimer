@@ -1,5 +1,11 @@
 # Telegram Claim Assistant - Mine HOT & More!
 
+To support the ongoing development of this project, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot) in exchange for the hours spent every day maintaining the script and providing support. Alternatively, help me monetize YouTube by subscribing and watching some content. Read why in [docs/YOUTUBE.md](docs/YOUTUBE.md).
+
+- **YouTube Channel:** [Crypto Chat with Phil](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw)
+
+## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
+
 Many popular Telegram apps require frequent logins to maximize rewards. This Python script utilizes Selenium and a virtual web browser to mimic human-like interaction with the games without using programmatically triggered API calls, which might arouse suspicion. Designed to run on your local computer or VPS, it automates the claim process by monitoring your account status within the app and claiming rewards at the most opportune moments. It operates fully automatically when properly configured, with an optional random timer offset to further emulate human behavior.
 
 For example, consider the cryptocurrency "HOT" on the Near Protocol. Mining occurs through the "@HereWalletBot" - a Telegram-based, Web3-enabled app on the NEAR Protocol blockchain. To maximize rewards, users must regularly visit to claim tokens. This script tracks the time until the storage pot fills and initiates a claim when it's full. If the storage is not full, it calculates the time until completion and waits for the optimal moment—adjusted by your preferred random offset—to claim, thereby minimizing network load and reducing gas fees.
@@ -11,8 +17,6 @@ We aim to expand this script to include other projects suggested by our users in
 ## 🎥 Step-by-Step Video Walkthrough 🎬
 
 Watch along while I perform each step, from server setup, downloading and installing the script, configuring the options, and initiating your automated claims with the [Video Walkthrough](#videos).
-
-## ☕ If you find this script useful, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot). Your support is much appreciated and encourages the effort to make everything public.
 
 ## Quick Start Install via Docker (best option for non-technical users)
 
