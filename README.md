@@ -1,6 +1,6 @@
 # Telegram Claim Assistant - Mine HOT & More!
 
-To support the ongoing development of this project, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot) in exchange for the hours spent every day maintaining the script and providing support. Alternatively, help me monetize YouTube by subscribing and watching some content. Read why in [docs/YOUTUBE.md](docs/YOUTUBE.md).
+To support the ongoing development of this project, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot) in exchange for the hours spent every day maintaining the script and providing support. Alternatively, it costs nothing to help me monetize YouTube by subscribing and watching some content. Read why in [docs/YOUTUBE.md](docs/YOUTUBE.md).
 
 - **YouTube Channel:** [Crypto Chat with Phil](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw)
 
