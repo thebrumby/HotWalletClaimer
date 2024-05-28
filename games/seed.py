@@ -642,11 +642,16 @@ def full_claim():
             modifiedTimer = unmodifiedTimer + random_offset
             output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
             return modifiedTimer
-
     launch_iframe()
-
+    xpath = "//div[contains(text(), 'Tap 10')]"    
+    move_and_click(xpath, 10, True, "check if tree tap blocking game (may not be present)", step, "clickable")
+    increase_step()
     xpath = "//button[contains(text(), 'CHECK NEWS')]"
     move_and_click(xpath, 20, True, "check for NEWS (may not be present)", step, "clickable")
+
+
+    
+    
 
     get_balance(False)
 
