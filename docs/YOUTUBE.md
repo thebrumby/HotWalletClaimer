@@ -10,6 +10,8 @@ The repository is cloned 600 times a week, and if everyone watched just 1 hour, 
 
 ## Ten Fun Uses for the YouTube Channel
 
+Leave it playing on an endless loop to bring these benefits into your life!
+
 1. Help babies sleep with my monotone voice.
 2. Get revenge on nasty neighbors by playing it at full volume.
 3. Keep pets calm during firework shows with the riveting content.
