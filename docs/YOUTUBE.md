@@ -1,6 +1,6 @@
 # Please Reward Me for My Time and Effort!
 
-Every day, I spend between 6 and 12 hours adding new scripts, keeping the existing ones running, and providing support. If you find this project useful, please play your part in keeping it alive and well-maintained.
+Every day, I spend between 4 and 10 hours adding new scripts, keeping the existing ones running, and providing support. If you find this project useful, please play your part in keeping it alive and well-maintained.
 
 - [Buying a coffee](https://www.buymeacoffee.com/HotWallletBot) costs just $5 and shows your appreciation for the script.
 - By making a donation, you help keep the script free to use and regularly maintained.
