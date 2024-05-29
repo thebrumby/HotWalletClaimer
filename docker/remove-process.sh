@@ -26,7 +26,7 @@ get_inactive_directories() {
     for session_path in "${all_sessions[@]}"; do
         session=$(basename "$session_path")
         pm2 describe "$session" &> /dev/null
-        if [ $? -ne 0 ]; then
+        if [ $? -ne 0 ] || pm2 list --no-color | grep -E "\s+${session}\s+" | grep -q "stopped"; then
             inactive_sessions+=("$session")
         fi
     done
@@ -66,23 +66,23 @@ while true; do
                 echo "Listing all PM2 processes:"
                 list_pm2_processes
                 read -rp "Enter the number of the process to remove, or type 'back' to go back: " proc_number
-                
+
                 if [[ "$proc_number" == "back" ]]; then
                     echo "Going back to the main menu."
                     break
                 fi
-                
+
                 process_name=$(pm2 list --no-color | awk "NR==$(($proc_number+4)) {print \$4}")
                 if [ -z "$process_name" ]; then
                     echo "Invalid process number."
                     continue
                 fi
-                
+
                 pm2 stop "$process_name" &> /dev/null
                 pm2 delete "$process_name" &> /dev/null
                 pm2 save &> /dev/null
                 echo "Stopped and deleted process $process_name from PM2."
-                
+
                 remove_directories "$process_name"
                 break
             done
@@ -94,7 +94,7 @@ while true; do
                     break
                 fi
                 read -rp "Enter the number of the directory to remove, 'all' to remove all except Telegram, or 'back' to go back: " dir_input
-                
+
                 inactive_sessions=($(get_inactive_directories))
                 total_sessions=${#inactive_sessions[@]}
 
@@ -102,6 +102,9 @@ while true; do
                     echo "Removing all inactive directories except those starting with 'Telegram:'..."
                     for dir in "${inactive_sessions[@]}"; do
                         if [[ $dir != Telegram:* ]]; then
+                            pm2 stop "$dir" &> /dev/null
+                            pm2 delete "$dir" &> /dev/null
+                            pm2 save &> /dev/null
                             remove_directories "$dir"
                         fi
                     done
@@ -111,6 +114,9 @@ while true; do
                     break
                 elif [[ "$dir_input" =~ ^[0-9]+$ && "$dir_input" -gt 0 && "$dir_input" -le "$total_sessions" ]]; then
                     dir_name=${inactive_sessions[$(($dir_input-1))]}
+                    pm2 stop "$dir_name" &> /dev/null
+                    pm2 delete "$dir_name" &> /dev/null
+                    pm2 save &> /dev/null
                     remove_directories "$dir_name"
                 else
                     echo "Invalid choice. Please enter a valid number, 'all', or 'back'."
