@@ -701,7 +701,7 @@ def full_claim():
                     xpath = "//div[@class='boxes_d_open' and contains(text(), 'Open box')]"
                     box = move_and_click(xpath, 10, True, "open the box...", step, "clickable")
                     if box:
-                        box_claim = datetime.datetime.now().strftime("%d %B %Y, %I:%M %p")
+                        box_claim = datetime.now().strftime("%d %B %Y, %I:%M %p")
                         output(f"Step {step} - The date and time of the box claim has been updated to {box_claim}.",3)
 
                 if wait_time_text == "Filled":
