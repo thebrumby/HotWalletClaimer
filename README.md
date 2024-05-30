@@ -1,8 +1,6 @@
 # Telegram Claim Assistant - Mine HOT & More!
 
-To support the ongoing development of this project, please consider [buying me a coffee](https://www.buymeacoffee.com/HotWallletBot) in exchange for the hours spent every day maintaining the script and providing support. Alternatively, it costs nothing to help me monetize YouTube by subscribing and watching some content. Read why in [docs/YOUTUBE.md](docs/YOUTUBE.md).
-
-- **YouTube Channel:** [Crypto Chat with Phil](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw)
+Hello, Fellow Crypto Game Enthusiasts! To keep up with the latest updates and changes, check out our change log on [Patreon](https://www.patreon.com/TelegramClaimBot)—it's free to read! If you find the scripts useful and would like to support our ongoing development, consider subscribing to our Patreon, or treat us to a [cup of coffee ☕](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation - both are just $5. You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. You can even see some humorous uses for the channel and more reasons why we need your help [here](docs/YOUTUBE.md).
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -10,7 +8,7 @@ Many popular Telegram apps require frequent logins to maximize rewards. This Pyt
 
 For example, consider the cryptocurrency "HOT" on the Near Protocol. Mining occurs through the "@HereWalletBot" - a Telegram-based, Web3-enabled app on the NEAR Protocol blockchain. To maximize rewards, users must regularly visit to claim tokens. This script tracks the time until the storage pot fills and initiates a claim when it's full. If the storage is not full, it calculates the time until completion and waits for the optimal moment—adjusted by your preferred random offset—to claim, thereby minimizing network load and reducing gas fees.
 
-Similarly, you can automate interactions with "Ocean" on SUI, "Vertus" on TON, and both "Cold" and "Tree" on BSC using their respective Telegram bots. Each bot allows users to claim tokens and manage their rewards efficiently by automating the timing of claims, ensuring that you maximize your mining potential while minimizing transaction costs. The script also supports "Seed," which is not associated with a specific blockchain but still offers reward opportunities through automated claims.
+Similarly, you can automate interactions with "Ocean" on SUI, "Vertus" on TON, "Oxygen" on Polygon, and both "Cold" and "Tree" on BSC using their respective Telegram bots. Each bot allows users to claim tokens and manage their rewards efficiently by automating the timing of claims, ensuring that you maximize your mining potential while minimizing transaction costs. The script also supports "Seed," which is not associated with a specific blockchain but still offers reward opportunities through automated claims.
 
 We aim to expand this script to include other projects suggested by our users in the coming weeks and months. However, we do not endorse any projects, some of which may take time and effort to mine but ultimately might yield little to no real-world value and may try to upsell additional features or incur gas fees. As always, doing your own research is essential in cryptocurrency.
 
