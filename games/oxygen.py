@@ -710,7 +710,7 @@ def full_claim():
                     output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                 else:
                     output(f"Step {step} - Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time), 1)
-                return max(60, total_wait_time)
+                return max(15, total_wait_time)
 
             except TimeoutException:
                 output(f"Step {step} - The claim process timed out: Maybe the site has lag? Will retry after one hour.", 2)
