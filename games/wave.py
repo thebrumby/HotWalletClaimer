@@ -1195,8 +1195,9 @@ def main():
                 
         now = datetime.now()
         next_claim_time = now + timedelta(minutes=wait_time)
-        next_claim_time_str = next_claim_time.strftime("%H:%M")
-        output(f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.",1)
+        this_claim_str = now.strftime("%d %B - %H:%M")
+        next_claim_time_str = next_claim_time.strftime("%d %B - %H:%M")
+        output(f"{this_claim_str} | Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.", 1)
         if settings["forceClaim"]:
             settings["forceClaim"] = False
 
