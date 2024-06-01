@@ -525,7 +525,7 @@ def full_claim():
                 wait_time_text = "1h30m"
                 output(f"Step {step} - As there are no gas fees with Tree coin - claim forced to 90 minutes.",3)
                 increase_step()
-            output(f"Step {step} - Considering {wait_time_text} and a {random_offset} minute offset, we'll go back to sleep for {remaining_wait_time} minutes.", 2)
+            output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
             return remaining_wait_time
 
     if wait_time_text == "Unknown":
@@ -577,18 +577,18 @@ def full_claim():
                 get_balance(True)
 
                 if wait_time_text == "Filled":
-                    output(f"Step {step} - The wait timer is still showing: Filled.",1)
+                    output(f"STATUS: The wait timer is still showing: Filled.",1)
                     output(f"Step {step} - This means either the claim failed, or there is >4 minutes lag in the game.",1)
                     output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.",2)
                 else:
-                    output(f"Step {step} - Post claim raw wait time: {wait_time_text} & proposed new wait timer = {total_wait_time} minutes.",1)
+                    output(f"STATUS: Successful Claim: Next claim {wait_time_text} / {total_wait_time} minutes.",1)
                 return max(60, total_wait_time)
 
             except TimeoutException:
-                output(f"Step {step} - The claim process timed out: Maybe the site has lag? Will retry after one hour.",2)
+                output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.",1)
                 return 60
             except Exception as e:
-                output(f"Step {step} - An error occurred while trying to claim: {e}\nLet's wait an hour and try again",1)
+                output(f"STATUS: An error occurred while trying to claim: {e}\nLet's wait an hour and try again",1)
                 return 60
 
         else:
@@ -616,7 +616,7 @@ def get_balance(claimed=False):
     priority = max(settings['verboseLevel'], default_priority)
 
     # Construct the specific balance XPath
-    balance_text = f'{prefix} Balance after claiming:' if claimed else f'{prefix} Balance before claiming:'
+    balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
     balance_xpath = f"//span[contains(text(), 'TREE Balance:')]/following-sibling::span[1]"
 
     try:
