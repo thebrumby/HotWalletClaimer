@@ -39,8 +39,6 @@ RUN chromedriver --version
 COPY docker/* /usr/src/app/
 COPY launch.sh /usr/src/app/
 
-RUN /usr/src/app/pull-games.sh
-
 RUN apt-get update && apt-get install -y 
     snapd curl wget python3 python3-pip libzbar0 unzip python3-venv gdebi-core  && \
     apt-get clean && \
@@ -48,7 +46,7 @@ RUN apt-get update && apt-get install -y
 
 WORKDIR /usr/src/app
 RUN python3 -m venv venv && \
-    venv/bin/pip install wheel selenium Pillow pyzbar qrcode-terminal
+    venv/bin/pip install wheel selenium Pillow pyzbar qrcode-terminal flask
 
 ENV PATH="/usr/src/app/venv/bin:$PATH"
 
