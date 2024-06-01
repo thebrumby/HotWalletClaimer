@@ -40,7 +40,7 @@ docker exec -it telegram-claim-bot /bin/bash
 # To remove a no longer wanted, or corrupted game:
 ./remove-process.sh
 # Predefining the game name and your wallet name:
-./launch.sh cold BNB-Cold:Wallet1
+./launch.sh cold Wave:Wallet1
 # Advanced example - specifying the seed phrase in the command line only works with HOT so far:
 ./launch.sh hot HOT:Wallet1 --seed-phrase wordone wordtwo wordthree wordfour wordfive wordsix wordseven wordeight wordnine wordten wordeleven wordtwelve
 ```
@@ -69,7 +69,6 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | Command                       | Mining Game Link in Telegram                    | Ubuntu | Docker |
 |-------------------------------|-------------------------------------------------|--------|--------|
 | `./launch.sh hot`             | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot) | ✅     | ✅     |
-| `./launch.sh cold`            | Launch Cold on BNB Wallet: [@Newcoldwallet_bot](https://t.me/Newcoldwallet_bot) | ✅     | ✅     |
 | `./launch.sh vertus`          | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot) | ✅     | ✅     |
 | `./launch.sh tree`            | Launch Tree on BNB Wallet: [@treeminebot](https://t.me/treeminebot/app?startapp=6783218884) | ✅     | ✅     |
 | `./launch.sh wave`            | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774) | ✅     | ✅     |
