@@ -2,7 +2,7 @@
 
 Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would like to support our ongoing development, consider subscribing to our [Patreon](https://www.patreon.com/TelegramClaimBot), or treat us to a [cup of coffee ☕](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation—both options are just $5. You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. Discover some humorous uses for the channel and more reasons to give a little back [here](docs/YOUTUBE.md).
 
-#### "Mine Cold" ends as June begins, and we welcome "Oxygen" to our lineup—more than just a click-and-claim game on Polygon. Read our blog posts FREE on [Patreon](https://www.patreon.com/TelegramClaimBot)!
+#### "Hexacore" has been added to our repository. Read our blog posts FREE on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -75,6 +75,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh seed`            | Launch Seed App - Mine Seed: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot) | ✅     | ✅     |
 | `./launch.sh blum`            | Mine Blum: [@BlumCryptoBot](https://web.telegram.org/k/#@BlumCryptoBot) | ❌     | ❌     |
 | `./launch.sh oxygen`            | Mine Blum: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot) | ✅     | ✅     |
+| `./launch.sh hexacore`            | Mine Blum: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     |
 
 💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 <a name="videos"></a>
