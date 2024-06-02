@@ -647,6 +647,13 @@ def full_claim():
     launch_iframe()
     increase_step()
 
+    # Let's take a break while the values load
+    xpath = "//p[@class='loader_ani' and img[@src='assets/oxy_logo.png']]"
+    loading = move_and_click(xpath, 300, False, "wait for the site to load", step, "invisible")
+    if not loading:
+        output("STATUS: Oxygen failed to open in Telegram Web. Retry in 60 minutes.",1)
+        return 60
+
     get_balance(False)
     increase_step()
 
