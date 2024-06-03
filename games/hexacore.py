@@ -687,6 +687,9 @@ def full_claim():
             # Move to the element and offset by random values
             action.move_to_element_with_offset(element, random_x, random_y).perform()
 
+            if not isinstance(remains, (int, float)):
+                return None 
+
             while remains > 0:
 
                 # Conditionally move cursor for even and odd number of remains
