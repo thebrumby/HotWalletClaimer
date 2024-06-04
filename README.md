@@ -36,7 +36,7 @@ docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/teleg
 ```sh
 docker exec -it telegram-claim-bot /bin/bash
 ```
-#### To launch a game:
+#### Once Inside the Container - To launch a game:
 ```sh
 ./launch.sh
 ```
