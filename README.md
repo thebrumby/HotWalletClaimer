@@ -48,8 +48,9 @@ docker exec -it telegram-claim-bot /bin/bash
 ```sh
 ./launch.sh status
 ```
+You can type `exit` or `CTRL+D` to leave the container, which will remain running until stopped. You may use the `docker exec` command above to re-enter the container as often as needed. 
 ## Windows 10 & 11 Alternative Installation - Utilize WSL2:
-You can check out the [WINDOWS.md](docs/WINDOWS.md) guide or checkout this [video](https://www.youtube.com/watch?v=wOajWwO32P4) for further instructions.
+You can check out the [WINDOWS.md](docs/WINDOWS.md) guide or check out this [video](https://www.youtube.com/watch?v=wOajWwO32P4) for further instructions.
 
 <a name="quick-start"></a>
 ## Stand-alone Linux Installation (best option for technically-minded users):
