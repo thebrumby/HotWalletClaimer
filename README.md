@@ -28,7 +28,7 @@ Using Docker simplifies the setup for non-technical users, by "containerizing" t
 
 Install Docker Desktop on your PC or CLI Docker on a VPS and then type the following commands into a terminal. Refer to the [DOCKER.md](docs/DOCKER.md) or video walkthrough for full details.
 
-#### To Set Up a Container with the Script and Dependencies from the Latest Image - will automatically restart the script
+#### Run a Container with the Script and Dependencies from the Latest Image and automatically restart
 ```sh
 docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot
 ```
