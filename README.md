@@ -28,22 +28,24 @@ Using Docker simplifies the setup for non-technical users, by "containerizing" t
 
 Install Docker Desktop on your PC or CLI Docker on a VPS and then type the following commands into a terminal. Refer to the [DOCKER.md](docs/DOCKER.md) or video walkthrough for full details.
 
-#### To Set Up a Container with the Script and Dependencies from the Latest Image
+#### To Set Up a Container with the Script and Dependencies from the Latest Image - will automatically restart the script
 ```sh
 docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot
 ```
-With this command, the container will run in the background even when you are not interacting with it. If your machine restarts, the container will automatically restart the script with Docker.
 #### To Interact with the Script, Including Adding New Game Accounts or Monitoring for Errors
 ```sh
 docker exec -it telegram-claim-bot /bin/bash
 ```
-#### Some Examples to Add a Game or Remove a Game
+#### To launch a game:
 ```sh
-# To add a game:
 ./launch.sh
-# To remove a no longer wanted, or corrupted game:
+```
+#### To remove a no longer wanted, or corrupted game:
+```sh
 ./remove-process.sh
-# To see the status of all your accounts on one page:
+```
+#### To see the status of all your accounts on one page:
+```sh
 ./launch.sh status
 ```
 ## Windows 10 & 11 Alternative Installation - Utilize WSL2:
