@@ -67,9 +67,9 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "games/hexacore.py"
-prefix = "Hexacore:"
-url = "https://web.telegram.org/k/#@HexacoinBot"
+script = "games/pocketfi.py"
+prefix = "Pocketfi:"
+url = "https://web.telegram.org/k/#@pocketfi_bot"
 pot_full = "Filled"
 pot_filling = "to fill"
 
@@ -638,169 +638,49 @@ def full_claim():
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
         if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
-            random_offset = random.randint(max(settings['lowestClaimOffset'], 1), max(settings['highestClaimOffset'], 1))
+            random_offset = random.randint(min(settings['lowestClaimOffset'], -10), min(settings['highestClaimOffset'], -10))
             modifiedTimer = unmodifiedTimer + random_offset
             output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
             return modifiedTimer
 
     launch_iframe()
+    increase_step()
 
-    # Let's take a short break to allow all elements to load
-    time.sleep(10)
+    wait_time_text = get_wait_time(step, "pre-claim") 
+    if wait_time_text == ['Unknown']:
+        output("STATUS: Looks like the pot isn't ready to claim yet. Let's come back in 30 minutes.",1)
+        return 30 
 
-    def get_remains():
-        remains = f"//div[contains(@class, 'TapContainer_textContainer')]"
-        try:
-            first = move_and_click(remains, 10, False, "remove overlays", step, "visible")
-            if first == None:
-                return None
-            element = monitor_element(remains)
-            # See if the timer is up
-            if "TAPS IN" in element:
-                return None
-            # Check if element is not None and process the balance
-            if element:
-                return int(element.replace(" REMAINS", ""))
-            else:
-                return None
-        except NoSuchElementException:
-            output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", 3)
-            return None
-        except Exception as e:
-            output(f"Step {step} - An error occurred: {str(e)}", 3)  # Provide error as string for logging
-            return None
-
-    def click_ahoy():
-            remains = get_remains()
-            xpath = "//div[contains(@class, 'TapContainer_textContainer')]"
-            output(f"Step {step} - We have {remains} targets to click. This might take some time!",3)
-            # Create the action chain object
-            action = ActionChains(driver)
-            # Locate the element
-            element = driver.find_element(By.XPATH, xpath)
-    
-            # Calculate random offsets
-            random_y = random.randint(70, 90)
-            random_x = random.randint(-10, 10)
-
-            # Move to the element and offset by random values
-            action.move_to_element_with_offset(element, random_x, random_y).perform()
-
-            if not isinstance(remains, (int, float)):
-                return None 
-
-            while remains > 0:
-
-                # Conditionally move cursor for even and odd number of remains
-                if int(remains / 2) == remains / 2:
-                    # If even, adjust x by -2, y by +2
-                    action.move_by_offset(-2, 2).perform()
-                else:
-                    # If odd, adjust x by +2, y by -2
-                    action.move_by_offset(2, -2).perform()
-    
-                # Perform click at current cursor location
-                action.click().perform()
-    
-                # Update the remaining clicks
-                remains = remains - 1
-
-                if remains % 100 == 0:
-                    output(f"Step {step} - {remains} clicks remaining...", 3)
+    output(f"Step {step} - the pre-claim timer shows {wait_time_text} minutes until burn.",2)
 
     get_balance(False)
- 
-    # Let's check if we have a box!
-    xpath = "//button[contains(text(), 'Claim') and not(contains(@class, 'disabled'))]"
+    increase_step()
+
+    xpath = "//button[contains(text(), 'Claim SWITCH')]"
     attempts = 1
     clicked_it = False
-    box_exists = move_and_click(xpath, 10, False, "check if the lucky box is present...", step, "visible")
-    if box_exists is not None:
-        while attempts < 5:
-            click_element(xpath,60)
-            time.sleep(5)
-            box_exists = move_and_click(xpath, 10, False, "recheck if the box is still there...", step, "visible")
-            if box_exists is None:
-                output(f"Step {step} - Looks like we claimed the box on attempt {attempts}.",3)
-                clicked_it = True
-                attempts = 6
-            else:
-                output(f"Step {step} - Looks like we failed to claim the box on attempt {attempts}. Trying again...",3)
-                attempts = attempts + 1 
+    while attempts < 5:
+        click_element(xpath,60)
+        time.sleep(5)
+        wait_time_text = get_wait_time(step, "mid-claim") 
+        if wait_time_text == ['Unknown']:
+            output(f"Step {step} - Looks like we made the claim on attempt {attempts}.",3)
+            clicked_it = True
+            break
+        else:
+            output(f"Step {step} - Looks like we failed the claim on attempt {attempts}. Trying again.",3)
+            attempts = attempts + 1 
+    increase_step()
+    
+    get_balance(True)
     increase_step()
 
-    remains = get_remains()
-    if remains:
-        output(f"Step {step} - The system reports {remains} available to click.",2)
-        wait_time_text = "Filled"
-    else:
-        output(f"Step {step} - There doesn't appear to be any remaining clicks available.",2)
-        wait_time_text = get_wait_time(step, "pre-claim") 
-    increase_step()
-
-    if wait_time_text != "Filled":
-        matches = re.findall(r'(\d+)([hm])', wait_time_text)
-        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + random_offset
-        if remaining_wait_time < 5 or settings["forceClaim"]:
-            settings['forceClaim'] = True
-            output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
-        else:
-            output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 2)
-            return remaining_wait_time
-
-    if wait_time_text == "Unknown":
-        return 15
-
-    try:
-        output(f"Step {step} - The pre-claim wait time is : {wait_time_text} and random offset is {random_offset} minutes.", 1)
-        increase_step()
-
-        if wait_time_text == "Filled" or settings['forceClaim']:
-            try:
-                click_ahoy()
-
-                # Now let's give the site a few seconds to update.
-                output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...", 3)
-                time.sleep(10)
-
-                wait_time_text = get_wait_time(step, "post-claim")
-                matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
-                increase_step()
-
-                get_balance(True)
-                increase_step()
-
-                if wait_time_text == "Filled":
-                    output(f"STATUS: The wait timer is still showing: Filled.", 1)
-                    output(f"Step {step} - This means either the claim failed, or there is lag in the game.", 1)
-                    output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
-                else:
-                    output(f"STATUS: Successful Claim: Next claim {wait_time_text} / {total_wait_time} minutes.",1)
-                return max(60, total_wait_time)
-
-            except TimeoutException:
-                output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.", 1)
-                return 60
-            except Exception as e:
-                output(f"STATUS: An error occurred while trying to claim: {e}\nLet's wait an hour and try again", 1)
-                return 60
-
-        else:
-            # If the wallet isn't ready to be claimed, calculate wait time based on the timer provided on the page
-            matches = re.findall(r'(\d+)([hm])', wait_time_text)
-            if matches:
-                total_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
-                total_time += 1
-                total_time = max(5, total_time)  # Wait at least 5 minutes or the time
-                output(f"Step {step} - Not Time to claim this wallet yet. Wait for {total_time} minutes until the storage is filled.", 2)
-                return total_time
-            else:
-                output(f"Step {step} - No wait time data found? Let's check again in one hour.", 2)
-                return 60  # Default wait time when no specific time until filled is found.
-    except Exception as e:
-        output(f"Step {step} - An unexpected error occurred: {e}", 1)
-        return 60  # Default wait time in case of an unexpected error
+    if clicked_it:
+        output (f"STATUS: Sucessfully claimed after {attempts} attempts. Mine again in 4 hours.",1)
+        return 240
+    else: 
+        output (f"STATUS: Unable to click. CPU may not be fast enough. Let's come back in 1 hour.",1)
+    return 60
 
 def get_balance(claimed=False):
     global step
@@ -812,7 +692,7 @@ def get_balance(claimed=False):
 
     # Construct the specific balance XPath
     balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-    balance_xpath = f"//div[contains(@class, 'BalanceDisplay_value')]"
+    balance_xpath = f"//span[@class='text-md font-bold']"
 
     try:
         first = move_and_click(balance_xpath, 30, False, "remove overlays", step, "visible")
@@ -856,12 +736,6 @@ def click_element(xpath, timeout=30):
             if intercepting_element:
                 driver.execute_script("arguments[0].style.display = 'none';", intercepting_element)
                 output(f"Step {step} - Intercepting element hidden, retrying click...", 3)
-        except UnexpectedAlertPresentException:
-            # Handle unexpected alert during the click
-            alert = driver.switch_to.alert
-            alert_text = alert.text
-            alert.accept()  # Accept the alert or modify if you need to dismiss or interact differently
-            output(f"Step {step} - Unexpected alert handled: {alert_text}", 3)
         except (StaleElementReferenceException, NoSuchElementException):
             pass  # Element not found or stale, try again
         except TimeoutException:
@@ -1005,16 +879,27 @@ def monitor_element(xpath, timeout=8):
 def get_wait_time(step_number="108", beforeAfter="pre-claim", max_attempts=1):
     global driver, step
 
+    def convert_to_minutes(time_str):
+        # Check if the string is in the time format HH:MM:SS
+        if re.match(r"^\d{2}:\d{2}:\d{2}$", time_str):
+            # Split the time string into hours, minutes, and seconds
+            hours, minutes, seconds = map(int, time_str.split(':'))
+            # Convert the total time to minutes
+            total_minutes = hours * 60 + minutes + seconds / 60
+            return int(total_minutes)  # Return as an integer
+        # Return the original string if it doesn't match the time format
+        return time_str
+
     for attempt in range(1, max_attempts + 1):
         try:
             output(f"Step {step} - Get the wait time...", 3)
-            xpath = "//span[contains(text(), 'TAPS IN')]"
+            xpath = "//p[contains(text(), 'burn in')]"
             elements = monitor_element(xpath, 10)
             if elements:
                 # Set our split phrase
-                parts = elements.split("TAPS IN ")
-                return parts[1] if len(parts) > 1 else "Unknown"    
-            return "Filled"
+                parts = elements.split("burn in: ")
+                results = [convert_to_minutes(parts[1] if len(parts) > 1 else "Unknown")]
+                return results 
         except Exception as e:
             output(f"Step {step} - An error occurred on attempt {attempt}: {e}", 3)
             return "Unknown"
@@ -1061,7 +946,7 @@ def find_working_link(old_step):
     global driver, screenshots_path, settings, step
     output(f"Step {step} - Attempting to open a link for the app...",2)
 
-    start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//a[contains(@href, 'https://t.me/HexacoinBot/wallet?startapp=play')]"
+    start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//span[contains(., 'Mining')]"
     try:
         start_app_buttons = WebDriverWait(driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
         clicked = False
