@@ -4,10 +4,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 #### Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
-- 4th June - "PocketFi" becomes the second game integration of the week [read more](https://www.patreon.com/posts/new-addition-to-105580101?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- 2nd June - "Hexacore" is added to the repository! Explore the AGO user-generated universe [read more](https://www.patreon.com/posts/hexacore-added-105419821?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- 31st May - Goodbye "Cold", Hello "Oxygen". BNB Mine Cold starts airdrop phase, as we introduce "Oxygen" [read more](https://www.patreon.com/posts/exciting-updates-105227562?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-
+- "PocketFi" becomes the second game integration of the week [read more](https://www.patreon.com/posts/new-addition-to-105580101?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- "Hexacore" is now part of our expanding repository! Explore the AGO user-generated universe [read more](https://www.patreon.com/posts/hexacore-added-105419821?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- Goodbye "Cold", Hello "Oxygen". BNB Mine Cold moves to it's airdrop phase and we introduce "Oxygen" [read more](https://www.patreon.com/posts/exciting-updates-105227562?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
