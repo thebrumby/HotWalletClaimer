@@ -723,7 +723,7 @@ def full_claim():
             if box_exists is None:
                 output(f"Step {step} - Looks like we claimed the box on attempt {attempts}.",3)
                 clicked_it = True
-                attempts = 6
+                break
             else:
                 output(f"Step {step} - Looks like we failed to claim the box on attempt {attempts}. Trying again...",3)
                 attempts = attempts + 1 
