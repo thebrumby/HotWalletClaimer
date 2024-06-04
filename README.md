@@ -32,7 +32,7 @@ Install Docker Desktop on your PC or CLI Docker on a VPS and then type the follo
 ```sh
 docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot
 ```
-#### To Interact with the Script, Including Adding New Game Accounts or Monitoring for Errors
+#### Enter the Container To Interact with the Script - Add New Game Accounts, Monitor for Errors etc
 ```sh
 docker exec -it telegram-claim-bot /bin/bash
 ```
