@@ -43,23 +43,9 @@ docker exec -it telegram-claim-bot /bin/bash
 ./launch.sh
 # To remove a no longer wanted, or corrupted game:
 ./remove-process.sh
-# Predefining the game name and your wallet name:
-./launch.sh cold Wave:Wallet1
-# Advanced example - specifying the seed phrase in the command line only works with HOT so far:
-./launch.sh hot HOT:Wallet1 --seed-phrase wordone wordtwo wordthree wordfour wordfive wordsix wordseven wordeight wordnine wordten wordeleven wordtwelve
+# To see the status of all your accounts on one page:
+./launch.sh status
 ```
-#### To return to the command-line interface type "exit or press ctrl+d
-```sh
-exit
-```
-#### Stop the System from Auto-Updating from GitHub
-
-By default, the system will pull any changes from GitHub twice a day and restart any affected running scripts with the latest code. You can stop this with the following command, but only **AFTER** you have another process (e.g., a game) running in PM2:
-
-```sh
-pm2 stop daily-update
-```
-
 ## Windows 10 & 11 Alternative Installation - Utilize WSL2:
 You can check out the [WINDOWS.md](docs/WINDOWS.md) guide or checkout this [video](https://www.youtube.com/watch?v=wOajWwO32P4) for further instructions.
 
