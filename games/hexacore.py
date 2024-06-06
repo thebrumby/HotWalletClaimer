@@ -648,6 +648,26 @@ def full_claim():
     # Let's take a short break to allow all elements to load
     time.sleep(10)
 
+    def get_box_time(step_number="108", beforeAfter="pre-claim", max_attempts=1):
+        global driver, step
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                output(f"Step {step} - Get the box full timer...", 3)
+                xpath = "//p[contains(text(), 'Next REWARD IN:')]"
+                elements = monitor_element(xpath, 30)
+                if elements:
+                    # Set our split phrase
+                    parts = elements.split("NEXT REWARD IN:")
+                    return parts[1] if len(parts) > 1 else "Unknown"    
+                return "Filled"
+            except Exception as e:
+                output(f"Step {step} - An error occurred on attempt {attempt}: {e}", 3)
+                return "Unknown"
+
+        # If all attempts fail         
+        return "Unknown"
+
     def get_remains():
         remains = f"//div[contains(@class, 'TapContainer_textContainer')]"
         try:
@@ -729,6 +749,12 @@ def full_claim():
                 attempts = attempts + 1 
     increase_step()
 
+    box_time_text = get_box_time(step)
+    if box_time_text != "Filled" or box_time_text != "Unknown":
+        matches = re.findall(r'(\d+)([HM])', box_time_text)
+        box_time = (sum(int(value) * (60 if unit == 'H' else 1) for value, unit in matches))
+    increase_step()
+
     remains = get_remains()
     if remains:
         output(f"Step {step} - The system reports {remains} available to click.",2)
@@ -740,13 +766,14 @@ def full_claim():
 
     if wait_time_text != "Filled":
         matches = re.findall(r'(\d+)([hm])', wait_time_text)
-        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + random_offset
+        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
         if remaining_wait_time < 5 or settings["forceClaim"]:
             settings['forceClaim'] = True
             output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
-            output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 2)
-            return remaining_wait_time
+            optimal_time = min (box_time, remaining_wait_time)
+            output(f"STATUS: Box due in {box_time} mins, and more clicks in {remaining_wait_time} mins, so sleeping for {optimal_time} mins.", 1)
+            return optimal_time
 
     if wait_time_text == "Unknown":
         return 15
@@ -776,8 +803,9 @@ def full_claim():
                     output(f"Step {step} - This means either the claim failed, or there is lag in the game.", 1)
                     output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                 else:
-                    output(f"STATUS: Successful Claim: Next claim {wait_time_text} / {total_wait_time} minutes.",1)
-                return max(60, total_wait_time)
+                    optimal_time = min (box_time, total_wait_time)
+                    output(f"STATUS: Successful claim! Box due {box_time} mins. More clicks in {total_wait_time} mins. Sleeping for {optimal_time} mins.", 1)
+                return optimal_time
 
             except TimeoutException:
                 output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.", 1)
@@ -999,7 +1027,6 @@ def monitor_element(xpath, timeout=8):
             pass
         except Exception as e:
             output(f"An error occurred: {e}", 3)
-        time.sleep(0.05)  # Short sleep to avoid busy-waiting
     return "Unknown"
 
 def get_wait_time(step_number="108", beforeAfter="pre-claim", max_attempts=1):
