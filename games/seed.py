@@ -753,26 +753,38 @@ def get_balance(claimed=False):
     # Increment step function, assumed to handle next step logic
     increase_step()
 
-def click_element(xpath, timeout=20):
+def click_element(xpath, timeout=30):
+    move_and_click(xpath, 8, False, f"move to {xpath}", step, "clickable")
     end_time = time.time() + timeout
     while time.time() < end_time:
         try:
-            element = driver.find_element(By.XPATH, xpath)
+            # Wait for the element to be present and clickable
+            element = WebDriverWait(driver, timeout).until(
+                EC.element_to_be_clickable((By.XPATH, xpath))
+            )
+            # Ensure the element is in the viewport
+            driver.execute_script("arguments[0].scrollIntoView();", element)
+            
+            # Clear any potential overlays before attempting to click
+            overlays_cleared = clear_overlays(element, step)
+            if overlays_cleared > 0:
+                output(f"Step {step} - Cleared {overlays_cleared} overlay(s), retrying click...", 3)
+
             # Attempt to click the element
-            element.click()
-            return True
-        except (StaleElementReferenceException, TimeoutException, NoSuchElementException):
-            pass
+            driver.execute_script("arguments[0].click();", element)
+            return True  # Success on clicking the element
+        except ElementClickInterceptedException:
+            pass # Let's go back as there are still overlays
+        except (StaleElementReferenceException, NoSuchElementException):
+            output(f"Step {step} - Element not found or stale, retrying...", 3)
+            pass  # Element not found or stale, try again
+        except TimeoutException:
+            output(f"Step {step} - Click timed out.", 3)
+            break  # Time's up - let's go back.
         except Exception as e:
-            output(f"An error occurred: {e}", 3)
-            try:
-                overlays_cleared = clear_overlays(element, step)  # Attempt to clear overlays if an error occurs
-                if overlays_cleared > 0:
-                    output(f"Step {step} - Overlays cleared, retrying click...", 3)
-            except Exception as clear_e:
-                output(f"An error occurred while trying to clear overlays: {clear_e}", 3)
-        time.sleep(0.05)  # Short sleep to avoid busy-waiting
-    return False
+            output(f"Step {step} - An error occurred: {e}", 3)
+            break  # Exit loop on unexpected error
+    return False  # Return False if the element could not be clicked
 
 def clear_overlays(target_element, step):
     try:
@@ -871,11 +883,14 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
 
 def monitor_element(xpath, timeout=8):
     end_time = time.time() + timeout
+    first_time = True
     while time.time() < end_time:
         try:
             elements = driver.find_elements(By.XPATH, xpath)
             # Debugging: Output the number of elements found
-            output(f"Step {step} - Found {len(elements)} elements with XPath: {xpath}", 3)
+            if first_time:
+                output(f"Step {step} - Found {len(elements)} elements with XPath: {xpath}", 3)
+                first_time = False
 
             # Get the text content of all relevant div elements
             texts = []
