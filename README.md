@@ -4,9 +4,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 #### Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
+- Telegram Web connectivity issues: including HOT Token and Hexacore/Hexacoin [read more](https://www.patreon.com/posts/important-update-105903332?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - "PocketFi" becomes the second game integration of the week [read more](https://www.patreon.com/posts/new-addition-to-105580101?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - "Hexacore" is now part of our expanding repository! Explore the AGO user-generated universe [read more](https://www.patreon.com/posts/hexacore-added-105419821?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- Goodbye "Cold", Hello "Oxygen". BNB Mine Cold starts airdrop, as we introduce "Oxygen" [read more](https://www.patreon.com/posts/exciting-updates-105227562?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -61,13 +61,13 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 
 | Command                       | Mining Game Link in Telegram                    | Ubuntu | Docker |
 |-------------------------------|-------------------------------------------------|--------|--------|
-| `./launch.sh hot`             | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot) | ✅     | ✅     |
+| `./launch.sh hot`             | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot) | ❌     | ❌     |
 | `./launch.sh vertus`          | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot) | ✅     | ✅     |
 | `./launch.sh tree`            | Launch Tree on BNB Wallet: [@treeminebot](https://t.me/treeminebot/app?startapp=6783218884) | ✅     | ✅     |
 | `./launch.sh wave`            | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774) | ✅     | ✅     |
 | `./launch.sh seed`            | Launch Seed App - Mine Seed: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot) | ✅     | ✅     |
 | `./launch.sh oxygen`            | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot) | ✅     | ✅     |
-| `./launch.sh hexacore`            | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     |
+| `./launch.sh hexacore`            | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ❌     | ❌     |
 | `./launch.sh pocketfi`            | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot) | ✅     | ✅     |
 
 💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
