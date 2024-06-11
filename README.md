@@ -4,7 +4,7 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 #### Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
-- Here comes the HOT stepper (Vert it up!) Hot is back + up to 100% bonus on Vert [read more](https://www.patreon.com/posts/here-comes-hot-106013700?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- Here comes the HOT stepper (Vert it up!) Hot is back, 100% bonus on Vert & Hexacore latest [read more](https://www.patreon.com/posts/here-comes-hot-106013700?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - Telegram Web connectivity issues: including HOT Token and Hexacore/Hexacoin [read more](https://www.patreon.com/posts/important-update-105903332?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - "PocketFi" becomes the second game integration of the week [read more](https://www.patreon.com/posts/new-addition-to-105580101?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
