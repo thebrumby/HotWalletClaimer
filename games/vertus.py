@@ -602,6 +602,29 @@ def full_claim():
     global driver, target_element, settings, session_path, step, random_offset
     step = "100"
 
+    def check_daily_reward():
+        xpath = "//p[contains(text(), 'Missions')]" #mission
+        button = move_and_click(xpath, 20, False, "click the 'mission' link", step, "visible")
+        driver.execute_script("arguments[0].click();", button)
+        increase_step()
+        xpath = "//p[contains(text(), 'Daily')]"  # daily
+        button = move_and_click(xpath, 20, False, "click the 'Daily' link", step, "visible")
+        driver.execute_script("arguments[0].click();", button)
+        increase_step()
+        xpath="//p[contains(text(), 'Claim')]"
+        claim = move_and_click(xpath, 20, True, "click the 'claimDaily' link", step, "visible")
+        if claim:
+            # driver.execute_script("arguments[0].click();", claim)
+            increase_step()
+            return "daily bonus clicked."
+        xpath="//p[contains(text(), 'Come back tomorrow')]"
+        come_back_tomorrow = move_and_click(xpath, 10, False, "check if reward is tomorrow", step, "visible")
+        if come_back_tomorrow:
+            increase_step()
+            return "daily bonus due tomorrow."
+        increase_step()
+        return "daily bonus unknown."
+
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
         if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
@@ -614,9 +637,10 @@ def full_claim():
 
     # Click on the Storage link:
     xpath = "//p[text()='Mining']"
-    button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "present")
+    button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "visible")
     driver.execute_script("arguments[0].click();", button)
-    increase_step
+    increase_step()
+
 
     try:
         element = WebDriverWait(driver, 10).until(
@@ -702,13 +726,15 @@ def full_claim():
                     print(f"Step {step} - An error occurred:", e)
                 increase_step()
 
+                daily_reward_text = check_daily_reward()
+                
                 if wait_time_text == "Ready to collect":
                     output(f"STATUS: The wait timer is still showing: Filled.",1)
                     output(f"Step {step} - This means either the claim failed, or there is >4 minutes lag in the game.",1)
                     output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.",2)
                 else:
-                    output(f"STATUS: Successful Claim: Next claim {wait_time_text} / {total_wait_time} minutes.",1)
-                return max(60, total_wait_time)
+                    output(f"STATUS: Successful Claim & {daily_reward_text}: Next claim in {min(60, total_wait_time)} minutes.",1)
+                return min(60, total_wait_time)
 
             except TimeoutException:
                 output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.",1)
