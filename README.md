@@ -4,9 +4,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 #### Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
+- Here comes the HOT stepper (Vert it up!) Hot is back + up to 100% bonus on Vert [read more](https://www.patreon.com/posts/here-comes-hot-106013700?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - Telegram Web connectivity issues: including HOT Token and Hexacore/Hexacoin [read more](https://www.patreon.com/posts/important-update-105903332?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - "PocketFi" becomes the second game integration of the week [read more](https://www.patreon.com/posts/new-addition-to-105580101?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- "Hexacore" is now part of our expanding repository! Explore the AGO user-generated universe [read more](https://www.patreon.com/posts/hexacore-added-105419821?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -61,6 +61,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 
 | Command                       | Mining Game Link in Telegram                    | Ubuntu | Docker |
 |-------------------------------|-------------------------------------------------|--------|--------|
+| `./launch.sh hot-alt          | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot) | ✅     | ✅     |
 | `./launch.sh hot`             | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot) | ❌     | ❌     |
 | `./launch.sh vertus`          | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot) | ✅     | ✅     |
 | `./launch.sh tree`            | Launch Tree on BNB Wallet: [@treeminebot](https://t.me/treeminebot/app?startapp=6783218884) | ✅     | ✅     |
