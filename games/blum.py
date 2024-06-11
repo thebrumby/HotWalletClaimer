@@ -244,6 +244,14 @@ def setup_driver():
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
 
+    # Set up the proxy to point to mitmproxy
+    chrome_options.add_argument("--proxy-server=http://127.0.0.1:8080")
+
+    # Add the mitmproxy certificate
+    chrome_options.add_argument("--ignore-certificate-errors")
+    chrome_options.add_argument("--allow-running-insecure-content")
+    chrome_options.add_argument("--test-type")
+
     # Find the path to chromedriver
     chromedriver_path = shutil.which("chromedriver")
     if chromedriver_path is None:
@@ -796,13 +804,13 @@ def get_wait_time(step_number="108", beforeAfter="pre-claim", max_attempts=1):
         try:
             output(f"Step {step} - First check if the time is still elapsing...", 3)
             xpath = "//div[@class='time-left']"
-            wait_time_value = monitor_element(xpath, 8)
+            wait_time_value = monitor_element(xpath, 10)
             if wait_time_value != "Unknown":
                 return wait_time_value
 
             output(f"Step {step} - Then check if the pot is full...", 3)
             xpath = "//button[.//div[contains(text(), 'Claim')]]"
-            pot_full_value = monitor_element(xpath, 8)
+            pot_full_value = monitor_element(xpath, 10)
             if pot_full_value != "Unknown":
                 return "Filled"
             return "Unknown"
@@ -1230,8 +1238,9 @@ def main():
                 
         now = datetime.now()
         next_claim_time = now + timedelta(minutes=wait_time)
-        next_claim_time_str = next_claim_time.strftime("%H:%M")
-        output(f"Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.",1)
+        this_claim_str = now.strftime("%d %B - %H:%M")
+        next_claim_time_str = next_claim_time.strftime("%d %B - %H:%M")
+        output(f"{this_claim_str} | Need to wait until {next_claim_time_str} before the next claim attempt. Approximately {wait_time} minutes.", 1)
         if settings["forceClaim"]:
             settings["forceClaim"] = False
 
