@@ -720,7 +720,7 @@ def full_claim():
                     action.move_by_offset(2, -2).perform()
     
                 # Perform click at current cursor location
-                action.click().perform()
+                driver.execute_script("arguments[0].click();", element)
     
                 # Update the remaining clicks
                 remains = remains - 1
@@ -805,7 +805,7 @@ def full_claim():
                 else:
                     optimal_time = min (box_time, total_wait_time)
                     output(f"STATUS: Successful claim! Box due {box_time} mins. More clicks in {total_wait_time} mins. Sleeping for {optimal_time} mins.", 1)
-                return optimal_time
+                return min (60, optimal_time)
 
             except TimeoutException:
                 output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.", 1)
