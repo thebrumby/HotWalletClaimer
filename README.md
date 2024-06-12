@@ -68,7 +68,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh wave`            | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774) | ✅     | ✅     |
 | `./launch.sh seed`            | Launch Seed App - Mine Seed: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot) | ✅     | ✅     |
 | `./launch.sh oxygen`          | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot) | ✅     | ✅     |
-| `./launch.sh hexacore`        | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ❌     | ❌     |
+| `./launch.sh hexacore`        | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     |
 | `./launch.sh pocketfi`        | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot) | ✅     | ✅     |
 | `./launch.sh blum` | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot) | ✅     | ✅     |
 
