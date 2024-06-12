@@ -719,7 +719,17 @@ def full_claim():
                     # If odd, adjust x by +2, y by -2
                     action.move_by_offset(2, -2).perform()
     
-                # Perform click at current cursor location
+                # Perform click with JS at current cursor location
+                driver.execute_script("""
+                    var event = new MouseEvent('click', {
+                        'view': window,
+                        'bubbles': true,
+                        'cancelable': true
+                    });
+                    var element = document.elementFromPoint(window.pageXOffset + window.innerWidth / 2, window.pageYOffset + window.innerHeight / 2);
+                    element.dispatchEvent(event);
+                """)
+                # Or perform the click with Action Chains
                 action.click().perform()
     
                 # Update the remaining clicks
