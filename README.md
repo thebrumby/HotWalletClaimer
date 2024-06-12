@@ -4,9 +4,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 #### Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
+- Mid-Week Update: **HOT Wallet** Telegram App and **Hexacore/Hexacoin** News [read more](https://www.patreon.com/posts/mid-week-update-106091359?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - Guess who's back, back again. **BLUM** is back, tell a friend! [read more](https://www.patreon.com/posts/blum-is-back-106056556?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- Here comes the **HOT** stepper (Vert it up!) Hot is back, 100% bonus on Vert & Hexacore latest [read more](https://www.patreon.com/posts/here-comes-hot-106013700?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- Telegram Web connectivity issues: including HOT Token and Hexacore/Hexacoin [read more](https://www.patreon.com/posts/important-update-105903332?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- Here comes the **HOT** stepper (Vert it up!) New Hot Alternative Method, 100% bonus on Vert & Hexacore latest [read more](https://www.patreon.com/posts/here-comes-hot-106013700?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -62,7 +62,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | Command                       | Mining Game Link in Telegram                    | Ubuntu | Docker |
 |-------------------------------|-------------------------------------------------|--------|--------|
 | `./launch.sh hot-alt`         | Launch HOT on Near Protocol: (non-TG method)    | ✅     | ✅     |
-| `./launch.sh hot`             | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot) | ❌     | ❌     |
+| `./launch.sh hot`             | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot) | ✅     | ✅     |
 | `./launch.sh vertus`          | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot) | ✅     | ✅     |
 | `./launch.sh tree`            | Launch Tree on BNB Wallet: [@treeminebot](https://t.me/treeminebot/app?startapp=6783218884) | ✅     | ✅     |
 | `./launch.sh wave`            | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774) | ✅     | ✅     |
