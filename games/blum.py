@@ -24,6 +24,17 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
+
+def run_http_proxy():
+    try:
+        subprocess.run(['./launch.sh', 'http-proxy'], check=True)
+        print("http-proxy started successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to start http-proxy: {e}")
+
+# Call the function at an appropriate place in your code
+run_http_proxy()
+
 def load_settings():
     global settings, settings_file
     # Default settings with all necessary keys
