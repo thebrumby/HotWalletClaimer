@@ -669,7 +669,7 @@ def full_claim():
             settings['forceClaim'] = True
             output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
-            output(f"STATUS: Considering {wait_time_text} and a {random_offset} minute offset, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
+            output(f"STATUS: Considering {wait_time_text} and a {random_offset} minute offset, we'll sleep for {remaining_wait_time} minutes.", 1)
             return remaining_wait_time
 
     if wait_time_text == "Unknown":
