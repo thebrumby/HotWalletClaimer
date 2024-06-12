@@ -730,7 +730,7 @@ def full_claim():
                     element.dispatchEvent(event);
                 """)
                 # Or perform the click with Action Chains
-                action.click().perform()
+                # action.click().perform()
     
                 # Update the remaining clicks
                 remains = remains - 1
@@ -814,8 +814,8 @@ def full_claim():
                     output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                 else:
                     optimal_time = min (box_time, total_wait_time)
-                    output(f"STATUS: Successful claim! Box due {box_time} mins. More clicks in {total_wait_time} mins. Sleeping for {optimal_time} mins.", 1)
-                return min (60, optimal_time)
+                    output(f"STATUS: Successful claim! Box due {box_time} mins. More clicks in {total_wait_time} mins. Sleeping for {max (60, optimal_time)} mins.", 1)
+                return max (60, optimal_time)
 
             except TimeoutException:
                 output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.", 1)
