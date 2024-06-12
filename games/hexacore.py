@@ -720,7 +720,7 @@ def full_claim():
                     action.move_by_offset(2, -2).perform()
     
                 # Perform click at current cursor location
-                driver.execute_script("arguments[0].click();", element)
+                action.click().perform()
     
                 # Update the remaining clicks
                 remains = remains - 1
