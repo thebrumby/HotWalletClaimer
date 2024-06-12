@@ -66,7 +66,7 @@ settings = {}
 load_settings()
 driver = None
 target_element = None
-random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
+random_offset = random.randint(max(settings['lowestClaimOffset'],0), max(settings['highestClaimOffset'],0))
 script = "games/blum.py"
 prefix = "Blum:"
 url = "https://web.telegram.org/k/#@BlumCryptoBot"
@@ -647,7 +647,7 @@ def full_claim():
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
         if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
-            random_offset = random.randint(max(settings['lowestClaimOffset'],0), settings['highestClaimOffset'])
+            random_offset = random.randint(max(settings['lowestClaimOffset'],0), max(settings['highestClaimOffset'],0))
             modifiedTimer = unmodifiedTimer + random_offset
             output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
             return modifiedTimer
