@@ -736,7 +736,7 @@ def full_claim():
                 remains = remains - 1
 
                 if remains % 100 == 0:
-                    output(f"Step {step} - {remains} clicks remaining...", 3)
+                    output(f"Step {step} - {remains} clicks remaining...", 2)
 
     get_balance(False)
  
