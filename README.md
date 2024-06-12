@@ -6,7 +6,7 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 - Mid-Week Update: **HOT Wallet** Telegram App and **Hexacore/Hexacoin** News [read more](https://www.patreon.com/posts/mid-week-update-106091359?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - Guess who's back, back again. **BLUM** is back, tell a friend! [read more](https://www.patreon.com/posts/blum-is-back-106056556?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- Here comes the **HOT** stepper (Vert it up!) New Hot Alternative Method, 100% bonus on Vert & Hexacore latest [read more](https://www.patreon.com/posts/here-comes-hot-106013700?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- Here comes the **HOT** stepper (Vert it up!) New Hot alternative method and up to 100% bonus on **Vert**[read more](https://www.patreon.com/posts/here-comes-hot-106013700?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
