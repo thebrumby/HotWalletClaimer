@@ -44,10 +44,12 @@ docker exec -it telegram-claim-bot /bin/bash
 ```sh
 ./remove-process.sh
 ```
-#### To see the status of all your accounts on one page:
+#### To see the status of all your accounts, delete processes, and see PM2 logs on one page:
 ```sh
 ./launch.sh status
 ```
+For more details on status, check out its [STATUS.md](docs/STATUS.md) guide.
+
 You can type `exit` or `CTRL+D` to leave the container, which will remain running until stopped. You may use the `docker exec` command above to re-enter the container as often as needed. 
 ## Windows 10 & 11 Alternative Installation - Utilize WSL2:
 You can check out the [WINDOWS.md](docs/WINDOWS.md) guide or check out this [video](https://www.youtube.com/watch?v=wOajWwO32P4) for further instructions.
