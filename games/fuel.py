@@ -689,14 +689,17 @@ def full_claim():
                 increase_step()
 
                 get_balance(True)
+                increase_step()
 
                 xpath = "//a[text()='Upgrades']"
                 move_and_click(xpath, 10, True, "click the 'Upgrades' button", step, "clickable")
                 xpath = "//button[contains(., 'Get 15')]"
                 advert = move_and_click(xpath, 10, True, "watch an advert", step, "clickable")
                 if advert:
-                    xpath = "//button[@class='mining-card-button' and @disabled]"
-                    advert = move_and_click(xpath, 60, False, "watch an advert", step, "visible")
+                    output(f"Step {step} - Waiting 60 seconds for the advert to play.")
+                    time.sleep(60)
+                    increase_step()
+                    get_balance(True)
 
                 if wait_time_text == "Filled":
                     output(f"Step {step} - The wait timer is still showing: Filled.",1)
