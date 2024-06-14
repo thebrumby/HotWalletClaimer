@@ -695,7 +695,7 @@ def full_claim():
                 xpath = "//button[contains(., 'Get 15')]"
                 advert = move_and_click(xpath, 10, True, "watch an advert", step, "clickable")
                 if advert:
-                    xpath = "//button[@class='mining-card-button' and @disabled]]"
+                    xpath = "//button[@class='mining-card-button' and @disabled]"
                     advert = move_and_click(xpath, 60, False, "watch an advert", step, "visible")
 
                 if wait_time_text == "Filled":
