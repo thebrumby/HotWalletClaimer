@@ -679,7 +679,8 @@ def full_claim():
         move_and_click(xpath, 10, True, "click continue", step, "clickable")
 
     xpath = "//div[@class='farming-buttons-wrapper']//button"
-    move_and_click(xpath, 10, True, "click the 'Start farming' button (may already be running)", step, "clickable")
+    move_and_click(xpath, 10, False, "click the 'Start farming' button (may already be running)", step, "clickable")
+    click_element(xpath)
     increase_step()
 
     get_balance(False)
@@ -707,12 +708,14 @@ def full_claim():
             
             try:
                 xpath ="//button[.//div[contains(text(), 'Claim')]]"
-                move_and_click(xpath, 10, True, "click the 'Launch' button", step, "clickable")
+                move_and_click(xpath, 10, False, "click the 'Launch' button", step, "clickable")
+                click_element(xpath)
 
                 time.sleep(5)
 
                 xpath = "//div[@class='farming-buttons-wrapper']//button"
-                move_and_click(xpath, 10, True, "click the 'Start farming' button", step, "clickable")
+                move_and_click(xpath, 10, False, "click the 'Start farming' button", step, "clickable")
+                click_element(xpath)
 
                 # Now let's give the site a few seconds to update.
                 output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...",3) 
