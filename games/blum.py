@@ -27,7 +27,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 def run_http_proxy():
     try:
-        subprocess.run(['./launch.sh', 'http-proxy'], check=True)
+        subprocess.run(['./launch.sh', 'enable-proxy'], check=True)
         print("http-proxy started successfully.")
     except subprocess.CalledProcessError as e:
         print(f"Failed to start http-proxy: {e}")
