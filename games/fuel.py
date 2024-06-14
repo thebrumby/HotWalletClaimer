@@ -651,14 +651,21 @@ def full_claim():
     wait_time_text = get_wait_time(step, "pre-claim") 
 
     if wait_time_text != "Filled":
-        matches = re.findall(r'(\d+)([hm])', wait_time_text)
-        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + random_offset
-        if remaining_wait_time < 5 or settings["forceClaim"]:
-            settings['forceClaim'] = True
-            output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
-        else:
-            output(f"STATUS: Considering {wait_time_text} and a {random_offset} minute offset, we'll sleep for {remaining_wait_time} minutes.", 1)
-            return remaining_wait_time
+        try:
+            time_parts = wait_time_text.split()
+            hours = int(time_parts[0].strip('h'))
+            minutes = int(time_parts[1].strip('m'))
+            remaining_wait_time = (hours * 60 + minutes)
+            if remaining_wait_time < 5 or settings["forceClaim"]:
+                settings['forceClaim'] = True
+                output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
+            else:
+                remaining_wait_time = (hours * 60 + minutes) + random_offset
+                output(f"STATUS: Considering {wait_time_text} and a {random_offset} minute offset, we'll sleep for {remaining_wait_time} minutes.", 1)
+                return remaining_wait_time
+        except ValueError:
+            # Handle the case where wait_time_text can't be parsed
+            pass
 
     if wait_time_text == "Unknown":
       return 15
@@ -688,8 +695,8 @@ def full_claim():
                 xpath = "//button[contains(., 'Get 15')]"
                 advert = move_and_click(xpath, 10, True, "watch an advert", step, "clickable")
                 if advert:
-                    time.sleep(60)
-
+                    xpath = "//button[@class='mining-card-button' and @disabled]]"
+                    advert = move_and_click(xpath, 60, False, "watch an advert", step, "visible")
 
                 if wait_time_text == "Filled":
                     output(f"Step {step} - The wait timer is still showing: Filled.",1)
