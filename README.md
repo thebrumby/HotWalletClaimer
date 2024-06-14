@@ -4,9 +4,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 #### Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
+- New Game Added: **$FUEL** oil drilling themed game with significant play-to-earn opportunities [read more](https://www.patreon.com/posts/new-game-added-106180661?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - Mid-Week Update: **HOT Wallet** Telegram App and **Hexacore/Hexacoin** News [read more](https://www.patreon.com/posts/mid-week-update-106091359?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - Guess who's back, back again. **BLUM** is back, tell a friend! [read more](https://www.patreon.com/posts/blum-is-back-106056556?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- Here comes the **HOT** stepper (Vert it up!) New Hot alternative method and up to 100% bonus on **Vert** [read more](https://www.patreon.com/posts/here-comes-hot-106013700?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -71,6 +71,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh hexacore`        | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     |
 | `./launch.sh pocketfi`        | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot) | ✅     | ✅     |
 | `./launch.sh blum` | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot) | ✅     | ✅     |
+| `./launch.sh fuel` | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot) | ✅     | ✅     |
 
 
 💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
