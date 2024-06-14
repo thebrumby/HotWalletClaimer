@@ -25,16 +25,6 @@ from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
 
-def run_http_proxy():
-    try:
-        subprocess.run(['./launch.sh', 'http-proxy'], check=True)
-        print("http-proxy started successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to start http-proxy: {e}")
-
-# Call the function at an appropriate place in your code
-run_http_proxy()
-
 def load_settings():
     global settings, settings_file
     # Default settings with all necessary keys
@@ -78,9 +68,9 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(max(settings['lowestClaimOffset'],0), max(settings['highestClaimOffset'],0))
-script = "games/blum.py"
-prefix = "Blum:"
-url = "https://web.telegram.org/k/#@BlumCryptoBot"
+script = "games/fuel.py"
+prefix = "Fuel:"
+url = "https://web.telegram.org/k/#@fueljetton_bot"
 pot_full = "Filled"
 pot_filling = "to fill"
 
@@ -247,21 +237,12 @@ def setup_driver():
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
-    chrome_options.add_argument(f"user-agent={user_agent}")
-
     # Disable various features to make headless mode less detectable
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    chrome_options.add_argument(f"user-agent={user_agent}")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
-
-    # Set up the proxy to point to mitmproxy
-    chrome_options.add_argument("--proxy-server=http://127.0.0.1:8080")
-
-    # Add the mitmproxy certificate
-    chrome_options.add_argument("--ignore-certificate-errors")
-    chrome_options.add_argument("--allow-running-insecure-content")
-    chrome_options.add_argument("--test-type")
 
     # Find the path to chromedriver
     chromedriver_path = shutil.which("chromedriver")
@@ -658,29 +639,12 @@ def full_claim():
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
         if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
-            random_offset = random.randint(max(settings['lowestClaimOffset'],0), max(settings['highestClaimOffset'],0))
+            random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
             modifiedTimer = unmodifiedTimer + random_offset
             output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
             return modifiedTimer
 
     launch_iframe()
-
-    xpath = "//div[contains(text(), 'Your daily rewards')]"
-    present = move_and_click(xpath, 20, False, "check for daily reward", step, "visible")
-    increase_step()
-    reward_text = None
-    if present:
-        xpath = "(//div[@class='count'])[1]"
-        points = move_and_click(xpath, 10, False, "get daily points", step, "visible")
-        xpath = "(//div[@class='count'])[2]"
-        days = move_and_click(xpath, 10, False, "get consecutive days played", step, "visible")
-        reward_text = f"Daily rewards: {points} points & {days} days."
-        xpath = "//button[.//div[text()='Continue']]"
-        move_and_click(xpath, 10, True, "click continue", step, "clickable")
-
-    xpath = "//div[@class='farming-buttons-wrapper']//button"
-    move_and_click(xpath, 10, True, "click the 'Start farming' button (may already be running)", step, "clickable")
-    increase_step()
 
     get_balance(False)
 
@@ -693,7 +657,7 @@ def full_claim():
             settings['forceClaim'] = True
             output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
-            output(f"STATUS: Still {wait_time_text} and {random_offset} minute offset - Let's sleep. {reward_text}", 1)
+            output(f"STATUS: Considering {wait_time_text} and a {random_offset} minute offset, we'll sleep for {remaining_wait_time} minutes.", 1)
             return remaining_wait_time
 
     if wait_time_text == "Unknown":
@@ -706,15 +670,9 @@ def full_claim():
         if wait_time_text == "Filled" or settings['forceClaim']:
             
             try:
-                xpath ="//button[.//div[contains(text(), 'Claim')]]"
+                xpath ="//button[contains(text(), 'Send to warehouse')]"
                 move_and_click(xpath, 10, True, "click the 'Launch' button", step, "clickable")
 
-                time.sleep(5)
-
-                xpath = "//div[@class='farming-buttons-wrapper']//button"
-                move_and_click(xpath, 10, True, "click the 'Start farming' button", step, "clickable")
-
-                # Now let's give the site a few seconds to update.
                 output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...",3) 
                 time.sleep(10)
                 
@@ -725,12 +683,20 @@ def full_claim():
 
                 get_balance(True)
 
+                xpath = "//a[text()='Upgrades']"
+                move_and_click(xpath, 10, True, "click the 'Upgrades' button", step, "clickable")
+                xpath = "//button[contains(., 'Get 15')]"
+                advert = move_and_click(xpath, 10, True, "watch an advert", step, "clickable")
+                if advert:
+                    time.sleep(60)
+
+
                 if wait_time_text == "Filled":
                     output(f"Step {step} - The wait timer is still showing: Filled.",1)
                     output(f"Step {step} - This means either the claim failed, or there is >4 minutes lag in the game.",1)
                     output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.",2)
                 else:
-                    output(f"STATUS: Post claim wait time: {wait_time_text} & new timer = {total_wait_time} minutes. {reward_text}",1)
+                    output(f"STATUS: Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time),1)
                 return max(60, total_wait_time)
 
             except TimeoutException:
@@ -766,23 +732,18 @@ def get_balance(claimed=False):
 
     # Construct the specific balance XPath
     balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-    balance_xpath = f"//div[@class='balance']//div[@class='kit-counter-animation value']"
+    balance_xpath = f"//span[@class='fuel-balance']"
+    balance_part = None
 
     try:
-        # Wait for the element to be visible based on the XPath
-        balance_element = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.XPATH, balance_xpath))
-        )
-
-        # Check if balance_element is not None and process the balance
-        if balance_element:
-            # Find all the individual character elements
-            char_elements = balance_element.find_elements(By.XPATH, ".//div[@class='el-char']")
-
-            # Concatenate their text to form the complete balance value
-            balance_part = ''.join([char.text for char in char_elements]).strip()
-            
-            output(f"Step {step} - {balance_text} {balance_part}", priority)
+        move_and_click(balance_xpath, 30, False, "look for fuel balance", step, "visible")
+        fuel = monitor_element(balance_xpath)
+        balance_xpath = f"//span[@class='fuel-balance']/preceding-sibling::span[1]"
+        move_and_click(balance_xpath, 30, False, "look for oil balance", step, "visible")
+        oil = monitor_element(balance_xpath)
+        balance_part = f"{fuel} fuel & {oil} oil."
+        # Check if element is not None and process the balance
+        output(f"Step {step} - {balance_text} {balance_part}", priority)
 
     except NoSuchElementException:
         output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", priority)
@@ -826,18 +787,10 @@ def get_wait_time(step_number="108", beforeAfter="pre-claim", max_attempts=1):
 
     for attempt in range(1, max_attempts + 1):
         try:
-            output(f"Step {step} - First check if the time is still elapsing...", 3)
-            xpath = "//div[@class='time-left']"
-            wait_time_value = monitor_element(xpath, 10)
-            if wait_time_value != "Unknown":
-                return wait_time_value
-
-            output(f"Step {step} - Then check if the pot is full...", 3)
-            xpath = "//button[.//div[contains(text(), 'Claim')]]"
-            pot_full_value = monitor_element(xpath, 10)
-            if pot_full_value != "Unknown":
-                return "Filled"
-            return "Unknown"
+            output(f"Step {step} - check if the timer is elapsing...", 3)
+            xpath = "//div[@class='in-storage-footer']"
+            pot_full_value = monitor_element(xpath, 15)
+            return pot_full_value
         except Exception as e:
             output(f"Step {step} - An error occurred on attempt {attempt}: {e}", 3)
             return "Unknown"
@@ -884,7 +837,7 @@ def find_working_link(old_step):
     global driver, screenshots_path, settings, step
     output(f"Step {step} - Attempting to open a link for the app...",2)
 
-    start_app_xpath = "//button[span[contains(text(), 'Launch Blum')]]"
+    start_app_xpath = "//span[contains(text(), 'Start pumping oil')]"
     try:
         start_app_buttons = WebDriverWait(driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
         clicked = False
