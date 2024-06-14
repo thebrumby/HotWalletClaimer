@@ -603,27 +603,42 @@ def full_claim():
     step = "100"
 
     def check_daily_reward():
-        xpath = "//p[contains(text(), 'Missions')]" #mission
-        button = move_and_click(xpath, 20, False, "click the 'mission' link", step, "visible")
-        driver.execute_script("arguments[0].click();", button)
+        action = ActionChains(driver)
+        
+        # Select the 'Missions' link and click it
+        mission_xpath = "//p[contains(text(), 'Missions')]"
+        mission_button = move_and_click(mission_xpath, 20, False, "click on the 'Missions' link", step, "visible")
+        action.move_to_element(mission_button).click().perform()  # Use ActionChains to click
         increase_step()
-        xpath = "//p[contains(text(), 'Daily')]"  # daily
-        button = move_and_click(xpath, 20, False, "click the 'Daily' link", step, "visible")
-        driver.execute_script("arguments[0].click();", button)
+        
+        # Select the 'Daily' link and click it
+        daily_xpath = "//p[contains(text(), 'Daily')]"
+        daily_button = move_and_click(daily_xpath, 20, False, "click on the 'Daily' link", step, "visible")
+        action.move_to_element(daily_button).click().perform()  # Use ActionChains to click
         increase_step()
-        xpath="//p[contains(text(), 'Claim')]"
-        claim = move_and_click(xpath, 20, True, "click the 'claimDaily' link", step, "visible")
-        if claim:
-            # driver.execute_script("arguments[0].click();", claim)
+        
+        # Try to select and click the 'Claim' link
+        claim_xpath = "//p[contains(text(), 'Claim')]"
+        claim_button = move_and_click(claim_xpath, 20, True, "click on the 'Claim' link", step, "visible")
+        if claim_button:
+            action.move_to_element(claim_button).click().perform()  # Use ActionChains to click
             increase_step()
-            return "daily bonus clicked."
-        xpath="//p[contains(text(), 'Come back tomorrow')]"
-        come_back_tomorrow = move_and_click(xpath, 10, False, "check if reward is tomorrow", step, "visible")
-        if come_back_tomorrow:
+            return "Daily bonus claimed."
+        
+        # Check if the 'Come back tomorrow' message is visible
+        come_back_tomorrow_xpath = "//p[contains(text(), 'Come back tomorrow')]"
+        come_back_tomorrow_msg = move_and_click(come_back_tomorrow_xpath, 10, False, "check if the bonus is for tomorrow", step, "visible")
+        if come_back_tomorrow_msg:
             increase_step()
-            return "daily bonus due tomorrow."
+            return "The daily bonus will be available tomorrow."
+        
+        # If no condition is met, return a default message
         increase_step()
-        return "daily bonus unknown."
+        return "Daily bonus status unknown."
+
+
+
+
 
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
