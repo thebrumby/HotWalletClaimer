@@ -5,7 +5,7 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
 - **Updated status command**: View your game session status, delete processes, and access PM2 logs [read more](https://www.patreon.com/posts/all-in-one-for-106185610?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **New Game Added: $FUEL** oil drilling themed game with significant play-to-earn opportunities [read more](https://www.patreon.com/posts/new-game-added-106180661?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **New Game Added: $FUEL** Oil drilling themed game with play-to-earn opportunities [read more](https://www.patreon.com/posts/new-game-added-106180661?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Mid-Week Update: HOT Wallet** Telegram App and **Hexacore/Hexacoin** News [read more](https://www.patreon.com/posts/mid-week-update-106091359?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Guess who's back, back again. BLUM** is back, tell a friend! [read more](https://www.patreon.com/posts/blum-is-back-106056556?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
