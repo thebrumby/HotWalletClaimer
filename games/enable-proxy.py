@@ -39,14 +39,14 @@ def response(flow: http.HTTPFlow) -> None:
 
 def write_start_script():
     start_script_content = """#!/bin/bash
-./venv/bin/mitmdump -s remove_headers.py
+./venv/bin/mitmdump -s remove_headers.py > mitmproxy.log 2>&1
 """
     with open('start_mitmproxy.sh', 'w') as file:
         file.write(start_script_content)
     os.chmod('start_mitmproxy.sh', 0o755)
 
 def start_pm2_app(script_path, app_name):
-    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter bash --watch {script_path}"
+    command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter bash --watch {script_path} --output /dev/null --error /dev/null --log-date-format 'YYYY-MM-DD HH:mm Z'"
     subprocess.run(command, shell=True, check=True)
 
 def main():
