@@ -693,10 +693,10 @@ def full_claim():
 
                 xpath = "//a[text()='Upgrades']"
                 move_and_click(xpath, 10, True, "click the 'Upgrades' button", step, "clickable")
-                xpath = "//button[contains(., 'Get 15')]"
+                xpath = "//button[contains(., 'Increase multiplier by')]"
                 advert = move_and_click(xpath, 10, True, "watch an advert", step, "clickable")
                 if advert:
-                    output(f"Step {step} - Waiting 60 seconds for the advert to play.")
+                    output(f"Step {step} - Waiting 60 seconds for the advert to play.",3)
                     time.sleep(60)
                     increase_step()
                     get_balance(True)
@@ -888,63 +888,6 @@ def find_working_link(old_step):
         return False
     except Exception as e:
         output(f"Step {step} - An error occurred while trying to open the app: {e}\n",1)
-        if settings['debugIsOn']:
-            screenshot_path = f"{screenshots_path}/{step}-unexpected-error-opening-app.png"
-            driver.save_screenshot(screenshot_path)
-        return False
-
-def find_claim_link(old_step):
-    global driver, screenshots_path, settings, step
-    output(f"Step {step} - Attempting to open a link for the app...", 2)
-
-    # Updated to use a more generic CSS selector
-    start_app_css_selector = ".farming-buttons-wrapper .kit-button"
-    try:
-        # Fetching all spans inside buttons
-        start_app_buttons = WebDriverWait(driver, 5).until(
-            EC.presence_of_all_elements_located((By.CSS_SELECTOR, start_app_css_selector))
-        )
-        # Filter buttons to find the one with specific text
-        start_app_buttons = [btn for btn in start_app_buttons if 'Launch Blum' in btn.text]
-
-        clicked = False
-
-        for button in reversed(start_app_buttons):
-            actions = ActionChains(driver)
-            actions.move_to_element(button).pause(0.2)
-            try:
-                if settings['debugIsOn']:
-                    driver.save_screenshot(f"{screenshots_path}/{step} - Find working link.png")
-                actions.perform()
-                driver.execute_script("arguments[0].click();", button)
-                clicked = True
-                break
-            except StaleElementReferenceException:
-                continue
-            except ElementClickInterceptedException:
-                continue
-
-        if not clicked:
-            output(f"Step {step} - None of the 'Launch Blum' buttons were clickable.\n", 1)
-            if settings['debugIsOn']:
-                screenshot_path = f"{screenshots_path}/{step}-no-clickable-button.png"
-                driver.save_screenshot(screenshot_path)
-            return False
-        else:
-            output(f"Step {step} - Successfully able to open a link for the app..\n", 3)
-            if settings['debugIsOn']:
-                screenshot_path = f"{screenshots_path}/{step}-app-opened.png"
-                driver.save_screenshot(screenshot_path)
-            return True
-
-    except TimeoutException:
-        output(f"Step {step} - Failed to find the 'Launch Blum' button within the expected timeframe.\n", 1)
-        if settings['debugIsOn']:
-            screenshot_path = f"{screenshots_path}/{step}-timeout-finding-button.png"
-            driver.save_screenshot(screenshot_path)
-        return False
-    except Exception as e:
-        output(f"Step {step} - An error occurred while trying to open the app: {e}\n", 1)
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-unexpected-error-opening-app.png"
             driver.save_screenshot(screenshot_path)
