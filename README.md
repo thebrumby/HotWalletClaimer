@@ -5,6 +5,7 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
+- **Hexacore Auto-Upgrade**: Alternative Hexacore version automatically applies the 10k click upgrade [read more](https://www.patreon.com/posts/hexacore-auto-106317318?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Time Farm** is now available to play! Learn more about this exciting game on our Patreon page [read more](https://www.patreon.com/posts/all-in-one-for-106185610?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Updated status command**: View your game session status, delete processes, and access PM2 logs [read more](https://www.patreon.com/posts/all-in-one-for-106185610?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **New Game Added: $FUEL** Oil drilling themed game with play-to-earn opportunities [read more](https://www.patreon.com/posts/new-game-added-106180661?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
@@ -66,12 +67,14 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 |-------------------------------|-------------------------------------------------|--------|--------|
 | `./launch.sh hot-alt`         | Launch HOT on Near Protocol: (non-TG method)    | ✅     | ✅     |
 | `./launch.sh hot`             | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot) | ✅     | ✅     |
-| `./launch.sh vertus`          | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot) | ✅     | ✅     |
+| `./launch.sh vertus`          | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot) | ❌     | ❌     |
 | `./launch.sh tree`            | Launch Tree on BNB Wallet: [@treeminebot](https://t.me/treeminebot/app?startapp=6783218884) | ✅     | ✅     |
 | `./launch.sh wave`            | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774) | ✅     | ✅     |
 | `./launch.sh seed`            | Launch Seed App - Mine Seed: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot) | ✅     | ✅     |
 | `./launch.sh oxygen`          | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot) | ✅     | ✅     |
 | `./launch.sh hexacore`        | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     |
+| `./launch.sh hexacore-autoupgrade`        | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     |
+| `./launch.sh hexacore`        | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     
 | `./launch.sh pocketfi`        | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot) | ✅     | ✅     |
 | `./launch.sh blum` | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot) | ✅     | ✅     |
 | `./launch.sh fuel` | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot) | ✅     | ✅     |
