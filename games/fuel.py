@@ -693,10 +693,10 @@ def full_claim():
 
                 xpath = "//a[text()='Upgrades']"
                 move_and_click(xpath, 10, True, "click the 'Upgrades' button", step, "clickable")
-                xpath = "//button[contains(., 'Get 15')]"
+                xpath = "//button[contains(., 'Increase multiplier by')]"
                 advert = move_and_click(xpath, 10, True, "watch an advert", step, "clickable")
                 if advert:
-                    output(f"Step {step} - Waiting 60 seconds for the advert to play.")
+                    output(f"Step {step} - Waiting 60 seconds for the advert to play.",3)
                     time.sleep(60)
                     increase_step()
                     get_balance(True)
