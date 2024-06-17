@@ -651,11 +651,15 @@ def full_claim():
             
             # Step 2: Click on the "Recycle into" button
             xpath = "//button[@class='recycle-button']"
-            move_and_click(xpath, 10, True, "Refining Oil to FuelWith good PH :) AHAH brumb", step, "clickable")
+            success = move_and_click(xpath, 10, True, "Refining Oil to Fuel With good PH :)", step, "clickable")
+            if success:
+                print("Step 2 successful: refine Oil to Fuel with perfet PH ")
+                increase_step()
+                time.sleep(20)
+            else:
+                print("Step 2 failed: Unable to refine")
+                return
             increase_step()
-            
-        except Exception as e:
-            print(f"An error occurred: {str(e)}")
 
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
