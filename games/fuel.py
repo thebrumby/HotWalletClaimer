@@ -632,10 +632,41 @@ def launch_iframe():
     select_iframe(step)
     increase_step()
 
+def get_balance(claimed=False):
+    global step
+    prefix = "After" if claimed else "Before"
+    default_priority = 2 if claimed else 3
+
+    # Dynamically adjust the log priority
+    priority = max(settings['verboseLevel'], default_priority)
+
+    # Construct the specific balance XPath
+    balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
+    balance_xpath = f"//span[@class='fuel-balance']"
+    balance_part = None
+
+    try:
+        move_and_click(balance_xpath, 30, False, "look for fuel balance", step, "visible")
+        fuel = monitor_element(balance_xpath)
+        balance_xpath = f"//span[@class='fuel-balance']/preceding-sibling::span[1]"
+        move_and_click(balance_xpath, 30, False, "look for oil balance", step, "visible")
+        oil = monitor_element(balance_xpath)
+        balance_part = f"{fuel} fuel & {oil} oil."
+        # Check if element is not None and process the balance
+        output(f"Step {step} - {balance_text} {balance_part}", priority)
+
+    except NoSuchElementException:
+        output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", priority)
+    except Exception as e:
+        output(f"Step {step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+
+    # Increment step function, assumed to handle next step logic
+    increase_step()
+
 def full_claim():
     global driver, target_element, settings, session_path, step, random_offset
     step = "100"
-    
+
     def recycle():
         try:
             # Step 1: Click on the Recycling link
@@ -651,28 +682,33 @@ def full_claim():
             
             # Step 2: Click on the "Recycle into" button
             xpath = "//button[@class='recycle-button']"
-            success = move_and_click(xpath, 10, True, "Refining Oil to Fuel With good PH :)", step, "clickable")
+            success = move_and_click(xpath, 10, True, "Refining Oil to FuelWith good PH :) AHAH brumb", step, "clickable")
             if success:
-                print("Step 2 successful: refine Oil to Fuel with perfet PH ")
+                print("Step 2 successful: refine oil to fuel with  perfet PH")
                 increase_step()
                 time.sleep(20)
             else:
                 print("Step 2 failed: Unable to refine")
                 return
             increase_step()
+            
+            
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
 
-def apply_random_offset(unmodifiedTimer):
-    global settings, step, random_offset
-    if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
-        random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-        modifiedTimer = unmodifiedTimer + random_offset
-        output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
-        return modifiedTimer
+
+    def apply_random_offset(unmodifiedTimer):
+        global settings, step, random_offset
+        if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
+            random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
+            modifiedTimer = unmodifiedTimer + random_offset
+            output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
+            return modifiedTimer
 
     launch_iframe()
 
     get_balance(False)
-    recycle()
+
     wait_time_text = get_wait_time(step, "pre-claim") 
 
     if wait_time_text != "Filled":
@@ -724,17 +760,11 @@ def apply_random_offset(unmodifiedTimer):
 
                 get_balance(True)
                 increase_step()
+                
+                       
 
-                xpath = "//a[text()='Upgrades']"
-                move_and_click(xpath, 10, True, "click the 'Upgrades' button", step, "clickable")
-                xpath = "//button[contains(., 'Increase multiplier by')]"
-                advert = move_and_click(xpath, 10, True, "watch an advert", step, "clickable")
-                if advert:
-                    output(f"Step {step} - Waiting 60 seconds for the advert to play.",3)
-                    time.sleep(60)
-                    increase_step()
-                    get_balance(True)
 
+                recycle()
                 if wait_time_text == "Filled":
                     output(f"Step {step} - The wait timer is still showing: Filled.",1)
                     output(f"Step {step} - This means either the claim failed, or there is >4 minutes lag in the game.",1)
@@ -766,37 +796,6 @@ def apply_random_offset(unmodifiedTimer):
         output(f"Step {step} - An unexpected error occurred: {e}",1)
         return 60  # Default wait time in case of an unexpected error
         
-def get_balance(claimed=False):
-    global step
-    prefix = "After" if claimed else "Before"
-    default_priority = 2 if claimed else 3
-
-    # Dynamically adjust the log priority
-    priority = max(settings['verboseLevel'], default_priority)
-
-    # Construct the specific balance XPath
-    balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-    balance_xpath = f"//span[@class='fuel-balance']"
-    balance_part = None
-
-    try:
-        move_and_click(balance_xpath, 30, False, "look for fuel balance", step, "visible")
-        fuel = monitor_element(balance_xpath)
-        balance_xpath = f"//span[@class='fuel-balance']/preceding-sibling::span[1]"
-        move_and_click(balance_xpath, 30, False, "look for oil balance", step, "visible")
-        oil = monitor_element(balance_xpath)
-        balance_part = f"{fuel} fuel & {oil} oil."
-        # Check if element is not None and process the balance
-        output(f"Step {step} - {balance_text} {balance_part}", priority)
-
-    except NoSuchElementException:
-        output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", priority)
-    except Exception as e:
-        output(f"Step {step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
-
-    # Increment step function, assumed to handle next step logic
-    increase_step()
-
 def click_element(xpath, timeout=20):
     end_time = time.time() + timeout
     while time.time() < end_time:
