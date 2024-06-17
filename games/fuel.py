@@ -661,13 +661,13 @@ def full_claim():
                 return
             increase_step()
 
-    def apply_random_offset(unmodifiedTimer):
-        global settings, step, random_offset
-        if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
-            random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-            modifiedTimer = unmodifiedTimer + random_offset
-            output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
-            return modifiedTimer
+def apply_random_offset(unmodifiedTimer):
+    global settings, step, random_offset
+    if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
+        random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
+        modifiedTimer = unmodifiedTimer + random_offset
+        output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
+        return modifiedTimer
 
     launch_iframe()
 
