@@ -632,6 +632,130 @@ def launch_iframe():
     select_iframe(step)
     increase_step()
 
+def full_claim():
+    global driver, target_element, settings, session_path, step, random_offset
+    step = "100"
+
+    def recycle():
+        global step
+        try:
+            # Step 1: Click on the Recycling link
+            xpath = "//a[text()='Recycling']"
+            success = move_and_click(xpath, 10, True, "click the 'Recycling' button", step, "clickable")
+            if success:
+                output(f"Step {step} - successful: Clicked on the 'Recycling' link", 2)
+                increase_step()
+                time.sleep(20)
+            else:
+                output(f"Step {step} - failed: Unable to click on the 'Recycling' link", 2)
+                return
+            
+            # Step 2: Click on the "Recycle into" button
+            xpath = "//button[@class='recycle-button']"
+            move_and_click(xpath, 10, True, "Refining Oil to FuelWith good PH :) AHAH brumb", step, "clickable")
+            increase_step()
+            
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+
+    def adverts():
+        global step
+        xpath = "//a[text()='Upgrades']"
+        move_and_click(xpath, 10, True, "click the 'Upgrades' button", step, "clickable")
+        xpath = "//button[contains(., 'Increase multiplier by')]"
+        advert = move_and_click(xpath, 10, True, "watch an advert", step, "clickable")
+        if advert:
+            output(f"Step {step} - Waiting 60 seconds for the advert to play.", 3)
+            time.sleep(60)
+            increase_step()
+            get_balance(True)
+
+    def apply_random_offset(unmodifiedTimer):
+        global settings, step, random_offset
+        if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
+            random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
+            modifiedTimer = unmodifiedTimer + random_offset
+            output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
+            return modifiedTimer
+
+    launch_iframe()
+
+    get_balance(False)
+    wait_time_text = get_wait_time(step, "pre-claim") 
+
+    if wait_time_text != "Filled":
+        try:
+            time_parts = wait_time_text.split()
+            hours = int(time_parts[0].strip('h'))
+            minutes = int(time_parts[1].strip('m'))
+            remaining_wait_time = (hours * 60 + minutes)
+            if remaining_wait_time < 5 or settings["forceClaim"]:
+                settings['forceClaim'] = True
+                output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
+            else:
+                remaining_wait_time = 30
+                adverts()
+                output(f"STATUS: Pot not ready for claiming - let's come back in 30 minutes to check for adverts.", 1)
+                return remaining_wait_time
+        except ValueError:
+            # Handle the case where wait_time_text can't be parsed
+            pass
+
+    if wait_time_text == "Unknown":
+        return 15
+
+    try:
+        output(f"Step {step} - The pre-claim wait time is : {wait_time_text} and random offset is {random_offset} minutes.", 1)
+        increase_step()
+
+        if wait_time_text == "Filled" or settings['forceClaim']:
+            
+            try:
+                xpath = "//button[contains(text(), 'Send to warehouse')]"
+                move_and_click(xpath, 10, True, "click the 'Launch' button", step, "clickable")
+
+                output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...", 3) 
+                time.sleep(10)
+                
+                wait_time_text = get_wait_time(step, "post-claim") 
+                matches = re.findall(r'(\d+)([hm])', wait_time_text)
+                total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                increase_step()
+                get_balance(True)
+                increase_step()
+                recycle()
+                if wait_time_text == "Filled":
+                    output(f"Step {step} - The wait timer is still showing: Filled.", 1)
+                    output(f"Step {step} - This means either the claim failed, or there is >4 minutes lag in the game.", 1)
+                    output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
+                else:
+                    output(f"STATUS: Pot full in {total_wait_time} minutes. We'll come back in 30 to check for adverts.", 1)
+                return 30
+
+            except TimeoutException:
+                output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.", 1)
+                return 60
+            except Exception as e:
+                output(f"STATUS: An error occurred while trying to claim: {e}\nLet's wait an hour and try again", 1)
+                return 60
+
+        else:
+            # If the wallet isn't ready to be claimed, calculate wait time based on the timer provided on the page
+            matches = re.findall(r'(\d+)([hm])', wait_time_text)
+            if matches:
+                total_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
+                total_time += 1
+                total_time = max(5, total_time)  # Wait at least 5 minutes or the time
+                output(f"Step {step} - Not Time to claim this wallet yet. Wait for {total_time} minutes until the storage is filled.", 2)
+                return total_time 
+            else:
+                output(f"Step {step} - No wait time data found? Let's check again in one hour.", 2)
+                return 60  # Default wait time when no specific time until filled is found.
+    except Exception as e:
+        output(f"Step {step} - An unexpected error occurred: {e}", 1)
+        return 60  # Default wait time in case of an unexpected error
+
+        
 def get_balance(claimed=False):
     global step
     prefix = "After" if claimed else "Before"
@@ -663,139 +787,6 @@ def get_balance(claimed=False):
     # Increment step function, assumed to handle next step logic
     increase_step()
 
-def full_claim():
-    global driver, target_element, settings, session_path, step, random_offset
-    step = "100"
-
-    def recycle():
-        try:
-            # Step 1: Click on the Recycling link
-            xpath = "//a[text()='Recycling']"
-            success = move_and_click(xpath, 10, True, "click the 'Recycling' button", step, "clickable")
-            if success:
-                print("Step 1 successful: Clicked on the 'Recycling' link")
-                increase_step()
-                time.sleep(20)
-            else:
-                print("Step 1 failed: Unable to click on the 'Recycling' link")
-                return
-            
-            # Step 2: Click on the "Recycle into" button
-            xpath = "//button[@class='recycle-button']"
-            success = move_and_click(xpath, 10, True, "Refining Oil to FuelWith good PH :) AHAH brumb", step, "clickable")
-            if success:
-                print("Step 2 successful: refine oil to fuel with  perfet PH")
-                increase_step()
-                time.sleep(20)
-            else:
-                print("Step 2 failed: Unable to refine")
-                return
-            increase_step()
-            
-            
-        except Exception as e:
-            print(f"An error occurred: {str(e)}")
-
-
-    def apply_random_offset(unmodifiedTimer):
-        global settings, step, random_offset
-        if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
-            random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-            modifiedTimer = unmodifiedTimer + random_offset
-            output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
-            return modifiedTimer
-
-    launch_iframe()
-
-    get_balance(False)
-
-    wait_time_text = get_wait_time(step, "pre-claim") 
-
-    if wait_time_text != "Filled":
-        try:
-            time_parts = wait_time_text.split()
-            hours = int(time_parts[0].strip('h'))
-            minutes = int(time_parts[1].strip('m'))
-            remaining_wait_time = (hours * 60 + minutes)
-            if remaining_wait_time < 5 or settings["forceClaim"]:
-                settings['forceClaim'] = True
-                output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
-            else:
-                remaining_wait_time = 30
-                xpath = "//a[text()='Upgrades']"
-                move_and_click(xpath, 10, True, "click the 'Upgrades' button", step, "clickable")
-                xpath = "//button[contains(., 'Increase multiplier by')]"
-                advert = move_and_click(xpath, 10, True, "watch an advert", step, "clickable")
-                if advert:
-                    output(f"Step {step} - Waiting 60 seconds for the advert to play.",3)
-                    time.sleep(60)
-                    increase_step()
-                    get_balance(True)
-                output(f"STATUS: Pot not ready for claiming - let's come back in 30 minutes to check for adverts.", 1)
-                return remaining_wait_time
-        except ValueError:
-            # Handle the case where wait_time_text can't be parsed
-            pass
-
-    if wait_time_text == "Unknown":
-      return 15
-
-    try:
-        output(f"Step {step} - The pre-claim wait time is : {wait_time_text} and random offset is {random_offset} minutes.",1)
-        increase_step()
-
-        if wait_time_text == "Filled" or settings['forceClaim']:
-            
-            try:
-                xpath ="//button[contains(text(), 'Send to warehouse')]"
-                move_and_click(xpath, 10, True, "click the 'Launch' button", step, "clickable")
-
-                output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...",3) 
-                time.sleep(10)
-                
-                wait_time_text = get_wait_time(step, "post-claim") 
-                matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
-                increase_step()
-
-                get_balance(True)
-                increase_step()
-                
-                       
-
-
-                recycle()
-                if wait_time_text == "Filled":
-                    output(f"Step {step} - The wait timer is still showing: Filled.",1)
-                    output(f"Step {step} - This means either the claim failed, or there is >4 minutes lag in the game.",1)
-                    output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.",2)
-                else:
-                    output(f"STATUS: Post claim raw wait time: %s & proposed new wait timer = %s minutes." % (wait_time_text, total_wait_time),1)
-                return max(60, total_wait_time)
-
-            except TimeoutException:
-                output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.",1)
-                return 60
-            except Exception as e:
-                output(f"STATUS: An error occurred while trying to claim: {e}\nLet's wait an hour and try again",1)
-                return 60
-
-        else:
-            # If the wallet isn't ready to be claimed, calculate wait time based on the timer provided on the page
-            matches = re.findall(r'(\d+)([hm])', wait_time_text)
-            if matches:
-                total_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
-                total_time += 1
-                total_time = max(5, total_time) # Wait at least 5 minutes or the time
-                output(f"Step {step} - Not Time to claim this wallet yet. Wait for {total_time} minutes until the storage is filled.",2)
-                return total_time 
-            else:
-                output(f"Step {step} - No wait time data found? Let's check again in one hour.",2)
-                return 60  # Default wait time when no specific time until filled is found.
-    except Exception as e:
-        output(f"Step {step} - An unexpected error occurred: {e}",1)
-        return 60  # Default wait time in case of an unexpected error
-        
 def click_element(xpath, timeout=20):
     end_time = time.time() + timeout
     while time.time() < end_time:
