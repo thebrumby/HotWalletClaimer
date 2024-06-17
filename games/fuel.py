@@ -635,6 +635,27 @@ def launch_iframe():
 def full_claim():
     global driver, target_element, settings, session_path, step, random_offset
     step = "100"
+    
+    def recycle():
+        try:
+            # Step 1: Click on the Recycling link
+            xpath = "//a[text()='Recycling']"
+            success = move_and_click(xpath, 10, True, "click the 'Recycling' button", step, "clickable")
+            if success:
+                print("Step 1 successful: Clicked on the 'Recycling' link")
+                increase_step()
+                time.sleep(20)
+            else:
+                print("Step 1 failed: Unable to click on the 'Recycling' link")
+                return
+            
+            # Step 2: Click on the "Recycle into" button
+            xpath = "//button[@class='recycle-button']"
+            move_and_click(xpath, 10, True, "Refining Oil to FuelWith good PH :) AHAH brumb", step, "clickable")
+            increase_step()
+            
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
 
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
@@ -647,7 +668,7 @@ def full_claim():
     launch_iframe()
 
     get_balance(False)
-
+    recycle()
     wait_time_text = get_wait_time(step, "pre-claim") 
 
     if wait_time_text != "Filled":
@@ -660,8 +681,17 @@ def full_claim():
                 settings['forceClaim'] = True
                 output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
             else:
-                remaining_wait_time = (hours * 60 + minutes) + random_offset
-                output(f"STATUS: Considering {wait_time_text} and a {random_offset} minute offset, we'll sleep for {remaining_wait_time} minutes.", 1)
+                remaining_wait_time = 30
+                xpath = "//a[text()='Upgrades']"
+                move_and_click(xpath, 10, True, "click the 'Upgrades' button", step, "clickable")
+                xpath = "//button[contains(., 'Increase multiplier by')]"
+                advert = move_and_click(xpath, 10, True, "watch an advert", step, "clickable")
+                if advert:
+                    output(f"Step {step} - Waiting 60 seconds for the advert to play.",3)
+                    time.sleep(60)
+                    increase_step()
+                    get_balance(True)
+                output(f"STATUS: Pot not ready for claiming - let's come back in 30 minutes to check for adverts.", 1)
                 return remaining_wait_time
         except ValueError:
             # Handle the case where wait_time_text can't be parsed
