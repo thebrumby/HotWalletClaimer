@@ -668,7 +668,6 @@ def full_claim():
             output(f"Step {step} - Waiting 60 seconds for the advert to play.", 3)
             time.sleep(60)
             increase_step()
-            get_balance(True)
 
     def apply_random_offset(unmodifiedTimer):
         global settings, step, random_offset
