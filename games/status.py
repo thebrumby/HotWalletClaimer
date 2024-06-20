@@ -26,7 +26,7 @@ def extract_detail(line, keyword):
     return line.split(f"{keyword}:")[1].strip() if keyword in line else "None"
 
 def fetch_and_process_logs(process_name):
-    sanitized_process_name = process_name.replace(':', '-')
+    sanitized_process_name = process_name.replace(':', '-').replace('_', '-')
     log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
     logs = run_command(f"tail -n 200 {log_file}")
 
@@ -117,7 +117,7 @@ def delete_processes_by_ids(ids, process_list):
 
 def delete_process_by_pattern(pattern, process_list):
     for process in process_list[:]:
-        if re.match(pattern, process[0]):
+        if re.search(pattern, process[0]):
             run_command(f"pm2 stop {process[0]}")
             run_command(f"pm2 delete {process[0]}")
             run_command(f"pm2 save")
@@ -127,7 +127,7 @@ def delete_process_by_pattern(pattern, process_list):
 
 def show_logs(process_id, process_list, lines=30):
     if process_id <= len(process_list):
-        process_name = process_list[process_id - 1][0].strip()
+        process_name = process_list[process_id - 1][0].strip().replace('_', '-')
         sanitized_process_name = process_name.replace(':', '-')
         log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
         logs = run_command(f"tail -n {lines} {log_file}")
@@ -138,7 +138,7 @@ def show_logs(process_id, process_list, lines=30):
 
 def show_status_logs(process_id, process_list):
     if process_id <= len(process_list):
-        process_name = process_list[process_id - 1][0].strip()
+        process_name = process_list[process_id - 1][0].strip().replace('_', '-')
         sanitized_process_name = process_name.replace(':', '-')
         log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
         logs = run_command(f"grep -E 'BALANCE:|STATUS:' {log_file} | tail -n 20")
@@ -193,7 +193,7 @@ def main():
                 delete_processes_by_ids(delete_ids, stopped_process_list + running_process_list)
             except ValueError:
                 delete_pattern = user_input.split()[1]
-                delete_process_by_pattern(f"^{delete_pattern}.*", stopped_process_list + running_process_list)
+                delete_process_by_pattern(f".*{delete_pattern}.*", stopped_process_list + running_process_list)
         elif user_input.startswith("status "):
             try:
                 status_id = int(user_input.split()[1])
