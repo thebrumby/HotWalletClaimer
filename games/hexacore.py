@@ -669,12 +669,12 @@ def full_claim():
         return "Unknown"
 
     def get_remains():
-        remains = f"//div[contains(@class, 'TapContainer_textContainer')]"
+        remains_xpath = f"//div[contains(@class, 'TapContainer_textContainer')]"
         try:
-            first = move_and_click(remains, 10, False, "remove overlays", step, "visible")
-            if first == None:
+            first = move_and_click(remains_xpath, 10, False, "remove overlays", step, "visible")
+            if first is None:
                 return None
-            element = monitor_element(remains)
+            element = monitor_element(remains_xpath)
             # See if the timer is up
             if "TAPS IN" in element:
                 return None
@@ -684,59 +684,59 @@ def full_claim():
             else:
                 return None
         except NoSuchElementException:
-            output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", 3)
+            output(f"Step {step} - Element containing '{remains_xpath} Balance:' was not found.", 3)
             return None
         except Exception as e:
             output(f"Step {step} - An error occurred: {str(e)}", 3)  # Provide error as string for logging
             return None
 
     def click_ahoy():
-            remains = get_remains()
-            xpath = "//div[contains(@class, 'TapContainer_textContainer')]"
-            output(f"Step {step} - We have {remains} targets to click. This might take some time!",3)
-            # Create the action chain object
-            action = ActionChains(driver)
-            # Locate the element
-            element = driver.find_element(By.XPATH, xpath)
+        remains = get_remains()
+        xpath = "//div[contains(@class, 'TapContainer_textContainer')]"
+        output(f"Step {step} - We have {remains} targets to click. This might take some time!", 3)
+        # Create the action chain object
+        action = ActionChains(driver)
+        # Locate the element
+        element = driver.find_element(By.XPATH, xpath)
     
-            # Calculate random offsets
-            random_y = random.randint(70, 90)
-            random_x = random.randint(-10, 10)
+        # Calculate random offsets
+        random_y = random.randint(70, 90)
+        random_x = random.randint(-10, 10)
 
-            # Move to the element and offset by random values
-            action.move_to_element_with_offset(element, random_x, random_y).perform()
+        # Move to the element and offset by random values
+        action.move_to_element_with_offset(element, random_x, random_y).perform()
 
-            if not isinstance(remains, (int, float)):
-                return None 
+        if not isinstance(remains, (int, float)):
+            return None 
 
-            while remains > 0:
+        click_count = 0
+        max_clicks = 500
+        start_time = time.time()
 
-                # Conditionally move cursor for even and odd number of remains
-                if int(remains / 2) == remains / 2:
-                    # If even, adjust x by -2, y by +2
-                    action.move_by_offset(-2, 2).perform()
-                else:
-                    # If odd, adjust x by +2, y by -2
-                    action.move_by_offset(2, -2).perform()
+        while remains > 0 and click_count < max_clicks and (time.time() - start_time) < 3600:
+
+            # Conditionally move cursor for even and odd number of remains
+            if int(remains / 2) == remains / 2:
+                # If even, adjust x by -2, y by +2
+                action.move_by_offset(-2, 2).perform()
+            else:
+                # If odd, adjust x by +2, y by -2
+                action.move_by_offset(2, -2).perform()
     
-                # Perform click with JS at current cursor location
-                driver.execute_script("""
-                    var event = new MouseEvent('click', {
-                        'view': window,
-                        'bubbles': true,
-                        'cancelable': true
-                    });
-                    var element = document.elementFromPoint(window.pageXOffset + window.innerWidth / 2, window.pageYOffset + window.innerHeight / 2);
-                    element.dispatchEvent(event);
-                """)
-                # Or perform the click with Action Chains
-                # action.click().perform()
+            # Perform click with ActionChains at current cursor location
+            action.click().perform()
     
-                # Update the remaining clicks
-                remains = remains - 1
+            # Update the remaining clicks
+            remains -= 1
+            click_count += 1
 
-                if remains % 100 == 0:
-                    output(f"Step {step} - {remains} clicks remaining...", 2)
+            if remains % 100 == 0:
+                output(f"Step {step} - {remains} clicks remaining...", 2)
+
+        if remains > 0:
+            output(f"Step {step} - Reached {click_count} clicks or 1 hour limit, returning early.", 2)
+        else:
+            output(f"Step {step} - Completed all clicks within limit.", 2)
 
     get_balance(False)
  
@@ -747,41 +747,41 @@ def full_claim():
     box_exists = move_and_click(xpath, 10, False, "check if the lucky box is present...", step, "visible")
     if box_exists is not None:
         while attempts < 5:
-            click_element(xpath,60)
+            click_element(xpath, 60)
             time.sleep(5)
             box_exists = move_and_click(xpath, 10, False, "recheck if the box is still there...", step, "visible")
             if box_exists is None:
-                output(f"Step {step} - Looks like we claimed the box on attempt {attempts}.",3)
+                output(f"Step {step} - Looks like we claimed the box on attempt {attempts}.", 3)
                 clicked_it = True
                 break
             else:
-                output(f"Step {step} - Looks like we failed to claim the box on attempt {attempts}. Trying again...",3)
-                attempts = attempts + 1 
+                output(f"Step {step} - Looks like we failed to claim the box on attempt {attempts}. Trying again...", 3)
+                attempts += 1 
     increase_step()
 
     box_time_text = get_box_time(step)
-    if box_time_text != "Filled" or box_time_text != "Unknown":
+    if box_time_text not in ["Filled", "Unknown"]:
         matches = re.findall(r'(\d+)([HM])', box_time_text)
-        box_time = (sum(int(value) * (60 if unit == 'H' else 1) for value, unit in matches))
+        box_time = sum(int(value) * (60 if unit == 'H' else 1) for value, unit in matches)
     increase_step()
 
     remains = get_remains()
     if remains:
-        output(f"Step {step} - The system reports {remains} available to click.",2)
+        output(f"Step {step} - The system reports {remains} available to click.", 2)
         wait_time_text = "Filled"
     else:
-        output(f"Step {step} - There doesn't appear to be any remaining clicks available.",2)
+        output(f"Step {step} - There doesn't appear to be any remaining clicks available.", 2)
         wait_time_text = get_wait_time(step, "pre-claim") 
     increase_step()
 
     if wait_time_text != "Filled":
         matches = re.findall(r'(\d+)([hm])', wait_time_text)
-        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+        remaining_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
         if remaining_wait_time < 5 or settings["forceClaim"]:
             settings['forceClaim'] = True
             output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
-            optimal_time = min (box_time, remaining_wait_time)
+            optimal_time = min(box_time, remaining_wait_time)
             output(f"STATUS: Box due in {box_time} mins, and more clicks in {remaining_wait_time} mins, so sleeping for {optimal_time} mins.", 1)
             return optimal_time
 
@@ -805,17 +805,14 @@ def full_claim():
                 total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                 increase_step()
 
-                get_balance(True)
-                increase_step()
-
                 if wait_time_text == "Filled":
                     output(f"STATUS: The wait timer is still showing: Filled.", 1)
                     output(f"Step {step} - This means either the claim failed, or there is lag in the game.", 1)
                     output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                 else:
-                    optimal_time = min (box_time, total_wait_time)
-                    output(f"STATUS: Successful claim! Box due {box_time} mins. More clicks in {total_wait_time} mins. Sleeping for {max (60, optimal_time)} mins.", 1)
-                return max (60, optimal_time)
+                    optimal_time = min(box_time, total_wait_time)
+                    output(f"STATUS: Successful claim! Box due {box_time} mins. More clicks in {total_wait_time} mins. Sleeping for {max(60, optimal_time)} mins.", 1)
+                return max(60, optimal_time)
 
             except TimeoutException:
                 output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.", 1)
@@ -859,6 +856,8 @@ def get_balance(claimed=False):
         if element:
             balance_part = element
             output(f"Step {step} - {balance_text} {balance_part}", priority)
+            increase_step()
+            return {balance_part}
 
     except NoSuchElementException:
         output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", priority)
@@ -1139,69 +1138,6 @@ def find_working_link(old_step):
         return False
     except Exception as e:
         output(f"Step {step} - An error occurred while trying to open the app: {e}\n",1)
-        if settings['debugIsOn']:
-            screenshot_path = f"{screenshots_path}/{step}-unexpected-error-opening-app.png"
-            driver.save_screenshot(screenshot_path)
-        return False
-
-def find_claim_link(old_step):
-    global driver, screenshots_path, settings, step
-    output(f"Step {step} - Attempting to open a link for the app...", 2)
-
-    # Modify the larger element:
-    # button_xpath = "//button[contains(@class, 'kit-button is-large is-secondary is-fill is-centered button is-active')]"
-    # Wait for the button to be visible
-    ## button_element = WebDriverWait(driver, 10).until(
-    ##     EC.visibility_of_element_located((By.XPATH, button_xpath))
-    ## )
-    ## if button_element:
-    ##    driver.execute_script("arguments[0].removeAttribute('style');", button_element)
-
-    # Updated to use a more generic CSS selector
-    start_app_xpath = "//button[contains(text(), 'Claim')]/.."
-    try:
-        start_app_buttons = WebDriverWait(driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
-        # Filter buttons to find the one with specific text
-        start_app_buttons = [btn for btn in start_app_buttons]
-
-        clicked = False
-
-        for button in reversed(start_app_buttons):
-            actions = ActionChains(driver)
-            actions.move_to_element(button).pause(0.2)
-            try:
-                if settings['debugIsOn']:
-                    driver.save_screenshot(f"{screenshots_path}/{step} - Find working link.png")
-                actions.perform()
-                driver.execute_script("arguments[0].click();", button)
-                clicked = True
-                break
-            except StaleElementReferenceException:
-                continue
-            except ElementClickInterceptedException:
-                continue
-
-        if not clicked:
-            output(f"Step {step} - None of the 'Claim' buttons were clickable.\n", 1)
-            if settings['debugIsOn']:
-                screenshot_path = f"{screenshots_path}/{step}-no-clickable-button.png"
-                driver.save_screenshot(screenshot_path)
-            return False
-        else:
-            output(f"Step {step} - Successfully able to open a link for the app..\n", 3)
-            if settings['debugIsOn']:
-                screenshot_path = f"{screenshots_path}/{step}-app-opened.png"
-                driver.save_screenshot(screenshot_path)
-            return True
-
-    except TimeoutException:
-        output(f"Step {step} - Failed to find the 'Claim' button within the expected timeframe.\n", 1)
-        if settings['debugIsOn']:
-            screenshot_path = f"{screenshots_path}/{step}-timeout-finding-button.png"
-            driver.save_screenshot(screenshot_path)
-        return False
-    except Exception as e:
-        output(f"Step {step} - An error occurred while trying to open the app: {e}\n", 1)
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-unexpected-error-opening-app.png"
             driver.save_screenshot(screenshot_path)

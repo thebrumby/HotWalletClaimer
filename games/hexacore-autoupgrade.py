@@ -24,6 +24,16 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
+def run_http_proxy():
+    try:
+        subprocess.run(['./launch.sh', 'enable-proxy'], check=True)
+        print("http-proxy started successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to start http-proxy: {e}")
+
+# Call the function at an appropriate place in your code
+run_http_proxy()
+
 def load_settings():
     global settings, settings_file
     # Default settings with all necessary keys
@@ -236,12 +246,19 @@ def setup_driver():
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+
     # Disable various features to make headless mode less detectable
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-    chrome_options.add_argument(f"user-agent={user_agent}")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
+
+    # Set up the proxy to point to mitmproxy
+    chrome_options.add_argument("--proxy-server=http://127.0.0.1:8080")
+
+    # Add the mitmproxy certificate
+    chrome_options.add_argument("--ignore-certificate-errors")
+    chrome_options.add_argument("--allow-running-insecure-content")
+    chrome_options.add_argument("--test-type")
 
     # Find the path to chromedriver
     chromedriver_path = shutil.which("chromedriver")
@@ -669,12 +686,12 @@ def full_claim():
         return "Unknown"
 
     def get_remains():
-        remains = f"//div[contains(@class, 'TapContainer_textContainer')]"
+        remains_xpath = f"//div[contains(@class, 'TapContainer_textContainer')]"
         try:
-            first = move_and_click(remains, 10, False, "remove overlays", step, "visible")
-            if first == None:
+            first = move_and_click(remains_xpath, 10, False, "remove overlays", step, "visible")
+            if first is None:
                 return None
-            element = monitor_element(remains)
+            element = monitor_element(remains_xpath)
             # See if the timer is up
             if "TAPS IN" in element:
                 return None
@@ -684,59 +701,83 @@ def full_claim():
             else:
                 return None
         except NoSuchElementException:
-            output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", 3)
+            output(f"Step {step} - Element containing '{remains_xpath} Balance:' was not found.", 3)
             return None
         except Exception as e:
             output(f"Step {step} - An error occurred: {str(e)}", 3)  # Provide error as string for logging
             return None
 
+    def shopping_spree():
+        launch_iframe()
+        # Click on "My Level" button
+        xpath = "//span[text()='My Level']"
+        button = move_and_click(xpath, 10, True, "click the 'My Level' button", step, "clickable")
+        increase_step()
+
+        xpath = "//div[contains(@class, 'levelNumber')]"
+        current_level = monitor_element (xpath)
+        output(f"Step {step} - You're current level is {current_level}.",3)
+
+        xpath = "//button[contains(text(), 'PAY IN AGO') and not(@disabled)]"
+        success = click_element(xpath,10)
+        if success:
+            output(f"Step {step} - We were successfully able to click the Level Up button.",2)
+            launch_iframe()
+            xpath = "//div[contains(@class, 'levelNumber')]"
+            new_level = monitor_element (xpath)
+            output(f"Step {step} - You're current level is {new_level}.",3)
+            if int(new_level) > int(current_level):
+                output(f"STATUS: We have successfully upgraded from {current_level} to {new_level}.",1)
+        else:
+            output(f"Step {step} - You need more $AGO to upgrade.",2)
+
     def click_ahoy():
-            remains = get_remains()
-            xpath = "//div[contains(@class, 'TapContainer_textContainer')]"
-            output(f"Step {step} - We have {remains} targets to click. This might take some time!",3)
-            # Create the action chain object
-            action = ActionChains(driver)
-            # Locate the element
-            element = driver.find_element(By.XPATH, xpath)
+        remains = get_remains()
+        xpath = "//div[contains(@class, 'TapContainer_textContainer')]"
+        output(f"Step {step} - We have {remains} targets to click. This might take some time!", 3)
+        # Create the action chain object
+        action = ActionChains(driver)
+        # Locate the element
+        element = driver.find_element(By.XPATH, xpath)
     
-            # Calculate random offsets
-            random_y = random.randint(70, 90)
-            random_x = random.randint(-10, 10)
+        # Calculate random offsets
+        random_y = random.randint(70, 90)
+        random_x = random.randint(-10, 10)
 
-            # Move to the element and offset by random values
-            action.move_to_element_with_offset(element, random_x, random_y).perform()
+        # Move to the element and offset by random values
+        action.move_to_element_with_offset(element, random_x, random_y).perform()
 
-            if not isinstance(remains, (int, float)):
-                return None 
+        if not isinstance(remains, (int, float)):
+            return None 
 
-            while remains > 0:
+        click_count = 0
+        max_clicks = 500
+        start_time = time.time()
 
-                # Conditionally move cursor for even and odd number of remains
-                if int(remains / 2) == remains / 2:
-                    # If even, adjust x by -2, y by +2
-                    action.move_by_offset(-2, 2).perform()
-                else:
-                    # If odd, adjust x by +2, y by -2
-                    action.move_by_offset(2, -2).perform()
+        while remains > 0 and click_count < max_clicks and (time.time() - start_time) < 3600:
+
+            # Conditionally move cursor for even and odd number of remains
+            if int(remains / 2) == remains / 2:
+                # If even, adjust x by -2, y by +2
+                action.move_by_offset(-2, 2).perform()
+            else:
+                # If odd, adjust x by +2, y by -2
+                action.move_by_offset(2, -2).perform()
     
-                # Perform click with JS at current cursor location
-                driver.execute_script("""
-                    var event = new MouseEvent('click', {
-                        'view': window,
-                        'bubbles': true,
-                        'cancelable': true
-                    });
-                    var element = document.elementFromPoint(window.pageXOffset + window.innerWidth / 2, window.pageYOffset + window.innerHeight / 2);
-                    element.dispatchEvent(event);
-                """)
-                # Or perform the click with Action Chains
-                # action.click().perform()
+            # Perform click with ActionChains at current cursor location
+            action.click().perform()
     
-                # Update the remaining clicks
-                remains = remains - 1
+            # Update the remaining clicks
+            remains -= 1
+            click_count += 1
 
-                if remains % 100 == 0:
-                    output(f"Step {step} - {remains} clicks remaining...", 2)
+            if remains % 100 == 0:
+                output(f"Step {step} - {remains} clicks remaining...", 2)
+
+        if remains > 0:
+            output(f"Step {step} - Reached {click_count} clicks or 1 hour limit, returning early.", 2)
+        else:
+            output(f"Step {step} - Completed all clicks within limit.", 2)
 
     get_balance(False)
  
@@ -747,30 +788,30 @@ def full_claim():
     box_exists = move_and_click(xpath, 10, False, "check if the lucky box is present...", step, "visible")
     if box_exists is not None:
         while attempts < 5:
-            click_element(xpath,60)
+            click_element(xpath, 60)
             time.sleep(5)
             box_exists = move_and_click(xpath, 10, False, "recheck if the box is still there...", step, "visible")
             if box_exists is None:
-                output(f"Step {step} - Looks like we claimed the box on attempt {attempts}.",3)
+                output(f"Step {step} - Looks like we claimed the box on attempt {attempts}.", 3)
                 clicked_it = True
                 break
             else:
-                output(f"Step {step} - Looks like we failed to claim the box on attempt {attempts}. Trying again...",3)
-                attempts = attempts + 1 
+                output(f"Step {step} - Looks like we failed to claim the box on attempt {attempts}. Trying again...", 3)
+                attempts += 1 
     increase_step()
 
     box_time_text = get_box_time(step)
-    if box_time_text != "Filled" or box_time_text != "Unknown":
+    if box_time_text not in ["Filled", "Unknown"]:
         matches = re.findall(r'(\d+)([HM])', box_time_text)
-        box_time = (sum(int(value) * (60 if unit == 'H' else 1) for value, unit in matches))
+        box_time = sum(int(value) * (60 if unit == 'H' else 1) for value, unit in matches)
     increase_step()
 
     remains = get_remains()
     if remains:
-        output(f"Step {step} - The system reports {remains} available to click.",2)
+        output(f"Step {step} - The system reports {remains} available to click.", 2)
         wait_time_text = "Filled"
     else:
-        output(f"Step {step} - There doesn't appear to be any remaining clicks available.",2)
+        output(f"Step {step} - There doesn't appear to be any remaining clicks available.", 2)
         wait_time_text = get_wait_time(step, "pre-claim") 
     increase_step()
 
@@ -792,57 +833,14 @@ def full_claim():
         numeric_text = re.sub(r'[^0-9.]', '', text_without_html)
         return numeric_text
 
-    def upgradevlvl():
-        # Get balance as a number from homepage
-        balance = get_balance(True)
-        balance = str(balance)
-        balance = float(strip_html_and_non_numeric(balance))
-
-        # Switch to the store page
-        xpath = "//span[text()='Store']"
-        button = move_and_click(xpath, 10, True, "click the 'Store' button", step, "clickable")
-        increase_step()
-
-        # Now check if some upgrade is already Appliedha
-        xpath = "//div[contains(text(), 'Applied')]"
-        present = move_and_click(xpath, 10, False, "check if already applied", step, "visible")
-        increase_step()
-        # present = False # testing only
-        if present:
-            output(f"Step {step} - the upgrade is already applied.", 3)
-            return
-        else:
-            # Now get the upgrade costs and discard the lower ones.
-            xpath = "//button[@class='BuyPassButton_button__45CWq'][last()]"
-            cost_10k_text = monitor_element(xpath)
-            if cost_10k_text:
-                last_amount = extract_last_amount(cost_10k_text)
-
-            if balance > last_amount:
-                xpath = "(//button[@class='BuyPassButton_button__45CWq'])[3]"
-                success = click_element(xpath)
-                if success:
-                    output(f"Step {step} - it looks like we were able to click the upgrade button.",3)
-                else:
-                    output(f"Step {step} - looks like we missed the upgrade button.")
-                xpath = "//img[@alt='ago cube']"
-                button = move_and_click(xpath, 10, True, "click the 'home' button", step, "clickable")
-                time.sleep(10) # takes a few seconds to load
-                balance = get_balance(True)
-                return True
-            return False
-
     if wait_time_text != "Filled":
         matches = re.findall(r'(\d+)([hm])', wait_time_text)
-        remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+        remaining_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
         if remaining_wait_time < 5 or settings["forceClaim"]:
             settings['forceClaim'] = True
             output(f"Step {step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
-            optimal_time = min (box_time, remaining_wait_time)
-            if upgradevlvl():
-                output(f"STATUS: We just claimed the click upgrade, let's come back in 5 minutes.",1)
-                optimal_time = 5
+            optimal_time = min(box_time, remaining_wait_time)
             output(f"STATUS: Box due in {box_time} mins, and more clicks in {remaining_wait_time} mins, so sleeping for {optimal_time} mins.", 1)
             return optimal_time
 
@@ -856,7 +854,7 @@ def full_claim():
         if wait_time_text == "Filled" or settings['forceClaim']:
             try:
                 click_ahoy()
-
+                increase_step()
                 # Now let's give the site a few seconds to update.
                 output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...", 3)
                 time.sleep(10)
@@ -866,9 +864,7 @@ def full_claim():
                 total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                 increase_step()
 
-                if upgradevlvl():
-                    output(f"STATUS: We just claimed the click upgrade, let's come back in 5 minutes.",1)
-                    optimal_time = 5
+                shopping_spree()
                 increase_step()
 
                 if wait_time_text == "Filled":
@@ -876,9 +872,9 @@ def full_claim():
                     output(f"Step {step} - This means either the claim failed, or there is lag in the game.", 1)
                     output(f"Step {step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                 else:
-                    optimal_time = min (box_time, total_wait_time)
-                    output(f"STATUS: Successful claim! Box due {box_time} mins. More clicks in {total_wait_time} mins. Sleeping for {max (60, optimal_time)} mins.", 1)
-                return max (60, optimal_time)
+                    optimal_time = min(box_time, total_wait_time)
+                    output(f"STATUS: Successful claim! Box due {box_time} mins. More clicks in {total_wait_time} mins. Sleeping for {max(60, optimal_time)} mins.", 1)
+                return max(60, optimal_time)
 
             except TimeoutException:
                 output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.", 1)
@@ -1004,6 +1000,16 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
     def offset():
         return random.randint(1, 5)
 
+    def handle_alert():
+        try:
+            while True:
+                alert = driver.switch_to.alert
+                alert_text = alert.text
+                alert.accept()  # or alert.dismiss() if you need to dismiss it
+                output(f"STATUS: Alert handled: {alert_text}", 1)
+        except:
+            pass
+
     output(f"Step {step} - Attempting to {action_description}...", 2)
 
     try:
@@ -1042,13 +1048,14 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
                 output(f"Step {step} - Successfully moved to the element using ActionChains.", 3)
             if click:
                 click_element(xpath, wait_time)
+        
+        # Continuously handle alerts throughout the process
+        handle_alert()
+
         return target_element
 
     except UnexpectedAlertPresentException as e:
-        alert = driver.switch_to.alert
-        alert_text = alert.text
-        alert.accept()  # or alert.dismiss() if you need to dismiss it
-        output(f"Step {step} - We received the alert: {alert_text}", 2)
+        handle_alert()
 
     except TimeoutException:
         output(f"Step {step} - Timeout while trying to {action_description}.", 3)
@@ -1066,14 +1073,17 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
         output(f"Step {step} - StaleElementReferenceException caught for {action_description}.", 2)
 
     except Exception as e:
-        output(f"Step {step} - An error occurred while trying to {action_description}: {e}", 1)
+        output(f"Step {step} - An error occurred while trying to {action_description}, or maybe we got a success message.", 1)
 
     finally:
+        # Check and handle any remaining alerts before finishing
+        handle_alert()
         if settings['debugIsOn']:
             time.sleep(5)
             screenshot_path = f"{screenshots_path}/{step}-{action_description}.png"
             driver.save_screenshot(screenshot_path)
         return target_element
+
 
 def monitor_element(xpath, timeout=8):
     end_time = time.time() + timeout
@@ -1204,69 +1214,6 @@ def find_working_link(old_step):
         return False
     except Exception as e:
         output(f"Step {step} - An error occurred while trying to open the app: {e}\n",1)
-        if settings['debugIsOn']:
-            screenshot_path = f"{screenshots_path}/{step}-unexpected-error-opening-app.png"
-            driver.save_screenshot(screenshot_path)
-        return False
-
-def find_claim_link(old_step):
-    global driver, screenshots_path, settings, step
-    output(f"Step {step} - Attempting to open a link for the app...", 2)
-
-    # Modify the larger element:
-    # button_xpath = "//button[contains(@class, 'kit-button is-large is-secondary is-fill is-centered button is-active')]"
-    # Wait for the button to be visible
-    ## button_element = WebDriverWait(driver, 10).until(
-    ##     EC.visibility_of_element_located((By.XPATH, button_xpath))
-    ## )
-    ## if button_element:
-    ##    driver.execute_script("arguments[0].removeAttribute('style');", button_element)
-
-    # Updated to use a more generic CSS selector
-    start_app_xpath = "//button[contains(text(), 'Claim')]/.."
-    try:
-        start_app_buttons = WebDriverWait(driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
-        # Filter buttons to find the one with specific text
-        start_app_buttons = [btn for btn in start_app_buttons]
-
-        clicked = False
-
-        for button in reversed(start_app_buttons):
-            actions = ActionChains(driver)
-            actions.move_to_element(button).pause(0.2)
-            try:
-                if settings['debugIsOn']:
-                    driver.save_screenshot(f"{screenshots_path}/{step} - Find working link.png")
-                actions.perform()
-                driver.execute_script("arguments[0].click();", button)
-                clicked = True
-                break
-            except StaleElementReferenceException:
-                continue
-            except ElementClickInterceptedException:
-                continue
-
-        if not clicked:
-            output(f"Step {step} - None of the 'Claim' buttons were clickable.\n", 1)
-            if settings['debugIsOn']:
-                screenshot_path = f"{screenshots_path}/{step}-no-clickable-button.png"
-                driver.save_screenshot(screenshot_path)
-            return False
-        else:
-            output(f"Step {step} - Successfully able to open a link for the app..\n", 3)
-            if settings['debugIsOn']:
-                screenshot_path = f"{screenshots_path}/{step}-app-opened.png"
-                driver.save_screenshot(screenshot_path)
-            return True
-
-    except TimeoutException:
-        output(f"Step {step} - Failed to find the 'Claim' button within the expected timeframe.\n", 1)
-        if settings['debugIsOn']:
-            screenshot_path = f"{screenshots_path}/{step}-timeout-finding-button.png"
-            driver.save_screenshot(screenshot_path)
-        return False
-    except Exception as e:
-        output(f"Step {step} - An error occurred while trying to open the app: {e}\n", 1)
         if settings['debugIsOn']:
             screenshot_path = f"{screenshots_path}/{step}-unexpected-error-opening-app.png"
             driver.save_screenshot(screenshot_path)
