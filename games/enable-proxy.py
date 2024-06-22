@@ -189,11 +189,12 @@ def main():
 
             update_working_ip(user_ip)
             print("Setup complete. The http-proxy process is now running.")
+
+            # Pause for 10 seconds before finishing
+            time.sleep(10)
+
     else:
         print("The user requested IP matches the working IP and the PM2 process is running. Skipping setup.")
-
-    # Pause for 10 seconds before finishing
-    time.sleep(10)
 
 if __name__ == "__main__":
     main()
