@@ -109,6 +109,7 @@ http_access deny all
 # Define the outgoing address
 tcp_outgoing_address {outgoing_ip} localnet
 """
+    os.makedirs('/etc/squid', exist_ok=True)
     with open('/etc/squid/squid.conf', 'w') as file:
         file.write(squid_config_content)
 
