@@ -118,6 +118,8 @@ def main():
 
         print("Setup complete. The http-proxy process is now running.")
 
+        time.sleep(5)
+
     else:
         print("The PM2 process is running. Skipping setup.")
 
