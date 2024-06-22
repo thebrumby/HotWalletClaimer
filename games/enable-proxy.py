@@ -30,6 +30,9 @@ def install_squid():
     except Exception as e:
         print(f"An error occurred while installing Squid: {e}")
 
+def is_squid_installed():
+    return shutil.which('squid') is not None
+
 def copy_certificates():
     mitmproxy_cert_path = os.path.expanduser('~/.mitmproxy/mitmproxy-ca-cert.pem')
     if os.path.exists(mitmproxy_cert_path):
@@ -130,7 +133,10 @@ def update_working_ip(ip):
         file.write(ip)
 
 def restart_squid():
-    subprocess.run(['squid', '-k', 'reconfigure'], check=True)
+    if shutil.which('squid'):
+        subprocess.run(['squid', '-k', 'reconfigure'], check=True)
+    else:
+        print("Squid is not installed or not found in PATH.")
 
 def start_pm2_app(script_path, app_name):
     command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter bash --watch {script_path} --output /dev/null --error /dev/null --log-date-format 'YYYY-MM-DD HH:mm Z'"
