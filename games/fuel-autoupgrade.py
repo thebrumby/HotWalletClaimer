@@ -81,8 +81,8 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(max(settings['lowestClaimOffset'],0), max(settings['highestClaimOffset'],0))
-script = "games/fuel.py"
-prefix = "Fuel:"
+script = "games/fuel-autoupgrade.py"
+prefix = "Fuel-autoupgrade:"
 url = "https://web.telegram.org/k/#@fueljetton_bot"
 pot_full = "Filled"
 pot_filling = "to fill"
