@@ -130,10 +130,7 @@ def update_working_ip(ip):
         file.write(ip)
 
 def restart_squid():
-    if shutil.which('sudo'):
-        subprocess.run(['sudo', 'systemctl', 'restart', 'squid'], check=True)
-    else:
-        subprocess.run(['service', 'squid', 'restart'], check=True)
+    subprocess.run(['squid', '-k', 'reconfigure'], check=True)
 
 def start_pm2_app(script_path, app_name):
     command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter bash --watch {script_path} --output /dev/null --error /dev/null --log-date-format 'YYYY-MM-DD HH:mm Z'"
