@@ -24,8 +24,8 @@ def install_mitmproxy():
 
 def install_squid():
     try:
-        subprocess.run(['sudo', 'apt-get', 'update'], check=True)
-        subprocess.run(['sudo', 'apt-get', 'install', '-y', 'squid'], check=True)
+        subprocess.run(['apt-get', 'update'], check=True)
+        subprocess.run(['apt-get', 'install', '-y', 'squid'], check=True)
     except Exception as e:
         print(f"An error occurred while installing Squid: {e}")
 
@@ -33,8 +33,12 @@ def copy_certificates():
     mitmproxy_cert_path = os.path.expanduser('~/.mitmproxy/mitmproxy-ca-cert.pem')
     if os.path.exists(mitmproxy_cert_path):
         sudo_password = os.getenv('SUDO_PASSWORD')
-        command1 = f'echo {sudo_password} | sudo -S cp {mitmproxy_cert_path} /usr/local/share/ca-certificates/mitmproxy-ca-cert.crt'
-        command2 = f'echo {sudo_password} | sudo -S update-ca-certificates'
+        if shutil.which('sudo'):
+            command1 = f'echo {sudo_password} | sudo -S cp {mitmproxy_cert_path} /usr/local/share/ca-certificates/mitmproxy-ca-cert.crt'
+            command2 = f'echo {sudo_password} | sudo -S update-ca-certificates'
+        else:
+            command1 = f'cp {mitmproxy_cert_path} /usr/local/share/ca-certificates/mitmproxy-ca-cert.crt'
+            command2 = 'update-ca-certificates'
         subprocess.run(command1, shell=True, check=True)
         subprocess.run(command2, shell=True, check=True)
     else:
@@ -124,7 +128,10 @@ def update_working_ip(ip):
         file.write(ip)
 
 def restart_squid():
-    subprocess.run(['sudo', 'systemctl', 'restart', 'squid'], check=True)
+    if shutil.which('sudo'):
+        subprocess.run(['sudo', 'systemctl', 'restart', 'squid'], check=True)
+    else:
+        subprocess.run(['systemctl', 'restart', 'squid'], check=True)
 
 def start_pm2_app(script_path, app_name):
     command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter bash --watch {script_path} --output /dev/null --error /dev/null --log-date-format 'YYYY-MM-DD HH:mm Z'"
