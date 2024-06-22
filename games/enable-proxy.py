@@ -1,6 +1,7 @@
 import os
 import subprocess
 import shutil
+import time
 
 PROXY_DIR = os.path.abspath("./proxy")
 USER_REQUESTED_IP_FILE = os.path.join(PROXY_DIR, 'user_requested_outgoing_ip.txt')
@@ -190,6 +191,9 @@ def main():
             print("Setup complete. The http-proxy process is now running.")
     else:
         print("The user requested IP matches the working IP and the PM2 process is running. Skipping setup.")
+
+    # Pause for 10 seconds before finishing
+    time.sleep(10)
 
 if __name__ == "__main__":
     main()
