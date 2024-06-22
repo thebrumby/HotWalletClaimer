@@ -24,7 +24,6 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
-
 def load_settings():
     global settings, settings_file
     # Default settings with all necessary keys
@@ -35,9 +34,13 @@ def load_settings():
         "screenshotQRCode": True,
         "maxSessions": 1,
         "verboseLevel": 2,
-        "lowestClaimOffset": 0, # One/both be a negative figure to claim before reaches filled status.
-        "highestClaimOffset": 15, # Or one/both can be positive to claim after the pot is filled.
-        "forceNewSession": False
+        "lowestClaimOffset": 0,
+        "highestClaimOffset": 15,
+        "forceNewSession": False,
+        "useProxy": False,
+        "proxyAddress": "http://127.0.0.1:8080",
+        "proxyUsername": "",
+        "proxyPassword": ""
     }
 
     if os.path.exists(settings_file):
@@ -83,8 +86,7 @@ print(f"Initialising the {prefix} Wallet Auto-claim Python Script - Good Luck!")
 
 def update_settings():
     global settings
-    
-    # Function to simplify the process of updating settings
+
     def update_setting(setting_key, message, default_value):
         current_value = settings.get(setting_key, default_value)
         response = input(f"\n{message} (Y/N, press Enter to keep current [{current_value}]): ").strip().lower()
@@ -97,12 +99,12 @@ def update_settings():
     update_setting("debugIsOn", "Should we enable debugging? This will save screenshots in your local drive", settings["debugIsOn"])
     update_setting("hideSensitiveInput", "Should we hide sensitive input? Your phone number and seed phrase will not be visible on the screen", settings["hideSensitiveInput"])
     update_setting("screenshotQRCode", "Shall we allow log in by QR code? The alternative is by phone number and one-time password", settings["screenshotQRCode"])
-        
+
     try:
         new_max_sessions = int(input(f"\nEnter the number of max concurrent claim sessions. Additional claims will queue until a session slot is free.\n(current: {settings['maxSessions']}): "))
         settings["maxSessions"] = new_max_sessions
     except ValueError:
-        output("Number of sessions remains unchanged.",1)
+        output("Number of sessions remains unchanged.", 1)
 
     try:
         new_verbose_level = int(input("\nEnter the number for how much information you want displaying in the console.\n 3 = all messages, 2 = claim steps, 1 = minimal steps\n(current: {}): ".format(settings['verboseLevel'])))
@@ -134,19 +136,33 @@ def update_settings():
     except ValueError:
         output("Highest claim offset remains unchanged.", 2)
 
-    # Ensure lowestClaimOffset is not greater than highestClaimOffset
     if settings["lowestClaimOffset"] > settings["highestClaimOffset"]:
         settings["lowestClaimOffset"] = settings["highestClaimOffset"]
         output("Adjusted lowest claim offset to match the highest as it was greater.", 2)
+
+    update_setting("useProxy", "Use Proxy?", settings["useProxy"])
+
+    if settings["useProxy"]:
+        proxy_address = input(f"\nEnter the Proxy IP address and port (current: {settings['proxyAddress']}): ").strip()
+        if proxy_address:
+            settings["proxyAddress"] = proxy_address
+
+        proxy_username = input(f"\nEnter the Proxy username (current: {settings['proxyUsername']}): ").strip()
+        if proxy_username:
+            settings["proxyUsername"] = proxy_username
+
+        proxy_password = input(f"\nEnter the Proxy password (current: {settings['proxyPassword']}): ").strip()
+        if proxy_password:
+            settings["proxyPassword"] = proxy_password
 
     save_settings()
 
     update_setting("forceNewSession", "Overwrite existing session and Force New Login? Use this if your saved session has crashed\nOne-Time only (setting not saved): ", settings["forceNewSession"])
 
-    output("\nRevised settings:",1)
+    output("\nRevised settings:", 1)
     for key, value in settings.items():
-        output(f"{key}: {value}",1)
-    output("",1)
+        output(f"{key}: {value}", 1)
+    output("", 1)
 
 def get_session_id():
     """Prompts the user for a session ID or determines the next sequential ID based on a 'Wallet' prefix.
@@ -233,24 +249,40 @@ screenshot_base = os.path.join(screenshots_path, "screenshot")
 def setup_driver():
     chrome_options = Options()
     chrome_options.add_argument(f"user-data-dir={session_path}")
-    chrome_options.add_argument("--headless")  # Ensure headless is enabled
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    # Disable various features to make headless mode less detectable
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
     chrome_options.add_argument(f"user-agent={user_agent}")
+
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
 
-    # Find the path to chromedriver
+    if settings["useProxy"]:
+        proxy_server = settings["proxyAddress"]
+        chrome_options.add_argument(f"--proxy-server={proxy_server}")
+
+        if settings["proxyUsername"] and settings["proxyPassword"]:
+            # Create a proxy authentication extension
+            proxy_auth_plugin_path = create_proxyauth_extension(
+                proxy_host=settings["proxyAddress"].split(':')[1][2:],
+                proxy_port=settings["proxyAddress"].split(':')[2],
+                proxy_username=settings["proxyUsername"],
+                proxy_password=settings["proxyPassword"]
+            )
+            chrome_options.add_extension(proxy_auth_plugin_path)
+
+    chrome_options.add_argument("--ignore-certificate-errors")
+    chrome_options.add_argument("--allow-running-insecure-content")
+    chrome_options.add_argument("--test-type")
+
     chromedriver_path = shutil.which("chromedriver")
     if chromedriver_path is None:
         output("ChromeDriver not found in PATH. Please ensure it is installed.", 1)
         exit(1)
 
-    # Initialize WebDriver
     try:
         service = Service(chromedriver_path)
         driver = webdriver.Chrome(service=service, options=chrome_options)
@@ -259,6 +291,35 @@ def setup_driver():
         output(f"Initial ChromeDriver setup may have failed: {e}", 1)
         output("Please ensure you have the correct ChromeDriver version for your system.", 1)
         exit(1)
+
+def run_http_proxy():
+    proxy_lock_file = "./start_proxy.txt"
+    max_wait_time = 15 * 60  # 15 minutes
+    wait_interval = 5  # 5 seconds
+    start_time = time.time()
+
+    while os.path.exists(proxy_lock_file) and (time.time() - start_time) < max_wait_time:
+        output("Proxy is already running. Waiting for it to free up...", 1)
+        time.sleep(wait_interval)
+
+    if os.path.exists(proxy_lock_file):
+        output("Max wait time elapsed. Proceeding to run the proxy.", 1)
+
+    with open(proxy_lock_file, "w") as lock_file:
+        lock_file.write(f"Proxy started at: {time.ctime()}\n")
+
+    try:
+        subprocess.run(['./launch.sh', 'enable-proxy'], check=True)
+        output("http-proxy started successfully.", 1)
+    except subprocess.CalledProcessError as e:
+        output(f"Failed to start http-proxy: {e}", 1)
+    finally:
+        os.remove(proxy_lock_file)
+
+if settings["useProxy"] and settings["proxyAddress"] == "http://127.0.0.1:8080":
+    run_http_proxy()
+else:
+    output("Proxy disabled in settings.",2)
 
 def get_driver():
     global driver

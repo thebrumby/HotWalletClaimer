@@ -23,16 +23,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException
 from datetime import datetime, timedelta
 
-def run_http_proxy():
-    try:
-        subprocess.run(['./launch.sh', 'enable-proxy'], check=True)
-        print("http-proxy started successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to start http-proxy: {e}")
-
-# Call the function at an appropriate place in your code
-run_http_proxy()
-
 def load_settings():
     global settings, settings_file
     # Default settings with all necessary keys
@@ -43,9 +33,13 @@ def load_settings():
         "screenshotQRCode": True,
         "maxSessions": 1,
         "verboseLevel": 2,
-        "lowestClaimOffset": 0, # One/both be a negative figure to claim before reaches filled status.
-        "highestClaimOffset": 15, # Or one/both can be positive to claim after the pot is filled.
-        "forceNewSession": False
+        "lowestClaimOffset": 0,
+        "highestClaimOffset": 15,
+        "forceNewSession": False,
+        "useProxy": False,
+        "proxyAddress": "http://127.0.0.1:8080",
+        "proxyUsername": "",
+        "proxyPassword": ""
     }
 
     if os.path.exists(settings_file):
@@ -89,8 +83,7 @@ print(f"Initialising the {prefix} Wallet Auto-claim Python Script - Good Luck!")
 
 def update_settings():
     global settings
-    
-    # Function to simplify the process of updating settings
+
     def update_setting(setting_key, message, default_value):
         current_value = settings.get(setting_key, default_value)
         response = input(f"\n{message} (Y/N, press Enter to keep current [{current_value}]): ").strip().lower()
@@ -103,12 +96,12 @@ def update_settings():
     update_setting("debugIsOn", "Should we enable debugging? This will save screenshots in your local drive", settings["debugIsOn"])
     update_setting("hideSensitiveInput", "Should we hide sensitive input? Your phone number and seed phrase will not be visible on the screen", settings["hideSensitiveInput"])
     update_setting("screenshotQRCode", "Shall we allow log in by QR code? The alternative is by phone number and one-time password", settings["screenshotQRCode"])
-        
+
     try:
         new_max_sessions = int(input(f"\nEnter the number of max concurrent claim sessions. Additional claims will queue until a session slot is free.\n(current: {settings['maxSessions']}): "))
         settings["maxSessions"] = new_max_sessions
     except ValueError:
-        output("Number of sessions remains unchanged.",1)
+        output("Number of sessions remains unchanged.", 1)
 
     try:
         new_verbose_level = int(input("\nEnter the number for how much information you want displaying in the console.\n 3 = all messages, 2 = claim steps, 1 = minimal steps\n(current: {}): ".format(settings['verboseLevel'])))
@@ -140,19 +133,33 @@ def update_settings():
     except ValueError:
         output("Highest claim offset remains unchanged.", 2)
 
-    # Ensure lowestClaimOffset is not greater than highestClaimOffset
     if settings["lowestClaimOffset"] > settings["highestClaimOffset"]:
         settings["lowestClaimOffset"] = settings["highestClaimOffset"]
         output("Adjusted lowest claim offset to match the highest as it was greater.", 2)
+
+    update_setting("useProxy", "Use Proxy?", settings["useProxy"])
+
+    if settings["useProxy"]:
+        proxy_address = input(f"\nEnter the Proxy IP address and port (current: {settings['proxyAddress']}): ").strip()
+        if proxy_address:
+            settings["proxyAddress"] = proxy_address
+
+        proxy_username = input(f"\nEnter the Proxy username (current: {settings['proxyUsername']}): ").strip()
+        if proxy_username:
+            settings["proxyUsername"] = proxy_username
+
+        proxy_password = input(f"\nEnter the Proxy password (current: {settings['proxyPassword']}): ").strip()
+        if proxy_password:
+            settings["proxyPassword"] = proxy_password
 
     save_settings()
 
     update_setting("forceNewSession", "Overwrite existing session and Force New Login? Use this if your saved session has crashed\nOne-Time only (setting not saved): ", settings["forceNewSession"])
 
-    output("\nRevised settings:",1)
+    output("\nRevised settings:", 1)
     for key, value in settings.items():
-        output(f"{key}: {value}",1)
-    output("",1)
+        output(f"{key}: {value}", 1)
+    output("", 1)
 
 def get_session_id():
     """Prompts the user for a session ID or determines the next sequential ID based on a 'Wallet' prefix.
@@ -223,33 +230,40 @@ screenshot_base = os.path.join(screenshots_path, "screenshot")
 def setup_driver():
     chrome_options = Options()
     chrome_options.add_argument(f"user-data-dir={session_path}")
-    chrome_options.add_argument("--headless")  # Ensure headless is enabled
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
     chrome_options.add_argument(f"user-agent={user_agent}")
 
-    # Disable various features to make headless mode less detectable
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
 
-    # Set up the proxy to point to mitmproxy
-    chrome_options.add_argument("--proxy-server=http://127.0.0.1:8080")
+    if settings["useProxy"]:
+        proxy_server = settings["proxyAddress"]
+        chrome_options.add_argument(f"--proxy-server={proxy_server}")
 
-    # Add the mitmproxy certificate
+        if settings["proxyUsername"] and settings["proxyPassword"]:
+            # Create a proxy authentication extension
+            proxy_auth_plugin_path = create_proxyauth_extension(
+                proxy_host=settings["proxyAddress"].split(':')[1][2:],
+                proxy_port=settings["proxyAddress"].split(':')[2],
+                proxy_username=settings["proxyUsername"],
+                proxy_password=settings["proxyPassword"]
+            )
+            chrome_options.add_extension(proxy_auth_plugin_path)
+
     chrome_options.add_argument("--ignore-certificate-errors")
     chrome_options.add_argument("--allow-running-insecure-content")
     chrome_options.add_argument("--test-type")
 
-    # Find the path to chromedriver
     chromedriver_path = shutil.which("chromedriver")
     if chromedriver_path is None:
         output("ChromeDriver not found in PATH. Please ensure it is installed.", 1)
         exit(1)
 
-    # Initialize WebDriver
     try:
         service = Service(chromedriver_path)
         driver = webdriver.Chrome(service=service, options=chrome_options)
@@ -258,6 +272,38 @@ def setup_driver():
         output(f"Initial ChromeDriver setup may have failed: {e}", 1)
         output("Please ensure you have the correct ChromeDriver version for your system.", 1)
         exit(1)
+
+def run_http_proxy():
+    proxy_lock_file = "./start_proxy.txt"
+    max_wait_time = 15 * 60  # 15 minutes
+    wait_interval = 5  # 5 seconds
+    start_time = time.time()
+
+    while os.path.exists(proxy_lock_file) and (time.time() - start_time) < max_wait_time:
+        output("Proxy is already running. Waiting for it to free up...", 1)
+        time.sleep(wait_interval)
+
+    if os.path.exists(proxy_lock_file):
+        output("Max wait time elapsed. Proceeding to run the proxy.", 1)
+
+    with open(proxy_lock_file, "w") as lock_file:
+        lock_file.write(f"Proxy started at: {time.ctime()}\n")
+
+    try:
+        subprocess.run(['./launch.sh', 'enable-proxy'], check=True)
+        output("http-proxy started successfully.", 1)
+    except subprocess.CalledProcessError as e:
+        output(f"Failed to start http-proxy: {e}", 1)
+    finally:
+        os.remove(proxy_lock_file)
+
+settings["useProxy"] = True
+settings["proxyAddress"] = "http://127.0.0.1:8080"
+
+if settings["useProxy"] and settings["proxyAddress"] == "http://127.0.0.1:8080":
+    run_http_proxy()
+else:
+    output("Proxy disabled in settings.",2)
 
 def get_driver():
     global driver
@@ -616,73 +662,88 @@ def launch_iframe():
     select_iframe(step)
     increase_step()
 
+def click_element(xpath, timeout=30):
+    end_time = time.time() + timeout
+    while time.time() < end_time:
+        try:
+            element = driver.find_element(By.XPATH, xpath)
+            # Ensure the element is in the viewport
+            driver.execute_script("arguments[0].scrollIntoView();", element)
+            
+            # Clear any potential overlays before attempting to click
+            overlays_cleared = clear_overlays(element, step)
+            if overlays_cleared is None:
+                overlays_cleared = 0
+
+            if overlays_cleared > 0:
+                output(f"Step {step} - Cleared {overlays_cleared} overlay(s), retrying click...", 3)
+
+            # Attempt to click the element
+            element.click()
+            return True  # Success on clicking the element
+        except ElementClickInterceptedException as e:
+            # If still intercepted, try to hide the intercepting element directly
+            intercepting_element = driver.execute_script(
+                "var elem = arguments[0];"
+                "var rect = elem.getBoundingClientRect();"
+                "var x = rect.left + (rect.width / 2);"
+                "var y = rect.top + (rect.height / 2);"
+                "return document.elementFromPoint(x, y);", element)
+            if intercepting_element:
+                driver.execute_script("arguments[0].style.display = 'none';", intercepting_element)
+                output(f"Step {step} - Intercepting element hidden, retrying click...", 3)
+        except UnexpectedAlertPresentException:
+            # Handle unexpected alert during the click
+            alert = driver.switch_to.alert
+            alert_text = alert.text
+            alert.accept()  # Accept the alert or modify if you need to dismiss or interact differently
+            output(f"Step {step} - Unexpected alert handled: {alert_text}", 3)
+        except (StaleElementReferenceException, NoSuchElementException):
+            pass  # Element not found or stale, try again
+        except TimeoutException:
+            output(f"Step {step} - Click timed out.", 2)
+            break  # Exit loop if timed out
+        except Exception as e:
+            output(f"Step {step} - An error occurred:", 3)
+            break  # Exit loop on unexpected error
+    return False  # Return False if the element could not be clicked
+
 def full_claim():
     global driver, target_element, settings, session_path, step, random_offset
     step = "100"
-
-    def click_element(xpath, timeout=30):
-        end_time = time.time() + timeout
-        while time.time() < end_time:
-            try:
-                element = driver.find_element(By.XPATH, xpath)
-                # Ensure the element is in the viewport
-                driver.execute_script("arguments[0].scrollIntoView();", element)
-                # Clear any potential overlays before attempting to click
-                overlays_cleared = clear_overlays(element, step)
-                if overlays_cleared > 0:
-                    output(f"Step {step} - Cleared {overlays_cleared} overlay(s), retrying click...", 3)
-
-                # Attempt to click the element
-                element.click()
-                return True  # Success on clicking the element
-            except ElementClickInterceptedException as e:
-                # If still intercepted, try to hide the intercepting element directly
-                intercepting_element = driver.execute_script(
-                    "var elem = arguments[0];"
-                    "var rect = elem.getBoundingClientRect();"
-                    "var x = rect.left + (rect.width / 2);"
-                    "var y = rect.top + (rect.height / 2);"
-                    "return document.elementFromPoint(x, y);", element)
-                if intercepting_element:
-                    driver.execute_script("arguments[0].style.display = 'none';", intercepting_element)
-                    output(f"Step {step} - Intercepting element hidden, retrying click...", 3)
-            except UnexpectedAlertPresentException:
-                # Handle unexpected alert during the click
-                alert = driver.switch_to.alert
-                alert_text = alert.text
-                alert.accept()  # Accept the alert or modify if you need to dismiss or interact differently
-                output(f"Step {step} - Unexpected alert handled: {alert_text}", 3)
-            except (StaleElementReferenceException, NoSuchElementException):
-                pass  # Element not found or stale, try again
-            except TimeoutException:
-                output(f"Step {step} - Click timed out.", 2)
-                break  # Exit loop if timed out
-            except Exception as e:
-                output(f"Step {step} - An error occurred: {e}", 3)
-                break  # Exit loop on unexpected error
-        return False  # Return False if the element could not be clicked
 
     def check_daily_reward():
         action = ActionChains(driver)
         
         # Select the 'Missions' link and click it
         mission_xpath = "//p[contains(text(), 'Missions')]"
-        mission_button = move_and_click(mission_xpath, 20, False, "click on the 'Missions' link", step, "visible")
-        action.move_to_element(mission_button).click().perform()  # Use ActionChains to click
-        increase_step()
+        move_and_click(mission_xpath, 10, False, "move to the missions link", step, "visible")
+        success = click_element(mission_xpath)
+        if success:
+            output(f"Step {step} - Successfully able to click the 'Missions' link.",3)
+        else:
+            output(f"Step {step} - Failed to click the 'Missions' link.",3)
         
         # Select the 'Daily' link and click it
         daily_xpath = "//p[contains(text(), 'Daily')]"
-        daily_button = move_and_click(daily_xpath, 20, False, "click on the 'Daily' link", step, "visible")
-        action.move_to_element(daily_button).click().perform()  # Use ActionChains to click
+        move_and_click(daily_xpath, 10, False, "move to the daily missions link", step, "visible")
+        button = move_and_click(daily_xpath, 10, False, "move to the daily missions link", step, "visible")
+        success = click_element(daily_xpath)
+        if success:
+            output(f"Step {step} - Successfully able to click the 'Daily Missions' link.",3)
+        else:
+            output(f"Step {step} - Failed to click the 'Daily Missions' link.",3)
         increase_step()
         
         # Try to select and click the 'Claim' link
         claim_xpath = "//p[contains(text(), 'Claim')]"
-        claim_button = move_and_click(claim_xpath, 20, True, "click on the 'Claim' link", step, "visible")
-        if claim_button:
-            action.move_to_element(claim_button).click().perform()  # Use ActionChains to click
+        button = move_and_click(claim_xpath, 10, False, "move to the claim daily missions link", step, "visible")
+        if button:
+            driver.execute_script("arguments[0].click();", button)
+        success = click_element(claim_xpath)
+        if success:
             increase_step()
+            output(f"Step {step} - Successfully able to click the 'Claim Daily' link.",3)
             return "Daily bonus claimed."
         
         # Check if the 'Come back tomorrow' message is visible
@@ -708,18 +769,15 @@ def full_claim():
 
     xpath = "//p[text()='Collect']"
     island_text = ""
-    button = move_and_click(xpath, 20, False, "collect the Island reward", step, "visible")
-    if button:
-        driver.execute_script("arguments[0].click();", button)
+    success = click_element(xpath)
+    if success:
         output(f"Step {step} - We clicked the reward button for the Island Claim.",3)
         island_text = "Island bonus claimed. "
     increase_step()
 
     # Click on the Storage link:
     xpath = "//p[text()='Mining']"
-    button = move_and_click(xpath, 30, False, "click the 'storage' link", step, "visible")
-    if button:
-        driver.execute_script("arguments[0].click();", button)
+    success = click_element(xpath)
     increase_step()
 
     try:
@@ -741,6 +799,7 @@ def full_claim():
     increase_step()
 
     wait_time_text = get_wait_time(step, "pre-claim") 
+    output(f"Step {step} - Pre-Claim raw wait time text: {wait_time_text}",3)
 
     if wait_time_text != "Ready to collect":
         matches = re.findall(r'(\d+)([hm])', wait_time_text)
@@ -763,21 +822,17 @@ def full_claim():
         if wait_time_text == "Ready to collect" or settings['forceClaim']:
             try:
                 xpath = "//div[p[text()='Collect']]"
-                move_and_click(xpath, 10, False, "click the claim button", step, "clickable")
                 success = click_element(xpath)
+                if success:
+                    output(f"Step {step} - We successfully clicked the Collect button.",2)
+                else:
+                    output(f"Step {step} - We failed to the Collect button.",2)
                 increase_step()
 
-                output(f"Step {step} - Let's wait for the pending Claim spinner to stop spinning...",2)
                 time.sleep(5)
-                wait = WebDriverWait(driver, 5)
-                spinner_xpath = "//*[contains(@class, 'spinner')]" 
-                try:
-                    wait.until(EC.invisibility_of_element_located((By.XPATH, spinner_xpath)))
-                    output(f"Step {step} - Pending action spinner has stopped.\n",3)
-                except TimeoutException:
-                    output(f"Step {step} - Looks like the site has lag - the Spinner did not disappear in time.\n",2)
-                increase_step()
+
                 wait_time_text = get_wait_time(step, "post-claim") 
+                output(f"Step {step} - Post-Claim raw wait time text: {wait_time_text}",3)
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                 increase_step()
@@ -834,18 +889,42 @@ def full_claim():
     except Exception as e:
         output(f"Step {step} - An unexpected error occurred: {e}",1)
         return 60  # Default wait time in case of an unexpected error
+
+def monitor_element(xpath, timeout=8):
+    end_time = time.time() + timeout
+    first_time = True
+    while time.time() < end_time:
+        try:
+            elements = driver.find_elements(By.XPATH, xpath)
+            # Debugging: Output the number of elements found
+            if first_time:
+                output(f"Step {step} - Found {len(elements)} elements with XPath: {xpath}", 3)
+                first_time = False
+
+            # Check if any elements were found
+            if elements:
+                # Get the text content of the first relevant div element
+                for element in elements:
+                    if element.text.strip() != "":
+                        cleaned_text = element.text.replace('\n', ' ').replace('\r', ' ').strip()
+                        return cleaned_text
+
+        except (StaleElementReferenceException, TimeoutException, NoSuchElementException):
+            pass
+        except Exception as e:
+            output(f"An error occurred: {e}", 3)
+    return "Unknown"
         
 def get_wait_time(step_number="108", beforeAfter="pre-claim", max_attempts=2):
     for attempt in range(1, max_attempts + 1):
         try:
-            xpath = "//p[@class='_title_15j4z_24'][contains(text(), 'Storage')]/following-sibling::div[@class='_rowInfo_15j4z_30'][1]/p[@class='_descInfo_15j4z_38']"
-            wait_time_element = move_and_click(xpath, 20, True, f"get the {beforeAfter} wait timer", step, "visible")
+            xpath = "//p[contains(@class, 'descInfo')][1]"
+            move_and_click(xpath, 10, False, f"get the {beforeAfter} wait timer", step, "visible")
+            wait_time_element = monitor_element(xpath,10)
             
             # Check if wait_time_element is not None and return its text
             if wait_time_element is not None:
-                wait_time_text = wait_time_element.text
-                if wait_time_text:
-                    return wait_time_text
+                return wait_time_element
             else:
                 output(f"Step {step_number} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...", 3)
                 storage_xpath = "//h4[text()='Storage']"
@@ -1095,17 +1174,24 @@ def move_and_click(xpath, wait_time, click, action_description, old_step, expect
             driver.save_screenshot(screenshot_path)
         return target_element
 
-def clear_overlays(target_element, old_step):
-    # Get the location of the target element
-    element_location = target_element.location_once_scrolled_into_view
-    overlays = driver.find_elements(By.XPATH, "//*[contains(@style,'position: absolute') or contains(@style,'position: fixed')]")
-    for overlay in overlays:
-        overlay_rect = overlay.rect
-        # Check if overlay covers the target element
-        if (overlay_rect['x'] <= element_location['x'] <= overlay_rect['x'] + overlay_rect['width'] and
-            overlay_rect['y'] <= element_location['y'] <= overlay_rect['y'] + overlay_rect['height']):
-            driver.execute_script("arguments[0].style.display = 'none';", overlay)
-            output(f"Step {step} - Removed an overlay covering the target.", 3)
+def clear_overlays(target_element, step):
+    try:
+        # Get the location of the target element
+        element_location = target_element.location_once_scrolled_into_view
+        overlays = driver.find_elements(By.XPATH, "//*[contains(@style,'position: absolute') or contains(@style,'position: fixed')]")
+        overlays_cleared = 0
+        for overlay in overlays:
+            overlay_rect = overlay.rect
+            # Check if overlay covers the target element
+            if (overlay_rect['x'] <= element_location['x'] <= overlay_rect['x'] + overlay_rect['width'] and
+                overlay_rect['y'] <= element_location['y'] <= overlay_rect['y'] + overlay_rect['height']):
+                driver.execute_script("arguments[0].style.display = 'none';", overlay)
+                overlays_cleared += 1
+        output(f"Step {step} - Removed {overlays_cleared} overlay(s) covering the target.", 3)
+        return overlays_cleared
+    except Exception as e:
+        output(f"Step {step} - An error occurred while trying to clear overlays: {e}", 1)
+        return 0
 
 def validate_seed_phrase():
     # Let's take the user inputed seed phrase and carry out basic validation
