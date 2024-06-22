@@ -100,7 +100,7 @@ def write_squid_config(outgoing_ip):
 http_port 3128
 
 # Define an ACL for localhost
-acl localnet src 127.0.0.1/32 ::1
+acl localnet src 127.0.0.1/32
 
 # Only allow requests from localhost
 http_access allow localnet
@@ -132,6 +132,7 @@ def restart_squid():
     if shutil.which('sudo'):
         subprocess.run(['sudo', 'systemctl', 'restart', 'squid'], check=True)
     else:
+        # Ensure necessary directories exist and have correct permissions
         if not os.path.exists('/run/squid'):
             os.makedirs('/run/squid', exist_ok=True)
             subprocess.run(['chown', '-R', 'proxy:proxy', '/run/squid'], check=True)
