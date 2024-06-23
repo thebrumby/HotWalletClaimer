@@ -26,7 +26,6 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 def load_settings():
     global settings, settings_file
-    # Default settings with all necessary keys
     default_settings = {
         "forceClaim": False,
         "debugIsOn": False,
@@ -38,20 +37,18 @@ def load_settings():
         "highestClaimOffset": 15,
         "forceNewSession": False,
         "useProxy": False,
-        "proxyAddress": "http://127.0.0.1:8080",
-        "proxyUsername": "",
-        "proxyPassword": ""
+        "proxyAddress": "http://127.0.0.1:8080"
     }
 
     if os.path.exists(settings_file):
         with open(settings_file, "r") as f:
             loaded_settings = json.load(f)
-        # Update default settings with any settings loaded from the file
-        settings = {**default_settings, **loaded_settings}
+        # Filter out unused settings from previous versions
+        settings = {k: loaded_settings.get(k, v) for k, v in default_settings.items()}
         output("Settings loaded successfully.", 3)
     else:
         settings = default_settings
-        save_settings()  # Save the default settings if the file does not exist
+        save_settings()
 
 def save_settings():
     global settings, settings_file
@@ -147,14 +144,6 @@ def update_settings():
         if proxy_address:
             settings["proxyAddress"] = proxy_address
 
-        proxy_username = input(f"\nEnter the Proxy username (current: {settings['proxyUsername']}): ").strip()
-        if proxy_username:
-            settings["proxyUsername"] = proxy_username
-
-        proxy_password = input(f"\nEnter the Proxy password (current: {settings['proxyPassword']}): ").strip()
-        if proxy_password:
-            settings["proxyPassword"] = proxy_password
-
     save_settings()
 
     update_setting("forceNewSession", "Overwrite existing session and Force New Login? Use this if your saved session has crashed\nOne-Time only (setting not saved): ", settings["forceNewSession"])
@@ -249,7 +238,7 @@ screenshot_base = os.path.join(screenshots_path, "screenshot")
 def setup_driver():
     chrome_options = Options()
     chrome_options.add_argument(f"user-data-dir={session_path}")
-    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless")  # Ensure headless is enabled
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
@@ -263,16 +252,6 @@ def setup_driver():
     if settings["useProxy"]:
         proxy_server = settings["proxyAddress"]
         chrome_options.add_argument(f"--proxy-server={proxy_server}")
-
-        if settings["proxyUsername"] and settings["proxyPassword"]:
-            # Create a proxy authentication extension
-            proxy_auth_plugin_path = create_proxyauth_extension(
-                proxy_host=settings["proxyAddress"].split(':')[1][2:],
-                proxy_port=settings["proxyAddress"].split(':')[2],
-                proxy_username=settings["proxyUsername"],
-                proxy_password=settings["proxyPassword"]
-            )
-            chrome_options.add_extension(proxy_auth_plugin_path)
 
     chrome_options.add_argument("--ignore-certificate-errors")
     chrome_options.add_argument("--allow-running-insecure-content")
@@ -708,7 +687,7 @@ def full_claim():
     launch_iframe()
 
     # Let's take a short break to allow all elements to load
-    time.sleep(10)
+    time.sleep(30)
 
     def get_box_time(step_number="108", beforeAfter="pre-claim", max_attempts=1):
         global driver, step
@@ -733,7 +712,7 @@ def full_claim():
     def get_remains():
         remains_xpath = f"//div[contains(@class, 'TapContainer_textContainer')]"
         try:
-            first = move_and_click(remains_xpath, 10, False, "remove overlays", step, "visible")
+            # first = move_and_click(remains_xpath, 10, False, "remove overlays", step, "visible")
             if first is None:
                 return None
             element = monitor_element(remains_xpath)
@@ -957,8 +936,8 @@ def get_balance(claimed=False):
     balance_xpath = f"//div[contains(@class, 'BalanceDisplay_value')]"
 
     try:
-        first = move_and_click(balance_xpath, 30, False, "remove overlays", step, "visible")
-        element = monitor_element(balance_xpath)
+        # first = move_and_click(balance_xpath, 30, False, "remove overlays", step, "visible")
+        element = monitor_element(balance_xpath,45)
         # Check if element is not None and process the balance
         if element:
             balance_part = element
