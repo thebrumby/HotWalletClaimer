@@ -5,9 +5,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
-- **Version 3.1: New Docker, Built-in Proxy, and More!** Discover the latest updates, including a significantly reduced Docker file size, a built-in proxy to help with anti-bot measures, and upgraded claim automation for Blum, Fuel & Vertus. [read more](https://www.patreon.com/posts/version-3-1-new-106685100?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **Proxy Issues and hello LumCity**: Issues with the new in-built proxy and LumCity game integration. [read more](https://www.patreon.com/posts/addressing-proxy-106735342?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **New Docker and More!** Reduced Docker size, a built-in proxy, and extra automation for Blum, Fuel & Vertus. [read more](https://www.patreon.com/posts/version-3-1-new-106685100?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Hexacore Auto-Upgrade**: Alternative Hexacore version automatically applies the 10k click upgrade [read more](https://www.patreon.com/posts/hexacore-auto-106317318?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Time Farm** is now available to play! Learn more about this exciting game on our Patreon page [read more](https://www.patreon.com/posts/all-in-one-for-106185610?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
