@@ -236,20 +236,36 @@ step = "01"
 screenshot_base = os.path.join(screenshots_path, "screenshot")
 
 def setup_driver():
+    global driver
     chrome_options = Options()
     chrome_options.add_argument(f"user-data-dir={session_path}")
     chrome_options.add_argument("--headless")  # Ensure headless is enabled
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
-    chrome_options.add_argument(f"user-agent={user_agent}")
 
+    # Attempt to load user agent from cookies
+    try:
+        cookies_path = f"{session_path}/cookies.json"
+        with open(cookies_path, 'r') as file:
+            cookies = json.load(file)
+            user_agent_cookie = next((cookie for cookie in cookies if cookie["name"] == "user_agent"), None)
+            if user_agent_cookie and user_agent_cookie["value"]:
+                user_agent = user_agent_cookie["value"]
+                output(f"Using saved user agent: {user_agent}", 1)
+            else:
+                user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                output("No user agent found, using default.", 1)
+    except FileNotFoundError:
+        user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+        output("Cookies file not found, using default user agent.", 1)
+    
+    chrome_options.add_argument(f"user-agent={user_agent}")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
 
-    if settings["useProxy"]:
+    if settings.get("useProxy"):
         proxy_server = settings["proxyAddress"]
         chrome_options.add_argument(f"--proxy-server={proxy_server}")
 
@@ -295,7 +311,7 @@ def run_http_proxy():
     finally:
         os.remove(proxy_lock_file)
 
-if settings["useProxy"] and settings["proxyAddress"] == "http://127.0.0.1:8080":
+if settings["useProxy"] and settings["proxyAddress"] != "http://127.0.0.1:8080":
     run_http_proxy()
 else:
     output("Proxy disabled in settings.",2)
@@ -596,27 +612,43 @@ def test_for_2fa():
             screenshot_path = f"{screenshots_path}/Step {step} - error: Something Bad Occured.png"
             driver.save_screenshot(screenshot_path)
 
+# Function to prompt user for their user agent
+def prompt_user_agent():
+    output("Step 01 - Here is how to find your user agent:", 1)
+    output("1. Open your browser and go to Telegram Web (https://web.telegram.org).", 1)
+    output("2. Right-click on the page and select 'Inspect' or press 'Ctrl+Shift+I' to open the Developer Tools.", 1)
+    output("3. Go to the 'Console' tab in the Developer Tools.", 1)
+    output("4. In the console, type 'navigator.userAgent' and press 'Enter'.", 1)
+    output("5. Your user agent string will be displayed. Copy the entire string.", 1)
+    user_agent = input("Please enter your user agent string: ")
+    return user_agent
+
+# Main function for next steps
 def next_steps():
     global driver, target_element, settings, backup_path, session_path, step, imported_seedphrase
-    if step:
+    if 'step' in globals():
         pass
     else:
+        global step
         step = "01"
 
     try:
+        user_agent = prompt_user_agent()
+        
         launch_iframe()
         increase_step()
 
         cookies_path = f"{session_path}/cookies.json"
         cookies = driver.get_cookies()
+        cookies.append({"name": "user_agent", "value": user_agent})  # Save user agent to cookies
         with open(cookies_path, 'w') as file:
             json.dump(cookies, file)
 
     except TimeoutException:
-        output(f"Step {step} - Failed to find or switch to the iframe within the timeout period.",1)
+        output(f"Step {step} - Failed to find or switch to the iframe within the timeout period.", 1)
 
     except Exception as e:
-        output(f"Step {step} - An error occurred: {e}",1)
+        output(f"Step {step} - An error occurred: {e}", 1)
 
 def launch_iframe():
     global driver, target_element, settings, step
