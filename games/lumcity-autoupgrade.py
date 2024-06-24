@@ -789,7 +789,7 @@ def full_claim():
             output(f"Step {step} - The remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
             output(f"STATUS: Wait time is {remaining_wait_time} minutes and off-set of {random_offset}.", 1)
-            return min(remaining_wait_time + random_offset, 15)
+            return max(remaining_wait_time + random_offset, 15)
 
     try:
         if remaining_wait_time < 5 or settings['forceClaim']:
