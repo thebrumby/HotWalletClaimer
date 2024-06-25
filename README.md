@@ -41,10 +41,6 @@ docker exec -it telegram-claim-bot /bin/bash
 ```sh
 ./launch.sh
 ```
-#### To remove a no longer wanted, or corrupted game:
-```sh
-./remove-process.sh
-```
 #### To see the status of all your accounts, delete processes, and see PM2 logs on one page:
 ```sh
 ./launch.sh status
