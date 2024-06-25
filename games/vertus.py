@@ -806,6 +806,13 @@ def full_claim():
                     output(f"Step {step} - We successfully clicked the Collect button.",2)
                 else:
                     output(f"Step {step} - We failed to the Collect button.",2)
+
+                xpath = "//p[contains(@class, '_text_16x1w_17') and text()='Claim']"
+                success = click_element(xpath)
+                if success:
+                    output("Successfully Claimed The new splash from vertus :) ", 2)
+                else:
+                    output("Failed to click 'the newest Claim' button", 2)
                 increase_step()
 
                 time.sleep(5)
