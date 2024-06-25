@@ -663,7 +663,7 @@ def launch_iframe():
         increase_step()
 
     # Now let's move to and JS click the "Launch" Button
-    xpath = "//button[contains(@class, 'reply-markup-button-text') and contains(., 'Play')]"
+    xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
     button = move_and_click(xpath, 8, False, "click the 'Launch' button (may not be present)", step, "visible")
     if button:
         button.click()
