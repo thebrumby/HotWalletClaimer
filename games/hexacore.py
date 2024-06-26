@@ -812,6 +812,7 @@ def full_claim():
     # Click main tab
     xpath = "//div[contains(@class, 'NavBar_agoContainer')]"
     move_and_click(xpath, 10, True, "click main tab", step, "visible")
+    increase_step()
 
     get_balance(False)
  
