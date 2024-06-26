@@ -835,6 +835,10 @@ def full_claim():
         else:
             output(f"Step {step} - Completed all clicks within limit.", 2)
 
+    # Click main tab
+    xpath = "//div[contains(@class, 'NavBar_agoContainer')]"
+    move_and_click(xpath, 10, True, "click main tab", step, "visible")
+
     get_balance(False)
  
     # Let's check if we have a box!
