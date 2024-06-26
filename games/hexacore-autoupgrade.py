@@ -744,7 +744,7 @@ def full_claim():
     def get_remains():
         remains_xpath = f"//div[contains(@class, 'TapContainer_textContainer')]"
         try:
-            # first = move_and_click(remains_xpath, 10, False, "remove overlays", step, "visible")
+            first = move_and_click(remains_xpath, 10, False, "remove overlays", step, "visible")
             if first is None:
                 return None
             element = monitor_element(remains_xpath)
@@ -764,7 +764,6 @@ def full_claim():
             return None
 
     def shopping_spree():
-        launch_iframe()
         # Click on "My Level" button
         xpath = "//span[text()='My Level']"
         button = move_and_click(xpath, 10, True, "click the 'My Level' button", step, "clickable")
@@ -807,7 +806,7 @@ def full_claim():
             return None 
 
         click_count = 0
-        max_clicks = 500
+        max_clicks = 1000
         start_time = time.time()
 
         while remains > 0 and click_count < max_clicks and (time.time() - start_time) < 3600:
@@ -834,6 +833,11 @@ def full_claim():
             output(f"Step {step} - Reached {click_count} clicks or 1 hour limit, returning early.", 2)
         else:
             output(f"Step {step} - Completed all clicks within limit.", 2)
+
+    # Click main tab
+    xpath = "//div[contains(@class, 'NavBar_agoContainer')]"
+    move_and_click(xpath, 10, True, "click main tab", step, "visible")
+    increase_step()
 
     get_balance(False)
  
