@@ -60,7 +60,6 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 
 | Command                       | Mining Game Link in Telegram                    | Ubuntu | Docker |
 |-------------------------------|-------------------------------------------------|--------|--------|
-| `./launch.sh hot-alt`         | Launch HOT on Near Protocol: (non-TG method)    | ✅     | ✅     |
 | `./launch.sh hot`             | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot) | ✅     | ✅     |
 | `./launch.sh vertus`          | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot) | ✅     | ✅     |
 | `./launch.sh tree`            | Launch Tree on BNB Wallet: [@treeminebot](https://t.me/treeminebot/app?startapp=6783218884) | ✅     | ✅     |
@@ -72,7 +71,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh hexacore`        | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     
 | `./launch.sh pocketfi`        | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot) | ✅     | ✅     |
 | `./launch.sh blum` | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot) | ✅     | ✅     |
-| `./launch.sh fuel` | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot) | ✅     | ✅     |
+| `./launch.sh fuel` | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot) | ❌     | ❌     |
 | `./launch.sh time-farm` | Launch Time Farm on Telegram: [@TimeFarmCryptoBot](https://web.telegram.org/k/#@TimeFarmCryptoBot) | ✅     | ✅     |
 | `./launch.sh lumcity` | Launch Lum City on Telegram: [@LumCity_bot](https://web.telegram.org/k/#@LumCity_bot) | ✅     | ✅     |
 | `./launch.sh lumcity-autoupgrade` | Launch Lum City on Telegram: [@LumCity_bot](https://web.telegram.org/k/#@LumCity_bot) | ✅     | ✅     |
