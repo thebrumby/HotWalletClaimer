@@ -68,8 +68,8 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "games/oxygen.py"
-prefix = "Oxygen:"
+script = "games/oxygen-autoupgrade.py"
+prefix = "Oxygen-auto:"
 url = "https://web.telegram.org/k/#@oxygenminerbot"
 pot_full = "Filled"
 pot_filling = "to fill"
