@@ -717,23 +717,11 @@ def full_claim():
 
         if wait_time_text == "Filled" or settings['forceClaim']:
             try:
-                xpath = "//div[@class='farm_btn']"
-                button = move_and_click(xpath, 10, True, "click the 'Claim' button", step, "clickable")
-                increase_step()
-
-                # Now let's give the site a few seconds to update.
-                output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...", 3)
-                time.sleep(10)
-
                 wait_time_text = get_wait_time(step, "post-claim")
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                 increase_step()
-
-                get_balance(True)
-                quit_driver()
-                launch_iframe()
-                increase_step()
+                
 
                 # Let's check how many boxes we have!
                 output(f"Step {step} - check if there are lucky boxes..",3)
@@ -748,7 +736,9 @@ def full_claim():
                     if box:
                         box_claim = datetime.now().strftime("%d %B %Y, %I:%M %p")
                         output(f"Step {step} - The date and time of the box claim has been updated to {box_claim}.",3)
-
+                quit_driver()
+                launch_iframe()
+                get_balance(True)
                 if wait_time_text == "Filled":
                     output(f"STATUS: The wait timer is still showing: Filled.", 1)
                     output(f"Step {step} - This means either the claim failed, or there is lag in the game.", 1)
@@ -794,6 +784,13 @@ def get_balance(claimed=False):
     food_xpath = "//div[@class='indicator_item' and @data='food']/div[@class='indicator_text']"
 
     try:
+        xpath = "//div[@class='farm_btn']"
+        button = move_and_click(xpath, 10, True, "click the 'Claim' button", step, "clickable")
+        increase_step()
+
+        # Now let's give the site a few seconds to update.
+        output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...", 3)
+        time.sleep(10)
         # Get oxygen balance
         oxy_element = driver.find_element(By.XPATH, oxy_xpath)
         oxy_balance = oxy_element.text if oxy_element else "N/A"
