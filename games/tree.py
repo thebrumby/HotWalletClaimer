@@ -255,8 +255,8 @@ class TreeClaimer(Claimer):
 
                     self.get_balance(True)
 
-                    if wait_time_text == "Filled":
-                        self.output(f"STATUS: The wait timer is still showing: Filled.",1)
+                    if wait_time_text == "0h 0m to fill":
+                        self.output(f"STATUS: The wait timer is still showing: Filled - possible issue with Axe's not claiming.",1)
                         self.output(f"Step {self.step} - This means either the claim failed, or there is >4 minutes lag in the game.",1)
                         self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.",2)
                     else:
