@@ -82,6 +82,7 @@ class Claimer():
             if user_input == "y":
                 self.update_settings()
             user_input = self.get_session_id()
+            self.wallet_id = user_input
 
         self.session_path = "./selenium/{}".format(user_input)
         os.makedirs(self.session_path, exist_ok=True)
@@ -97,8 +98,11 @@ class Claimer():
 
         if self.settings["useProxy"] and self.settings["proxyAddress"] == "http://127.0.0.1:8080":
             self.run_http_proxy()
+        elif self.forceLocalProxy:
+            self.run_http_proxy()
+            self.output("Use of the built-in proxy is force on for this game.", 2)
         else:
-            self.output("Proxy disabled in settings.",2)
+            self.output("Proxy disabled in settings.", 2)
 
     def run(self):
 
@@ -117,7 +121,7 @@ class Claimer():
                 user_input = input("Enter the number of the session you want to restore, or 'n' to create a new session: ").strip().lower()
         
                 if user_input == 'n':
-                    self.log_into_telegram()
+                    self.log_into_telegram(self.wallet_id)
                     self.quit_driver()
                     self.backup_telegram()
                 elif user_input.isdigit() and 0 < int(user_input) <= len(telegram_backup_dirs):
@@ -126,7 +130,7 @@ class Claimer():
                     self.restore_from_backup(os.path.join(os.path.dirname(self.session_path), telegram_backup_dirs[0]))  # Default to the first session
 
             else:
-                self.log_into_telegram()
+                self.log_into_telegram(self.wallet_id)
                 self.quit_driver()
                 self.backup_telegram()
         
@@ -200,7 +204,8 @@ class Claimer():
             "highestClaimOffset": 15,
             "forceNewSession": False,
             "useProxy": False,
-            "proxyAddress": "http://127.0.0.1:8080"
+            "proxyAddress": "http://127.0.0.1:8080",
+            "requestUserAgent": False
         }
 
         if os.path.exists(self.settings_file):
@@ -288,6 +293,13 @@ class Claimer():
             if proxy_address:
                 self.settings["proxyAddress"] = proxy_address
 
+        if self.settings["requestUserAgent"]:
+            proxy_address = input(f"\nEnter the Proxy IP address and port (current: {self.settings['proxyAddress']}): ").strip()
+            if proxy_address:
+                self.settings["proxyAddress"] = proxy_address
+
+        update_setting("requestUserAgent", "Shall we collect a User Agent during setup?: ", self.settings["requestUserAgent"])
+
         self.save_settings()
 
         update_setting("forceNewSession", "Overwrite existing session and Force New Login? Use this if your saved session has crashed\nOne-Time only (setting not saved): ", self.settings["forceNewSession"])
@@ -333,6 +345,11 @@ class Claimer():
             user_input = f"Wallet{next_wallet_id}"  # Ensuring the full ID is prefixed correctly
 
         return self.prefix+user_input
+
+    def prompt_user_agent(self):
+        user_agent = input("Please enter the User-Agent string you wish to use: ").strip()
+        return user_agent
+
     
     def setup_driver(self):
         chrome_options = Options()
@@ -341,7 +358,23 @@ class Claimer():
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
-        user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
+
+        # Attempt to load user agent from cookies
+        try:
+            cookies_path = f"{self.session_path}/cookies.json"
+            with open(cookies_path, 'r') as file:
+                cookies = json.load(file)
+                user_agent_cookie = next((cookie for cookie in cookies if cookie["name"] == "user_agent"), None)
+                if user_agent_cookie and user_agent_cookie["value"]:
+                    user_agent = user_agent_cookie["value"]
+                    self.output(f"Using saved user agent: {user_agent}", 1)
+                else:
+                    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
+                    self.output("No user agent found, using default.", 1)
+        except FileNotFoundError:
+            user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
+            self.output("Cookies file not found, using default user agent.", 1)
+
         chrome_options.add_argument(f"user-agent={user_agent}")
 
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
@@ -478,8 +511,25 @@ class Claimer():
             flock(file, LOCK_UN)
             self.output(f"Session released: {current_session}", 3)
     
-    def log_into_telegram(self):
+    def log_into_telegram(self, user_input=None):
+
         self.step = "01"
+
+        # Check and recreate directories
+        self.session_path = f"./selenium/{user_input}"
+        if os.path.exists(self.session_path):
+            shutil.rmtree(self.session_path)
+        os.makedirs(self.session_path, exist_ok=True)
+
+        self.screenshots_path = f"./screenshots/{user_input}"
+        if os.path.exists(self.screenshots_path):
+            shutil.rmtree(self.screenshots_path)
+        os.makedirs(self.screenshots_path, exist_ok=True)
+
+        self.backup_path = f"./backups/{user_input}"
+        if os.path.exists(self.backup_path):
+            shutil.rmtree(self.backup_path)
+        os.makedirs(self.backup_path, exist_ok=True)
 
         def visible_QR_code():
             max_attempts = 5
@@ -522,16 +572,15 @@ class Claimer():
                 except TimeoutException:
                     self.output(f"Step {self.step} - QR Code is no longer visible.", 2)
                     return True  # Indicates the QR code has been scanned or disappeared
-            
+        
             self.output(f"Step {self.step} - Failed to generate a valid QR code after multiple attempts.", 1)
             return False  # If loop completes without a successful scan
 
         self.driver = self.get_driver()
-        
+    
         # QR Code Method
         if self.settings['screenshotQRCode']:
             try:
-
                 while True:
                     if visible_QR_code():  # QR code not found
                         self.test_for_2fa()
@@ -553,23 +602,28 @@ class Claimer():
         self.output(f"Step {self.step} - Initiating the One-Time Password (OTP) method...\n",1)
         self.driver.get(self.url)
         xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
-        self.target_element=self.move_and_click(xpath, 30, False, "switch to log in by phone number", self.step, "visible")
-        self.target_element.click()
+        self.move_and_click(xpath, 30, True, "switch to log in by phone number", self.step, "visible")
         self.increase_step()
 
         # Country Code Selection
-        xpath = "//div[@class='input-field-input']"    
-        self.target_element = self.move_and_click(xpath, 30, False, "update users country", self.step, "visible")
-        self.target_element.click()
-        user_input = input(f"Step {self.step} - Please enter your Country Name as it appears in the Telegram list: ").strip()  
+        xpath = "//div[@class='input-field-input']"
+        self.target_element = self.move_and_click(xpath, 30, True, "update user's country", self.step, "visible")
+        if not self.target_element:
+            self.output(f"Step {self.step} - Failed to find country input field.", 1)
+            return
+
+        user_input = input(f"Step {self.step} - Please enter your Country Name as it appears in the Telegram list: ").strip()
         self.target_element.send_keys(user_input)
         self.target_element.send_keys(Keys.RETURN)
         self.increase_step()
 
         # Phone Number Input
         xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
-        self.target_element = self.move_and_click(xpath, 30, False, "request users phone number", self.step, "visible")
-        self.driver.execute_script("arguments[0].click();", self.target_element)
+        self.target_element = self.move_and_click(xpath, 30, True, "request user's phone number", self.step, "visible")
+        if not self.target_element:
+            self.output(f"Step {self.step} - Failed to find phone number input field.", 1)
+            return
+    
         def validate_phone_number(phone):
             # Regex for validating an international phone number without leading 0 and typically 7 to 15 digits long
             pattern = re.compile(r"^[1-9][0-9]{6,14}$")
@@ -580,7 +634,7 @@ class Claimer():
                 user_phone = getpass.getpass(f"Step {self.step} - Please enter your phone number without leading 0 (hidden input): ")
             else:
                 user_phone = input(f"Step {self.step} - Please enter your phone number without leading 0 (visible input): ")
-        
+    
             if validate_phone_number(user_phone):
                 self.output(f"Step {self.step} - Valid phone number entered.",3)
                 break
@@ -591,8 +645,7 @@ class Claimer():
 
         # Wait for the "Next" button to be clickable and click it    
         xpath = "//button//span[contains(text(), 'Next')]"
-        self.target_element = self.move_and_click(xpath, 15, False, "click next to proceed to OTP entry", self.step, "visible")
-        self.driver.execute_script("arguments[0].click();", self.target_element)
+        self.move_and_click(xpath, 15, True, "click next to proceed to OTP entry", self.step, "visible")
         self.increase_step()
 
         try:
@@ -611,18 +664,18 @@ class Claimer():
         except TimeoutException:
             # Check for Storage Offline
             xpath = "//button[contains(text(), 'STORAGE_OFFLINE')]"
-            self.target_element = self.move_and_click(xpath, 8, False, "check for 'STORAGE_OFFLINE'", self.step, "visible")
+            self.move_and_click(xpath, 8, True, "check for 'STORAGE_OFFLINE'", self.step, "visible")
             if self.target_element:
                 self.output(f"Step {self.step} - ***Progress is blocked by a 'STORAGE_OFFLINE' button",1)
                 self.output(f"Step {self.step} - If you are re-using an old Wallet session; try to delete or create a new session.",1)
                 found_error = True
             # Check for flood wait
             xpath = "//button[contains(text(), 'FLOOD_WAIT')]"
-            self.target_element = self.move_and_click(xpath, 8, False, "check for 'FLOOD_WAIT'", self.step, "visible")
+            self.move_and_click(xpath, 8, True, "check for 'FLOOD_WAIT'", self.step, "visible")
             if self.target_element:
                 self.output(f"Step {self.step} - ***Progress is blocked by a 'FLOOD_WAIT' button", 1)
                 self.output(f"Step {self.step} - You need to wait for the specified number of seconds before retrying.", 1)
-                self.output(f"Step {self.step} - {target_element.text}")
+                self.output(f"Step {self.step} - {self.target_element.text}")
                 found_error = True
             if not found_error:
                 self.output(f"Step {self.step} - Selenium was unable to interact with the OTP screen for an unknown reason.")
@@ -645,6 +698,7 @@ class Claimer():
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
             xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
             fa_input = self.move_and_click(xpath, 10, False, "check for 2FA requirement (will timeout if you don't have 2FA)", self.step, "present")
+        
             if fa_input:
                 if self.settings['hideSensitiveInput']:
                     tg_password = getpass.getpass(f"Step {self.step} - Enter your Telegram 2FA password: ")
@@ -653,12 +707,13 @@ class Claimer():
                 fa_input.send_keys(tg_password + Keys.RETURN)
                 self.output(f"Step {self.step} - 2FA password sent.\n", 3)
                 self.output(f"Step {self.step} - Checking if the 2FA password is correct.\n", 2)
+            
                 xpath = "//*[contains(text(), 'Incorrect password')]"
                 try:
                     incorrect_password = WebDriverWait(self.driver, 3).until(EC.visibility_of_element_located((By.XPATH, xpath)))
-                    self.output(f"Step {step} - 2FA password is marked as incorrect by Telegram - check your debug screenshot if active.", 1)
+                    self.output(f"Step {self.step} - 2FA password is marked as incorrect by Telegram - check your debug screenshot if active.", 1)
                     if self.settings['debugIsOn']:
-                        screenshot_path = f"{self.screenshots_path}/Step {self.step} - Test QR code after session is resumed.png"
+                        screenshot_path = f"{self.screenshots_path}/Step {self.step} - Incorrect 2FA Password.png"
                         self.driver.save_screenshot(screenshot_path)
                     self.quit_driver()
                     sys.exit()  # Exit if incorrect password is detected
@@ -682,16 +737,65 @@ class Claimer():
         except Exception as e:  # Catch any other unexpected errors
             self.output(f"Step {self.step} - Login failed. 2FA Error - you'll probably need to restart the script: {e}", 1)
             if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/Step {self.step} - error: Something Bad Occured.png"
+                screenshot_path = f"{self.screenshots_path}/Step {self.step} - error_Something_Bad_Occurred.png"
                 self.driver.save_screenshot(screenshot_path)
+
 
     def next_steps(self):
         # Must OVERRIDE this function in the child class
         self.output("Function 'next-steps' - Not defined (Need override in child class) \n", 1)
 
     def launch_iframe(self):
-        # Must OVERRIDE this function in the child class
-        self.output("Function 'launch_iframe' - Not defined (Need override in child class) \n", 1)
+        self.driver = self.get_driver()
+
+        try:
+            self.driver.get(self.url)
+            WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            self.output(f"Step {self.step} - Attempting to verify if we are logged in (hopefully QR code is not present).", 3)
+            xpath = "//canvas[@class='qr-canvas']"
+            wait = WebDriverWait(self.driver, 5)
+            wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+            if self.settings['debugIsOn']:
+                screenshot_path = f"{self.screenshots_path}/Step {self.step} - Test QR code after session is resumed.png"
+                self.driver.save_screenshot(screenshot_path)
+            self.output(f"Step {self.step} - Chrome driver reports the QR code is visible: It appears we are no longer logged in.", 2)
+            self.output(f"Step {self.step} - Most likely you will get a warning that the central input box is not found.", 2)
+            self.output(f"Step {self.step} - System will try to restore session, or restart the script from CLI to force a fresh log in.\n", 2)
+
+        except TimeoutException:
+            self.output(f"Step {self.step} - nothing found to action. The QR code test passed.\n", 3)
+        self.increase_step()
+
+        self.driver.get(self.url)
+        WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+
+        # There is a very unlikely scenario that the chat might have been cleared.
+        # In this case, the "START" button needs pressing to expose the chat window!
+        xpath = "//button[contains(., 'START')]"
+        button = self.move_and_click(xpath, 3, False, "check for the start button (should not be present)", self.step, "clickable")
+        if button:
+            button.click()
+        self.increase_step()
+
+        # New link logic to avoid finding an expired link
+        if self.find_working_link(self.step):
+            self.increase_step()
+        else:
+            self.send_start(self.step)
+            self.increase_step()
+            self.find_working_link(self.step)
+            self.increase_step()
+
+        # Now let's move to and JS click the "Launch" Button
+        xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
+        button = self.move_and_click(xpath, 8, False, "click the 'Launch' button", self.step, "clickable")
+        if button:
+            button.click()
+        self.increase_step()
+
+        # HereWalletBot Pop-up Handling
+        self.select_iframe(self.step)
+        self.increase_step()
 
     def full_claim(self):
         # Must OVERRIDE this function in the child class
@@ -782,8 +886,6 @@ class Claimer():
             return False
 
     def move_and_click(self, xpath, wait_time, click, action_description, old_step, expectedCondition):
-        target_element = None
-
         def timer():
             return random.randint(1, 3) / 10
 
@@ -792,87 +894,93 @@ class Claimer():
 
         self.output(f"Step {self.step} - Attempting to {action_description}...", 2)
 
-        try:
-            wait = WebDriverWait(self.driver, wait_time)
-            # Check and prepare the element based on the expected condition
-            if expectedCondition == "visible":
-                target_element = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-            elif expectedCondition == "present":
-                target_element = wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
-            elif expectedCondition == "invisible":
-                wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
-                return None  # Early return as there's no element to interact with
-            elif expectedCondition == "clickable":
-                target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+        wait = WebDriverWait(self.driver, wait_time)
+        target_element = None
+        for attempt in range(5):  # Retry loop for handling StaleElementReferenceException
+            try:
+                # Check and prepare the element based on the expected condition
+                if expectedCondition == "visible":
+                    target_element = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+                elif expectedCondition == "present":
+                    target_element = wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+                elif expectedCondition == "invisible":
+                    wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
+                    return None  # Early return as there's no element to interact with
+                elif expectedCondition == "clickable":
+                    target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
 
-            # Check if the target_element is found
-            if target_element is None:
-                self.output(f"Step {self.step} - The element was not found for {action_description}.", 2)
-                return None
+                if target_element is None:
+                    self.output(f"Step {self.step} - The element was not found for {action_description}.", 2)
+                    return None
 
-            # Before interacting, check for and remove overlays if click is needed or visibility is essential
-            if click or expectedCondition in ["visible", "clickable"]:
-                self.clear_overlays(target_element, self.step)
+                # Use ActionChains to move to the element
+                actions = ActionChains(self.driver)
+                actions.move_to_element(target_element).pause(timer()).perform()
 
-            # Perform actions if the element is found and clicking is requested
-            if target_element:
-                if expectedCondition == "clickable":
-                    actions = ActionChains(self.driver)
-                    actions.move_by_offset(0, 0 - offset()) \
-                            .pause(timer()) \
-                            .move_by_offset(0, offset()) \
-                            .pause(timer()) \
-                            .move_to_element(target_element) \
-                            .pause(timer()) \
-                            .perform()
-                    self.output(f"Step {self.step} - Successfully moved to the element using ActionChains.", 3)
+                # Check if the element is within the viewport
+                is_in_viewport = self.driver.execute_script("""
+                    var elem = arguments[0], box = elem.getBoundingClientRect();
+                    return (box.top >= 0 && box.left >= 0 &&
+                            box.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                            box.right <= (window.innerWidth || document.documentElement.clientWidth));
+                """, target_element)
+            
+                if not is_in_viewport:
+                    self.output(f"Step {self.step} - Element still out of bounds after moving with ActionChains.", 2)
+                    continue  # Retry if the element is not in the viewport
 
-                if click:
-                    click_result = self.click_element(xpath, wait_time)
-                    if click_result:
-                        self.output(f"Step {self.step} - Successfully clicked {action_description} using click_element.", 3)
-                    else:
-                        self.output(f"Step {self.step} - Failed to click {action_description} using click_element.", 2)
+                # Before interacting, check for and remove overlays if click is needed or visibility is essential
+                if click or expectedCondition in ["visible", "clickable"]:
+                    self.clear_overlays(target_element, self.step)
 
-        except TimeoutException:
-            self.output(f"Step {self.step} - Timeout while trying to {action_description}.", 3)
-            if self.settings['debugIsOn']:
-                # Capture the page source and save it to a file
-                page_source = self.driver.page_source
-                with open(f"{self.screenshots_path}/{self.step}_page_source.html", "w", encoding="utf-8") as f:
-                    f.write(page_source)
-                logs = self.driver.get_log("browser")
-                with open(f"{self.screenshots_path}/{self.step}_browser_console_logs.txt", "w", encoding="utf-8") as f:
-                    for log in logs:
-                        f.write(f"{log['level']}: {log['message']}\n")
-
-        except StaleElementReferenceException:
-            self.output(f"Step {self.step} - StaleElementReferenceException caught for {action_description}.", 2)
-
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred while trying to {action_description}: {e}", 1)
-
-        finally:
-            if self.settings['debugIsOn']:
-                time.sleep(5)
-                screenshot_path = f"{self.screenshots_path}/{self.step}-{action_description}.png"
-                self.driver.save_screenshot(screenshot_path)
-            return target_element
+                # Perform actions if the element is found and clicking is requested
+                if target_element:
+                    if click:
+                        actions.move_to_element(target_element).click().perform()
+                        self.output(f"Step {self.step} - Successfully clicked {action_description} using ActionChains.", 3)
+                return target_element
+            except StaleElementReferenceException:
+                self.output(f"Step {self.step} - StaleElementReferenceException caught, retrying attempt {attempt + 1} for {action_description}.", 2)
+            except TimeoutException:
+                self.output(f"Step {self.step} - Timeout while trying to {action_description}.", 3)
+                if self.settings['debugIsOn']:
+                    page_source = self.driver.page_source
+                    with open(f"{self.screenshots_path}/{self.step}_page_source.html", "w", encoding="utf-8") as f:
+                        f.write(page_source)
+                    logs = self.driver.get_log("browser")
+                    with open(f"{self.screenshots_path}/{self.step}_browser_console_logs.txt", "w", encoding="utf-8") as f:
+                        for log in logs:
+                            f.write(f"{log['level']}: {log['message']}\n")
+                break
+            except Exception as e:
+                self.output(f"Step {self.step} - An error occurred while trying to {action_description}: {e}", 1)
+                if self.settings['debugIsOn']:
+                    screenshot_path = f"{self.screenshots_path}/{self.step}_move_and_click_error.png"
+                    self.driver.save_screenshot(screenshot_path)
+                    self.output(f"Screenshot saved to {screenshot_path}", 3)
+                break
+        if self.settings['debugIsOn']:
+            time.sleep(5)
+            screenshot_path = f"{self.screenshots_path}/{self.step}-{action_description}.png"
+            self.driver.save_screenshot(screenshot_path)
+        return target_element
 
     def click_element(self, xpath, timeout=30):
         end_time = time.time() + timeout
         while time.time() < end_time:
             try:
                 element = self.driver.find_element(By.XPATH, xpath)
-                # Ensure the element is in the viewport
-                self.driver.execute_script("arguments[0].scrollIntoView();", element)
+                # Ensure the element is in the viewport using ActionChains
+                actions = ActionChains(self.driver)
+                actions.move_to_element(element).perform()
+
                 # Clear any potential overlays before attempting to click
                 overlays_cleared = self.clear_overlays(element, self.step)
                 if overlays_cleared > 0:
                     self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s), retrying click...", 3)
 
                 # Attempt to click the element
-                element.click()
+                actions.click(element).perform()
                 return True  # Success on clicking the element
             except ElementClickInterceptedException as e:
                 # If still intercepted, try to hide the intercepting element directly
@@ -926,27 +1034,21 @@ class Claimer():
         while time.time() < end_time:
             try:
                 elements = self.driver.find_elements(By.XPATH, xpath)
-                # Debugging: Output the number of elements found
                 if first_time:
                     self.output(f"Step {self.step} - Found {len(elements)} elements with XPath: {xpath}", 3)
                     first_time = False
 
-                # Get the text content of all relevant div elements
-                texts = []
-
-                # Loop through each element and clean text before adding to the list
-                for element in elements:
-                    if element.text.strip() != "":
-                        cleaned_text = element.text.replace('\n', ' ').replace('\r', ' ').strip()
-                        texts.append(cleaned_text)
-
+                texts = [element.text.replace('\n', ' ').replace('\r', ' ').strip() for element in elements if element.text.strip()]
                 if texts:
-                    combined_text = ' '.join(texts)
-                    return combined_text
+                    return ' '.join(texts)
             except (StaleElementReferenceException, TimeoutException, NoSuchElementException):
                 pass
             except Exception as e:
                 self.output(f"An error occurred: {e}", 3)
+                if self.settings['debugIsOn']:
+                    screenshot_path = f"{self.screenshots_path}/{self.step}_monitor_element_error.png"
+                    self.driver.save_screenshot(screenshot_path)
+                    self.output(f"Screenshot saved to {screenshot_path}", 3)
         return "Unknown"
 
     def validate_seed_phrase(self):
