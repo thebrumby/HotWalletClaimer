@@ -731,6 +731,8 @@ def full_claim():
                 increase_step()
 
                 get_balance(True)
+                quit_driver()
+                launch_iframe()
                 increase_step()
 
                 # Let's check how many boxes we have!
