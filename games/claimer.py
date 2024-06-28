@@ -788,7 +788,7 @@ class Claimer():
 
         # Now let's move to and JS click the "Launch" Button
         xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Launch' button", self.step, "clickable")
+        button = self.move_and_click(xpath, 8, False, "click the 'Launch' button (probably not present)", self.step, "clickable")
         if button:
             button.click()
         self.increase_step()

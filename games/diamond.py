@@ -112,9 +112,14 @@ class DiamondClaimer(Claimer):
 
         self.launch_iframe()
 
-        # Click on the Storage link:
+        # Best on Standalone:
+        xpath = "//p[text()='Storage']"
+        self.move_and_click(xpath, 15, True, "click the 'storage' link", self.step, "clickable")
+        self.increase_step
+
+        # Best on Docker!:
         xpath = "//h2[text()='Mining']"
-        self.move_and_click(xpath, 30, True, "click the 'storage' link", self.step, "clickable")
+        self.move_and_click(xpath, 15, True, "click the alternative 'storage' link", self.step, "clickable")
         self.increase_step
 
         self.get_balance(False)
