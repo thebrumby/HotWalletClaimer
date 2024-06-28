@@ -917,6 +917,21 @@ class Claimer():
                 actions = ActionChains(self.driver)
                 actions.move_to_element(target_element).pause(timer()).perform()
 
+                # Enhanced scrolling: Scroll the element into view using JavaScript with an offset
+                self.driver.execute_script("""
+                    var elem = arguments[0];
+                    var rect = elem.getBoundingClientRect();
+                    var isVisible = (
+                        rect.top >= 0 &&
+                        rect.left >= 0 &&
+                        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                    );
+                    if (!isVisible) {
+                        elem.scrollIntoView({block: 'center'});
+                    }
+                """, target_element)
+
                 # Check if the element is within the viewport
                 is_in_viewport = self.driver.execute_script("""
                     var elem = arguments[0], box = elem.getBoundingClientRect();
@@ -926,7 +941,7 @@ class Claimer():
                 """, target_element)
             
                 if not is_in_viewport:
-                    self.output(f"Step {self.step} - Element still out of bounds after moving with ActionChains.", 2)
+                    self.output(f"Step {self.step} - Element still out of bounds after moving with ActionChains and JavaScript scrolling.", 2)
                     continue  # Retry if the element is not in the viewport
 
                 # Before interacting, check for and remove overlays if click is needed or visibility is essential
@@ -970,9 +985,23 @@ class Claimer():
         while time.time() < end_time:
             try:
                 element = self.driver.find_element(By.XPATH, xpath)
-                # Ensure the element is in the viewport using ActionChains
+                # Ensure the element is in the viewport using ActionChains and JavaScript scrolling
                 actions = ActionChains(self.driver)
                 actions.move_to_element(element).perform()
+
+                self.driver.execute_script("""
+                    var elem = arguments[0];
+                    var rect = elem.getBoundingClientRect();
+                    var isVisible = (
+                        rect.top >= 0 &&
+                        rect.left >= 0 &&
+                        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                    );
+                    if (!isVisible) {
+                        elem.scrollIntoView({block: 'center'});
+                    }
+                """, element)
 
                 # Clear any potential overlays before attempting to click
                 overlays_cleared = self.clear_overlays(element, self.step)
