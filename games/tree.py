@@ -307,12 +307,12 @@ class TreeClaimer(Claimer):
             # Check if element is not None and process the balance
             if element:
                 balance_part = element.text.strip()
-                self.output(f"Step {step} - {balance_text} {balance_part}", priority)
+                self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
 
         except NoSuchElementException:
-            self.output(f"Step {step} - Element containing '{prefix} Balance:' was not found.", priority)
+            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
         except Exception as e:
-            self.output(f"Step {step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
 
         # Increment step function, assumed to handle next step logic
         self.increase_step()
@@ -327,7 +327,7 @@ class TreeClaimer(Claimer):
                 if wait_time_element is not None:
                     return wait_time_element.text
                 else:
-                    self.output(f"Step {step} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
+                    self.output(f"Step {self.step} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
                     storage_xpath = "//h4[text()='Storage']"
                     self.move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{self.step} recheck", "clickable")
                     self.output(f"Step {self.step} - Attempted to select strorage again...",3)
@@ -339,10 +339,10 @@ class TreeClaimer(Claimer):
                     storage_xpath = "//h4[text()='Storage']"
                     self.move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{self.step} recheck", "clickable")
                 else:  # No retries left after initial failure
-                    self.output(f"Step {step} - Attempt {attempt}: Wait time element not found.",3)
+                    self.output(f"Step {self.step} - Attempt {attempt}: Wait time element not found.",3)
 
             except Exception as e:
-                self.output(f"Step {step} - An error occurred on attempt {attempt}: {e}",3)
+                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}",3)
 
         # If all attempts fail         
         return "Unknown"
