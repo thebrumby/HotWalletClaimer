@@ -722,22 +722,6 @@ def full_claim():
                 total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                 increase_step()
                 
-
-                # Let's check how many boxes we have!
-                output(f"Step {step} - check if there are lucky boxes..",3)
-                xpath = "//div[@class='boxes_cntr']"
-                boxes = monitor_element (xpath)
-                output(f"Step {step} - Detected there are {boxes} boxes to claim.",3)
-                if int(boxes) > 0:
-                    xpath = "//div[@class='boxes_d_wrap']"
-                    move_and_click(xpath, 10, True, "click the boxes button", step, "clickable")
-                    xpath = "//div[@class='boxes_d_open' and contains(text(), 'Open box')]"
-                    box = move_and_click(xpath, 10, True, "open the box...", step, "clickable")
-                    if box:
-                        box_claim = datetime.now().strftime("%d %B %Y, %I:%M %p")
-                        output(f"Step {step} - The date and time of the box claim has been updated to {box_claim}.",3)
-                quit_driver()
-                launch_iframe()
                 get_balance(True)
                 if wait_time_text == "Filled":
                     output(f"STATUS: The wait timer is still showing: Filled.", 1)
@@ -791,6 +775,20 @@ def get_balance(claimed=False):
         # Now let's give the site a few seconds to update.
         output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...", 3)
         time.sleep(10)
+
+        # Let's check how many boxes we have!
+        output(f"Step {step} - check if there are lucky boxes..",3)
+        xpath = "//div[@class='boxes_cntr']"
+        boxes = monitor_element (xpath)
+        output(f"Step {step} - Detected there are {boxes} boxes to claim.",3)
+        if int(boxes) > 0:
+            xpath = "//div[@class='boxes_d_wrap']"
+            move_and_click(xpath, 10, True, "click the boxes button", step, "clickable")
+            xpath = "//div[@class='boxes_d_open' and contains(text(), 'Open box')]"
+            box = move_and_click(xpath, 10, True, "open the box...", step, "clickable")
+            if box:
+                box_claim = datetime.now().strftime("%d %B %Y, %I:%M %p")
+                output(f"Step {step} - The date and time of the box claim has been updated to {box_claim}.",3)
         # Get oxygen balance
         oxy_element = driver.find_element(By.XPATH, oxy_xpath)
         oxy_balance = oxy_element.text if oxy_element else "N/A"
