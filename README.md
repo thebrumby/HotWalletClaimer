@@ -1,5 +1,5 @@
 # Telegram Claim Assistant - Mine HOT & More!
-#### Currently supporting 13 crypto-based games and increasing weekly - automate claims and stay informed about their status.
+#### Currently supporting 14 crypto-based games and increasing weekly - automate claims and stay informed about their status.
 
 Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would like to support our ongoing development, consider subscribing to our [Patreon](https://www.patreon.com/TelegramClaimBot), or treat us to a [cup of coffee ☕](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation—both options are just $5. You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. Discover some humorous uses for the channel and more reasons to give a little back [here](docs/YOUTUBE.md).
 
@@ -68,7 +68,6 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh oxygen`          | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot) | ✅     | ✅     |
 | `./launch.sh hexacore`        | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     |
 | `./launch.sh hexacore-autoupgrade`        | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     |
-| `./launch.sh hexacore`        | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) | ✅     | ✅     
 | `./launch.sh pocketfi`        | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot) | ✅     | ✅     |
 | `./launch.sh blum` | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot) | ✅     | ✅     |
 | `./launch.sh fuel` | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot) | ❌     | ❌     |
