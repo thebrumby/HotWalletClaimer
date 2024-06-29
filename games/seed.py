@@ -143,16 +143,23 @@ class SeedClaimer(Claimer):
 
         xpath = "//button[contains(text(), 'CHECK NEWS')]"
         self.move_and_click(xpath, 20, True, "check for NEWS (may not be present)", self.step, "clickable")
+        
+        # GET WORM
+        xpath = "//img[contains(@src,'inventory/worm')]"
+        self.move_and_click(xpath, 20, True, "check for WORM (may not be present)", self.step, "clickable")
 
+        xpath = "//button[.//p[contains(text(), 'Sell now')]]"
+        self.move_and_click(xpath, 20, True, "sell WORM (may not be present)", self.step, "clickable")
+        
         # GET DAILY BONUS
         xpath = "//button[.//img[contains(@src, 'daily')]]"
-        self.move_and_click(xpath, 20, True, "check for DIALY BONUS (may not be present)", self.step, "clickable")
+        self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
 
-        xpath = "//button[not(.//img[contains(@src, 'lock') or contains(@src, 'check_mark')])]"
-        self.move_and_click(xpath, 20, True, "get DIALY BONUS (may not be present)", self.step, "clickable")
+        xpath = "//button[count(.//img) = 1 and .//img[contains(@src, 'daily/')]]"
+        self.move_and_click(xpath, 20, True, "get DAILY BONUS (may not be present)", self.step, "clickable")
 
         xpath = "//button[contains(text(), 'Got it')]"
-        self.move_and_click(xpath, 20, True, "exit DIALY BONUS (may not be present)", self.step, "clickable")
+        self.move_and_click(xpath, 20, True, "exit DAILY BONUS (may not be present)", self.step, "clickable")
 
         self.get_balance(False)
 
