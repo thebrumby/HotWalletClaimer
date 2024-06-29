@@ -68,8 +68,8 @@ load_settings()
 driver = None
 target_element = None
 random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
-script = "games/oxygen-autoupgrade.py"
-prefix = "Oxygen-auto:"
+script = "games/oxygen.py"
+prefix = "Oxygen:"
 url = "https://web.telegram.org/k/#@oxygenminerbot"
 pot_full = "Filled"
 pot_filling = "to fill"
@@ -664,12 +664,19 @@ def launch_iframe():
 
     # Now let's move to and JS click the "Launch" Button
     launch_xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
+    play_xpath = xpath = "//button[contains(@class, 'reply-markup-button-text') and contains(., 'Play')]"
+    
     # Essayer d'abord le bouton 'Launch'
     button = move_and_click(launch_xpath, 8, False, "click the 'Launch' button (may not be present)", step, "visible")
     if button:
         button.click()
         return
     
+    # Si 'Launch' n'est pas trouvé, essayer le bouton 'Play'
+    button = move_and_click(play_xpath, 8, False, "click the 'Play' button (may not be present)", step, "visible")
+    if button:
+        button.click()
+        increase_step()
 
     # HereWalletBot Pop-up Handling
     select_iframe(step)
@@ -717,12 +724,36 @@ def full_claim():
 
         if wait_time_text == "Filled" or settings['forceClaim']:
             try:
+                xpath = "//div[@class='farm_btn']"
+                button = move_and_click(xpath, 10, True, "click the 'Claim' button", step, "clickable")
+                increase_step()
+
+                # Now let's give the site a few seconds to update.
+                output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...", 3)
+                time.sleep(10)
+
                 wait_time_text = get_wait_time(step, "post-claim")
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                 increase_step()
-                
+
                 get_balance(True)
+                increase_step()
+
+                # Let's check how many boxes we have!
+                output(f"Step {step} - check if there are lucky boxes..",3)
+                xpath = "//div[@class='boxes_cntr']"
+                boxes = monitor_element (xpath)
+                output(f"Step {step} - Detected there are {boxes} boxes to claim.",3)
+                if int(boxes) > 0:
+                    xpath = "//div[@class='boxes_d_wrap']"
+                    move_and_click(xpath, 10, True, "click the boxes button", step, "clickable")
+                    xpath = "//div[@class='boxes_d_open' and contains(text(), 'Open box')]"
+                    box = move_and_click(xpath, 10, True, "open the box...", step, "clickable")
+                    if box:
+                        box_claim = datetime.now().strftime("%d %B %Y, %I:%M %p")
+                        output(f"Step {step} - The date and time of the box claim has been updated to {box_claim}.",3)
+
                 if wait_time_text == "Filled":
                     output(f"STATUS: The wait timer is still showing: Filled.", 1)
                     output(f"Step {step} - This means either the claim failed, or there is lag in the game.", 1)
@@ -758,81 +789,71 @@ def get_balance(claimed=False):
     global step
     prefix = "After" if claimed else "Before"
     default_priority = 2 if claimed else 3
+
+    # Dynamically adjust the log priority
     priority = max(settings['verboseLevel'], default_priority)
 
+    # Construct the specific balance XPath
+    balance_text = f'{prefix} BALANCE:'
+    oxy_xpath = "//span[@class='oxy_counter']"
+    food_xpath = "//div[@class='indicator_item' and @data='food']/div[@class='indicator_text']"
+
     try:
-        # Actions initiales
-        xpath = "//div[@class='farm_btn']"
-        button = move_and_click(xpath, 10, True, "click the 'Claim' button", step, "clickable")
-        increase_step()
-
-        output(f"Step {step} - Waiting 10 seconds for the totals and timer to update...", 3)
-        time.sleep(10)
-
-        output(f"Step {step} - check if there are lucky boxes..", 3)
-        xpath = "//div[@class='boxes_cntr']"
-        boxes = monitor_element(xpath)
-        output(f"Step {step} - Detected there are {boxes} boxes to claim.", 3)
-        if int(boxes) > 0:
-            xpath = "//div[@class='boxes_d_wrap']"
-            move_and_click(xpath, 10, True, "click the boxes button", step, "clickable")
-            xpath = "//div[@class='boxes_d_open' and contains(text(), 'Open box')]"
-            box = move_and_click(xpath, 10, True, "open the box...", step, "clickable")
-            if box:
-                box_claim = datetime.now().strftime("%d %B %Y, %I:%M %p")
-                output(f"Step {step} - The date and time of the box claim has been updated to {box_claim}.", 3)
-        quit_driver()
-        launch_iframe()
-        
-        # Vérification du solde
-        balance_text = f'{prefix} BALANCE:'
-        oxy_xpath = "//span[@class='oxy_counter']"
-        food_xpath = "//div[@class='indicator_item' and @data='food']/div[@class='indicator_text']"
-
+        # Get oxygen balance
         oxy_element = driver.find_element(By.XPATH, oxy_xpath)
         oxy_balance = oxy_element.text if oxy_element else "N/A"
 
+        # Get food balance
         food_element = driver.find_element(By.XPATH, food_xpath)
         food_balance = food_element.text if food_element else "N/A"
 
         output(f"Step {step} - {balance_text} Oxygen: {oxy_balance}, Food: {food_balance}", priority)
 
-        # Boost et mises à niveau
+        # Rest of your code...
         boost_xpath = "(//div[@class='menu_item' and @data='boosts']/div[@class='menu_icon icon_boosts'])[1]"
+        # Wait for the boost button to be clickable
         boost_element = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, boost_xpath))
         )
 
+        # Use ActionChains to click the boost button
         actions = ActionChains(driver)
         actions.move_to_element(boost_element).click().perform()
 
+        # XPath for upgrade costs
         cost_oxy_xpath = "//span[@class='upgrade_price oxy_upgrade']"
         cost_food_xpath = "//span[@class='upgrade_price' and not(contains(@class, 'oxy_upgrade'))]"
 
+        # Wait for the element to be visible
         WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, cost_oxy_xpath)))
 
+        # Get initial upgrade costs as strings
         initial_cost_oxy = driver.find_element(By.XPATH, cost_oxy_xpath).text
         initial_cost_food = driver.find_element(By.XPATH, cost_food_xpath).text
 
         print(f"Initial Oxygen upgrade cost: {initial_cost_oxy}")
         print(f"Initial Food upgrade cost: {initial_cost_food}")
 
+        # Click oxygen upgrade button
         click_oxy_xpath = "//div[@class='upgrade_btn' and @data='oxy'][1]"
         oxy_upgrade_element = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, click_oxy_xpath))
         )
         actions.move_to_element(oxy_upgrade_element).click().perform()
 
+        # Check if oxygen upgrade cost has changed
         new_cost_oxy = driver.find_element(By.XPATH, cost_oxy_xpath).text
         oxy_upgrade_success = "Success" if new_cost_oxy != initial_cost_oxy else "Failed"
         print(f"Oxygen upgrade: {oxy_upgrade_success}")
 
+        # Click food upgrade button
         click_food_xpath = "//div[@class='upgrade_btn' and @data='food'][1]"
         food_upgrade_element = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, click_food_xpath))
         )
         actions.move_to_element(food_upgrade_element).click().perform()
 
+        # Check if food upgrade cost has changed
         new_cost_food = driver.find_element(By.XPATH, cost_food_xpath).text
         food_upgrade_success = "Success" if new_cost_food != initial_cost_food else "Failed"
         print(f"Food upgrade: {food_upgrade_success}")
@@ -853,9 +874,10 @@ def get_balance(claimed=False):
     except Exception as e:
         output(f"Step {step} - An error occurred: {str(e)}", priority)
 
+    # Increment step function, assumed to handle next step logic
     increase_step()
-    return None  # Return None if there was an error
 
+    return None  # Return None if there was an error
 
 result = get_balance(claimed=False)
 if result:
