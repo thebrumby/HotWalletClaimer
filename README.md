@@ -5,7 +5,7 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
-- **Thanks to @jbr1989 & the Return of BNB-Mine Cold!**: Coding updates and the reintroduction of Mine Cold. [read more](https://www.patreon.com/posts/unveiling-new-to-107090895?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **Thanks to @jbr1989 & BNB-Mine Cold!**: Coding updates and the reintroduction of Mine Cold. [read more](https://www.patreon.com/posts/unveiling-new-to-107090895?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Hold Wallet - Diamond Hands joins the party**: A new mining-based game on the BNB network. [read more](https://www.patreon.com/posts/hold-wallet-106884224?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Proxy Issues and Hello LumCity**: Teething trouble for the new proxy and introducing LumCity. [read more](https://www.patreon.com/posts/addressing-proxy-106735342?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
