@@ -177,7 +177,6 @@ class TimeFarmClaimer(Claimer):
                 
                 # Convert to minutes
                 wait_time_in_minutes = self.extract_time(pot_full_value)
-                self.output (f"Step {self.step} - The remaining minutes in the wait timer were {wait_time_in_minutes}",3)
                 return wait_time_in_minutes
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
