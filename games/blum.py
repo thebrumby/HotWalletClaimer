@@ -39,7 +39,7 @@ class BlumClaimer(Claimer):
         self.pot_full = "Filled"
         self.pot_filling = "to fill"
         self.seed_phrase = None
-        self.forceLocalProxy = False
+        self.forceLocalProxy = True
         self.forceRequestUserAgent = False
 
         super().__init__()
