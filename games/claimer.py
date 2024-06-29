@@ -95,7 +95,6 @@ class Claimer():
         # Define our base path for debugging screenshots
         self.screenshot_base = os.path.join(self.screenshots_path, "screenshot")
 
-
         if self.settings["useProxy"] and self.settings["proxyAddress"] == "http://127.0.0.1:8080":
             self.run_http_proxy()
         elif self.forceLocalProxy:
@@ -223,7 +222,7 @@ class Claimer():
             json.dump(self.settings, f)
         self.output("Settings saved successfully.", 3)
 
-    def output(self, string, level):
+    def output(self, string, level=2):
         if self.settings['verboseLevel'] >= level:
             print(string)
 
@@ -350,7 +349,20 @@ class Claimer():
         user_agent = input("Please enter the User-Agent string you wish to use: ").strip()
         return user_agent
 
-    
+    def set_cookies(self):
+        if not (self.forceRequestUserAgent or self.settings["requestUserAgent"]):
+            cookies_path = f"{self.session_path}/cookies.json"
+            cookies = self.driver.get_cookies()
+            with open(cookies_path, 'w') as file:
+                json.dump(cookies, file)
+        else:
+            user_agent = self.prompt_user_agent()
+            cookies_path = f"{self.session_path}/cookies.json"
+            cookies = self.driver.get_cookies()
+            cookies.append({"name": "user_agent", "value": user_agent})  # Save user agent to cookies
+            with open(cookies_path, 'w') as file:
+                json.dump(cookies, file)
+
     def setup_driver(self):
         chrome_options = Options()
         chrome_options.add_argument(f"user-data-dir={self.session_path}")
@@ -667,7 +679,7 @@ class Claimer():
             self.move_and_click(xpath, 8, True, "check for 'STORAGE_OFFLINE'", self.step, "visible")
             if self.target_element:
                 self.output(f"Step {self.step} - ***Progress is blocked by a 'STORAGE_OFFLINE' button",1)
-                self.output(f"Step {self.step} - If you are re-using an old Wallet session; try to delete or create a new session.",1)
+                self.output(f"Step {self.step} - If you are re-usi,ng an old Wallet session; try to delete or create a new session.",1)
                 found_error = True
             # Check for flood wait
             xpath = "//button[contains(text(), 'FLOOD_WAIT')]"
@@ -739,7 +751,6 @@ class Claimer():
             if self.settings['debugIsOn']:
                 screenshot_path = f"{self.screenshots_path}/Step {self.step} - error_Something_Bad_Occurred.png"
                 self.driver.save_screenshot(screenshot_path)
-
 
     def next_steps(self):
         # Must OVERRIDE this function in the child class

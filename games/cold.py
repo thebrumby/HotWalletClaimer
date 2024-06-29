@@ -62,18 +62,7 @@ class ColdClaimer(Claimer):
             self.driver.execute_script("arguments[0].click();", self.target_element)
             self.increase_step()
 
-            if not (self.forceRequestUserAgent or self.settings["requestUserAgent"]):
-                cookies_path = f"{self.session_path}/cookies.json"
-                cookies = self.driver.get_cookies()
-                with open(cookies_path, 'w') as file:
-                    json.dump(cookies, file)
-            else:
-                user_agent = self.prompt_user_agent()
-                cookies_path = f"{self.session_path}/cookies.json"
-                cookies = self.driver.get_cookies()
-                cookies.append({"name": "user_agent", "value": user_agent})  # Save user agent to cookies
-                with open(cookies_path, 'w') as file:
-                    json.dump(cookies, file)
+            self.set_cookies()
 
         except TimeoutException:
             self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.",1)

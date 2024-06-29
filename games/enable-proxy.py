@@ -44,14 +44,6 @@ def request(flow: http.HTTPFlow) -> None:
     # Log the original User-Agent header
     original_user_agent = flow.request.headers.get('User-Agent', 'No User-Agent header')
     print(f"Original User-Agent: {original_user_agent}")
-    
-    # Check if the response object is not None before accessing its headers
-    if flow.response and ('cf-cache-status' in flow.response.headers or 'cloudflare' in flow.response.headers.get('server', '').lower()):
-        # Modify User-Agent header
-        flow.request.headers['User-Agent'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1'
-        print("Modified User-Agent for Cloudflare-protected site")
-    else:
-        print("Request not modified for Cloudflare-protected site")
 
     # Log the modified headers
     print(f"Modified Request Headers: {flow.request.headers}")
@@ -66,8 +58,15 @@ def response(flow: http.HTTPFlow) -> None:
     # Modify script to replace tgWebAppPlatform
     if flow.response.content:
         content = flow.response.content.decode('utf-8')
-        content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=iOS')
-        content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=iOS')
+        user_agent = flow.request.headers.get('User-Agent', '')
+        
+        if any(keyword in user_agent for keyword in ['iPhone', 'iPad']):
+            content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=iOS')
+            content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=iOS')
+        elif 'Android' in user_agent:
+            content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=android')
+            content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=android')
+
         flow.response.content = content.encode('utf-8')
 
     # Log the modified response headers
