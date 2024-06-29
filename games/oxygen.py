@@ -667,7 +667,14 @@ def launch_iframe():
     button = move_and_click(xpath, 8, False, "click the 'Launch' button (may not be present)", step, "visible")
     if button:
         button.click()
-    increase_step()
+        increase_step()
+
+    # or optional "Play" Button
+    xpath = "//button[contains(@class, 'reply-markup-button-text') and contains(., 'Play')]"
+    button = move_and_click(xpath, 8, False, "click the 'Launch' button (may not be present)", step, "visible")
+    if button:
+        button.click()
+        increase_step()
 
     # HereWalletBot Pop-up Handling
     select_iframe(step)
