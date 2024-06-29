@@ -724,8 +724,7 @@ def full_claim():
 
         if wait_time_text == "Filled" or settings['forceClaim']:
             try:
-                xpath = "//div[@class='farm_btn']"
-                button = move_and_click(xpath, 10, True, "click the 'Claim' button", step, "clickable")
+                click_claim_button(driver)
                 increase_step()
 
                 # Now let's give the site a few seconds to update.
@@ -784,6 +783,62 @@ def full_claim():
     except Exception as e:
         output(f"Step {step} - An unexpected error occurred: {e}", 1)
         return 60  # Default wait time in case of an unexpected error
+    
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+from selenium.webdriver.common.action_chains import ActionChains
+
+def click_claim_button(driver, max_attempts=5, wait_time=10, timeout=10):
+    xpath = "//div[@class='farm_btn']"
+    for attempt in range(1, max_attempts + 1):
+        try:
+            # Wait for the button to be present
+            button = WebDriverWait(driver, timeout).until(
+                EC.presence_of_element_located((By.XPATH, xpath))
+            )
+            
+            # Scroll the button into view
+            driver.execute_script("arguments[0].scrollIntoView(true);", button)
+            
+            # Wait a bit for any animations to complete
+            time.sleep(1)
+            
+            # Try to click using JavaScript
+            try:
+                driver.execute_script("arguments[0].click();", button)
+            except Exception:
+                # If JavaScript click fails, try ActionChains
+                ActionChains(driver).move_to_element(button).click().perform()
+            
+            increase_step()
+            
+            output(f"Step {step} - Clicked 'Claim' button (Attempt {attempt}). Waiting {wait_time} seconds...", 3)
+            time.sleep(wait_time)
+            
+            # Check if the button is still present
+            try:
+                driver.find_element(By.XPATH, xpath)
+            except NoSuchElementException:
+                output(f"Button XPath changed after {attempt} clicks. Stopping.", 3)
+                break
+                
+        except TimeoutException:
+            output(f"Button not found after {timeout} seconds on attempt {attempt}. Stopping.", 2)
+            break
+        except ElementClickInterceptedException:
+            output(f"Button click was intercepted on attempt {attempt}. Trying again.", 2)
+            continue
+        except Exception as e:
+            output(f"Error on attempt {attempt}: {str(e)}", 2)
+            break
+
+# Usage
+# Assuming 'driver' is your Selenium WebDriver instance
+# click_claim_button(driver)
+
 
 def get_balance(claimed=False):
     global step
