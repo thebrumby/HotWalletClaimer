@@ -68,60 +68,6 @@ class SeedClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}",1)
 
-    def launch_iframe(self):
-
-        self.driver = self.get_driver()
-
-        try:
-            self.driver.get(self.url)
-            WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            self.output(f"Step {self.step} - Attempting to verify if we are logged in (hopefully QR code is not present).",3)
-            xpath = "//canvas[@class='qr-canvas']"
-            wait = WebDriverWait(self.driver, 5)
-            wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-            if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/Step {self.step} - Test QR code after session is resumed.png"
-                self.driver.save_screenshot(screenshot_path)
-            self.output(f"Step {self.step} - Chrome driver reports the QR code is visible: It appears we are no longer logged in.",2)
-            self.output(f"Step {self.step} - Most likely you will get a warning that the central input box is not found.",2)
-            self.output(f"Step {self.step} - System will try to restore session, or restart the script from CLI force a fresh log in.\n",2)
-
-        except TimeoutException:
-            self.output(f"Step {self.step} - nothing found to action. The QR code test passed.\n",3)
-        self.increase_step()
-
-        self.driver.get(self.url)
-        WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-
-        # There is a very unlikely scenario that the chat might have been cleared.
-        # In this case, the "START" button needs pressing to expose the chat window!
-        xpath = "//button[contains(., 'START')]"
-        button = self.move_and_click(xpath, 8, False, "check for the start button (should not be present)", self.step, "visible")
-        if button:
-            button.click()
-        self.increase_step()
-
-
-        # New link logic to avoid finding and expired link
-        if self.find_working_link(self.step):
-            self.increase_step()
-        else:
-            self.send_start(self.step)
-            self.increase_step()
-            self.find_working_link(self.step)
-            self.increase_step()
-
-        # Now let's move to and JS click the "Launch" Button
-        xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Launch' button (may not be present)", self.step, "visible")
-        if button:
-            button.click()
-        self.increase_step()
-
-        # HereWalletBot Pop-up Handling
-        self.select_iframe(self.step)
-        self.increase_step()
-
     def full_claim(self):
         self.step = "100"
 
