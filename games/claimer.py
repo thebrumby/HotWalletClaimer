@@ -27,9 +27,9 @@ from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
 class Claimer():
-
     settings_file = "variables.txt"
     status_file_path = "status.txt"
+    start_app_xpath = None
     settings = {}
     driver = None
     target_element = None
@@ -346,7 +346,8 @@ class Claimer():
         return self.prefix+user_input
 
     def prompt_user_agent(self):
-        user_agent = input("Please enter the User-Agent string you wish to use: ").strip()
+        print (f"Step {self.step} - Please enter the User-Agent string you wish to use or press enter for default.")
+        user_agent = input(f"Step {self.step} - User-Agent: ").strip()
         return user_agent
 
     def set_cookies(self):
@@ -789,6 +790,7 @@ class Claimer():
         self.increase_step()
 
         # New link logic to avoid finding an expired link
+        self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//a[contains(@href, 'https://t.me/HexacoinBot/wallet?startapp=play')]"
         if self.find_working_link(self.step):
             self.increase_step()
         else:
@@ -1102,6 +1104,56 @@ class Claimer():
                         for log in logs:
                             f.write(f"{log['level']}: {log['message']}\n")
             return "Unknown"
+
+    def find_working_link(self, old_step):
+        self.output(f"Step {self.step} - Attempting to open a link for the app...", 2)
+
+        start_app_xpath = self.start_app_xpath
+
+        try:
+            start_app_buttons = WebDriverWait(self.driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
+            clicked = False
+
+            for button in reversed(start_app_buttons):
+                actions = ActionChains(self.driver)
+                actions.move_to_element(button).pause(0.2)
+                try:
+                    if self.settings['debugIsOn']:
+                        self.driver.save_screenshot(f"{self.screenshots_path}/{self.step} - Find working link.png")
+                    actions.perform()
+                    self.driver.execute_script("arguments[0].click();", button)
+                    clicked = True
+                    break
+                except StaleElementReferenceException:
+                    continue
+                except ElementClickInterceptedException:
+                    continue
+
+            if not clicked:
+                self.output(f"Step {self.step} - None of the 'Open Wallet' buttons were clickable.\n", 1)
+                if self.settings['debugIsOn']:
+                    screenshot_path = f"{self.screenshots_path}/{self.step}-no-clickable-button.png"
+                    self.driver.save_screenshot(screenshot_path)
+                return False
+            else:
+                self.output(f"Step {self.step} - Successfully able to open a link for the app..\n", 3)
+                if self.settings['debugIsOn']:
+                    screenshot_path = f"{self.screenshots_path}/{self.step}-app-opened.png"
+                    self.driver.save_screenshot(screenshot_path)
+                return True
+
+        except TimeoutException:
+            self.output(f"Step {self.step} - Failed to find the 'Open Wallet' button within the expected timeframe.\n", 1)
+            if self.settings['debugIsOn']:
+                screenshot_path = f"{self.screenshots_path}/{self.step}-timeout-finding-button.png"
+                self.driver.save_screenshot(screenshot_path)
+            return False
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred while trying to open the app: {e}\n", 1)
+            if self.settings['debugIsOn']:
+                screenshot_path = f"{self.screenshots_path}/{self.step}-unexpected-error-opening-app.png"
+                self.driver.save_screenshot(screenshot_path)
+            return False
 
     def validate_seed_phrase(self):
         # Let's take the user inputed seed phrase and carry out basic validation
