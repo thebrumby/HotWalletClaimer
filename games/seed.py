@@ -80,32 +80,25 @@ class SeedClaimer(Claimer):
             
         self.launch_iframe()
 
-        xpath = "//button[contains(text(), 'Claim')]"
-        self.move_and_click(xpath, 20, True, "check for Mystery Box (may not be present)", self.step, "clickable")
+        interactions = [
+            ("//button[contains(text(), 'Claim')]", "check for Mystery Box"),
+            ("//div[contains(text(), 'Tap 10')]", "check if tree tap blocking game"),
+            ("//button[contains(text(), 'CHECK NEWS')]", "check for NEWS"),
+            ("//img[contains(@src,'inventory/worm')]", "check for WORM"),
+            ("//button[.//p[contains(text(), 'Sell now')]]", "check for SELL NOW"),# Delete this if you want keep worm  or add #  at the begining of the line.
+            ("//button[.//img[contains(@src, 'daily')]]", "check for DAILY BONUS"),
+            ("//button[count(.//img) = 1 and .//img[contains(@src, 'daily/')]]", "get DAILY BONUS"),
+            ("//button[contains(text(), 'Got it')]", "exit DAILY BONUS")
+        ]
 
-        xpath = "//div[contains(text(), 'Tap 10')]"    
-        self.move_and_click(xpath, 10, True, "check if tree tap blocking game (may not be present)", self.step, "clickable")
-        self.increase_step()
+        DEFAULT_TIMEOUT = 15
 
-        xpath = "//button[contains(text(), 'CHECK NEWS')]"
-        self.move_and_click(xpath, 20, True, "check for NEWS (may not be present)", self.step, "clickable")
-        
-        # GET WORM
-        xpath = "//img[contains(@src,'inventory/worm')]"
-        self.move_and_click(xpath, 20, True, "check for WORM (may not be present)", self.step, "clickable")
-
-        xpath = "//button[.//p[contains(text(), 'Sell now')]]"
-        self.move_and_click(xpath, 20, True, "sell WORM (may not be present)", self.step, "clickable")
-        
-        # GET DAILY BONUS
-        xpath = "//button[.//img[contains(@src, 'daily')]]"
-        self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
-
-        xpath = "//button[count(.//img) = 1 and .//img[contains(@src, 'daily/')]]"
-        self.move_and_click(xpath, 20, True, "get DAILY BONUS (may not be present)", self.step, "clickable")
-
-        xpath = "//button[contains(text(), 'Got it')]"
-        self.move_and_click(xpath, 20, True, "exit DAILY BONUS (may not be present)", self.step, "clickable")
+        for xpath, description in interactions:
+            message = f"{description} (may not be present)"
+            if self.move_and_click(xpath, DEFAULT_TIMEOUT, True, message, self.step, "clickable"):
+                if "tree tap" in description:
+                    self.increase_step()
+                break  # Exit the loop after a successful click
 
         self.get_balance(False)
 
