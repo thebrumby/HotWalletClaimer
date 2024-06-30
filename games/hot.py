@@ -37,7 +37,7 @@ class HotClaimer(Claimer):
         self.url = "https://web.telegram.org/k/#@herewalletbot"
         self.pot_full = "Filled"
         self.pot_filling = "to fill"
-        self.seed_phrase = True
+        self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.step = "01"
