@@ -1086,10 +1086,22 @@ class Claimer():
             except Exception as e:
                 self.output(f"An error occurred: {e}", 3)
                 if self.settings['debugIsOn']:
+                    # Take a screenshot on error
                     screenshot_path = f"{self.screenshots_path}/{self.step}_monitor_element_error.png"
                     self.driver.save_screenshot(screenshot_path)
                     self.output(f"Screenshot saved to {screenshot_path}", 3)
-        return "Unknown"
+                
+                    # Save the HTML page source on error
+                    page_source = self.driver.page_source
+                    with open(f"{self.screenshots_path}/{self.step}_page_source.html", "w", encoding="utf-8") as f:
+                        f.write(page_source)
+                
+                    # Save browser console logs on error
+                    logs = self.driver.get_log("browser")
+                    with open(f"{self.screenshots_path}/{self.step}_browser_console_logs.txt", "w", encoding="utf-8") as f:
+                        for log in logs:
+                            f.write(f"{log['level']}: {log['message']}\n")
+            return "Unknown"
 
     def validate_seed_phrase(self):
         # Let's take the user inputed seed phrase and carry out basic validation

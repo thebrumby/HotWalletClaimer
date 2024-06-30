@@ -191,20 +191,19 @@ class HotClaimer(Claimer):
 
         priority = max(self.settings['verboseLevel'], default_priority)
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//p[contains(text(), 'HOT Balance:')]/following-sibling::p[1]"
+        balance_xpath = f"//p[contains(text(), 'HOT')]/following-sibling::img/following-sibling::p"
 
         try:
-            element = WebDriverWait(self.driver, 10).until(
-                EC.visibility_of_element_located((By.XPATH, balance_xpath))
-            )
+            element = self.monitor_element(balance_xpath)
             if element:
-                balance_part = element.text.strip()
+                balance_part = element # .text.strip()
                 self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
 
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
+        
         self.increase_step()
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=2):
