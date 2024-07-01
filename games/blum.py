@@ -88,6 +88,10 @@ class BlumClaimer(Claimer):
             self.move_and_click(xpath, 10, True, "click continue", self.step, "clickable")
             self.increase_step()
 
+        xpath = "//button[.//div[text()='Continue']]"
+        self.move_and_click(xpath, 10, True, "click continue", self.step, "clickable")
+        self.increase_step()
+
         xpath = "//div[@class='farming-buttons-wrapper']//button"
         self.move_and_click(xpath, 10, True, "click the 'Start farming' button (may already be running)", self.step, "clickable")
         # self.click_element(xpath)
