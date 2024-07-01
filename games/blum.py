@@ -202,13 +202,13 @@ class BlumClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - First check if the time is still elapsing...", 3)
                 xpath = "//div[@class='time-left']"
-                wait_time_value = self.monitor_element(xpath, 10)
+                wait_time_value = self.monitor_element(xpath, 15)
                 if wait_time_value != "Unknown":
                     return wait_time_value
 
                 self.output(f"Step {self.step} - Then check if the pot is full...", 3)
                 xpath = "//button[.//div[contains(text(), 'Claim')]]"
-                pot_full_value = self.monitor_element(xpath, 10)
+                pot_full_value = self.monitor_element(xpath, 15)
                 if pot_full_value != "Unknown":
                     return self.pot_full
                 return "Unknown"
