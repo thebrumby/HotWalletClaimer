@@ -86,10 +86,11 @@ class BlumClaimer(Claimer):
             reward_text = f"Daily rewards: {points} points & {days} days."
             xpath = "//button[.//div[text()='Continue']]"
             self.move_and_click(xpath, 10, True, "click continue", self.step, "clickable")
+            self.increase_step()
 
         xpath = "//div[@class='farming-buttons-wrapper']//button"
-        self.move_and_click(xpath, 10, False, "click the 'Start farming' button (may already be running)", self.step, "clickable")
-        self.click_element(xpath)
+        self.move_and_click(xpath, 10, True, "click the 'Start farming' button (may already be running)", self.step, "clickable")
+        # self.click_element(xpath)
         self.increase_step()
 
         self.get_balance(False)
@@ -116,14 +117,14 @@ class BlumClaimer(Claimer):
             if wait_time_text == self.pot_full or self.settings['forceClaim']:
                 try:
                     xpath = "//button[.//div[contains(text(), 'Claim')]]"
-                    self.move_and_click(xpath, 10, False, "click the 'Launch' button", self.step, "clickable")
-                    self.click_element(xpath)
+                    self.move_and_click(xpath, 10, True, "click the 'Launch' button", self.step, "clickable")
+                    # self.click_element(xpath)
 
                     time.sleep(5)
 
                     xpath = "//div[@class='farming-buttons-wrapper']//button"
-                    self.move_and_click(xpath, 10, False, "click the 'Start farming' button", self.step, "clickable")
-                    self.click_element(xpath)
+                    self.move_and_click(xpath, 10, True, "click the 'Start farming' button", self.step, "clickable")
+                    # self.click_element(xpath)
 
                     self.output(f"Step {self.step} - Waiting 10 seconds for the totals and timer to update...", 3) 
                     time.sleep(10)
