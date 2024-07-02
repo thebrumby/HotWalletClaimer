@@ -85,7 +85,7 @@ class BlumClaimer(Claimer):
             points = self.move_and_click(xpath, 10, False, "get daily points", self.step, "visible")
             xpath = "(//div[@class='count'])[2]"
             days = self.move_and_click(xpath, 10, False, "get consecutive days played", self.step, "visible")
-            reward_text = f"Daily rewards: {points} points & {days} days."
+            reward_text = f"Daily rewards: {points.text} points & {days.text} days."
             xpath = "//button[.//div[text()='Continue']]"
             self.move_and_click(xpath, 10, True, "click continue", self.step, "clickable")
             self.increase_step()
