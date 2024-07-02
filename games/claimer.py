@@ -954,7 +954,7 @@ class Claimer():
                     self.clear_overlays(target_element, self.step)
 
                 if click:
-                    if self.click_element(xpath, action_description):
+                    if self.click_element(xpath, action_description=action_description):
                         self.output(f"Step {self.step} - Successfully clicked {action_description}.", 3)
                         return target_element
                 else:

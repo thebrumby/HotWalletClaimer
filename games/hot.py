@@ -97,7 +97,8 @@ class HotClaimer(Claimer):
         self.launch_iframe()
 
         xpath = "//h4[text()='Storage']"
-        self.move_and_click(xpath, 30, True, "click the 'storage' link", self.step, "clickable")
+        self.move_and_click(xpath, 20, True, "click the 'storage' link", self.step, "clickable")
+
         self.increase_step()
 
         self.get_balance(False)
