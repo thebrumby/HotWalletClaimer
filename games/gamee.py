@@ -26,7 +26,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 from claimer import Claimer
 
-class ColdClaimer(Claimer):
+class GameeClaimer(Claimer):
 
     def __init__(self):
 
@@ -179,7 +179,7 @@ class ColdClaimer(Claimer):
             return 60
 
 def main():
-    claimer = ColdClaimer()
+    claimer = GameeClaimer()
     claimer.run()
 
 if __name__ == "__main__":
