@@ -76,6 +76,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh lumcity-autoupgrade` | Launch Lum City on Telegram: [@LumCity_bot](https://web.telegram.org/k/#@LumCity_bot) | ✅     | ✅     |
 | `./launch.sh diamond` | Launch Diamond Hands on Telegram: [@holdwallet_bot](https://web.telegram.org/k/#@holdwallet_bot) | ✅     | ✅     |
 | `./launch.sh cold` | Launch Cold on Telegram: [@Newcoldwallet_bot](https://web.telegram.org/k/#@Newcoldwallet_bot) | ✅     | ✅     |
+| `./launch.sh gamee` | Launch Gamee on Telegram: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458) | ✅     | ✅     |
 
 
 💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
