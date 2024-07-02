@@ -790,7 +790,6 @@ class Claimer():
         self.increase_step()
 
         # New link logic to avoid finding an expired link
-        self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//a[contains(@href, 'https://t.me/HexacoinBot/wallet?startapp=play')]"
         if self.find_working_link(self.step):
             self.increase_step()
         else:
@@ -809,6 +808,7 @@ class Claimer():
         # HereWalletBot Pop-up Handling
         self.select_iframe(self.step)
         self.increase_step()
+
 
     def full_claim(self):
         # Must OVERRIDE this function in the child class
@@ -902,23 +902,19 @@ class Claimer():
         def timer():
             return random.randint(1, 3) / 10
 
-        def offset():
-            return random.randint(1, 5)
-
-        self.output(f"Step {self.step} - Attempting to {action_description}...", 2)
+        self.output(f"Step {self.step} - Attempting to {action_description}... [{xpath}]", 2)
 
         wait = WebDriverWait(self.driver, wait_time)
         target_element = None
         for attempt in range(5):  # Retry loop for handling StaleElementReferenceException
             try:
-                # Check and prepare the element based on the expected condition
                 if expectedCondition == "visible":
                     target_element = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
                 elif expectedCondition == "present":
                     target_element = wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
                 elif expectedCondition == "invisible":
                     wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
-                    return None  # Early return as there's no element to interact with
+                    return None
                 elif expectedCondition == "clickable":
                     target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
 
@@ -926,11 +922,9 @@ class Claimer():
                     self.output(f"Step {self.step} - The element was not found for {action_description}.", 2)
                     return None
 
-                # Use ActionChains to move to the element
                 actions = ActionChains(self.driver)
                 actions.move_to_element(target_element).pause(timer()).perform()
 
-                # Enhanced scrolling: Scroll the element into view using JavaScript with an offset
                 self.driver.execute_script("""
                     var elem = arguments[0];
                     var rect = elem.getBoundingClientRect();
@@ -945,60 +939,45 @@ class Claimer():
                     }
                 """, target_element)
 
-                # Check if the element is within the viewport
                 is_in_viewport = self.driver.execute_script("""
                     var elem = arguments[0], box = elem.getBoundingClientRect();
                     return (box.top >= 0 && box.left >= 0 &&
                             box.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
                             box.right <= (window.innerWidth || document.documentElement.clientWidth));
                 """, target_element)
-            
+
                 if not is_in_viewport:
                     self.output(f"Step {self.step} - Element still out of bounds after moving with ActionChains and JavaScript scrolling.", 2)
-                    continue  # Retry if the element is not in the viewport
+                    continue
 
-                # Before interacting, check for and remove overlays if click is needed or visibility is essential
                 if click or expectedCondition in ["visible", "clickable"]:
                     self.clear_overlays(target_element, self.step)
 
-                # Perform actions if the element is found and clicking is requested
-                if target_element:
-                    if click:
-                        actions.move_to_element(target_element).click().perform()
-                        self.output(f"Step {self.step} - Successfully clicked {action_description} using ActionChains.", 3)
-                return target_element
+                if click:
+                    if self.click_element(xpath, action_description):
+                        self.output(f"Step {self.step} - Successfully clicked {action_description}.", 3)
+                        return target_element
+                else:
+                    return target_element
+
             except StaleElementReferenceException:
                 self.output(f"Step {self.step} - StaleElementReferenceException caught, retrying attempt {attempt + 1} for {action_description}.", 2)
             except TimeoutException:
                 self.output(f"Step {self.step} - Timeout while trying to {action_description}.", 3)
-                if self.settings['debugIsOn']:
-                    page_source = self.driver.page_source
-                    with open(f"{self.screenshots_path}/{self.step}_page_source.html", "w", encoding="utf-8") as f:
-                        f.write(page_source)
-                    logs = self.driver.get_log("browser")
-                    with open(f"{self.screenshots_path}/{self.step}_browser_console_logs.txt", "w", encoding="utf-8") as f:
-                        for log in logs:
-                            f.write(f"{log['level']}: {log['message']}\n")
+                self.debug_information(action_description)
                 break
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred while trying to {action_description}: {e}", 1)
-                if self.settings['debugIsOn']:
-                    screenshot_path = f"{self.screenshots_path}/{self.step}_move_and_click_error.png"
-                    self.driver.save_screenshot(screenshot_path)
-                    self.output(f"Screenshot saved to {screenshot_path}", 3)
+                self.debug_information(action_description)
                 break
-        if self.settings['debugIsOn']:
-            time.sleep(5)
-            screenshot_path = f"{self.screenshots_path}/{self.step}-{action_description}.png"
-            self.driver.save_screenshot(screenshot_path)
+
         return target_element
 
-    def click_element(self, xpath, timeout=30):
+    def click_element(self, xpath, timeout=30, action_description=""):
         end_time = time.time() + timeout
         while time.time() < end_time:
             try:
                 element = self.driver.find_element(By.XPATH, xpath)
-                # Ensure the element is in the viewport using ActionChains and JavaScript scrolling
                 actions = ActionChains(self.driver)
                 actions.move_to_element(element).perform()
 
@@ -1016,16 +995,13 @@ class Claimer():
                     }
                 """, element)
 
-                # Clear any potential overlays before attempting to click
                 overlays_cleared = self.clear_overlays(element, self.step)
                 if overlays_cleared > 0:
                     self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s), retrying click...", 3)
 
-                # Attempt to click the element
                 actions.click(element).perform()
-                return True  # Success on clicking the element
+                return True
             except ElementClickInterceptedException as e:
-                # If still intercepted, try to hide the intercepting element directly
                 intercepting_element = self.driver.execute_script(
                     "var elem = arguments[0];"
                     "var rect = elem.getBoundingClientRect();"
@@ -1036,30 +1012,26 @@ class Claimer():
                     self.driver.execute_script("arguments[0].style.display = 'none';", intercepting_element)
                     self.output(f"Step {self.step} - Intercepting element hidden, retrying click...", 3)
             except UnexpectedAlertPresentException:
-                # Handle unexpected alert during the click
                 alert = self.driver.switch_to.alert
-                alert_text = alert.text
-                alert.accept()  # Accept the alert or modify if you need to dismiss or interact differently
-                self.output(f"Step {self.step} - Unexpected alert handled: {alert_text}", 3)
+                alert.accept()
+                self.output(f"Step {self.step} - Unexpected alert handled.", 3)
             except (StaleElementReferenceException, NoSuchElementException):
-                pass  # Element not found or stale, try again
+                pass
             except TimeoutException:
                 self.output(f"Step {self.step} - Click timed out.", 2)
-                break  # Exit loop if timed out
+                break
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred: {e}", 3)
-                break  # Exit loop on unexpected error
-        return False  # Return False if the element could not be clicked
+                break
+        return False
 
     def clear_overlays(self, target_element, step):
         try:
-            # Get the location of the target element
             element_location = target_element.location_once_scrolled_into_view
             overlays = self.driver.find_elements(By.XPATH, "//*[contains(@style,'position: absolute') or contains(@style,'position: fixed')]")
             overlays_cleared = 0
             for overlay in overlays:
                 overlay_rect = overlay.rect
-                # Check if overlay covers the target element
                 if (overlay_rect['x'] <= element_location['x'] <= overlay_rect['x'] + overlay_rect['width'] and
                     overlay_rect['y'] <= element_location['y'] <= overlay_rect['y'] + overlay_rect['height']):
                     self.driver.execute_script("arguments[0].style.display = 'none';", overlay)
@@ -1070,14 +1042,14 @@ class Claimer():
             self.output(f"Step {step} - An error occurred while trying to clear overlays: {e}", 1)
             return 0
 
-    def monitor_element(self, xpath, timeout=8):
+    def monitor_element(self, xpath, timeout=8, action_description=""):
         end_time = time.time() + timeout
         first_time = True
         while time.time() < end_time:
             try:
                 elements = self.driver.find_elements(By.XPATH, xpath)
                 if first_time:
-                    self.output(f"Step {self.step} - Found {len(elements)} elements with XPath: {xpath}", 3)
+                    self.output(f"Step {self.step} - Found {len(elements)} elements with XPath: {xpath} for {action_description}", 3)
                     first_time = False
 
                 texts = [element.text.replace('\n', ' ').replace('\r', ' ').strip() for element in elements if element.text.strip()]
@@ -1088,47 +1060,70 @@ class Claimer():
             except Exception as e:
                 self.output(f"An error occurred: {e}", 3)
                 if self.settings['debugIsOn']:
-                    # Take a screenshot on error
-                    screenshot_path = f"{self.screenshots_path}/{self.step}_monitor_element_error.png"
-                    self.driver.save_screenshot(screenshot_path)
-                    self.output(f"Screenshot saved to {screenshot_path}", 3)
-                
-                    # Save the HTML page source on error
-                    page_source = self.driver.page_source
-                    with open(f"{self.screenshots_path}/{self.step}_page_source.html", "w", encoding="utf-8") as f:
-                        f.write(page_source)
-                
-                    # Save browser console logs on error
-                    logs = self.driver.get_log("browser")
-                    with open(f"{self.screenshots_path}/{self.step}_browser_console_logs.txt", "w", encoding="utf-8") as f:
-                        for log in logs:
-                            f.write(f"{log['level']}: {log['message']}\n")
-            return "Unknown"
+                    self.debug_information(action_description, "monitor_element_error")
+                return "Unknown"
+        return "Unknown"
+
+    def debug_information(self, action_description, error_type="error"):
+        # Check if "not" is present in the action_description enclosed in brackets
+        if re.search(r'\(.*?not.*?\)', action_description, re.IGNORECASE):
+            # Skip debugging if the condition is met
+            return
+    
+        if self.settings['debugIsOn']:
+            # Take a screenshot on error
+            screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_{error_type}.png"
+            self.driver.save_screenshot(screenshot_path)
+            self.output(f"Screenshot saved to {screenshot_path}", 3)
+
+            # Save the HTML page source on error
+            page_source = self.driver.page_source
+            with open(f"{self.screenshots_path}/{self.step}_{action_description}_page_source.html", "w", encoding="utf-8") as f:
+                f.write(page_source)
+
+            # Save browser console logs on error
+            logs = self.driver.get_log("browser")
+            with open(f"{self.screenshots_path}/{self.step}_{action_description}_browser_console_logs.txt", "w", encoding="utf-8") as f:
+                for log in logs:
+                    f.write(f"{log['level']}: {log['message']}\n")
 
     def find_working_link(self, old_step):
-        self.output(f"Step {self.step} - Attempting to open a link for the app...", 2)
 
         start_app_xpath = self.start_app_xpath
+        self.output(f"Step {self.step} - Attempting to open a link for the app: {start_app_xpath}...", 2)
 
         try:
-            start_app_buttons = WebDriverWait(self.driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
+            # Wait for the presence of all elements located by the specified XPath with extended timeout
+            start_app_buttons = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_all_elements_located((By.XPATH, start_app_xpath))
+            )
             clicked = False
 
+            if not start_app_buttons:
+                self.output(f"Step {self.step} - No buttons found with XPath: {start_app_xpath}\n", 1)
+                if self.settings['debugIsOn']:
+                    screenshot_path = f"{self.screenshots_path}/{self.step}-no-buttons-found.png"
+                    self.driver.save_screenshot(screenshot_path)
+                return False
+
+            # Iterate through the buttons in reverse order
             for button in reversed(start_app_buttons):
                 actions = ActionChains(self.driver)
                 actions.move_to_element(button).pause(0.2)
                 try:
+                    # Save screenshot if debug is on
                     if self.settings['debugIsOn']:
                         self.driver.save_screenshot(f"{self.screenshots_path}/{self.step} - Find working link.png")
+                    # Perform actions and click the button using JavaScript
                     actions.perform()
                     self.driver.execute_script("arguments[0].click();", button)
                     clicked = True
                     break
-                except StaleElementReferenceException:
-                    continue
-                except ElementClickInterceptedException:
+                except (StaleElementReferenceException, ElementClickInterceptedException):
+                    self.output(f"Step {self.step} - Button click intercepted or stale, trying next button.", 2)
                     continue
 
+            # Check if a button was successfully clicked
             if not clicked:
                 self.output(f"Step {self.step} - None of the 'Open Wallet' buttons were clickable.\n", 1)
                 if self.settings['debugIsOn']:

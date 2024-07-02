@@ -44,6 +44,8 @@ class HexacoreAUClaimer(Claimer):
 
         super().__init__()
 
+        self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//a[contains(@href, 'https://t.me/HexacoinBot/wallet?startapp=play')]"
+
     def next_steps(self):
         if self.step:
             pass
@@ -76,7 +78,11 @@ class HexacoreAUClaimer(Claimer):
 
         self.launch_iframe()
 
-        time.sleep(30)
+        xpath="//div[@id='modal-root']//button[contains(@class, 'IconButton_button__')]"
+        self.move_and_click(xpath, 10, True, "remove overlays", self.step, "visible")
+        self.increase_step()
+
+        time.sleep(5)
 
         def get_box_time(step_number="108", beforeAfter="pre-claim", max_attempts=1):
             for attempt in range(1, max_attempts + 1):
@@ -152,7 +158,7 @@ class HexacoreAUClaimer(Claimer):
                 return None 
 
             click_count = 0
-            max_clicks = 1000
+            max_clicks = 500
             start_time = time.time()
 
             while remains > 0 and click_count < max_clicks and (time.time() - start_time) < 3600:
@@ -181,21 +187,16 @@ class HexacoreAUClaimer(Claimer):
         self.get_balance(False)
     
         xpath = "//button[contains(text(), 'Claim') and not(contains(@class, 'disabled'))]"
-        attempts = 1
-        clicked_it = False
         box_exists = self.move_and_click(xpath, 10, False, "check if the lucky box is present...", self.step, "visible")
         if box_exists is not None:
-            while attempts < 5:
-                self.click_element(xpath, 60)
-                time.sleep(5)
-                box_exists = self.move_and_click(xpath, 10, False, "recheck if the box is still there...", self.step, "visible")
-                if box_exists is None:
-                    self.output(f"Step {self.step} - Looks like we claimed the box on attempt {attempts}.", 3)
-                    clicked_it = True
-                    break
-                else:
-                    self.output(f"Step {self.step} - Looks like we failed to claim the box on attempt {attempts}. Trying again...", 3)
-                    attempts += 1 
+            self.output(f"Step {self.step} - It looks like the bonus box exists.", 3)
+            success = self.click_element(xpath, 60)
+            if success:
+                self.output(f"Step {self.step} - Looks like we claimed the box.", 3)
+            else:
+                self.output(f"Step {self.step} - Looks like box claim failed.", 3)
+        else:
+                self.output(f"Step {self.step} - Looks like box was already claimed.", 3)
         self.increase_step()
 
         box_time_text = get_box_time(self.step)

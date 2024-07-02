@@ -45,6 +45,8 @@ class HotClaimer(Claimer):
 
         super().__init__()
 
+        self.start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
+
     def next_steps(self):
         try:
             self.launch_iframe()
@@ -232,55 +234,6 @@ class HotClaimer(Claimer):
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
 
         return "Unknown"
-
-    def find_working_link(self, old_step):
-        self.output(f"Step {self.step} - Attempting to open a link for the app...", 2)
-
-        start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
-        try:
-            start_app_buttons = WebDriverWait(self.driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
-            clicked = False
-
-            for button in reversed(start_app_buttons):
-                actions = ActionChains(self.driver)
-                actions.move_to_element(button).pause(0.2)
-                try:
-                    if self.settings['debugIsOn']:
-                        self.driver.save_screenshot(f"{self.screenshots_path}/{self.step} - Find working link.png".format(self.screenshots_path))
-                    actions.perform()
-                    self.driver.execute_script("arguments[0].click();", button)
-                    clicked = True
-                    break
-                except StaleElementReferenceException:
-                    continue
-                except ElementClickInterceptedException:
-                    continue
-
-            if not clicked:
-                self.output(f"Step {self.step} - None of the 'Open Wallet' buttons were clickable.\n", 1)
-                if self.settings['debugIsOn']:
-                    screenshot_path = f"{self.screenshots_path}/{self.step}-no-clickable-button.png"
-                    self.driver.save_screenshot(screenshot_path)
-                return False
-            else:
-                self.output(f"Step {self.step} - Successfully able to open a link for the app..\n", 3)
-                if self.settings['debugIsOn']:
-                    screenshot_path = f"{self.screenshots_path}/{self.step}-app-opened.png"
-                    self.driver.save_screenshot(screenshot_path)
-                return True
-
-        except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find the 'Open Wallet' button within the expected timeframe.\n", 1)
-            if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/{self.step}-timeout-finding-button.png"
-                self.driver.save_screenshot(screenshot_path)
-            return False
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred while trying to open the app: {e}\n", 1)
-            if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/{self.step}-unexpected-error-opening-app.png"
-                self.driver.save_screenshot(screenshot_path)
-            return False
 
 def main():
     claimer = HotClaimer()
