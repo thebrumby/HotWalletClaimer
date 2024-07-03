@@ -207,7 +207,7 @@ class SeedClaimer(Claimer):
         # Increment step function, assumed to handle next step logic
         self.increase_step()
 
-    def click_element(self, xpath, timeout=30):
+    def click_element(self, xpath, timeout=30, action_description=""):
         self.move_and_click(xpath, 8, False, f"move to {xpath}", self.step, "clickable")
         end_time = time.time() + timeout
         while time.time() < end_time:
