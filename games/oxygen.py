@@ -45,7 +45,7 @@ class OxygenClaimer(Claimer):
 
         super().__init__()
 
-        self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//button[.//span[contains(text(), 'Start App')]]"
+        self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//button[.//span[contains(text(), 'Start App')] or .//span[contains(text(), 'Play Now!')]]"
 
     def next_steps(self):
         if self.step:
