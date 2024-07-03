@@ -39,6 +39,8 @@ class OxygenAUClaimer(Claimer):
         self.pot_full = "Filled"
         self.pot_filling = "to fill"
         self.box_claim = "Never."
+        self.forceLocalProxy = False
+        self.forceRequestUserAgent = False
 
         super().__init__()
 
