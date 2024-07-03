@@ -34,7 +34,7 @@ class SimpleTapClaimer(Claimer):
         self.status_file_path = "status.txt"
         self.load_settings()
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-        self.script = "games/pixeltap.py"
+        self.script = "games/simpletap.py"
         self.prefix = "SimpleTap:"
         self.url = "https://web.telegram.org/k/#@Simple_Tap_Bot"
         self.pot_full = "Filled"
