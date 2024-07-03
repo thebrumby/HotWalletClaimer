@@ -205,6 +205,8 @@ class HexacoreAUClaimer(Claimer):
             box_time = sum(int(value) * (60 if unit == 'H' else 1) for value, unit in matches)
         self.increase_step()
 
+        self.get_balance(True)
+
         remains = get_remains()
         if remains:
             self.output(f"Step {self.step} - The system reports {remains} available to click.", 2)
