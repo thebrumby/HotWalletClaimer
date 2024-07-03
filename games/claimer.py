@@ -14,6 +14,7 @@ from pyzbar.pyzbar import decode
 import qrcode_terminal
 import fcntl
 from fcntl import flock, LOCK_EX, LOCK_UN, LOCK_NB
+import requests
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
@@ -204,7 +205,9 @@ class Claimer():
             "forceNewSession": False,
             "useProxy": False,
             "proxyAddress": "http://127.0.0.1:8080",
-            "requestUserAgent": False
+            "requestUserAgent": False,
+            "telegramBotToken": "", # Define token before run script
+            "telegramBotChatId": ""
         }
 
         if os.path.exists(self.settings_file):
@@ -225,6 +228,22 @@ class Claimer():
     def output(self, string, level=2):
         if self.settings['verboseLevel'] >= level:
             print(string)
+
+        if level>=3:
+            self.send_message(string)
+
+    def get_telegram_bot_chat_id(self):
+        url = f"https://api.telegram.org/bot{self.settings['telegramBotToken']}/getUpdates"
+        response = requests.get(url).json()
+        print(response)
+        return response['result'][0]['message']['chat']['id']
+
+    def send_message(self, string):
+        if self.settings['telegramBotChatId'] == "":
+            self.settings['telegramBotChatId'] = self.get_telegram_bot_chat_id()
+
+        url = f"https://api.telegram.org/bot{self.settings['telegramBotToken']}/sendMessage?chat_id={self.settings['telegramBotChatId']}&text={self.prefix} - {string}"
+        print(requests.get(url).json()) # this sends the message
 
     def increase_step(self):
         step_int = int(self.step) + 1
