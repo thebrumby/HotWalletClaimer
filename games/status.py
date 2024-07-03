@@ -1,3 +1,4 @@
+import json
 import subprocess
 from datetime import datetime
 import re
@@ -91,13 +92,25 @@ def remove_directories(dir_name):
 def list_pm2_processes(status_filter):
     return run_command(f"pm2 list --no-color | grep {status_filter} | awk '{{print $4}}'").splitlines()
 
+# def get_inactive_directories():
+#     all_sessions = [d for d in os.listdir('./selenium') if os.path.isdir(os.path.join('./selenium', d))]
+#     inactive_sessions = []
+#     for session in all_sessions:
+#         if run_command(f"pm2 describe {session}").strip() == "":
+#             inactive_sessions.append(session)
+#     return inactive_sessions
+
 def get_inactive_directories():
+    output = run_command("pm2 jlist")
+
+    process_list = json.loads(output)
+    active_process_names = [proc['name'] for proc in process_list if proc['pm2_env']['status'] == 'online']
+    
     all_sessions = [d for d in os.listdir('./selenium') if os.path.isdir(os.path.join('./selenium', d))]
-    inactive_sessions = []
-    for session in all_sessions:
-        if run_command(f"pm2 describe {session}").strip() == "":
-            inactive_sessions.append(session)
-    return inactive_sessions
+
+    inactive_sessions = set(all_sessions) - set(active_process_names)
+
+    return list(inactive_sessions)
 
 def delete_process_by_id(process_id, process_list):
     if process_id <= len(process_list):
