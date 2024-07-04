@@ -27,6 +27,8 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
+from utils.pm2 import start_pm2_app, save_pm2
+
 class Claimer():
     settings_file = "variables.txt"
     status_file_path = "status.txt"
@@ -151,10 +153,10 @@ class Claimer():
                 self.output("Exiting script. You can resume the process later.", 1)
                 sys.exit()
             elif user_choice == "a" or not user_choice:
-                self.start_pm2_app(self.script, pm2_session, pm2_session)
+                start_pm2_app(self.script, pm2_session, pm2_session)
                 user_choice = input("Should we save your PM2 processes? (Y/n): ").lower()
                 if user_choice == "y" or not user_choice:
-                    self.save_pm2()
+                    save_pm2()
                 self.output(f"You can now watch the session log into PM2 with: pm2 logs {pm2_session}", 2)
                 sys.exit()
 
@@ -1175,18 +1177,6 @@ class Claimer():
             except ValueError as e:
                 self.output(f"Error: {e}",1)
 
-    # Start a new PM2 process
-    def start_pm2_app(self, script_path, app_name, session_name):
-        interpreter_path = "venv/bin/python3"
-        command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} --watch {script_path} -- {session_name}"
-        subprocess.run(command, shell=True, check=True)
-
-    # Save the new PM2 process
-    def save_pm2(self):
-        command = f"NODE_NO_WARNINGS=1 pm2 save"
-        result = subprocess.run(command, shell=True, text=True, capture_output=True)
-        print(result.stdout)
-        
     def backup_telegram(self):
 
         # Ask the user if they want to backup their Telegram directory

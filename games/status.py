@@ -89,16 +89,11 @@ def remove_directories(dir_name):
     run_command(f"rm -rf ./screenshots/{dir_name}")
     print(f"Removed directories for {dir_name}")
 
+def list_all_pm2_processes():
+    return run_command("pm2 list --no-color | awk '{{print $4}}'").splitlines()
+
 def list_pm2_processes(status_filter):
     return run_command(f"pm2 list --no-color | grep {status_filter} | awk '{{print $4}}'").splitlines()
-
-# def get_inactive_directories():
-#     all_sessions = [d for d in os.listdir('./selenium') if os.path.isdir(os.path.join('./selenium', d))]
-#     inactive_sessions = []
-#     for session in all_sessions:
-#         if run_command(f"pm2 describe {session}").strip() == "":
-#             inactive_sessions.append(session)
-#     return inactive_sessions
 
 def get_inactive_directories():
     output = run_command("pm2 jlist")
@@ -139,26 +134,38 @@ def delete_process_by_pattern(pattern, process_list):
             process_list.remove(process)
 
 def show_logs(process_id, process_list, lines=30):
-    if process_id <= len(process_list):
-        process_name = process_list[process_id - 1][0].strip().replace('_', '-')
-        sanitized_process_name = process_name.replace(':', '-')
-        log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
-        logs = run_command(f"tail -n {lines} {log_file}")
-        print(logs)
-    else:
-        print("Invalid process ID.")
+    print(get_logs(process_id, process_list, lines))
     input("Press enter to continue...")
 
+def get_logs(process_id, process_list, lines=30):
+    if process_id > len(process_list):
+        return "Invalid process ID."
+    
+    return get_logs_by_process_name(process_list[process_id - 1][0], lines)
+
+def get_logs_by_process_name(process_name, lines=30):
+    process_name = process_name.strip().replace('_', '-')
+    sanitized_process_name = process_name.replace(':', '-')
+    log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
+    logs = run_command(f"tail -n {lines} {log_file}")
+    return logs
+
 def show_status_logs(process_id, process_list):
-    if process_id <= len(process_list):
-        process_name = process_list[process_id - 1][0].strip().replace('_', '-')
-        sanitized_process_name = process_name.replace(':', '-')
-        log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
-        logs = run_command(f"grep -E 'BALANCE:|STATUS:' {log_file} | tail -n 20")
-        print(logs)
-    else:
-        print("Invalid process ID.")
+    print(get_status_logs(process_id, process_list))
     input("Press enter to continue...")
+
+def get_status_logs(process_id, process_list):
+    if process_id > len(process_list):
+        return "Invalid process ID."
+    
+    return get_logs_by_process_name(process_list[process_id - 1][0])
+
+def get_status_logs_by_process_name(process_name):
+    process_name = process_name.strip().replace('_', '-')
+    sanitized_process_name = process_name.replace(':', '-')
+    log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
+    logs = run_command(f"grep -E 'BALANCE:|STATUS:' {log_file} | tail -n 20")
+    return logs
 
 def parse_delete_ids(delete_ids_str):
     ids = set()
