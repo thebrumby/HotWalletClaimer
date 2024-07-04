@@ -5,7 +5,7 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
-- **Community Member @JBR1989 Contributes 2 More!**: SimpleTap & PixelTap join the club. [read more](https://www.patreon.com/posts/simpletap-107475385?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **Community Member Contributes 2 More Games!**: SimpleTap & PixelTap join the club. [read more](https://www.patreon.com/posts/simpletap-107475385?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Thanks to @jbr1989 & BNB-Mine Cold!**: Coding updates and the reintroduction of Mine Cold. [read more](https://www.patreon.com/posts/unveiling-new-to-107090895?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Hold Wallet - Diamond Hands joins the party**: A new mining-based game on the BNB network. [read more](https://www.patreon.com/posts/hold-wallet-106884224?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
