@@ -10,7 +10,7 @@ sudo systemctl daemon-reload
 # Create a virtual environment and install dependencies
 python3 -m venv venv
 source venv/bin/activate
-pip install wheel selenium Pillow pyzbar qrcode-terminal python-telegram-bot
+pip install wheel selenium Pillow pyzbar qrcode-terminal python-telegram-bot requests
 deactivate
 
 # Installing Node.js and npm
