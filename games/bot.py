@@ -28,7 +28,7 @@ selected_process = None
 
 def run() -> None:
     """Run the bot."""
-    application = Application.builder().token("YOUR TELEGRAM BOT TOKEN").build()
+    application = Application.builder().token("7307510385:AAFlX2cIYj94sqfv1VxkdfqTvEdIb8E3zqQ").build()
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
@@ -243,8 +243,6 @@ async def get_processes():
 def main() -> None:
 
     list_pm2_processes = set(list_all_pm2_processes())
-
-    print(list_pm2_processes)
 
     if "bot" not in list_pm2_processes:
         script = "games/bot.py"
