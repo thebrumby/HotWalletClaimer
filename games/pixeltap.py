@@ -92,16 +92,20 @@ class PixelTapClaimer(Claimer):
             
         self.increase_step()
 
+        status_text = None
+
         # CLAIM 
         xpath = "//button[@class='claimButton']"
         button = self.move_and_click(xpath, 8, False, "click the 'CLAIM' button", self.step, "clickable")
-        if button: button.click()
+        if button:button.click()
         self.increase_step()
 
         # Select the 'Rewards' tab
         xpath = "//a[contains(span/text(), 'Rewards')]"
         button = self.move_and_click(xpath, 8, False, "click the 'Rewards TAB'", self.step, "clickable")
-        if button: button.click()
+        if button:
+            button.click()
+            status_text = "Reward claimed. "
         self.increase_step()
 
         # Select the 'Rewards' tab
@@ -116,7 +120,14 @@ class PixelTapClaimer(Claimer):
 
             xpath = "//button[@class='closeBtn']"
             button = self.move_and_click(xpath, 8, False, "exit the 'CLAIM' pop-up", self.step, "clickable")
-            if button: button.click()
+            if button: 
+                button.click()
+                status_text += "Claim made."
+
+        if not status_text:
+            status_text = "No reward or claim made on this occassion."
+
+        self.output(f"STATUS: {status_text}",1)
 
         self.increase_step()
 
