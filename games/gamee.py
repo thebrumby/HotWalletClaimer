@@ -50,6 +50,19 @@ class GameeClaimer(Claimer):
     def launch_iframe(self):
         super().launch_iframe()
 
+        # self.driver.switch_to.default_content()
+
+        # iframe = self.driver.find_element(By.TAG_NAME, "iframe")
+        # iframe_url = iframe.get_attribute("src")
+        # iframe_url = iframe_url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=android")
+
+        # self.driver.execute_script("arguments[0].src = arguments[1];", iframe, iframe_url)
+        # self.driver.execute_script("arguments[0].contentWindow.location.reload();", iframe)
+        # WebDriverWait(self.driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, f"//iframe[@src='{iframe_url}']")))
+
+        #self.driver.switch_to.default_content()
+        #self.driver.switch_to.frame(iframe)
+
         # Open tab in main window
         self.driver.switch_to.default_content()
         self.driver.execute_script("location.href = document.querySelector('iframe').src")
@@ -76,11 +89,40 @@ class GameeClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
-        # START MINING
-        xpath = "//div[contains(@class, 'eWLHYP')]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Spin TAB'", self.step, "clickable")
-        if button: button.click()
+        clicked_it = False
+
+        status_text = ""
+
+        #  # START MINING - clear_overlays provokes move the element to the top of the page and overlap other items
+        try:
+
+            xpath = "//div[contains(@class, 'eWLHYP')]" # START MINING button
+            button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            if button:
+                button.click()
+                self.output(f"Step {self.step} - Successfully clicked 'MINING' button.", 3)
+                status_text = "STATUS: Start MINING"
+
+        except TimeoutException:
+            try:
+
+                xpath = "//div[contains(@class, 'cYeqKR')]" # MINING button
+                button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                self.output(f"Step {self.step} - Currently mining:  {"YES" if button else "NO"}.", 3)
+                status_text = "STATUS: Currently mining" if button else "STATUS: Not mining"
+
+            except TimeoutException:
+                self.output(f"Step {self.step} - MINING button NOT found .\n",3)
+                status_text = "STATUS: MINING button NOT found"
+
         self.increase_step()
+
+        # START MINING
+        # xpath = "//div[contains(@class, 'eWLHYP')]"
+        # xpath = "//div[contains(@class, 'cYeqKR')]"
+        # button = self.move_and_click(xpath, 8, False, "click the 'Spin TAB'", self.step, "clickable")
+        # if button: button.click()
+        # self.increase_step()
 
         xpath = "//div[contains(@class, 'wxeDq') and .//text()[contains(., 'Spin')]]"
         button = self.move_and_click(xpath, 8, False, "click the 'Spin TAB'", self.step, "clickable")
@@ -102,8 +144,13 @@ class GameeClaimer(Claimer):
         self.get_balance(False)
 
         wait_time = self.get_wait_time(self.step, "pre-claim") 
-        
-        return wait_time
+
+        if wait_time is None:
+            self.output(f"{status_text} - Failed to get wait time. Next try in 60 minutes", 3)
+            return 60
+        else:
+            self.output(f"{status_text} - Next try in {self.show_time(wait_time)}.", 2)
+            return wait_time
 
 
     def get_balance(self, claimed=False):
@@ -176,7 +223,14 @@ class GameeClaimer(Claimer):
                 self.driver.save_screenshot(screenshot_path)
                 self.output(f"Screenshot saved to {screenshot_path}", 3)
 
-            return 60
+            return None
+        
+def show_time(self, time):
+        hours = int(time / 60)
+        minutes = time % 60
+        if hours > 0:
+            return f"{hours} hours and {minutes} minutes"
+        return f"{minutes} minutes"
 
 def main():
     claimer = GameeClaimer()

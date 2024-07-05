@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import sys
@@ -1219,3 +1218,10 @@ class Claimer():
             with open(seed_file_path, 'r') as file:
                 return file.read().strip()
         return None
+    
+    def show_time(self, time):
+        hours = int(time / 60)
+        minutes = time % 60
+        if hours > 0:
+            return f"{hours} hours and {minutes} minutes"
+        return f"{minutes} minutes"
