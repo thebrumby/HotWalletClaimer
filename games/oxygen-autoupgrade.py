@@ -117,7 +117,8 @@ class OxygenAUClaimer(Claimer):
 
                     self.get_balance(True)
                     self.increase_step()
-
+                    self.quit_driver()
+                    self.launch_iframe()
                     self.output(f"Step {self.step} - check if there are lucky boxes..", 3)
                     xpath = "//div[@class='boxes_cntr']"
                     boxes = self.monitor_element(xpath)
