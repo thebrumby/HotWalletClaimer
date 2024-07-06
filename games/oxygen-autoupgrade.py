@@ -106,6 +106,8 @@ class OxygenAUClaimer(Claimer):
                 try:
                     self.click_claim_button()
                     self.increase_step()
+                    self.click_daily_buttons()
+                    self.increase_step()
 
                     self.output(f"Step {self.step} - Waiting 10 seconds for the totals and timer to update...", 3)
                     time.sleep(10)
@@ -161,7 +163,44 @@ class OxygenAUClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
+    def click_daily_buttons(self, wait_time=10, timeout=10):
+        xpath_button_wrap = "//div[@class='daily_btn_wrap']"
+        xpath_button_get_reward = "//div[@class='daily_get' and contains(text(), 'Get reward')]"
 
+        try:
+            self.quit_driver()
+            self.launch_iframe()
+
+            # Trouver et cliquer sur le premier bouton
+            button_wrap = WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located((By.XPATH, xpath_button_wrap))
+            )
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", button_wrap)
+            time.sleep(1)
+            try:
+                button_wrap.click()
+            except Exception:
+                ActionChains(self.driver).move_to_element(button_wrap).click().perform()
+
+            # Augmenter le compteur de pas
+            self.increase_step()
+
+            print(f"Step {self.step} - Clicked 'daily_btn_wrap' button. Waiting {wait_time} seconds...")
+            time.sleep(wait_time)
+
+            # Trouver et cliquer sur le deuxième bouton "Get reward"
+            button_get_reward = WebDriverWait(self.driver, timeout).until(
+                EC.element_to_be_clickable((By.XPATH, xpath_button_get_reward))
+            )
+            button_get_reward.click()
+            print(f"Step {self.step} - Clicked 'daily_get' button.")
+
+            # Attente supplémentaire avant de continuer avec le prochain clic
+            time.sleep(2)  # Attendre un peu avant de continuer
+
+        except Exception as e:
+            print(f"Erreur lors du processus : {str(e)}")
+            
     def click_claim_button(self, max_attempts=5, wait_time=10, timeout=10):
         xpath = "//div[@class='farm_btn']"
         for attempt in range(1, max_attempts + 1):
