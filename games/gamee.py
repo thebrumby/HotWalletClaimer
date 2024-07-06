@@ -107,8 +107,8 @@ class GameeClaimer(Claimer):
             try:
 
                 xpath = "//div[contains(@class, 'cYeqKR')]" # MINING button
-                button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-                self.output(f"Step {self.step} - Currently mining:  {"YES" if button else "NO"}.", 3)
+                button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, XPath)))
+                self.output(f"Step {self.step} - Currently mining: {'YES' if button else 'NO'}.", 3)
                 status_text = "STATUS: Currently mining" if button else "STATUS: Not mining"
 
             except TimeoutException:
