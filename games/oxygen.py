@@ -115,7 +115,9 @@ class OxygenClaimer(Claimer):
                     matches = re.findall(r'(\d+)([hm])', wait_time_text)
                     total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                     self.increase_step()
-
+                    self.click_daily_buttons()
+                    self.quit_driver()
+                    self.launch_iframe()
                     self.get_balance(True)
                     self.increase_step()
 
@@ -161,7 +163,48 @@ class OxygenClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
+    def click_daily_buttons(self, max_attempts=5, wait_time=10, timeout=10):
+        xpath_button_wrap = "//div[@class='daily_btn_wrap']"
+        xpath_button_get_reward = "//div[@class='daily_get' and contains(text(), 'Get reward')]"
+        
+        for attempt in range(1, max_attempts + 1):
+            try:
+                self.quit_driver()
+                self.launch_iframe()
+                
+                # Click the first button
+                if self.move_and_click(xpath_button_wrap, timeout, True, "click 'daily_btn_wrap'", self.step, "visible"):
+                    self.increase_step()
+                    self.output(f"Step {self.step} - Clicked 'daily_btn_wrap' button (Attempt {attempt}). Waiting {wait_time} seconds...", 2)
+                    time.sleep(wait_time)
 
+                    # Click the second button
+                    if self.move_and_click(xpath_button_get_reward, timeout, True, "click 'Get reward'", self.step, "visible"):
+                        self.increase_step()
+                        self.output(f"Step {self.step} - Clicked 'Get reward' button (Attempt {attempt}). Waiting {wait_time} seconds...", 2)
+                        
+                        # Check for already claimed reward message
+                        if self.monitor_element("//div[contains(text(), 'You have already claimed this reward')]", timeout, "check claimed reward"):
+                            self.output("You have already claimed this reward.", 1)
+                            return
+
+                        time.sleep(wait_time)
+                        self.quit_driver()
+                        self.launch_iframe()
+                    else:
+                        self.output(f"Step {self.step} - Failed to click 'Get reward' button (Attempt {attempt}).", 1)
+                else:
+                    self.output(f"Step {self.step} - Failed to click 'daily_btn_wrap' button (Attempt {attempt}).", 1)
+            except TimeoutException:
+                self.output(f"Button not found after {timeout} seconds on attempt {attempt}. Stopping.", 1)
+                break
+            except ElementClickInterceptedException:
+                self.output(f"Button click was intercepted on attempt {attempt}. Trying again.", 3)
+                continue
+            except Exception as e:
+                self.output(f"Error on attempt {attempt}: {str(e)}", 1)
+                break
+                
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
