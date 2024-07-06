@@ -81,6 +81,10 @@ class SimpleTapClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
+        status_text = ""
+
+        self.get_balance(False)
+
         # # Fortune NOT WORKING
         # xpath = "//div[contains(@class, 'wheel_link')]"
         # button = self.move_and_click(xpath, 8, False, "click the 'Fortune' button", self.step, "clickable")
@@ -96,23 +100,46 @@ class SimpleTapClaimer(Claimer):
 
         # self.increase_step()
 
-
         # Farming
         xpath = "//div[contains(@class, 'home-button')]"
         button = self.move_and_click(xpath, 8, False, "click the 'Farming' button", self.step, "clickable")
-        if button: button.click()
+        if button: 
+            classes = button.get_attribute("class")
+            if "block" in classes:
+                status_text = "STATUS: Farming"
+            else:
+                button.click()
+                status_text = "STATUS: Start Farming"
+
         self.increase_step()
 
-        self.get_balance(False)
+        # Take friends points
+        xpath = "(//div[@class='appbar-tab'])[last()]"
+        button = self.move_and_click(xpath, 8, False, "open 'Friends' tab", self.step, "clickable")
+        if button: button.click()
 
-        total_wait = self.get_wait_time(self.step, "pre-claim") 
+        xpath = "//div[contains(@class, 'claim-button')]"
+        button = self.move_and_click(xpath, 8, False, "click the 'Take Friends Points' button", self.step, "clickable")
+        if button: 
+            button.click()
 
-        if total_wait == 0:
-            return 0
-        
-        self.output(f"STATUS: Successful Claim: Next claim {self.show_time(total_wait)}.", 1)
+            # Close the congratulations popup
+            xpath = "//div[contains(@class, 'invite_claimed-button')]"
+            button = self.move_and_click(xpath, 8, False, "exit the 'Congratulations' popup", self.step, "clickable")
+            if button: button.click()
+            
+        self.increase_step()
 
-        return random.randint(0, 5) + total_wait
+        self.get_balance(True)
+
+        wait_time = self.get_wait_time(self.step, "pre-claim") 
+
+        if wait_time is None:
+            self.output(f"{status_text} - Failed to get wait time. Next try in 60 minutes", 3)
+            return 60
+        else:
+            self.output(f"{status_text} - Next try in {self.show_time(wait_time)}.", 2)
+            return wait_time
 
 
     def get_balance(self, claimed=False):
@@ -131,6 +158,11 @@ class SimpleTapClaimer(Claimer):
 
         # Dynamically adjust the log priority
         priority = max(self.settings['verboseLevel'], default_priority)
+
+        # Open home tab
+        xpath = "(//div[@class='appbar-tab'])[1]" 
+        button = self.move_and_click(xpath, 8, False, "open 'Home' tab", self.step, "clickable")
+        if button: button.click()
 
         # Construct the specific balance XPath
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
@@ -171,7 +203,7 @@ class SimpleTapClaimer(Claimer):
                 self.driver.save_screenshot(screenshot_path)
                 self.output(f"Screenshot saved to {screenshot_path}", 3)
 
-            return 60
+            return None
 
     def extract_time(self, text):
         time_parts = text.split(':')
