@@ -1,5 +1,5 @@
 # Telegram Claim Assistant - Mine HOT & More!
-#### Currently supporting 15 crypto-based games and increasing weekly - automate claims and stay informed about their status.
+#### Currently supporting 16 crypto-based games and increasing weekly - automate claims and stay informed about their status.
 
 Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would like to support our ongoing development, consider subscribing to our [Patreon](https://www.patreon.com/TelegramClaimBot), or treat us to a [cup of coffee ☕](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation—both options are just $5. You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. Discover some humorous uses for the channel and more reasons to give a little back [here](docs/YOUTUBE.md).
 
@@ -78,9 +78,9 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh cold`                   | Launch Cold on Telegram: [@Newcoldwallet_bot](https://web.telegram.org/k/#@Newcoldwallet_bot)       | ✅     |
 | `./launch.sh pixeltap`               | Launch PixelTap on Telegram: [@pixelversexyzbot](https://t.me/pixelversexyzbot?start=7254165458)    | ✅     |
 | `./launch.sh simpletap`              | Launch SimpleTap on Telegram: [@Simple_Tap_Bot](https://t.me/Simple_Tap_Bot/app?startapp=1719999344321) | ✅     |
+| `./launch.sh gamee`                  | Launch Gamee on Telegram: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458)                | ✅     |
 | `./launch.sh fuel`                   | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot)            | ❌     |
 | `./launch.sh fuel-autoupgrade        | **Auto-upgrade spends your tokens to increase mining speed**            | ❌     |
-| `./launch.sh gamee`                  | Launch Gamee on Telegram: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458)                | ❌     |
 
 💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 <a name="videos"></a>
