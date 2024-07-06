@@ -107,7 +107,7 @@ class GameeClaimer(Claimer):
             try:
 
                 xpath = "//div[contains(@class, 'cYeqKR')]" # MINING button
-                button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, XPath)))
+                button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
                 self.output(f"Step {self.step} - Currently mining: {'YES' if button else 'NO'}.", 3)
                 status_text = "STATUS: Currently mining" if button else "STATUS: Not mining"
 
@@ -151,7 +151,6 @@ class GameeClaimer(Claimer):
         else:
             self.output(f"{status_text} - Next try in {self.show_time(wait_time)}.", 2)
             return wait_time
-
 
     def get_balance(self, claimed=False):
 
@@ -197,7 +196,6 @@ class GameeClaimer(Claimer):
         # Increment step function, assumed to handle next step logic
         self.increase_step()
 
-
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim"):
         try:
 
@@ -224,8 +222,8 @@ class GameeClaimer(Claimer):
                 self.output(f"Screenshot saved to {screenshot_path}", 3)
 
             return None
-        
-def show_time(self, time):
+
+    def show_time(self, time):
         hours = int(time / 60)
         minutes = time % 60
         if hours > 0:
