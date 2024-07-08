@@ -5,9 +5,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
+- **Setting Up a Relay to a Telegram Bot**: A step-by-step guide to get real-time updates to Telegram. [read more](https://www.patreon.com/posts/heres-polished-107773474?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Gamee added & Oxygen improved**: Now claim the Oxygen daily reward, and check out new game Gamee. [read more](https://www.patreon.com/posts/weekend-updates-107599840?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Community Member Contributes 2 More Games!**: SimpleTap & PixelTap join the club. [read more](https://www.patreon.com/posts/simpletap-107475385?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Thanks to @jbr1989 & BNB-Mine Cold!**: Coding updates and the reintroduction of Mine Cold. [read more](https://www.patreon.com/posts/unveiling-new-to-107090895?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -48,6 +48,10 @@ docker exec -it telegram-claim-bot /bin/bash
 For more details on status, check out its [STATUS.md](docs/STATUS.md) guide.
 
 You can type `exit` or `CTRL+D` to leave the container, which will remain running until stopped. You may use the `docker exec` command above to re-enter the container as often as needed. 
+## Setting Up a Relay from This Script to a Telegram Bot
+
+We've detailed the process of setting up a relay from this script to a Telegram bot in step-by-step instructions. This includes creating a bot using BotFather, configuring your script to use the bot, and adding interaction levels. For comprehensive instructions, refer to the [TG-BOT.md](docs/TG-BOT.md) guide.
+
 ## Windows 10 & 11 Alternative Installation - Utilize WSL2:
 You can check out the [WINDOWS.md](docs/WINDOWS.md) guide or check out this [video](https://www.youtube.com/watch?v=wOajWwO32P4) for further instructions.
 
