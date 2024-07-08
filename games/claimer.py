@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import sys
@@ -8,9 +7,7 @@ import json
 import getpass
 import random
 import subprocess
-
 from PIL import Image
-
 from pyzbar.pyzbar import decode
 import qrcode_terminal
 import fcntl
@@ -27,7 +24,13 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
-from utils.pm2 import start_pm2_app, save_pm2
+# Ensure the `requests` module is installed
+try:
+    import requests
+except ImportError:
+    print("The 'requests' module is not installed. Installing it now...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
+    import requests
 
 class Claimer():
     settings_file = "variables.txt"
@@ -43,14 +46,11 @@ class Claimer():
     pot_full = "Filled"
     pot_filling = "to fill"
     seed_phrase = None
+    wallet_id = ""
 
     def __init__(self):
-
-        # Define sessions and settings files
-        # self.load_settings()
-
-        # self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         print(f"Initialising the {self.prefix} Wallet Auto-claim Python Script - Good Luck!")
 
         self.imported_seedphrase = None
@@ -58,6 +58,7 @@ class Claimer():
         # Update the settings based on user input
         if len(sys.argv) > 1:
             user_input = sys.argv[1]  # Get session ID from command-line argument
+            self.wallet_id = user_input
             self.output(f"Session ID provided: {user_input}", 2)
             
             # Safely check for a second argument
@@ -87,11 +88,11 @@ class Claimer():
             user_input = self.get_session_id()
             self.wallet_id = user_input
 
-        self.session_path = "./selenium/{}".format(user_input)
+        self.session_path = "./selenium/{}".format(self.wallet_id)
         os.makedirs(self.session_path, exist_ok=True)
-        self.screenshots_path = "./screenshots/{}".format(user_input)
+        self.screenshots_path = "./screenshots/{}".format(self.wallet_id)
         os.makedirs(self.screenshots_path, exist_ok=True)
-        self.backup_path = "./backups/{}".format(user_input)
+        self.backup_path = "./backups/{}".format(self.wallet_id)
         os.makedirs(self.backup_path, exist_ok=True)
         self.step = "01"
 
@@ -107,21 +108,20 @@ class Claimer():
             self.output("Proxy disabled in settings.", 2)
 
     def run(self):
-
         if not self.settings["forceNewSession"]:
             self.load_settings()
         cookies_path = os.path.join(self.session_path, 'cookies.json')
         if os.path.exists(cookies_path) and not self.settings['forceNewSession']:
-            self.output("Resuming the previous session...",2)
+            self.output("Resuming the previous session...", 2)
         else:
             telegram_backup_dirs = [d for d in os.listdir(os.path.dirname(self.session_path)) if d.startswith("Telegram")]
             if telegram_backup_dirs:
                 print("Previous Telegram login sessions found. Pressing <enter> will select the account numbered '1':")
                 for i, dir_name in enumerate(telegram_backup_dirs):
                     print(f"{i + 1}. {dir_name}")
-        
+
                 user_input = input("Enter the number of the session you want to restore, or 'n' to create a new session: ").strip().lower()
-        
+
                 if user_input == 'n':
                     self.log_into_telegram(self.wallet_id)
                     self.quit_driver()
@@ -135,28 +135,28 @@ class Claimer():
                 self.log_into_telegram(self.wallet_id)
                 self.quit_driver()
                 self.backup_telegram()
-        
+
             self.next_steps()
             self.quit_driver()
 
             try:
                 shutil.copytree(self.session_path, self.backup_path, dirs_exist_ok=True)
-                self.output("We backed up the session data in case of a later crash!",3)
+                self.output("We backed up the session data in case of a later crash!", 3)
             except Exception as e:
-                self.output("Oops, we weren't able to make a backup of the session data! Error:", 1)
+                self.output(f"Oops, we weren't able to make a backup of the session data! Error: {e}", 1)
 
             pm2_session = self.session_path.replace("./selenium/", "")
-            self.output(f"You could add the new/updated session to PM use: pm2 start {self.script} --interpreter venv/bin/python3 --name {pm2_session} -- {pm2_session}",1)
+            self.output(f"You could add the new/updated session to PM use: pm2 start {self.script} --interpreter venv/bin/python3 --name {pm2_session} -- {pm2_session}", 1)
             user_choice = input("Enter 'y' to continue to 'claim' function, 'e' to exit, 'a' or <enter> to automatically add to PM2: ").lower()
 
             if user_choice == "e":
                 self.output("Exiting script. You can resume the process later.", 1)
                 sys.exit()
             elif user_choice == "a" or not user_choice:
-                start_pm2_app(self.script, pm2_session, pm2_session)
+                self.start_pm2_app(self.script, pm2_session, pm2_session)
                 user_choice = input("Should we save your PM2 processes? (Y/n): ").lower()
                 if user_choice == "y" or not user_choice:
-                    save_pm2()
+                    self.save_pm2()
                 self.output(f"You can now watch the session log into PM2 with: pm2 logs {pm2_session}", 2)
                 sys.exit()
 
@@ -172,10 +172,10 @@ class Claimer():
                         file.seek(0)
                         json.dump(status, file)
                         file.truncate()
-                        self.output(f"Session released: {self.session_path}",3)
+                        self.output(f"Session released: {self.session_path}", 3)
 
             self.quit_driver()
-                    
+
             now = datetime.now()
             next_claim_time = now + timedelta(minutes=wait_time)
             this_claim_str = now.strftime("%d %B - %H:%M")
@@ -188,11 +188,11 @@ class Claimer():
                 this_wait = min(wait_time, 15)
                 now = datetime.now()
                 timestamp = now.strftime("%H:%M")
-                self.output(f"[{timestamp}] Waiting for {this_wait} more minutes...",3)
+                self.output(f"[{timestamp}] Waiting for {this_wait} more minutes...", 3)
                 time.sleep(this_wait * 60)  # Convert minutes to seconds
                 wait_time -= this_wait
                 if wait_time > 0:
-                    self.output(f"Updated wait time: {wait_time} minutes left.",3)
+                    self.output(f"Updated wait time: {wait_time} minutes left.", 3)
 
     def load_settings(self):
         default_settings = {
@@ -202,12 +202,15 @@ class Claimer():
             "screenshotQRCode": True,
             "maxSessions": 1,
             "verboseLevel": 2,
+            "telegramVerboseLevel": 0,
             "lowestClaimOffset": 0,
             "highestClaimOffset": 15,
             "forceNewSession": False,
             "useProxy": False,
             "proxyAddress": "http://127.0.0.1:8080",
-            "requestUserAgent": False
+            "requestUserAgent": False,
+            "telegramBotToken": "", 
+            "telegramBotChatId": ""
         }
 
         if os.path.exists(self.settings_file):
@@ -225,9 +228,128 @@ class Claimer():
             json.dump(self.settings, f)
         self.output("Settings saved successfully.", 3)
 
+    def update_settings(self):
+
+        def update_setting(setting_key, message, default_value):
+            current_value = self.settings.get(setting_key, default_value)
+            response = input(f"\n{message} (Y/N, press Enter to keep current [{current_value}]): ").strip().lower()
+            if response == "y":
+                self.settings[setting_key] = True
+            elif response == "n":
+                self.settings[setting_key] = False
+
+        update_setting("forceClaim", "Shall we force a claim on first run? Does not wait for the timer to be filled", self.settings["forceClaim"])
+        update_setting("debugIsOn", "Should we enable debugging? This will save screenshots in your local drive", self.settings["debugIsOn"])
+        update_setting("hideSensitiveInput", "Should we hide sensitive input? Your phone number and seed phrase will not be visible on the screen", self.settings["hideSensitiveInput"])
+        update_setting("screenshotQRCode", "Shall we allow log in by QR code? The alternative is by phone number and one-time password", self.settings["screenshotQRCode"])
+
+        try:
+            new_max_sessions = int(input(f"\nEnter the number of max concurrent claim sessions. Additional claims will queue until a session slot is free.\n(current: {self.settings['maxSessions']}): "))
+            self.settings["maxSessions"] = new_max_sessions
+        except ValueError:
+            self.output("Number of sessions remains unchanged.", 1)
+
+        try:
+            new_verbose_level = int(input("\nEnter the number for how much information you want displaying in the console.\n 3 = all messages, 2 = claim steps, 1 = minimal steps\n(current: {}): ".format(self.settings['verboseLevel'])))
+            if 1 <= new_verbose_level <= 3:
+                self.settings["verboseLevel"] = new_verbose_level
+                self.output("Verbose level updated successfully.", 2)
+            else:
+                self.output("Verbose level remains unchanged.", 2)
+        except ValueError:
+            self.output("Verbose level remains unchanged.", 2)
+
+        try:
+            new_telegram_verbose_level = int(input("\nEnter the Telegram verbose level (3 = all messages, 2 = claim steps, 1 = minimal steps, 0 = none)\n(current: {}): ".format(self.settings['telegramVerboseLevel'])))
+            if 0 <= new_telegram_verbose_level <= 3:
+                self.settings["telegramVerboseLevel"] = new_telegram_verbose_level
+                self.output("Telegram verbose level updated successfully.", 2)
+            else:
+                self.output("Telegram verbose level remains unchanged.", 2)
+        except ValueError:
+            self.output("Telegram verbose level remains unchanged.", 2)
+
+        try:
+            new_lowest_offset = int(input("\nEnter the lowest possible offset for the claim timer (valid values are -30 to +30 minutes)\n(current: {}): ".format(self.settings['lowestClaimOffset'])))
+            if -30 <= new_lowest_offset <= 30:
+                self.settings["lowestClaimOffset"] = new_lowest_offset
+                self.output("Lowest claim offset updated successfully.", 2)
+            else:
+                self.output("Invalid range for lowest claim offset. Please enter a value between -30 and +30.", 2)
+        except ValueError:
+            self.output("Lowest claim offset remains unchanged.", 2)
+
+        try:
+            new_highest_offset = int(input("\nEnter the highest possible offset for the claim timer (valid values are 0 to 60 minutes)\n(current: {}): ".format(self.settings['highestClaimOffset'])))
+            if 0 <= new_highest_offset <= 60:
+                self.settings["highestClaimOffset"] = new_highest_offset
+                self.output("Highest claim offset updated successfully.", 2)
+            else:
+                self.output("Invalid range for highest claim offset. Please enter a value between 0 and 60.", 2)
+        except ValueError:
+            self.output("Highest claim offset remains unchanged.", 2)
+
+        if self.settings["lowestClaimOffset"] > self.settings["highestClaimOffset"]:
+            self.settings["lowestClaimOffset"] = self.settings["highestClaimOffset"]
+            self.output("Adjusted lowest claim offset to match the highest as it was greater.", 2)
+
+        update_setting("useProxy", "Use Proxy?", self.settings["useProxy"])
+
+        if self.settings["useProxy"]:
+            proxy_address = input(f"\nEnter the Proxy IP address and port (current: {self.settings['proxyAddress']}): ").strip()
+            if proxy_address:
+                self.settings["proxyAddress"] = proxy_address
+
+        update_setting("requestUserAgent", "Shall we collect a User Agent during setup?: ", self.settings["requestUserAgent"])
+
+        # Collect the Telegram Bot Token
+        new_telegram_bot_token = input(f"\nEnter the Telegram Bot Token (current: {self.settings['telegramBotToken']}): ").strip()
+        if new_telegram_bot_token:
+            self.settings["telegramBotToken"] = new_telegram_bot_token
+
+        self.save_settings()
+
+        update_setting("forceNewSession", "Overwrite existing session and Force New Login? Use this if your saved session has crashed\nOne-Time only (setting not saved): ", self.settings["forceNewSession"])
+
+        self.output("\nRevised settings:", 1)
+        for key, value in self.settings.items():
+            self.output(f"{key}: {value}", 1)
+        self.output("", 1)
+
     def output(self, string, level=2):
         if self.settings['verboseLevel'] >= level:
             print(string)
+        if self.settings['telegramBotToken'] and not self.settings['telegramBotChatId']:
+            try:
+                self.settings['telegramBotChatId'] = self.get_telegram_bot_chat_id()
+                self.save_settings()  # Save the settings after getting the chat ID
+            except ValueError as e:
+                print(f"Error fetching Telegram chat ID: {e}")
+        if self.settings['telegramBotChatId'] and self.wallet_id and self.settings['telegramVerboseLevel'] >= level:
+            self.send_message(string)
+
+    def get_telegram_bot_chat_id(self):
+        url = f"https://api.telegram.org/bot{self.settings['telegramBotToken']}/getUpdates"
+        response = requests.get(url).json()
+        print(response)  # Add this line to print the entire response
+        if 'result' in response and len(response['result']) > 0:
+            return response['result'][0]['message']['chat']['id']
+        else:
+            raise ValueError("No messages found in response")
+
+    def send_message(self, string):
+        try:
+            if self.settings['telegramBotChatId'] == "":
+                self.settings['telegramBotChatId'] = self.get_telegram_bot_chat_id()
+
+            message = f"{self.wallet_id}: {string}"
+            url = f"https://api.telegram.org/bot{self.settings['telegramBotToken']}/sendMessage?chat_id={self.settings['telegramBotChatId']}&text={message}"
+            response = requests.get(url).json()
+            # print(response)  # This sends the message and prints the response
+            if not response.get("ok"):
+                raise ValueError(f"Failed to send message: {response}")
+        except ValueError as e:
+            print(f"Error: {e}")
 
     def increase_step(self):
         step_int = int(self.step) + 1
@@ -265,6 +387,17 @@ class Claimer():
             self.output("Verbose level remains unchanged.", 2)
 
         try:
+            new_telegram_verbose_level = int(input("\nEnter the Telegram verbose level (3 = all messages, 2 = claim steps, 1 = minimal steps)\n(current: {}): ".format(self.settings['telegramVerboseLevel'])))
+            if 1 <= new_telegram_verbose_level <= 3:
+                self.settings["telegramVerboseLevel"] = new_telegram_verbose_level
+                self.output("Telegram verbose level updated successfully.", 2)
+            else:
+                self.output("Telegram verbose level remains unchanged.", 2)
+        except ValueError:
+            self.output("Telegram verbose level remains unchanged.", 2)
+
+
+        try:
             new_lowest_offset = int(input("\nEnter the lowest possible offset for the claim timer (valid values are -30 to +30 minutes)\n(current: {}): ".format(self.settings['lowestClaimOffset'])))
             if -30 <= new_lowest_offset <= 30:
                 self.settings["lowestClaimOffset"] = new_lowest_offset
@@ -295,12 +428,12 @@ class Claimer():
             if proxy_address:
                 self.settings["proxyAddress"] = proxy_address
 
-        if self.settings["requestUserAgent"]:
-            proxy_address = input(f"\nEnter the Proxy IP address and port (current: {self.settings['proxyAddress']}): ").strip()
-            if proxy_address:
-                self.settings["proxyAddress"] = proxy_address
-
         update_setting("requestUserAgent", "Shall we collect a User Agent during setup?: ", self.settings["requestUserAgent"])
+
+        # Collect the Telegram Bot Token
+        new_telegram_bot_token = input(f"\nEnter the Telegram Bot Token (current: {self.settings['telegramBotToken']}): ").strip()
+        if new_telegram_bot_token:
+            self.settings["telegramBotToken"] = new_telegram_bot_token
 
         self.save_settings()
 
@@ -383,13 +516,13 @@ class Claimer():
                 user_agent_cookie = next((cookie for cookie in cookies if cookie["name"] == "user_agent"), None)
                 if user_agent_cookie and user_agent_cookie["value"]:
                     user_agent = user_agent_cookie["value"]
-                    self.output(f"Using saved user agent: {user_agent}", 1)
+                    self.output(f"Using saved user agent: {user_agent}", 2)
                 else:
                     user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
-                    self.output("No user agent found, using default.", 1)
+                    self.output("No user agent found, using default.", 2)
         except FileNotFoundError:
             user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
-            self.output("Cookies file not found, using default user agent.", 1)
+            self.output("Cookies file not found, using default user agent.", 2)
 
         chrome_options.add_argument(f"user-agent={user_agent}")
 
@@ -424,20 +557,23 @@ class Claimer():
         max_wait_time = 15 * 60  # 15 minutes
         wait_interval = 5  # 5 seconds
         start_time = time.time()
+        message_displayed = False
 
         while os.path.exists(proxy_lock_file) and (time.time() - start_time) < max_wait_time:
-            self.output("Proxy is already running. Waiting for it to free up...", 1)
+            if not message_displayed:
+                self.output("Proxy is already running. Waiting for it to free up...", 2)
+                message_displayed = True
             time.sleep(wait_interval)
 
         if os.path.exists(proxy_lock_file):
-            self.output("Max wait time elapsed. Proceeding to run the proxy.", 1)
+            self.output("Max wait time elapsed. Proceeding to run the proxy.", 2)
 
         with open(proxy_lock_file, "w") as lock_file:
             lock_file.write(f"Proxy started at: {time.ctime()}\n")
 
         try:
             subprocess.run(['./launch.sh', 'enable-proxy'], check=True)
-            self.output("http-proxy started successfully.", 1)
+            self.output("http-proxy started successfully.", 2)
         except subprocess.CalledProcessError as e:
             self.output(f"Failed to start http-proxy: {e}", 1)
         finally:
@@ -462,7 +598,7 @@ class Claimer():
         current_timestamp = int(time.time())
         session_started = False
         new_message = True
-        output_priority = 1
+        output_priority = 2
 
         while True:
             try:
@@ -1177,6 +1313,18 @@ class Claimer():
             except ValueError as e:
                 self.output(f"Error: {e}",1)
 
+    # Start a new PM2 process
+    def start_pm2_app(self, script_path, app_name, session_name):
+        interpreter_path = "venv/bin/python3"
+        command = f"NODE_NO_WARNINGS=1 pm2 start {script_path} --name {app_name} --interpreter {interpreter_path} --watch {script_path} -- {session_name}"
+        subprocess.run(command, shell=True, check=True)
+
+    # Save the new PM2 process
+    def save_pm2(self):
+        command = f"NODE_NO_WARNINGS=1 pm2 save"
+        result = subprocess.run(command, shell=True, text=True, capture_output=True)
+        print(result.stdout)
+        
     def backup_telegram(self):
 
         # Ask the user if they want to backup their Telegram directory
@@ -1203,9 +1351,9 @@ class Claimer():
         except Exception as e:
             self.output(f"Step {self.step} - Oops, we weren't able to make a backup of the session data! Error: {e}", 1)
 
-    def get_seed_phrase_from_file(self, screenshots_path):
-        seed_file_path = os.path.join(screenshots_path, 'seed.txt')
-        if os.path.exists(seed_file_path):
-            with open(seed_file_path, 'r') as file:
-                return file.read().strip()
-        return None
+    def show_time(self, time):
+        hours = int(time / 60)
+        minutes = time % 60
+        if hours > 0:
+            return f"{hours} hours and {minutes} minutes"
+        return f"{minutes} minutes"
