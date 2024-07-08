@@ -250,7 +250,7 @@ class Claimer():
             self.output("Number of sessions remains unchanged.", 1)
 
         try:
-            new_verbose_level = int(input("\nEnter the number for how much information you want displaying in the console.\n 3 = all messages, 2 = claim steps, 1 = minimal steps\n(current: {}): ".format(self.settings['verboseLevel'])))
+            new_verbose_level = int(input("\nEnter the number for how much information you want displaying in the script console.\n 3 = all messages, 2 = claim steps, 1 = minimal steps\n(current: {}): ".format(self.settings['verboseLevel'])))
             if 1 <= new_verbose_level <= 3:
                 self.settings["verboseLevel"] = new_verbose_level
                 self.output("Verbose level updated successfully.", 2)
@@ -260,7 +260,7 @@ class Claimer():
             self.output("Verbose level remains unchanged.", 2)
 
         try:
-            new_telegram_verbose_level = int(input("\nEnter the Telegram verbose level (3 = all messages, 2 = claim steps, 1 = minimal steps, 0 = none)\n(current: {}): ".format(self.settings['telegramVerboseLevel'])))
+            new_telegram_verbose_level = int(input("\nHow much information to show in the Telegram bot? (3 = all messages, 2 = claim steps, 1 = minimal steps, 0 = none)\n(current: {}): ".format(self.settings['telegramVerboseLevel'])))
             if 0 <= new_telegram_verbose_level <= 3:
                 self.settings["telegramVerboseLevel"] = new_telegram_verbose_level
                 self.output("Telegram verbose level updated successfully.", 2)
