@@ -1351,9 +1351,17 @@ class Claimer():
         except Exception as e:
             self.output(f"Step {self.step} - Oops, we weren't able to make a backup of the session data! Error: {e}", 1)
 
-    def show_time(self, time):
-        hours = int(time / 60)
-        minutes = time % 60
-        if hours > 0:
-            return f"{hours} hours and {minutes} minutes"
-        return f"{minutes} minutes"
+def get_seed_phrase_from_file(self, screenshots_path):
+    seed_file_path = os.path.join(screenshots_path, 'seed.txt')
+    if os.path.exists(seed_file_path):
+        with open(seed_file_path, 'r') as file:
+            return file.read().strip()
+    return None
+
+def show_time(self, time):
+    hours = int(time / 60)
+    minutes = time % 60
+    if hours > 0:
+        return f"{hours} hours and {minutes} minutes"
+    return f"{minutes} minutes"
+

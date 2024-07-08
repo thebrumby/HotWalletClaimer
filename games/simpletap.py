@@ -26,7 +26,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 from claimer import Claimer
 
-class GameeClaimer(Claimer):
+class SimpleTapClaimer(Claimer):
 
     def __init__(self):
 
@@ -34,9 +34,9 @@ class GameeClaimer(Claimer):
         self.status_file_path = "status.txt"
         self.load_settings()
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-        self.script = "games/gamee.py"
-        self.prefix = "Gamee:"
-        self.url = "https://web.telegram.org/k/#@gamee"
+        self.script = "games/simpletap.py"
+        self.prefix = "SimpleTap:"
+        self.url = "https://web.telegram.org/k/#@Simple_Tap_Bot"
         self.pot_full = "Filled"
         self.pot_filling = "Mining"
         self.seed_phrase = None
@@ -45,27 +45,19 @@ class GameeClaimer(Claimer):
 
         super().__init__()
 
-        self.start_app_xpath = "//div[text()='Open app']"
+        self.start_app_xpath = "//div[contains(@class, 'new-message-wrapper')]//div[contains(text(), 'Start')]"
 
     def launch_iframe(self):
         super().launch_iframe()
 
-        # self.driver.switch_to.default_content()
-
-        # iframe = self.driver.find_element(By.TAG_NAME, "iframe")
-        # iframe_url = iframe.get_attribute("src")
-        # iframe_url = iframe_url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=android")
-
-        # self.driver.execute_script("arguments[0].src = arguments[1];", iframe, iframe_url)
-        # self.driver.execute_script("arguments[0].contentWindow.location.reload();", iframe)
-        # WebDriverWait(self.driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, f"//iframe[@src='{iframe_url}']")))
-
-        #self.driver.switch_to.default_content()
-        #self.driver.switch_to.frame(iframe)
-
         # Open tab in main window
         self.driver.switch_to.default_content()
-        self.driver.execute_script("location.href = document.querySelector('iframe').src")
+
+        iframe = self.driver.find_element(By.TAG_NAME, "iframe")
+        iframe_url = iframe.get_attribute("src")
+        iframe_url = iframe_url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=android")
+
+        self.driver.execute_script("location.href = '" + iframe_url + "'")
 
     def next_steps(self):
         if self.step:
@@ -89,59 +81,56 @@ class GameeClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
-        clicked_it = False
-
         status_text = ""
 
-        #  # START MINING - clear_overlays provokes move the element to the top of the page and overlap other items
-        try:
+        self.get_balance(False)
 
-            xpath = "//div[contains(@class, 'eWLHYP')]" # START MINING button
-            button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-            if button:
-                button.click()
-                self.output(f"Step {self.step} - Successfully clicked 'MINING' button.", 3)
-                status_text = "STATUS: Start MINING"
-
-        except TimeoutException:
-            try:
-
-                xpath = "//div[contains(@class, 'cYeqKR')]" # MINING button
-                button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-                self.output(f"Step {self.step} - Currently mining: {'YES' if button else 'NO'}.", 3)
-                status_text = "STATUS: Currently mining" if button else "STATUS: Not mining"
-
-            except TimeoutException:
-                self.output(f"Step {self.step} - MINING button NOT found .\n",3)
-                status_text = "STATUS: MINING button NOT found"
-
-        self.increase_step()
-
-        # START MINING
-        # xpath = "//div[contains(@class, 'eWLHYP')]"
-        # xpath = "//div[contains(@class, 'cYeqKR')]"
-        # button = self.move_and_click(xpath, 8, False, "click the 'Spin TAB'", self.step, "clickable")
+        # # Fortune NOT WORKING
+        # xpath = "//div[contains(@class, 'wheel_link')]"
+        # button = self.move_and_click(xpath, 8, False, "click the 'Fortune' button", self.step, "clickable")
         # if button: button.click()
+
+        # # If execute move_and_click() fails, because the element is overlapped by another element, try to click the element directly
+        # xpath = "//div[contains(@class, 'wheel_invite_button')]"
+        # try:
+        #     element = self.driver.find_element(By.XPATH, xpath)
+        #     self.driver.execute_script("arguments[0].click();", element)
+        # except Exception:
+        #     pass
+
         # self.increase_step()
 
-        xpath = "//div[contains(@class, 'wxeDq') and .//text()[contains(., 'Spin')]]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Spin TAB'", self.step, "clickable")
-        if button: button.click()
+        # Farming
+        xpath = "//div[contains(@class, 'home-button')]"
+        button = self.move_and_click(xpath, 8, False, "click the 'Farming' button", self.step, "clickable")
+        if button: 
+            classes = button.get_attribute("class")
+            if "block" in classes:
+                status_text = "STATUS: Farming"
+            else:
+                button.click()
+                status_text = "STATUS: Start Farming"
+
         self.increase_step()
 
-        # Wait for the 'FREE SPIN' button to appear
-        xpath = "//button[.//text()[contains(., 'available')]]"
+        # Take friends points
+        xpath = "(//div[@class='appbar-tab'])[last()]"
+        button = self.move_and_click(xpath, 8, False, "open 'Friends' tab", self.step, "clickable")
+        if button: button.click()
 
-        while True:
+        xpath = "//div[contains(@class, 'claim-button')]"
+        button = self.move_and_click(xpath, 8, False, "click the 'Take Friends Points' button", self.step, "clickable")
+        if button: 
+            button.click()
 
-            try:
-                button = self.move_and_click(xpath, 30, False, "click the 'FREE Spin'", self.step, "clickable")
-                if not button: break
-                if button: button.click()
-            except TimeoutException:
-                break
+            # Close the congratulations popup
+            xpath = "//div[contains(@class, 'invite_claimed-button')]"
+            button = self.move_and_click(xpath, 8, False, "exit the 'Congratulations' popup", self.step, "clickable")
+            if button: button.click()
+            
+        self.increase_step()
 
-        self.get_balance(False)
+        self.get_balance(True)
 
         wait_time = self.get_wait_time(self.step, "pre-claim") 
 
@@ -152,14 +141,8 @@ class GameeClaimer(Claimer):
             self.output(f"{status_text} - Next try in {self.show_time(wait_time)}.", 2)
             return wait_time
 
+
     def get_balance(self, claimed=False):
-
-        xpath = "//div[contains(@class, 'wxeDq') and .//text()[contains(., 'Mine')]]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Mine TAB'", self.step, "clickable")
-        if button: button.click()
-        self.increase_step()
-
-        self.driver.execute_script("location.href = 'https://prizes.gamee.com/telegram/mining/12'")
 
         def strip_html_and_non_numeric(text):
             """Remove HTML tags and keep only numeric characters and decimal points."""
@@ -167,8 +150,8 @@ class GameeClaimer(Claimer):
             clean = re.compile('<.*?>')
             text_without_html = clean.sub('', text)
             # Keep only numeric characters and decimal points
-            numeric_text = re.sub(r'[^0-9.]', '', text_without_html)
-            return numeric_text
+            #numeric_text = re.sub(r'[^0-9.]', '', text_without_html)
+            return text_without_html
 
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
@@ -176,9 +159,14 @@ class GameeClaimer(Claimer):
         # Dynamically adjust the log priority
         priority = max(self.settings['verboseLevel'], default_priority)
 
+        # Open home tab
+        xpath = "(//div[@class='appbar-tab'])[1]" 
+        button = self.move_and_click(xpath, 8, False, "open 'Home' tab", self.step, "clickable")
+        if button: button.click()
+
         # Construct the specific balance XPath
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = "//h2[@id='animated-mining-balance-id']"
+        balance_xpath = "//div[contains(@class, 'home_balance')]" 
 
         try:
             element = self.monitor_element(balance_xpath)
@@ -201,16 +189,10 @@ class GameeClaimer(Claimer):
 
             self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
 
-            xpath = "(//p[contains(@class, 'bEEYcp')])[1]"
-            actual = float(self.monitor_element(xpath, 15))
+            xpath = "//div[contains(@class, 'header_timer')]"
+            wait_time = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15)))
 
-            xpath = "(//p[contains(@class, 'bEEYcp')])[2]"
-            max = float(self.monitor_element(xpath, 15))
-
-            xpath = "(//p[contains(@class, 'jQUosL')])[1]"
-            production = float(self.monitor_element(xpath, 15))
-
-            wait_time = int(((max-actual)/production)*60)
+            self.output(f"Step {self.step} - The wait time is {wait_time} minutes.")
 
             return wait_time          
 
@@ -223,8 +205,32 @@ class GameeClaimer(Claimer):
 
             return None
 
+    def extract_time(self, text):
+        time_parts = text.split(':')
+        if len(time_parts) == 3:
+            try:
+                hours = int(time_parts[0].strip())
+                minutes = int(time_parts[1].strip())
+                return hours * 60 + minutes
+            except ValueError:
+                return "Unknown"
+        return "Unknown"
+    
+    def strip_html_tags(self, text):
+        clean = re.compile('<.*?>')
+        text_without_html = re.sub(clean, '', text)
+        text_cleaned = re.sub(r'[^0-9:.]', '', text_without_html)
+        return text_cleaned
+
+    def show_time(self, time):
+        hours = int(time / 60)
+        minutes = time % 60
+        if hours > 0:
+            return f"{hours} hours and {minutes} minutes"
+        return f"{minutes} minutes"
+
 def main():
-    claimer = GameeClaimer()
+    claimer = SimpleTapClaimer()
     claimer.run()
 
 if __name__ == "__main__":
