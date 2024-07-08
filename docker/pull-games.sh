@@ -25,22 +25,7 @@ cd $GAMES_DIR
 # Create the destination directory
 mkdir -p $DEST_DIR
 
-# Copy Python scripts to the destination directory if they exist and are newer
-if ls *.py 1> /dev/null 2>&1; then
-    for file in *.py; do
-        # Check if the destination file exists and compare modification times
-        if [ -f "$DEST_DIR/$file" ]; then
-            if [ "$file" -nt "$DEST_DIR/$file" ]; then
-                cp "$file" "$DEST_DIR"
-                echo "Updated $file"
-            else
-                echo "$file is already up-to-date."
-            fi
-        else
-            cp "$file" "$DEST_DIR"
-            echo "Copied new file $file"
-        fi
-    done
-else
-    echo "No Python scripts found to copy."
-fi
+# Copy the contents of the games directory recursively
+rsync -av --update $GAMES_DIR/ $DEST_DIR
+
+echo "All files and subdirectories have been copied to $DEST_DIR"

@@ -1,0 +1,56 @@
+# Use an Ubuntu 24.04 base image
+FROM ubuntu:24.04
+
+# Set environment variables to avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install basic dependencies
+RUN apt-get update && \
+    apt-get install -y wget curl gnupg2 ca-certificates xdg-utils libasound2-dev git python3-pip python3-venv zbar-tools gdebi-core --no-install-recommends && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Node.js (latest) and PM2
+RUN curl -fsSL https://deb.nodesource.com/setup_current.x -o nodesource_setup.sh && \
+    bash nodesource_setup.sh && \
+    apt-get install -y nodejs && \
+    npm install -g pm2 && \
+    rm nodesource_setup.sh
+
+# Install Chromium and Chromedriver
+RUN apt-get clean && apt-get autoclean && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt update && \
+    apt-get install -y xdg-utils libasound2-dev && \
+    wget http://launchpadlibrarian.net/660838579/chromium-codecs-ffmpeg-extra_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb && \
+    gdebi -n chromium-codecs-ffmpeg-extra_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb && \
+    wget http://launchpadlibrarian.net/660838574/chromium-browser_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb && \
+    gdebi -n chromium-browser_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb && \
+    wget http://launchpadlibrarian.net/660838578/chromium-chromedriver_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb && \
+    gdebi -n chromium-chromedriver_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb
+
+RUN chromium-browser --version && \
+    chromedriver --version
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Copy the shell scripts and make them executable
+COPY docker/* /usr/src/app/
+
+# Create and activate a virtual environment within the app directory, then install Python packages
+RUN python3 -m venv /usr/src/app/venv && \
+    /usr/src/app/venv/bin/pip install --upgrade pip && \
+    /usr/src/app/venv/bin/pip install wheel selenium Pillow pyzbar qrcode-terminal mitmproxy python-telegram-bot requests
+
+# Copy the launch script and make it executable
+RUN find /usr/src/app -type f -name "*.sh" -exec chmod +x {} \;
+
+# Ensure the virtual environment's Python interpreter is in the PATH
+ENV PATH="/usr/src/app/venv/bin:$PATH"
+
+# Copy the PM2 ecosystem configuration file
+COPY ecosystem.config.js /usr/src/app/
+
+# Ensure PM2 resurrects saved process list on startup and then run enable-proxy
+CMD ["sh", "-c", "pm2 resurrect && pm2-runtime start ecosystem.config.js"]
