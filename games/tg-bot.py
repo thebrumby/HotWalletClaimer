@@ -5,6 +5,51 @@ import asyncio
 import logging
 import subprocess
 import shutil
+import requests
+from git import Repo
+
+def download_file(url, dest):
+    """Download a file from a URL to a destination path."""
+    response = requests.get(url)
+    response.raise_for_status()  # Ensure we notice bad responses
+    with open(dest, 'wb') as f:
+        f.write(response.content)
+    print(f"Downloaded {url} to {dest}")
+
+def clone_directory(repo_url, subdir, dest_dir):
+    """Clone a specific directory from a git repository."""
+    Repo.clone_from(repo_url, dest_dir, multi_options=[f'--filter=blob:none', f'--sparse'])
+    repo = Repo(dest_dir)
+    repo.git.sparse_checkout_set(subdir)
+    repo.git.checkout('HEAD')
+    print(f"Cloned {subdir} from {repo_url} to {dest_dir}")
+
+def main() -> None:
+    token = load_telegram_token('variables.txt')
+    if not token:
+        sys.exit(1)
+    
+    list_pm2_processes = set(list_all_pm2_processes())
+
+    if "Telegram-Bot" not in list_pm2_processes:
+        script = "games/tg-bot.py"
+
+        pm2_session = "Telegram-Bot"
+        print(f"You could add the new/updated session to PM use: pm2 start {script} --interpreter venv/bin/python3 --name {pm2_session} -- {pm2_session}", 1)
+        user_choice = input("Enter 'e' to exit, 'a' or <enter> to automatically add to PM2: ").lower()
+
+        if user_choice == "e":
+            print("Exiting script. You can resume the process later.", 1)
+            sys.exit()
+        elif user_choice == "a" or not user_choice:
+            start_pm2_app(script, pm2_session, pm2_session)
+            user_choice = input("Should we save your PM2 processes? (Y/n): ").lower()
+            if user_choice == "y" or not user_choice:
+                save_pm2()
+            print(f"You can now watch the session log into PM2 with: pm2 logs {pm2_session}", 2)
+            sys.exit()
+
+    run()
 
 try:
     from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove, Update,
@@ -22,18 +67,26 @@ except ImportError:
 try:
     from utils.pm2 import start_pm2_app, save_pm2
 except ImportError:
-    # If import fails, execute the copy sequence
+    # If import fails, download and copy the necessary files and directories
+    repo_url = "https://github.com/thebrumby/HotWalletClaimer"
+    pull_games_url = f"{repo_url}/raw/main/docker/pull-games.sh"
+    pull_games_dest = "/usr/src/app/pull-games.sh"
+    utils_subdir = "games/utils"
+    utils_dest_dir = "/usr/src/app/games/utils"
+
     if not os.path.exists("/usr/src/app/games/utils"):
-        if os.path.exists("/app/docker/pull-games.sh"):
-            shutil.move("/app/docker/pull-games.sh", "/usr/src/app/pull-games.sh")
-            os.chmod("/usr/src/app/pull-games.sh", 0o755)
-            os.system("/usr/src/app/pull-games.sh")
+        if not os.path.exists(pull_games_dest):
+            download_file(pull_games_url, pull_games_dest)
+            os.chmod(pull_games_dest, 0o755)
+            subprocess.run([pull_games_dest])
+        if not os.path.exists(utils_dest_dir):
+            clone_directory(repo_url, utils_subdir, "/usr/src/app")
 
     # Retry importing after copying
     try:
         from utils.pm2 import start_pm2_app, save_pm2
     except ImportError:
-        print("Failed to import PM2 utilities even after attempting to copy the pull-games.sh script.")
+        print("Failed to import PM2 utilities even after attempting to copy the necessary files and directories.")
         sys.exit(1)
 
 from status import list_pm2_processes, list_all_pm2_processes, get_inactive_directories, get_logs_by_process_name, get_status_logs_by_process_name, fetch_and_process_logs
@@ -160,7 +213,7 @@ async def select_process(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     keyboard = []
 
     print("Stopped Processes: " + ', '.join(stopped_processes))
-    print("Running Processes: " + ', '.join(running_processes))
+    print("Running Processes: " + ', '. '.join(running_processes))
     print("Inactive Directories: " + ', '.join(inactive_directories))
 
     for process in stopped_processes:
@@ -288,45 +341,6 @@ async def get_processes():
     inactive_directories = get_inactive_directories()
 
 #endregion
-
-def main() -> None:
-    token = load_telegram_token('variables.txt')
-    if not token:
-        sys.exit(1)
-    
-    list_pm2_processes = set(list_all_pm2_processes())
-
-    if "Telegram-Bot" not in list_pm2_processes:
-        script = "games/tg-bot.py"
-
-        pm2_session = "Telegram-Bot"
-        print(f"You could add the new/updated session to PM use: pm2 start {script} --interpreter venv/bin/python3 --name {pm2_session} -- {pm2_session}", 1)
-        user_choice = input("Enter 'e' to exit, 'a' or <enter> to automatically add to PM2: ").lower()
-
-        if user_choice == "e":
-            print("Exiting script. You can resume the process later.", 1)
-            sys.exit()
-        elif user_choice == "a" or not user_choice:
-            start_pm2_app(script, pm2_session, pm2_session)
-            user_choice = input("Should we save your PM2 processes? (Y/n): ").lower()
-            if user_choice == "y" or not user_choice:
-                save_pm2()
-            print(f"You can now watch the session log into PM2 with: pm2 logs {pm2_session}", 2)
-            sys.exit()
-
-    run()
-
-async def run_command(command: str) -> str:
-    """Execute a shell command and return its output."""
-    proc = await asyncio.create_subprocess_shell(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    stdout, stderr = await proc.communicate()
-    if stderr:
-        print(f"Error: {stderr.decode()}")
-    return stdout.decode()
 
 if __name__ == '__main__':
     main()
