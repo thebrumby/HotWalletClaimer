@@ -4,6 +4,7 @@ import json
 import asyncio
 import logging
 import subprocess
+import shutil
 
 try:
     from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove, Update,
@@ -276,6 +277,17 @@ def main() -> None:
     token = load_telegram_token('variables.txt')
     if not token:
         sys.exit(1)
+
+    # Check if the /usr/src/app/games/utils directory exists
+    if not os.path.exists("/usr/src/app/games/utils"):
+        # Check if /app/pull-games.sh exists
+        if os.path.exists("/app/pull-games.sh"):
+            # Move the pull-games.sh script
+            shutil.move("/app/pull-games.sh", "/usr/src/app/pull-games.sh")
+            # Make the script executable if necessary
+            os.chmod("/usr/src/app/pull-games.sh", 0o755)
+            # Run the pull-games.sh script
+            os.system("/usr/src/app/pull-games.sh")
 
     list_pm2_processes = set(list_all_pm2_processes())
 
