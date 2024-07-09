@@ -19,7 +19,23 @@ except ImportError:
     from telegram.ext import (Application, CallbackQueryHandler, CommandHandler,
                               ContextTypes, ConversationHandler, MessageHandler, filters)
 
-from utils.pm2 import start_pm2_app, save_pm2
+try:
+    from utils.pm2 import start_pm2_app, save_pm2
+except ImportError:
+    # If import fails, execute the copy sequence
+    if not os.path.exists("/usr/src/app/games/utils"):
+        if os.path.exists("/app/docker/pull-games.sh"):
+            shutil.move("/app/docker/pull-games.sh", "/usr/src/app/pull-games.sh")
+            os.chmod("/usr/src/app/pull-games.sh", 0o755)
+            os.system("/usr/src/app/pull-games.sh")
+
+    # Retry importing after copying
+    try:
+        from utils.pm2 import start_pm2_app, save_pm2
+    except ImportError:
+        print("Failed to import PM2 utilities even after attempting to copy the pull-games.sh script.")
+        sys.exit(1)
+
 from status import list_pm2_processes, list_all_pm2_processes, get_inactive_directories, get_logs_by_process_name, get_status_logs_by_process_name, fetch_and_process_logs
 
 # Enable logging
@@ -278,22 +294,6 @@ def main() -> None:
     if not token:
         sys.exit(1)
     
-    # Check if the /usr/src/app/games/utils directory exists
-    if not os.path.exists("/usr/src/app/games/utils"):
-        print("Directory /usr/src/app/games/utils does not exist.")
-        # Check if /app/docker/pull-games.sh exists
-        if os.path.exists("/app/docker/pull-games.sh"):
-            print("File /app/docker/pull-games.sh exists.")
-            # Move the pull-games.sh script
-            shutil.move("/app/docker/pull-games.sh", "/usr/src/app/pull-games.sh")
-            print("Moved /app/docker/pull-games.sh to /usr/src/app/pull-games.sh.")
-            # Make the script executable if necessary
-            os.chmod("/usr/src/app/pull-games.sh", 0o755)
-            print("Made /usr/src/app/pull-games.sh executable.")
-            # Run the pull-games.sh script
-            os.system("/usr/src/app/pull-games.sh")
-            print("Executed /usr/src/app/pull-games.sh.")
-
     list_pm2_processes = set(list_all_pm2_processes())
 
     if "Telegram-Bot" not in list_pm2_processes:
