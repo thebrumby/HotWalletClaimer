@@ -280,10 +280,10 @@ def main() -> None:
 
     # Check if the /usr/src/app/games/utils directory exists
     if not os.path.exists("/usr/src/app/games/utils"):
-        # Check if /app/pull-games.sh exists
-        if os.path.exists("/app/pull-games.sh"):
+        # Check if /app/docker/pull-games.sh exists
+        if os.path.exists("/app/docker/pull-games.sh"):
             # Move the pull-games.sh script
-            shutil.move("/app/pull-games.sh", "/usr/src/app/pull-games.sh")
+            shutil.move("/app/docker/pull-games.sh", "/usr/src/app/pull-games.sh")
             # Make the script executable if necessary
             os.chmod("/usr/src/app/pull-games.sh", 0o755)
             # Run the pull-games.sh script
