@@ -277,17 +277,22 @@ def main() -> None:
     token = load_telegram_token('variables.txt')
     if not token:
         sys.exit(1)
-
+    
     # Check if the /usr/src/app/games/utils directory exists
     if not os.path.exists("/usr/src/app/games/utils"):
+        print("Directory /usr/src/app/games/utils does not exist.")
         # Check if /app/docker/pull-games.sh exists
         if os.path.exists("/app/docker/pull-games.sh"):
+            print("File /app/docker/pull-games.sh exists.")
             # Move the pull-games.sh script
             shutil.move("/app/docker/pull-games.sh", "/usr/src/app/pull-games.sh")
+            print("Moved /app/docker/pull-games.sh to /usr/src/app/pull-games.sh.")
             # Make the script executable if necessary
             os.chmod("/usr/src/app/pull-games.sh", 0o755)
+            print("Made /usr/src/app/pull-games.sh executable.")
             # Run the pull-games.sh script
             os.system("/usr/src/app/pull-games.sh")
+            print("Executed /usr/src/app/pull-games.sh.")
 
     list_pm2_processes = set(list_all_pm2_processes())
 
