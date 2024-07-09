@@ -1,28 +1,35 @@
 import os
 import sys
 import json
-import asyncio
-import logging
 import subprocess
 import shutil
 import requests
 from git import Repo
+import logging
 
 def download_file(url, dest):
     """Download a file from a URL to a destination path."""
-    response = requests.get(url)
-    response.raise_for_status()  # Ensure we notice bad responses
-    with open(dest, 'wb') as f:
-        f.write(response.content)
-    print(f"Downloaded {url} to {dest}")
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Ensure we notice bad responses
+        with open(dest, 'wb') as f:
+            f.write(response.content)
+        print(f"Downloaded {url} to {dest}")
+    except Exception as e:
+        print(f"Failed to download {url}: {e}")
+        sys.exit(1)
 
 def clone_directory(repo_url, subdir, dest_dir):
     """Clone a specific directory from a git repository."""
-    Repo.clone_from(repo_url, dest_dir, multi_options=[f'--filter=blob:none', f'--sparse'])
-    repo = Repo(dest_dir)
-    repo.git.sparse_checkout_set(subdir)
-    repo.git.checkout('HEAD')
-    print(f"Cloned {subdir} from {repo_url} to {dest_dir}")
+    try:
+        Repo.clone_from(repo_url, dest_dir, multi_options=[f'--filter=blob:none', f'--sparse'])
+        repo = Repo(dest_dir)
+        repo.git.sparse_checkout_set(subdir)
+        repo.git.checkout('HEAD')
+        print(f"Cloned {subdir} from {repo_url} to {dest_dir}")
+    except Exception as e:
+        print(f"Failed to clone {subdir} from {repo_url}: {e}")
+        sys.exit(1)
 
 def main() -> None:
     token = load_telegram_token('variables.txt')
@@ -78,7 +85,12 @@ except ImportError:
         if not os.path.exists(pull_games_dest):
             download_file(pull_games_url, pull_games_dest)
             os.chmod(pull_games_dest, 0o755)
-            subprocess.run([pull_games_dest])
+            result = subprocess.run([pull_games_dest], capture_output=True, text=True)
+            if result.returncode != 0:
+                print(f"Failed to execute {pull_games_dest}: {result.stderr}")
+                sys.exit(1)
+            else:
+                print(f"Successfully executed {pull_games_dest}: {result.stdout}")
         if not os.path.exists(utils_dest_dir):
             clone_directory(repo_url, utils_subdir, "/usr/src/app")
 
@@ -213,19 +225,15 @@ async def select_process(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     keyboard = []
 
     print("Stopped Processes: " + ', '.join(stopped_processes))
-    print("Running Processes: " + ', '. '.join(running_processes))
-    print("Inactive Directories: " + ', '.join(inactive_directories))
 
     for process in stopped_processes:
-        keyboard.append([InlineKeyboardButton(process + u" 🔴", callback_data=process)])
+        keyboard.append([InlineKeyboardButton(process, callback_data=process)])
 
     for process in running_processes:
-        keyboard.append([InlineKeyboardButton(process + u" 🟢", callback_data=process)])
-
-    for directory in inactive_directories:
-        keyboard.append([InlineKeyboardButton(directory + u" ⚫", callback_data=directory)])
+        keyboard.append([InlineKeyboardButton(process, callback_data=process)])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
+
     await query.message.reply_text('<b>Choose an option:</b>', parse_mode='HTML', reply_markup=reply_markup)
 
     return PROCESS_DECISION
