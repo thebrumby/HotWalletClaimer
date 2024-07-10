@@ -211,15 +211,6 @@ class DiamondClaimer(Claimer):
         
     def get_balance(self, claimed=False):
 
-        def strip_html_and_non_numeric(text):
-            """Remove HTML tags and keep only numeric characters and decimal points."""
-            # Remove HTML tags
-            clean = re.compile('<.*?>')
-            text_without_html = clean.sub('', text)
-            # Keep only numeric characters and decimal points
-            numeric_text = re.sub(r'[^0-9.]', '', text_without_html)
-            return numeric_text
-
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
 
@@ -231,7 +222,7 @@ class DiamondClaimer(Claimer):
         balance_xpath = f"//small[text()='DMH Balance']/following-sibling::div"
 
         try:
-            element = strip_html_and_non_numeric(self.monitor_element(balance_xpath))
+            element = self.strip_html_and_non_numeric(self.monitor_element(balance_xpath))
 
             # Check if element is not None and process the balance
             if element:
@@ -239,6 +230,22 @@ class DiamondClaimer(Claimer):
 
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//div[div[p[text()='Storage']]]//span[last()]"
+
+        try:
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+
+            # Check if element is not None and process the profit
+            if element:
+                self.output(f"Step {self.step} - {profit_text} {element}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
 

@@ -185,8 +185,8 @@ class SeedClaimer(Claimer):
         priority = max(self.settings['verboseLevel'], default_priority)
 
         # Construct the specific balance XPath
-        balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//div[p[contains(text(), 'SEED Balance:')]]"
+        balance_text = f'{prefix} BALANCE:'
+        balance_xpath = "//div[p[contains(text(), 'SEED Balance:')]]"
 
         try:
             element = self.monitor_element(balance_xpath)
@@ -206,8 +206,8 @@ class SeedClaimer(Claimer):
 
 
         # Construct the specific profit XPath
-        profit_text = f'{prefix} PROFIT/HOUR:' if claimed else f'{prefix} PROFIT/HOUR:'
-        profit_xpath = f"//p[contains(text(), 'SEED/hour')]"
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//p[contains(text(), 'SEED/hour')]"
 
         try:
             element = self.monitor_element(profit_xpath)

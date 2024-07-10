@@ -83,6 +83,29 @@ class FuelAUClaimer(Claimer):
         balance_text = f"{prefix} BALANCE: {balance['fuel']} fuel & {balance['oil']} oil."
         self.output(f"Step {self.step} - {balance_text}", priority)
 
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//div[div[contains(text(), 'Oil rig')]]//div[last()]"
+
+        try:
+            element = None
+
+            xpath = "//a[text()='Upgrades']"
+            button = self.move_and_click(xpath, 10, False, "click the 'Upgrades' button", self.step, "clickable")
+            if button:
+                button.click()
+
+                element = self.strip_html_and_non_numeric(self.monitor_element(profit_xpath))
+
+            # Check if element is not None and process the profit
+            if element:
+                self.output(f"Step {self.step} - {profit_text} {element} oil", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+
         return balance
 
     def recycle_and_upgrade(self):
