@@ -63,26 +63,25 @@ echo "All files and subdirectories have been copied to $DEST_DIR"
 def check_and_update_games_utils():
     """Check if games/utils exists, and if not, update using pull-games.sh."""
     if not os.path.exists("/usr/src/app/games/utils"):
-        pull_games_url = "https://github.com/thebrumby/HotWalletClaimer/raw/main/docker/pull-games.sh"
         pull_games_dest = "/usr/src/app/pull-games.sh"
 
-        # Download the pull-games.sh script if it does not exist
-        if not os.path.exists(pull_games_dest):
-            download_file(pull_games_url, pull_games_dest)
+        # Check if pull-games.sh exists
+        if os.path.exists(pull_games_dest):
+            # Modify the pull-games.sh script
+            modify_pull_games_script(pull_games_dest)
 
-        # Modify the pull-games.sh script
-        modify_pull_games_script(pull_games_dest)
+            # Make the script executable
+            os.chmod(pull_games_dest, 0o755)
 
-        # Make the script executable
-        os.chmod(pull_games_dest, 0o755)
-
-        # Run the pull-games.sh script
-        result = subprocess.run([pull_games_dest], capture_output=True, text=True)
-        if result.returncode != 0:
-            print(f"Failed to execute {pull_games_dest}: {result.stderr}")
-            sys.exit(1)
+            # Run the pull-games.sh script
+            result = subprocess.run([pull_games_dest], capture_output=True, text=True)
+            if result.returncode != 0:
+                print(f"Failed to execute {pull_games_dest}: {result.stderr}")
+                sys.exit(1)
+            else:
+                print(f"Successfully executed {pull_games_dest}: {result.stdout}")
         else:
-            print(f"Successfully executed {pull_games_dest}: {result.stdout}")
+            print("pull-games.sh does not exist, skipping the update.")
 
 # Ensure games/utils is present before proceeding with the imports
 check_and_update_games_utils()
@@ -365,26 +364,25 @@ def main() -> None:
         sys.exit(1)
 
     if not os.path.exists("/usr/src/app/games/utils"):
-        pull_games_url = "https://github.com/thebrumby/HotWalletClaimer/raw/main/docker/pull-games.sh"
         pull_games_dest = "/usr/src/app/pull-games.sh"
 
-        # Download the pull-games.sh script if it does not exist
-        if not os.path.exists(pull_games_dest):
-            download_file(pull_games_url, pull_games_dest)
+        # Check if pull-games.sh exists
+        if os.path.exists(pull_games_dest):
+            # Modify the pull-games.sh script
+            modify_pull_games_script(pull_games_dest)
 
-        # Modify the pull-games.sh script
-        modify_pull_games_script(pull_games_dest)
+            # Make the script executable
+            os.chmod(pull_games_dest, 0o755)
 
-        # Make the script executable
-        os.chmod(pull_games_dest, 0o755)
-
-        # Run the pull-games.sh script
-        result = subprocess.run([pull_games_dest], capture_output=True, text=True)
-        if result.returncode != 0:
-            print(f"Failed to execute {pull_games_dest}: {result.stderr}")
-            sys.exit(1)
+            # Run the pull-games.sh script
+            result = subprocess.run([pull_games_dest], capture_output=True, text=True)
+            if result.returncode != 0:
+                print(f"Failed to execute {pull_games_dest}: {result.stderr}")
+                sys.exit(1)
+            else:
+                print(f"Successfully executed {pull_games_dest}: {result.stdout}")
         else:
-            print(f"Successfully executed {pull_games_dest}: {result.stdout}")
+            print("pull-games.sh does not exist, skipping the update.")
 
     list_pm2_processes = set(list_all_pm2_processes())
 
