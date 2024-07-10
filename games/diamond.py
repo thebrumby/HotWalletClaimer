@@ -125,6 +125,7 @@ class DiamondClaimer(Claimer):
         self.increase_step
 
         self.get_balance(False)
+        self.get_profit_hour(False)
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
@@ -177,6 +178,7 @@ class DiamondClaimer(Claimer):
                     self.increase_step()
 
                     self.get_balance(True)
+                    self.get_profit_hour(True)
 
                     if wait_time_text == "0h 0m to fill":
                         self.output(f"STATUS: The wait timer is still showing: Filled.",1)
@@ -232,6 +234,17 @@ class DiamondClaimer(Claimer):
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+
+        # Increment step function, assumed to handle next step logic
+        self.increase_step()
+
+    def get_profit_hour(self, claimed=False):
+
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        # Dynamically adjust the log priority
+        priority = max(self.settings['verboseLevel'], default_priority)
 
         # Construct the specific profit XPath
         profit_text = f'{prefix} PROFIT/HOUR:'

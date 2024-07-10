@@ -108,6 +108,7 @@ class SeedClaimer(Claimer):
         self.move_and_click(xpath, 20, True, "exit DAILY BONUS (may not be present)", self.step, "clickable")
 
         self.get_balance(False)
+        self.get_profit_hour(False)
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
@@ -144,6 +145,7 @@ class SeedClaimer(Claimer):
                     self.increase_step()
 
                     self.get_balance(True)
+                    self.get_profit_hour(True)
 
                     if wait_time_text == "Filled":
                         self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
@@ -204,6 +206,16 @@ class SeedClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
 
+        # Increment step function, assumed to handle next step logic
+        self.increase_step()
+
+    def get_profit_hour(self, claimed=False):
+
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        # Dynamically adjust the log priority
+        priority = max(self.settings['verboseLevel'], default_priority)
 
         # Construct the specific profit XPath
         profit_text = f'{prefix} PROFIT/HOUR:'

@@ -83,6 +83,12 @@ class FuelAUClaimer(Claimer):
         balance_text = f"{prefix} BALANCE: {balance['fuel']} fuel & {balance['oil']} oil."
         self.output(f"Step {self.step} - {balance_text}", priority)
 
+        return balance
+    
+    def get_profit_hour(self, claimed=False):
+        prefix = "After" if claimed else "Before"
+        priority = max(self.settings['verboseLevel'], 2 if claimed else 3)
+
         # Construct the specific profit XPath
         profit_text = f'{prefix} PROFIT/HOUR:'
         profit_xpath = "//div[div[contains(text(), 'Oil rig')]]//div[last()]"
@@ -106,7 +112,6 @@ class FuelAUClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
 
-        return balance
 
     def recycle_and_upgrade(self):
         steps = [
@@ -202,6 +207,7 @@ class FuelAUClaimer(Claimer):
                 time.sleep(60)
                 self.increase_step()
                 self.get_balance(True)
+                self.get_profit_hour(True)
 
         def apply_random_offset(unmodifiedTimer):
             if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
@@ -212,6 +218,7 @@ class FuelAUClaimer(Claimer):
 
         self.launch_iframe()
         self.get_balance(False)
+        self.get_profit_hour(False)
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim")
         if wait_time_text != "Filled":
@@ -252,6 +259,7 @@ class FuelAUClaimer(Claimer):
                     self.recycle_and_upgrade()
                     self.increase_step()
                     self.get_balance(True)
+                    self.get_profit_hour(True)
                     self.increase_step()
                     if wait_time_text == "Filled":
                         self.output(f"Step {self.step} - The wait timer is still showing: Filled.", 1)

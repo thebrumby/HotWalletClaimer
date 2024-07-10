@@ -89,6 +89,9 @@ class GameeClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
+        self.get_balance(False)
+        self.get_profit_hour(False)
+
         clicked_it = False
 
         status_text = ""
@@ -141,8 +144,9 @@ class GameeClaimer(Claimer):
             except TimeoutException:
                 break
 
-        self.get_balance(False)
-
+        self.get_balance(True)
+        self.get_profit_hour(True)
+        
         wait_time = self.get_wait_time(self.step, "pre-claim") 
 
         if wait_time is None:
@@ -161,15 +165,6 @@ class GameeClaimer(Claimer):
 
         self.driver.execute_script("location.href = 'https://prizes.gamee.com/telegram/mining/12'")
 
-        def strip_html_and_non_numeric(text):
-            """Remove HTML tags and keep only numeric characters and decimal points."""
-            # Remove HTML tags
-            clean = re.compile('<.*?>')
-            text_without_html = clean.sub('', text)
-            # Keep only numeric characters and decimal points
-            numeric_text = re.sub(r'[^0-9.]', '', text_without_html)
-            return numeric_text
-
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
 
@@ -185,7 +180,7 @@ class GameeClaimer(Claimer):
 
             # Check if element is not None and process the balance
             if element:
-                cleaned_balance = strip_html_and_non_numeric(element)
+                cleaned_balance = self.strip_html_and_non_numeric(element)
                 self.output(f"Step {self.step} - {balance_text} {cleaned_balance}", priority)
 
         except NoSuchElementException:
@@ -194,6 +189,17 @@ class GameeClaimer(Claimer):
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
 
 
+        # Increment step function, assumed to handle next step logic
+        self.increase_step()
+
+    def get_profit_hour(self, claimed=False):
+
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        # Dynamically adjust the log priority
+        priority = max(self.settings['verboseLevel'], default_priority)
+
         # Construct the specific profit XPath
         profit_text = f'{prefix} PROFIT/HOUR:'
         profit_xpath = "(//p[contains(@class, 'jQUosL')])[1]"
@@ -201,7 +207,7 @@ class GameeClaimer(Claimer):
         try:
             element = self.monitor_element(profit_xpath)
             if element:
-                profit_part = strip_html_and_non_numeric(element)
+                profit_part = self.strip_html_and_non_numeric(element)
                 self.output(f"Step {self.step} - {profit_text} {profit_part}", priority)
 
         except NoSuchElementException:

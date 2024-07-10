@@ -82,6 +82,7 @@ class ColdClaimer(Claimer):
         self.increase_step()
 
         self.get_balance(False)
+        self.get_profit_hour(False)
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
         if wait_time_text != "Filled":
@@ -124,6 +125,7 @@ class ColdClaimer(Claimer):
                     time.sleep(20)
 
                     self.get_balance(True)
+                    self.get_profit_hour(True)
                     wait_time_text = self.get_wait_time(self.step, "post-claim")
 
                     if wait_time_text != "Filled":
@@ -142,6 +144,7 @@ class ColdClaimer(Claimer):
 
             # Check if the status is still "Filled" outside the try block
             self.get_balance(True)
+            self.get_profit_hour(True)
             wait_time_text = self.get_wait_time(self.step, "post-claim")
             if wait_time_text != "Filled":
                 self.output(f"STATUS: Successful Claim: We'll check back hourly for the pot to be full.", 1)
@@ -182,6 +185,16 @@ class ColdClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
 
+        # Increment step function, assumed to handle next step logic
+        self.increase_step()
+
+    def get_profit_hour(self, claimed=False):
+
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        # Dynamically adjust the log priority
+        priority = max(self.settings['verboseLevel'], default_priority)
 
         # Construct the specific profit XPath
         profit_text = f'{prefix} PROFIT/HOUR:'

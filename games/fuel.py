@@ -106,6 +106,7 @@ class FuelClaimer(Claimer):
         self.launch_iframe()
 
         self.get_balance(False)
+        self.get_profit_hour(False)
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
         if wait_time_text != "Filled":
@@ -146,6 +147,7 @@ class FuelClaimer(Claimer):
                     total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                     self.increase_step()
                     self.get_balance(True)
+                    self.get_profit_hour(True)
                     self.increase_step()
                     recycle()
                     if wait_time_text == "Filled":
@@ -202,6 +204,15 @@ class FuelClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
 
+        self.increase_step()
+
+
+    def get_profit_hour(self, claimed=False):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        priority = max(self.settings['verboseLevel'], default_priority)
+
         # Construct the specific profit XPath
         profit_text = f'{prefix} PROFIT/HOUR:'
         profit_xpath = "//div[div[contains(text(), 'Oil rig')]]//div[last()]"
@@ -226,6 +237,7 @@ class FuelClaimer(Claimer):
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
 
         self.increase_step()
+
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
         for attempt in range(1, max_attempts + 1):
