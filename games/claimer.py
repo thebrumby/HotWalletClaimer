@@ -324,6 +324,7 @@ class Claimer():
                 self.settings['telegramBotChatId'] = self.get_telegram_bot_chat_id()
                 self.save_settings()  # Save the settings after getting the chat ID
             except ValueError as e:
+                pass
                 # print(f"Error fetching Telegram chat ID: {e}")
         if self.settings['telegramBotChatId'] and self.wallet_id and self.settings['telegramVerboseLevel'] >= level:
             self.send_message(string)
