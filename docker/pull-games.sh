@@ -26,6 +26,6 @@ cd $GAMES_DIR
 mkdir -p $DEST_DIR
 
 # Copy the contents of the games directory recursively
-rsync -av --update $GAMES_DIR/ $DEST_DIR
+cp -r $GAMES_DIR/* $DEST_DIR
 
 echo "All files and subdirectories have been copied to $DEST_DIR"
