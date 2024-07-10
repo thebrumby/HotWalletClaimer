@@ -204,8 +204,30 @@ class SeedClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
 
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:' if claimed else f'{prefix} PROFIT/HOUR:'
+        profit_xpath = f"//p[contains(text(), 'SEED/hour')]"
+
+        try:
+            element = self.monitor_element(profit_xpath)
+            if isinstance(element, str):
+                # Split element at the colon (if present) and assign the right side (excluding ":")
+                if ' ' in element:
+                    element = element.split(' ')[0].strip()
+            # Check if element is not None and process the balance
+            if element:
+                profit_part = element
+                self.output(f"Step {self.step} - {profit_text} {profit_part}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+
         # Increment step function, assumed to handle next step logic
         self.increase_step()
+
 
     def click_element(self, xpath, timeout=30, action_description=""):
         self.move_and_click(xpath, 8, False, f"move to {xpath}", self.step, "clickable")

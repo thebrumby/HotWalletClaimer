@@ -32,14 +32,17 @@ def fetch_and_process_logs(process_name):
     logs = run_command(f"tail -n 200 {log_file}")
 
     balance = "None"
+    profit_hour = "None"
     next_claim_at = "None"
     log_status = "None"
 
-    relevant_lines = [line for line in reversed(logs.splitlines()) if any(kw in line for kw in ["BALANCE:", "STATUS:", "Need to wait until"])]
+    relevant_lines = [line for line in reversed(logs.splitlines()) if any(kw in line for kw in ["BALANCE:", "STATUS:", "Need to wait until", "PROFIT/HOUR:"])]
 
     for line in relevant_lines:
         if "BALANCE:" in line and balance == "None":
             balance = extract_detail(line, "BALANCE")
+        if "PROFIT/HOUR:" in line and profit_hour == "None":
+            profit_hour = extract_detail(line, "PROFIT/HOUR")
         if "STATUS:" in line and log_status == "None":
             log_status = extract_detail(line, "STATUS")
         if "Need to wait until" in line and next_claim_at == "None":
@@ -47,37 +50,39 @@ def fetch_and_process_logs(process_name):
             if next_claim_at is not None:
                 next_claim_at = next_claim_at.strftime("%d %B - %H:%M")
 
-    return process_name, balance, next_claim_at, log_status
+    return process_name, balance, profit_hour, next_claim_at, log_status
 
 def display_processes(processes, status, sort_by="time", start_index=1):
     name_width = 20
     balance_width = 20
+    profit_hour_width = 20
     claim_width = 20
     status_width = 80
-    total_width = name_width + balance_width + claim_width + status_width + 15
+    total_width = name_width + balance_width + profit_hour_width + claim_width + status_width + 18
 
     print(f"{status} Wallet Processes:\n")
     print("|-" + "-" * total_width + "-|")
-    print(f"| {'ID'.ljust(3)} | {'Wallet Name'.ljust(name_width)} | {'Balance'.ljust(balance_width)} | {'Next Claim'.ljust(claim_width)} | {'Status'.ljust(status_width)} |")
+    print(f"| {'ID'.ljust(3)} | {'Wallet Name'.ljust(name_width)} | {'Balance'.ljust(balance_width)} | {'Profit/Hour'.ljust(profit_hour_width)} | {'Next Claim'.ljust(claim_width)} | {'Status'.ljust(status_width)} |")
     print("|-" + "-" * total_width + "-|")
 
     process_list = []
     for process_name in processes:
         if process_name.strip():
-            name, balance, next_claim_at, log_status = fetch_and_process_logs(process_name.strip())
-            process_list.append((name, balance, next_claim_at, log_status))
+            name, balance, profit_hour, next_claim_at, log_status = fetch_and_process_logs(process_name.strip())
+            process_list.append((name, balance, profit_hour, next_claim_at, log_status))
 
     if sort_by == "time":
         process_list.sort(key=lambda x: datetime.strptime(x[2], "%d %B - %H:%M") if x[2] != "None" else datetime.max)
     elif sort_by == "name":
         process_list.sort(key=lambda x: x[0])
 
-    for i, (name, balance, next_claim_at, log_status) in enumerate(process_list, start=start_index):
+    for i, (name, balance, profit_hour, next_claim_at, log_status) in enumerate(process_list, start=start_index):
         name = truncate_and_pad(name, name_width)
         balance = truncate_and_pad(balance, balance_width)
+        profit_hour = truncate_and_pad(profit_hour, claim_width)
         next_claim_at = truncate_and_pad(next_claim_at, claim_width)
         log_status = truncate_and_pad(log_status, status_width)
-        print(f"| {str(i).ljust(3)} | {name} | {balance} | {next_claim_at} | {log_status} |")
+        print(f"| {str(i).ljust(3)} | {name} | {balance} | {profit_hour} | {next_claim_at} | {log_status} |")
 
     print("|-" + "-" * total_width + "-|")
     return process_list
