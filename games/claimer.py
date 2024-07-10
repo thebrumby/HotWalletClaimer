@@ -332,7 +332,7 @@ class Claimer():
     def get_telegram_bot_chat_id(self):
         url = f"https://api.telegram.org/bot{self.settings['telegramBotToken']}/getUpdates"
         response = requests.get(url).json()
-        print(response)  # Add this line to print the entire response
+        # print(response)  # Add this line to print the entire response (Commented out for cleaner output)
         if 'result' in response and len(response['result']) > 0:
             return response['result'][0]['message']['chat']['id']
         else:
@@ -346,7 +346,7 @@ class Claimer():
             message = f"{self.wallet_id}: {string}"
             url = f"https://api.telegram.org/bot{self.settings['telegramBotToken']}/sendMessage?chat_id={self.settings['telegramBotChatId']}&text={message}"
             response = requests.get(url).json()
-            # print(response)  # This sends the message and prints the response
+            # print(response)  # This sends the message and prints the response (Commented out for cleaner output)
             if not response.get("ok"):
                 raise ValueError(f"Failed to send message: {response}")
         except ValueError as e:
