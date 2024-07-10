@@ -157,17 +157,19 @@ class LumCityAUClaimer(Claimer):
 
         remaining_wait_time = self.get_wait_time(self.step, "pre-claim")
 
+        try:
+            remaining_wait_time = int(remaining_wait_time)
+        except ValueError:
+            self.output("STATUS: Wait time is unknown due to non-numeric input.", 1)
+            return 60
+
         if remaining_wait_time > 0:
-          try:
             if remaining_wait_time < 5 or self.settings["forceClaim"]:
-                  self.settings['forceClaim'] = True
-                  self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
+                self.settings['forceClaim'] = True
+                self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
             else:
-                  self.output(f"STATUS: Wait time is {remaining_wait_time} minutes and off-set of {self.random_offset}.", 1)
-                  return remaining_wait_time + self.random_offset
-          except ValueError:
-              self.output("STATUS: Wait time is unknown due to non-numeric input.", 1)
-              return 60
+                self.output(f"STATUS: Wait time is {remaining_wait_time} minutes and off-set of {self.random_offset}.", 1)
+                return remaining_wait_time + self.random_offset
 
         try:
             if remaining_wait_time < 5 or self.settings['forceClaim']:
