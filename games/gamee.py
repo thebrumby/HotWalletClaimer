@@ -193,6 +193,22 @@ class GameeClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
 
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "(//p[contains(@class, 'jQUosL')])[1]"
+
+        try:
+            element = self.monitor_element(profit_xpath)
+            if element:
+                profit_part = strip_html_and_non_numeric(element)
+                self.output(f"Step {self.step} - {profit_text} {profit_part}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+
         # Increment step function, assumed to handle next step logic
         self.increase_step()
 
