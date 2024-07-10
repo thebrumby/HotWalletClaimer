@@ -1,11 +1,10 @@
 import os
 import sys
 import json
-import subprocess
-import shutil
-import requests
-from git import Repo
+import asyncio
 import logging
+import subprocess
+import requests
 
 def download_file(url, dest):
     """Download a file from a URL to a destination path."""
@@ -19,44 +18,74 @@ def download_file(url, dest):
         print(f"Failed to download {url}: {e}")
         sys.exit(1)
 
-def clone_directory(repo_url, subdir, dest_dir):
-    """Clone a specific directory from a git repository."""
+def modify_pull_games_script(script_path):
+    """Modify the pull-games.sh script to suit our purpose."""
+    script_content = """#!/bin/bash
+
+# Define the target and source directories
+TARGET_DIR="/app"
+GAMES_DIR="$TARGET_DIR/games"
+DEST_DIR="/usr/src/app/games"
+
+# Check if the directory exists and is a git repository
+if [ -d "$TARGET_DIR" ] && [ -d "$TARGET_DIR/.git" ]; then
+    echo "$TARGET_DIR pulling latest changes."
+    cd $TARGET_DIR
+    git pull
+elif [ -d "$TARGET_DIR" ] ; then
+    echo "$TARGET_DIR exists but is not a git repository. Removing and cloning afresh."
+    rm -rf $TARGET_DIR
+    git clone https://github.com/thebrumby/HotWalletClaimer.git $TARGET_DIR
+else
+    echo "$TARGET_DIR does not exist. Cloning repository."
+    git clone https://github.com/thebrumby/HotWalletClaimer.git $TARGET_DIR
+fi
+
+# Set the working directory to the cloned repository
+cd $GAMES_DIR
+
+# Create the destination directory
+mkdir -p $DEST_DIR
+
+# Copy the contents of the games directory recursively
+cp -r $GAMES_DIR/* $DEST_DIR
+
+echo "All files and subdirectories have been copied to $DEST_DIR"
+"""
     try:
-        Repo.clone_from(repo_url, dest_dir, multi_options=[f'--filter=blob:none', f'--sparse'])
-        repo = Repo(dest_dir)
-        repo.git.sparse_checkout_set(subdir)
-        repo.git.checkout('HEAD')
-        print(f"Cloned {subdir} from {repo_url} to {dest_dir}")
+        with open(script_path, 'w') as f:
+            f.write(script_content)
+        print(f"Modified {script_path} successfully.")
     except Exception as e:
-        print(f"Failed to clone {subdir} from {repo_url}: {e}")
+        print(f"Failed to modify {script_path}: {e}")
         sys.exit(1)
 
-def main() -> None:
-    token = load_telegram_token('variables.txt')
-    if not token:
-        sys.exit(1)
-    
-    list_pm2_processes = set(list_all_pm2_processes())
+def check_and_update_games_utils():
+    """Check if games/utils exists, and if not, update using pull-games.sh."""
+    if not os.path.exists("/usr/src/app/games/utils"):
+        pull_games_url = "https://github.com/thebrumby/HotWalletClaimer/raw/main/docker/pull-games.sh"
+        pull_games_dest = "/usr/src/app/pull-games.sh"
 
-    if "Telegram-Bot" not in list_pm2_processes:
-        script = "games/tg-bot.py"
+        # Download the pull-games.sh script if it does not exist
+        if not os.path.exists(pull_games_dest):
+            download_file(pull_games_url, pull_games_dest)
 
-        pm2_session = "Telegram-Bot"
-        print(f"You could add the new/updated session to PM use: pm2 start {script} --interpreter venv/bin/python3 --name {pm2_session} -- {pm2_session}", 1)
-        user_choice = input("Enter 'e' to exit, 'a' or <enter> to automatically add to PM2: ").lower()
+        # Modify the pull-games.sh script
+        modify_pull_games_script(pull_games_dest)
 
-        if user_choice == "e":
-            print("Exiting script. You can resume the process later.", 1)
-            sys.exit()
-        elif user_choice == "a" or not user_choice:
-            start_pm2_app(script, pm2_session, pm2_session)
-            user_choice = input("Should we save your PM2 processes? (Y/n): ").lower()
-            if user_choice == "y" or not user_choice:
-                save_pm2()
-            print(f"You can now watch the session log into PM2 with: pm2 logs {pm2_session}", 2)
-            sys.exit()
+        # Make the script executable
+        os.chmod(pull_games_dest, 0o755)
 
-    run()
+        # Run the pull-games.sh script
+        result = subprocess.run([pull_games_dest], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Failed to execute {pull_games_dest}: {result.stderr}")
+            sys.exit(1)
+        else:
+            print(f"Successfully executed {pull_games_dest}: {result.stdout}")
+
+# Ensure games/utils is present before proceeding with the imports
+check_and_update_games_utils()
 
 try:
     from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove, Update,
@@ -74,32 +103,8 @@ except ImportError:
 try:
     from utils.pm2 import start_pm2_app, save_pm2
 except ImportError:
-    # If import fails, download and copy the necessary files and directories
-    repo_url = "https://github.com/thebrumby/HotWalletClaimer"
-    pull_games_url = f"{repo_url}/raw/main/docker/pull-games.sh"
-    pull_games_dest = "/usr/src/app/pull-games.sh"
-    utils_subdir = "games/utils"
-    utils_dest_dir = "/usr/src/app/games/utils"
-
-    if not os.path.exists("/usr/src/app/games/utils"):
-        if not os.path.exists(pull_games_dest):
-            download_file(pull_games_url, pull_games_dest)
-            os.chmod(pull_games_dest, 0o755)
-            result = subprocess.run([pull_games_dest], capture_output=True, text=True)
-            if result.returncode != 0:
-                print(f"Failed to execute {pull_games_dest}: {result.stderr}")
-                sys.exit(1)
-            else:
-                print(f"Successfully executed {pull_games_dest}: {result.stdout}")
-        if not os.path.exists(utils_dest_dir):
-            clone_directory(repo_url, utils_subdir, "/usr/src/app")
-
-    # Retry importing after copying
-    try:
-        from utils.pm2 import start_pm2_app, save_pm2
-    except ImportError:
-        print("Failed to import PM2 utilities even after attempting to copy the necessary files and directories.")
-        sys.exit(1)
+    print("Failed to import PM2 utilities even after attempting to copy the necessary files and directories.")
+    sys.exit(1)
 
 from status import list_pm2_processes, list_all_pm2_processes, get_inactive_directories, get_logs_by_process_name, get_status_logs_by_process_name, fetch_and_process_logs
 
@@ -225,15 +230,19 @@ async def select_process(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     keyboard = []
 
     print("Stopped Processes: " + ', '.join(stopped_processes))
+    print("Running Processes: " + ', '.join(running_processes))
+    print("Inactive Directories: " + ', '.join(inactive_directories))
 
     for process in stopped_processes:
-        keyboard.append([InlineKeyboardButton(process, callback_data=process)])
+        keyboard.append([InlineKeyboardButton(process + u" 🔴", callback_data=process)])
 
     for process in running_processes:
-        keyboard.append([InlineKeyboardButton(process, callback_data=process)])
+        keyboard.append([InlineKeyboardButton(process + u" 🟢", callback_data=process)])
+
+    for directory in inactive_directories:
+        keyboard.append([InlineKeyboardButton(directory + u" ⚫", callback_data=directory)])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-
     await query.message.reply_text('<b>Choose an option:</b>', parse_mode='HTML', reply_markup=reply_markup)
 
     return PROCESS_DECISION
@@ -349,6 +358,67 @@ async def get_processes():
     inactive_directories = get_inactive_directories()
 
 #endregion
+
+def main() -> None:
+    token = load_telegram_token('variables.txt')
+    if not token:
+        sys.exit(1)
+
+    if not os.path.exists("/usr/src/app/games/utils"):
+        pull_games_url = "https://github.com/thebrumby/HotWalletClaimer/raw/main/docker/pull-games.sh"
+        pull_games_dest = "/usr/src/app/pull-games.sh"
+
+        # Download the pull-games.sh script if it does not exist
+        if not os.path.exists(pull_games_dest):
+            download_file(pull_games_url, pull_games_dest)
+
+        # Modify the pull-games.sh script
+        modify_pull_games_script(pull_games_dest)
+
+        # Make the script executable
+        os.chmod(pull_games_dest, 0o755)
+
+        # Run the pull-games.sh script
+        result = subprocess.run([pull_games_dest], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Failed to execute {pull_games_dest}: {result.stderr}")
+            sys.exit(1)
+        else:
+            print(f"Successfully executed {pull_games_dest}: {result.stdout}")
+
+    list_pm2_processes = set(list_all_pm2_processes())
+
+    if "Telegram-Bot" not in list_pm2_processes:
+        script = "games/tg-bot.py"
+
+        pm2_session = "Telegram-Bot"
+        print(f"You could add the new/updated session to PM use: pm2 start {script} --interpreter venv/bin/python3 --name {pm2_session} -- {pm2_session}", 1)
+        user_choice = input("Enter 'e' to exit, 'a' or <enter> to automatically add to PM2: ").lower()
+
+        if user_choice == "e":
+            print("Exiting script. You can resume the process later.", 1)
+            sys.exit()
+        elif user_choice == "a" or not user_choice:
+            start_pm2_app(script, pm2_session, pm2_session)
+            user_choice = input("Should we save your PM2 processes? (Y/n): ").lower()
+            if user_choice == "y" or not user_choice:
+                save_pm2()
+            print(f"You can now watch the session log into PM2 with: pm2 logs {pm2_session}", 2)
+            sys.exit()
+
+    run()
+
+async def run_command(command: str) -> str:
+    """Execute a shell command and return its output."""
+    proc = await asyncio.create_subprocess_shell(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    stdout, stderr = await proc.communicate()
+    if stderr:
+        print(f"Error: {stderr.decode()}")
+    return stdout.decode()
 
 if __name__ == '__main__':
     main()
