@@ -19,6 +19,7 @@ Similarly, you can automate interactions with "Ocean" on SUI, "Vertus" on TON, "
 
 We aim to expand this script to include other projects suggested by our users in the coming weeks and months. However, we do not endorse any projects, some of which may take time and effort to mine but ultimately might yield little to no real-world value and may try to upsell additional features or incur gas fees. As always, doing your own research is essential in cryptocurrency.
 
+<a name="videos"></a>
 ## 🎥 Step-by-Step Video Walkthrough 🎬
 
 Watch along while I perform each step, from server setup, downloading and installing the script, configuring the options, and initiating your automated claims with the [Video Walkthrough](#videos).
