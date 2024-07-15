@@ -108,6 +108,7 @@ class SeedClaimer(Claimer):
         self.move_and_click(xpath, 20, True, "exit DAILY BONUS (may not be present)", self.step, "clickable")
 
         self.get_balance(False)
+        self.get_profit_hour(False)
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
@@ -144,6 +145,7 @@ class SeedClaimer(Claimer):
                     self.increase_step()
 
                     self.get_balance(True)
+                    self.get_profit_hour(True)
 
                     if wait_time_text == "Filled":
                         self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
@@ -185,8 +187,8 @@ class SeedClaimer(Claimer):
         priority = max(self.settings['verboseLevel'], default_priority)
 
         # Construct the specific balance XPath
-        balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//div[p[contains(text(), 'SEED Balance:')]]"
+        balance_text = f'{prefix} BALANCE:'
+        balance_xpath = "//div[p[contains(text(), 'SEED Balance:')]]"
 
         try:
             element = self.monitor_element(balance_xpath)
@@ -206,6 +208,38 @@ class SeedClaimer(Claimer):
 
         # Increment step function, assumed to handle next step logic
         self.increase_step()
+
+    def get_profit_hour(self, claimed=False):
+
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        # Dynamically adjust the log priority
+        priority = max(self.settings['verboseLevel'], default_priority)
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//p[contains(text(), 'SEED/hour')]"
+
+        try:
+            element = self.monitor_element(profit_xpath)
+            if isinstance(element, str):
+                # Split element at the colon (if present) and assign the right side (excluding ":")
+                if ' ' in element:
+                    element = element.split(' ')[0].strip()
+            # Check if element is not None and process the balance
+            if element:
+                profit_part = element
+                self.output(f"Step {self.step} - {profit_text} {profit_part}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+
+        # Increment step function, assumed to handle next step logic
+        self.increase_step()
+
 
     def click_element(self, xpath, timeout=30, action_description=""):
         self.move_and_click(xpath, 8, False, f"move to {xpath}", self.step, "clickable")

@@ -296,7 +296,7 @@ class TreeClaimer(Claimer):
 
         # Construct the specific balance XPath
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//span[contains(text(), 'TREE Balance:')]/following-sibling::span[1]"
+        balance_xpath = "//span[contains(text(), 'TREE Balance:')]/following-sibling::span[1]"
 
         try:
             # Wait for the element to be visible based on the XPath
@@ -313,6 +313,28 @@ class TreeClaimer(Claimer):
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+
+
+        # Construct the specific balance XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//p[contains(text(), 'TREE/hour')]//span"
+
+        try:
+            # Wait for the element to be visible based on the XPath
+            element = WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.XPATH, profit_xpath))
+            )
+
+            # Check if element is not None and process the balance
+            if element:
+                profit_part = element.text.strip()
+                self.output(f"Step {self.step} - {profit_text} {profit_part}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+
 
         # Increment step function, assumed to handle next step logic
         self.increase_step()

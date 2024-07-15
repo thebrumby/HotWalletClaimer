@@ -1365,3 +1365,18 @@ class Claimer():
         if hours > 0:
             return f"{hours} hours and {minutes} minutes"
         return f"{minutes} minutes"
+
+    def strip_html_and_non_numeric(self, text):
+        """Remove HTML tags and keep only numeric characters and decimal points."""
+        text = self.strip_html(text)
+        text = self.strip_non_numeric(text)
+        return text
+    
+    def strip_html(self, text):
+        """Remove HTML tags."""
+        clean = re.compile('<.*?>')
+        return clean.sub('', text)
+    
+    def strip_non_numeric(self, text):
+        """Keep only numeric characters and decimal points."""
+        return re.sub(r'[^0-9.]', '', text)
