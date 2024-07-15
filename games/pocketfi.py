@@ -79,7 +79,7 @@ class PocketFiClaimer(Claimer):
         self.increase_step()
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
-        if wait_time_text == ['Unknown']:
+        if wait_time_text and isinstance(wait_time_text[0], int) and wait_time_text[0] > 330:
             self.output("STATUS: Looks like the pot isn't ready to claim yet. Let's come back in 30 minutes.", 1)
             return 30 
 
@@ -88,7 +88,7 @@ class PocketFiClaimer(Claimer):
         self.get_balance(False)
         self.increase_step()
 
-        xpath = "//button[contains(text(), 'Claim SWITCH')]"
+        xpath = "//div[@class='absolute flex items-center justify-center flex-col text-white']/span[contains(text(), 'claim')]"
         attempts = 1
         clicked_it = False
         while attempts < 5:
@@ -97,7 +97,7 @@ class PocketFiClaimer(Claimer):
                 self.driver.execute_script("arguments[0].click();", button)
             time.sleep(5)
             wait_time_text = self.get_wait_time(self.step, "mid-claim") 
-            if wait_time_text == ['Unknown']:
+            if wait_time_text and isinstance(wait_time_text[0], int) and wait_time_text[0] > 330:
                 self.output(f"Step {self.step} - Looks like we made the claim on attempt {attempts}.", 3)
                 clicked_it = True
                 break
@@ -123,7 +123,7 @@ class PocketFiClaimer(Claimer):
         priority = max(self.settings['verboseLevel'], default_priority)
 
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//span[@class='text-md font-bold']"
+        balance_xpath = f"//span[@class='text-2xl font-bold']"
 
         try:
             first = self.move_and_click(balance_xpath, 30, False, "remove overlays", self.step, "visible")
@@ -145,7 +145,7 @@ class PocketFiClaimer(Claimer):
             if re.match(r"^\d{2}:\d{2}:\d{2}$", time_str):
                 hours, minutes, seconds = map(int, time_str.split(':'))
                 total_minutes = hours * 60 + minutes + seconds / 60
-                return int(total_minutes) 
+                return int(total_minutes)
             return time_str
 
         for attempt in range(1, max_attempts + 1):
@@ -154,9 +154,11 @@ class PocketFiClaimer(Claimer):
                 xpath = "//p[contains(text(), 'burn in')]"
                 elements = self.monitor_element(xpath, 10)
                 if elements:
-                    parts = elements.split("burn in: ")
-                    results = [convert_to_minutes(parts[1] if len(parts) > 1 else "Unknown")]
-                    return results 
+                    match = re.search(r"burn in\s*(\d{2}:\d{2}:\d{2})", elements)
+                    if match:
+                        wait_time = match.group(1)
+                        results = [convert_to_minutes(wait_time)]
+                        return results
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
                 return "Unknown"
