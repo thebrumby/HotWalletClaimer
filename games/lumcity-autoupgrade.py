@@ -65,40 +65,25 @@ class LumCityAUClaimer(Claimer):
         self.step = "100"
 
         def get_cost_upgrade():
-            balance = float(after_balance)
-            cost_xpath = "//div[contains(@class, '_price_lnqn0_57')]/span[1]"
-
             try:
+                balance = float(after_balance) if after_balance else 0
+                cost_xpath = "//div[contains(@class, '_price_lnqn0_57')]/span[1]"
                 self.move_and_click(cost_xpath, 30, False, "look for cost upgrade", self.step, "visible")
                 cost_upgrade = self.monitor_element(cost_xpath)
-                
-                try:
-                    cost_upgrade = float(cost_upgrade.replace(',', '').strip())
-                except (ValueError, AttributeError):
-                    self.output(f"Step {self.step} - Unable to convert cost '{cost_upgrade}' to a number.", 2)
-                    return
+                cost_upgrade = float(cost_upgrade.replace(',', '').strip()) if cost_upgrade else 0
+            except (ValueError, AttributeError, TypeError) as e:
+                self.output(f"Step {self.step} - Unable to convert cost or balance to a number: {e}", 2)
+                return
 
-                if balance is None or not isinstance(balance, (int, float)):
-                    self.output(f"Step {self.step} - Invalid balance: {balance}", 2)
-                    return
+            shortfall = balance - cost_upgrade
+            shortfall_text = f", Shortfall of {round(shortfall, 5)}" if shortfall < 0 else ""
+            self.output(f"Step {self.step} - Balance: {balance}, Upgrade cost: {cost_upgrade}{shortfall_text}", 2)
 
-                shortfall = balance - cost_upgrade
-                if shortfall < 0:
-                    shortfall_text = f", Shortfall of {round(shortfall, 5)}"
-                else:
-                    shortfall_text = ""
-                self.output(f"Step {self.step} - Balance: {balance}, Upgrade cost: {cost_upgrade}{shortfall_text}", 2)
-
-                if balance > cost_upgrade:
-                    self.output(f"Step {self.step} - We can upgrade, processing...", 2)
-                    perform_upgrade()
-                else:
-                    self.output(f"Step {self.step} - Not enough balance to upgrade. Cost: {cost_upgrade}, Balance: {balance}", 2)
-
-            except NoSuchElementException:
-                self.output(f"Step {self.step} - Element containing cost upgrade was not found.", 2)
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred: {str(e)}", 2)
+            if balance > cost_upgrade:
+                self.output(f"Step {self.step} - We can upgrade, processing...", 2)
+                perform_upgrade()
+            else:
+                self.output(f"Step {self.step} - Not enough balance to upgrade. Cost: {cost_upgrade}, Balance: {balance}", 2)
 
             self.increase_step()
 
@@ -133,7 +118,11 @@ class LumCityAUClaimer(Claimer):
             reward_value = self.monitor_element(reward_xpath, 20)
             if reward_value:
                 self.output(f"Step {self.step} - This claim increased the balance: +{reward_value}", 1)
-                after_balance = float(before_balance) + float(reward_value)
+                try:
+                    after_balance = float(before_balance) + float(reward_value)
+                except (ValueError, TypeError) as e:
+                    self.output(f"Step {self.step} - Error converting balance or reward value to float: {e}", 2)
+                    return 60
 
             ok_xpath = "//div[contains(@class, '_btnContainer')]//button[text()='Ok']"
             self.move_and_click(ok_xpath, 20, True, "click the 'OK' button", self.step, "clickable")
