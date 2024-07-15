@@ -183,24 +183,27 @@ class PixelTapClaimer(Claimer):
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim"):
         try:
-
             self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
-
+        
             xpath = "//div[contains(@class, 'claimTimer')]"
-            wait_time = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15)))
+            wait_time_str = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15)))
+
+            if wait_time_str == "Unknown":
+                wait_time = 60
+            else:
+                wait_time = int(wait_time_str)
 
             self.output(f"Step {self.step} - The wait time is {wait_time} minutes.")
 
             return wait_time          
-
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             if self.settings['debugIsOn']:
                 screenshot_path = f"{self.screenshots_path}/{self.step}_get_wait_time_error.png"
                 self.driver.save_screenshot(screenshot_path)
                 self.output(f"Screenshot saved to {screenshot_path}", 3)
-
             return 60
+
 
     def extract_time(self, text):
         time_parts = text.split(':')
