@@ -18,6 +18,13 @@ def check_pm2_process_exists(process_name):
         print(f"An error occurred while checking PM2 process: {e}")
         return False
 
+def install_wheel_if_missing():
+    try:
+        __import__('wheel')
+    except ImportError:
+        print("Installing missing wheel package...")
+        subprocess.run(['pip3', 'install', 'wheel'], check=True)
+
 def install_mitmproxy():
     subprocess.run(['pip3', 'install', 'mitmproxy'], check=True)
 
@@ -97,6 +104,8 @@ def main():
 
     # If the PM2 process doesn't exist, proceed with setup
     if not pm2_process_exists:
+        install_wheel_if_missing()
+
         print("Installing mitmproxy...")
         install_mitmproxy()
 
