@@ -24,9 +24,9 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
-from claimer import Claimer
+from lumcity import LumCityClaimer
 
-class LumCityAUClaimer(Claimer):
+class LumCityAUClaimer(LumCityClaimer):
 
     def __init__(self):
         self.settings_file = "variables.txt"
@@ -46,20 +46,6 @@ class LumCityAUClaimer(Claimer):
 
         self.start_app_xpath = "//span[contains(text(), 'Open the App')]"
 
-    def next_steps(self):
-        if self.step:
-            pass
-        else:
-            self.step = "01"
-
-        try:
-            self.launch_iframe()
-            self.increase_step()
-            self.set_cookies()
-        except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.", 1)
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {e}", 1)
 
     def full_claim(self):
         self.step = "100"
@@ -100,14 +86,6 @@ class LumCityAUClaimer(Claimer):
 
             self.move_and_click(ok_xpath, 20, True, "click the 'Ok' button", self.step, "clickable")
             self.increase_step()
-
-        def apply_random_offset(unmodified_timer):
-            if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-                modified_timer = unmodified_timer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
-                return modified_timer
-            return unmodified_timer
 
         def handle_claim_process():
             xpath = "//button[contains(normalize-space(.), 'Claim')]"
@@ -170,12 +148,12 @@ class LumCityAUClaimer(Claimer):
                     self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                     return 60
                 else:
-                    total_time = apply_random_offset(remaining_wait_time)
+                    total_time = self.apply_random_offset(remaining_wait_time)
                     self.output(f"STATUS: Pot full in {remaining_wait_time} minutes, plus an off-set of {self.random_offset}.", 1)
                     return total_time
             else:
                 if remaining_wait_time:
-                    total_time = apply_random_offset(remaining_wait_time)
+                    total_time = self.apply_random_offset(remaining_wait_time)
                     self.output(f"Step {self.step} - Not Time to claim this wallet yet. Wait for {total_time} minutes until the storage is filled.", 2)
                     return total_time
                 else:
@@ -187,56 +165,6 @@ class LumCityAUClaimer(Claimer):
         except Exception as e:
             self.output(f"STATUS: An error occurred: {e}\nLet's wait an hour and try again", 1)
             return 60
-
-    def get_balance(self, claimed=False):
-        prefix = "After" if claimed else "Before"
-        default_priority = 2 if claimed else 3
-
-        priority = max(self.settings['verboseLevel'], default_priority)
-
-        balance_text = f'{prefix} Golt BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"(//div[contains(@class, '1615f_24')])[2]"
-        balance_part = None
-
-        try:
-            self.move_and_click(balance_xpath, 30, False, "look for Golt balance", self.step, "visible")
-            balance_part = self.strip_html_tags(self.monitor_element(balance_xpath))
-            self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
-
-        self.increase_step()
-
-    def strip_html_tags(self, text):
-        clean = re.compile('<.*?>')
-        text_without_html = re.sub(clean, '', text)
-        text_cleaned = re.sub(r'[^0-9:.]', '', text_without_html)
-        return text_cleaned
-
-    def extract_time(self, text):
-        time_parts = text.split(':')
-        if len(time_parts) == 3:
-            try:
-                hours = int(time_parts[0].strip())
-                minutes = int(time_parts[1].strip())
-                return hours * 60 + minutes
-            except ValueError:
-                return "Unknown"
-        return "Unknown"
-
-    def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
-                xpath = "//span[text()='Fill Time']/ancestor::div[1]/following-sibling::div"
-                pot_full_value = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15)))
-                return pot_full_value
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
-        return "Unknown"
 
 def main():
     claimer = LumCityAUClaimer()

@@ -24,9 +24,9 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
-from claimer import Claimer
+from oxygen import OxygenClaimer
 
-class OxygenAUClaimer(Claimer):
+class OxygenAUClaimer(OxygenClaimer):
 
     def __init__(self):
         self.settings_file = "variables.txt"
@@ -46,33 +46,9 @@ class OxygenAUClaimer(Claimer):
 
         self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//button[.//span[contains(text(), 'Start App')] or .//span[contains(text(), 'Play Now!')]]"
 
-    def next_steps(self):
-        if self.step:
-            pass
-        else:
-            self.step = "01"
-
-        try:
-            self.launch_iframe()
-            self.increase_step()
-
-            self.set_cookies()
-
-        except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.", 1)
-
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {e}", 1)
 
     def full_claim(self):
         self.step = "100"
-
-        def apply_random_offset(unmodifiedTimer):
-            if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 1), max(self.settings['highestClaimOffset'], 1))
-                modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
-                return modifiedTimer
 
         self.launch_iframe()
         self.increase_step()
@@ -114,7 +90,7 @@ class OxygenAUClaimer(Claimer):
 
                     wait_time_text = self.get_wait_time(self.step, "post-claim")
                     matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                    total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                    total_wait_time = self.apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                     self.increase_step()
 
                     self.get_balance(True)
@@ -163,48 +139,7 @@ class OxygenAUClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
-    def click_daily_buttons(self, max_attempts=5, wait_time=10, timeout=10):
-        xpath_button_wrap = "//div[@class='daily_btn_wrap']"
-        xpath_button_get_reward = "//div[@class='daily_get' and contains(text(), 'Get reward')]"
         
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.quit_driver()
-                self.launch_iframe()
-                
-                # Click the first button
-                if self.move_and_click(xpath_button_wrap, timeout, True, "click 'daily_btn_wrap'", self.step, "visible"):
-                    self.increase_step()
-                    self.output(f"Step {self.step} - Clicked 'daily_btn_wrap' button (Attempt {attempt}). Waiting {wait_time} seconds...", 2)
-                    time.sleep(wait_time)
-
-                    # Click the second button
-                    if self.move_and_click(xpath_button_get_reward, timeout, True, "click 'Get reward'", self.step, "visible"):
-                        self.increase_step()
-                        self.output(f"Step {self.step} - Clicked 'Get reward' button (Attempt {attempt}). Waiting {wait_time} seconds...", 2)
-                        
-                        # Check for already claimed reward message
-                        if self.monitor_element("//div[contains(text(), 'You have already claimed this reward')]", timeout, "check claimed reward"):
-                            self.output("You have already claimed this reward.", 1)
-                            return
-
-                        time.sleep(wait_time)
-                        self.quit_driver()
-                        self.launch_iframe()
-                    else:
-                        self.output(f"Step {self.step} - Failed to click 'Get reward' button (Attempt {attempt}).", 1)
-                else:
-                    self.output(f"Step {self.step} - Failed to click 'daily_btn_wrap' button (Attempt {attempt}).", 1)
-            except TimeoutException:
-                self.output(f"Button not found after {timeout} seconds on attempt {attempt}. Stopping.", 1)
-                break
-            except ElementClickInterceptedException:
-                self.output(f"Button click was intercepted on attempt {attempt}. Trying again.", 3)
-                continue
-            except Exception as e:
-                self.output(f"Error on attempt {attempt}: {str(e)}", 1)
-                break
-            
     def click_claim_button(self, max_attempts=5, wait_time=10, timeout=10):
         xpath = "//div[@class='farm_btn']"
         for attempt in range(1, max_attempts + 1):
@@ -320,24 +255,6 @@ class OxygenAUClaimer(Claimer):
 
         return None
 
-    def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.output(f"Step {self.step} - Get the wait time...", 3)
-                xpath = "//div[@class='farm_btn']"
-                elements = self.monitor_element(xpath, 10)
-                if re.search(r"[СC]ollect food", elements, re.IGNORECASE):
-                    return self.pot_full
-                xpath = "//div[@class='farm_wait']"
-                elements = self.monitor_element(xpath, 10)
-                if elements:
-                    return elements
-                return "Unknown"
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
-
-        return "Unknown"
 
 def main():
     claimer = OxygenAUClaimer()

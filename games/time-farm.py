@@ -74,13 +74,6 @@ class TimeFarmClaimer(Claimer):
 
         self.step = "100"
 
-        def apply_random_offset(unmodifiedTimer):
-            if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(max(self.settings['lowestClaimOffset'],0), max(self.settings['highestClaimOffset'],0))
-                modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
-                return modifiedTimer
-
         self.launch_iframe()
 
         xpath = "//div[@class='app-container']//div[@class='btn-text' and contains(., 'Claim')]"
@@ -99,7 +92,7 @@ class TimeFarmClaimer(Claimer):
         self.increase_step()
         
         if isinstance(remaining_time, (int, float)):
-            remaining_time = apply_random_offset(remaining_time)
+            remaining_time = self.apply_random_offset(remaining_time)
             self.output(f"STATUS: We still have {remaining_time} minutes left to wait - sleeping.", 1)
             return remaining_time
 
@@ -117,7 +110,7 @@ class TimeFarmClaimer(Claimer):
             remaining_time = self.get_wait_time()
             self.increase_step()
             self.get_balance(True)
-            return apply_random_offset(remaining_time)
+            return self.apply_random_offset(remaining_time)
         else:
             self.output(f"STATUS: The claim button wasn't clickable on this occassion.",1)
             return 60

@@ -68,13 +68,6 @@ class PocketFiClaimer(Claimer):
     def full_claim(self):
         self.step = "100"
 
-        def apply_random_offset(unmodifiedTimer):
-            if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(min(self.settings['lowestClaimOffset'], -60), min(self.settings['highestClaimOffset'], -60))
-                modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
-                return modifiedTimer
-
         self.launch_iframe()
         self.increase_step()
 

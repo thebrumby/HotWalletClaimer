@@ -1380,3 +1380,11 @@ class Claimer():
     def strip_non_numeric(self, text):
         """Keep only numeric characters and decimal points."""
         return re.sub(r'[^0-9.]', '', text)
+    
+    def apply_random_offset(self, unmodifiedTimer):
+        if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
+            self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+            modifiedTimer = unmodifiedTimer + self.random_offset
+            self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
+            return modifiedTimer
+        return unmodifiedTimer
