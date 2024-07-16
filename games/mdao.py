@@ -65,11 +65,9 @@ class MDAOClaimer(Claimer):
     def full_claim(self):
 
         def return_minutes(wait_time_text):
-            if wait_time_text != "Filled":
-                matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
-                return remaining_wait_time
-            return 120
+            matches = re.findall(r'(\d+)([hm])', wait_time_text)
+            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
+            return remaining_wait_time
 
         self.step = "100"
 
@@ -77,7 +75,16 @@ class MDAOClaimer(Claimer):
 
         self.get_balance(False)
 
-        remaining_wait_time = return_minutes(self.get_wait_time(self.step, "pre-claim"))
+        if remaining_wait_time == "Filled":
+            self.settings['forceClaim'] = True
+        elif remaining_wait_time == "Unknown":
+            return 30
+        else:
+            remaining_wait_time = return_minutes(remaining_wait_time)
+            self.output(f"STATUS: Pot not yet full, let's sleep for {remaining_wait_time} minutes.", 1)
+            return remaining_wait_time
+            
+
         self.increase_step()
 
         if remaining_wait_time < 5 or self.settings["forceClaim"]:
@@ -125,8 +132,11 @@ class MDAOClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
                 xpath = "//div[contains(text(), 'until claim')]"
-                pot_full_value = self.strip_html(self.monitor_element(xpath, 15))
-                return pot_full_value
+                pot_full_value = self.monitor_element(xpath, 15)
+                if pot_full_value != "Unknown":
+                    return pot_full_value
+                else:
+                    return "Filled"
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
                 return "Unknown"

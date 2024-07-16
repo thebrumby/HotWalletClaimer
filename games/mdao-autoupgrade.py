@@ -66,11 +66,9 @@ class MDAOAUClaimer(Claimer):
     def full_claim(self):
 
         def return_minutes(wait_time_text):
-            if wait_time_text != "Filled":
-                matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
-                return remaining_wait_time
-            return 120
+            matches = re.findall(r'(\d+)([hm])', wait_time_text)
+            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
+            return remaining_wait_time
 
         self.step = "100"
 
@@ -78,7 +76,17 @@ class MDAOAUClaimer(Claimer):
 
         self.get_balance(False)
 
-        remaining_wait_time = return_minutes(self.get_wait_time(self.step, "pre-claim"))
+        remaining_wait_time = self.get_wait_time(self.step, "pre-claim")
+
+        if remaining_wait_time == "Filled":
+            self.settings['forceClaim'] = True
+        elif remaining_wait_time == "Unknown":
+            return 30
+        else:
+            remaining_wait_time = return_minutes(remaining_wait_time)
+            self.output(f"STATUS: Pot not yet full, let's sleep for {remaining_wait_time} minutes.", 1)
+            return remaining_wait_time
+
         self.increase_step()
 
         if remaining_wait_time < 5 or self.settings["forceClaim"]:
@@ -105,8 +113,8 @@ class MDAOAUClaimer(Claimer):
             upgrade_cost = self.strip_html_and_non_numeric(self.monitor_element(xpath))
             upgrade_cost = float(upgrade_cost.replace(',', '').strip()) if upgrade_cost else 0
             self.output(f"Step {self.step} - the upgrade cost is {upgrade_cost}.",3)
-            shortfall = available_balance - upgrade_cost
-            if not shortfall:
+            shortfall = upgrade_cost - available_balance
+            if shortfall < 0:
                 xpath = "//div[contains(text(), 'LVL UP')]"
                 self.move_and_click(xpath, 30, True, "click the LVL UP button", self.step, "clickable")
                 xpath = "//div[contains(text(), 'CONFIRM')]"
@@ -149,8 +157,11 @@ class MDAOAUClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
                 xpath = "//div[contains(text(), 'until claim')]"
-                pot_full_value = self.strip_html(self.monitor_element(xpath, 15))
-                return pot_full_value
+                pot_full_value = self.monitor_element(xpath, 15)
+                if pot_full_value != "Unknown":
+                    return pot_full_value
+                else:
+                    return "Filled"
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
                 return "Unknown"
