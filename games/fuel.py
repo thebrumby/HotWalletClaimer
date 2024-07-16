@@ -95,13 +95,8 @@ class FuelClaimer(Claimer):
                 self.output(f"Step {self.step} - Waiting 60 seconds for the advert to play.", 3)
                 time.sleep(60)
                 self.increase_step()
-
-        def apply_random_offset(unmodifiedTimer):
-            if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-                modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
-                return modifiedTimer
+                self.get_balance(True)
+                self.get_profit_hour(True)
 
         self.launch_iframe()
 
@@ -144,7 +139,7 @@ class FuelClaimer(Claimer):
                     
                     wait_time_text = self.get_wait_time(self.step, "post-claim") 
                     matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                    total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                    total_wait_time = self.apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                     self.increase_step()
                     self.get_balance(True)
                     self.get_profit_hour(True)
@@ -182,29 +177,23 @@ class FuelClaimer(Claimer):
         
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
-        default_priority = 2 if claimed else 3
+        priority = max(self.settings['verboseLevel'], 2 if claimed else 3)
 
-        priority = max(self.settings['verboseLevel'], default_priority)
+        xpaths = {
+            'fuel': "//span[@class='fuel-balance']",
+            'oil': "//span[@class='fuel-balance']/preceding-sibling::span[1]",
+        }
 
-        balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//span[@class='fuel-balance']"
-        balance_part = None
+        balance = {}
 
-        try:
-            self.move_and_click(balance_xpath, 30, False, "look for fuel balance", self.step, "visible")
-            fuel = self.monitor_element(balance_xpath)
-            balance_xpath = f"//span[@class='fuel-balance']/preceding-sibling::span[1]"
-            self.move_and_click(balance_xpath, 30, False, "look for oil balance", self.step, "visible")
-            oil = self.monitor_element(balance_xpath)
-            balance_part = f"{fuel} fuel & {oil} oil."
-            self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
+        for resource, xpath in xpaths.items():
+            self.move_and_click(xpath, 30, False, f"look for {resource} balance", self.step, "visible")
+            balance[resource] = self.monitor_element(xpath)
 
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
+        balance_text = f"{prefix} BALANCE: {balance['fuel']} fuel & {balance['oil']} oil."
+        self.output(f"Step {self.step} - {balance_text}", priority)
 
-        self.increase_step()
+        return balance
 
 
     def get_profit_hour(self, claimed=False):

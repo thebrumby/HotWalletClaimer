@@ -24,9 +24,9 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
-from claimer import Claimer
+from fuel import FuelClaimer
 
-class FuelAUClaimer(Claimer):
+class FuelAUClaimer(FuelClaimer):
 
     def __init__(self):
         self.settings_file = "variables.txt"
@@ -46,72 +46,6 @@ class FuelAUClaimer(Claimer):
         super().__init__()
 
         self.start_app_xpath = "//span[contains(text(), 'Start pumping oil')]"
-
-    def next_steps(self):
-        if self.step:
-            pass
-        else:
-            self.step = "01"
-
-        try:
-            self.launch_iframe()
-            self.increase_step()
-
-            self.set_cookies()
-
-        except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.", 1)
-
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {e}", 1)
-
-    def get_balance(self, claimed=False):
-        prefix = "After" if claimed else "Before"
-        priority = max(self.settings['verboseLevel'], 2 if claimed else 3)
-
-        xpaths = {
-            'fuel': "//span[@class='fuel-balance']",
-            'oil': "//span[@class='fuel-balance']/preceding-sibling::span[1]",
-        }
-
-        balance = {}
-
-        for resource, xpath in xpaths.items():
-            self.move_and_click(xpath, 30, False, f"look for {resource} balance", self.step, "visible")
-            balance[resource] = self.monitor_element(xpath)
-
-        balance_text = f"{prefix} BALANCE: {balance['fuel']} fuel & {balance['oil']} oil."
-        self.output(f"Step {self.step} - {balance_text}", priority)
-
-        return balance
-    
-    def get_profit_hour(self, claimed=False):
-        prefix = "After" if claimed else "Before"
-        priority = max(self.settings['verboseLevel'], 2 if claimed else 3)
-
-        # Construct the specific profit XPath
-        profit_text = f'{prefix} PROFIT/HOUR:'
-        profit_xpath = "//div[div[contains(text(), 'Oil rig')]]//div[last()]"
-
-        try:
-            element = None
-
-            xpath = "//a[text()='Upgrades']"
-            button = self.move_and_click(xpath, 10, False, "click the 'Upgrades' button", self.step, "clickable")
-            if button:
-                button.click()
-
-                element = self.strip_html_and_non_numeric(self.monitor_element(profit_xpath))
-
-            # Check if element is not None and process the profit
-            if element:
-                self.output(f"Step {self.step} - {profit_text} {element} oil", priority)
-
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
-
 
     def recycle_and_upgrade(self):
         steps = [
@@ -209,13 +143,6 @@ class FuelAUClaimer(Claimer):
                 self.get_balance(True)
                 self.get_profit_hour(True)
 
-        def apply_random_offset(unmodifiedTimer):
-            if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-                modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
-                return modifiedTimer
-
         self.launch_iframe()
         self.get_balance(False)
         self.get_profit_hour(False)
@@ -255,7 +182,7 @@ class FuelAUClaimer(Claimer):
                     time.sleep(10)
                     wait_time_text = self.get_wait_time(self.step, "post-claim")
                     matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                    total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                    total_wait_time = self.apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                     self.recycle_and_upgrade()
                     self.increase_step()
                     self.get_balance(True)
@@ -290,18 +217,6 @@ class FuelAUClaimer(Claimer):
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
 
-    def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
-                xpath = "//div[@class='in-storage-footer']"
-                pot_full_value = self.monitor_element(xpath, 15)
-                return pot_full_value
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
-
-        return "Unknown"
 
 def main():
     claimer = FuelAUClaimer()

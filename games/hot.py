@@ -87,13 +87,6 @@ class HotClaimer(Claimer):
     def full_claim(self):
         self.step = "100"
 
-        def apply_random_offset(unmodifiedTimer):
-            if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-                modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
-                return modifiedTimer
-
         self.launch_iframe()
 
         xpath = "//h4[text()='Storage']"
@@ -154,7 +147,7 @@ class HotClaimer(Claimer):
                     self.increase_step()
                     wait_time_text = self.get_wait_time(self.step, "post-claim") 
                     matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                    total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                    total_wait_time = self.apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                     self.increase_step()
 
                     self.get_balance(True)

@@ -67,13 +67,6 @@ class OxygenClaimer(Claimer):
     def full_claim(self):
         self.step = "100"
 
-        def apply_random_offset(unmodifiedTimer):
-            if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 1), max(self.settings['highestClaimOffset'], 1))
-                modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
-                return modifiedTimer
-
         self.launch_iframe()
         self.increase_step()
 
@@ -113,7 +106,7 @@ class OxygenClaimer(Claimer):
 
                     wait_time_text = self.get_wait_time(self.step, "post-claim")
                     matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                    total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                    total_wait_time = self.apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                     self.increase_step()
                     self.click_daily_buttons()
                     self.quit_driver()
@@ -163,6 +156,7 @@ class OxygenClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
+        
     def click_daily_buttons(self, max_attempts=5, wait_time=10, timeout=10):
         xpath_button_wrap = "//div[@class='daily_btn_wrap']"
         xpath_button_get_reward = "//div[@class='daily_get' and contains(text(), 'Get reward')]"

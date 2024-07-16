@@ -64,13 +64,6 @@ class LumCityClaimer(Claimer):
     def full_claim(self):
         self.step = "100"
 
-        def apply_random_offset(unmodifiedTimer):
-            if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-                modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
-                return modifiedTimer
-
         self.launch_iframe()
         self.output(f"Step {self.step} - Short wait to let the totals load", 3)
         time.sleep(10)
@@ -128,7 +121,7 @@ class LumCityClaimer(Claimer):
                         self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                         return 60
                     else:
-                        total_time = apply_random_offset(remaining_wait_time)
+                        total_time = self.apply_random_offset(remaining_wait_time)
                         self.output(f"STATUS: Pot full in {remaining_wait_time} minutes, plus an off-set of {self.random_offset}.", 1)
                     return total_time
 
@@ -171,12 +164,6 @@ class LumCityClaimer(Claimer):
 
         self.increase_step()
 
-    def strip_html_tags(self, text):
-        clean = re.compile('<.*?>')
-        text_without_html = re.sub(clean, '', text)
-        text_cleaned = re.sub(r'[^0-9:.]', '', text_without_html)
-        return text_cleaned
-
     def extract_time(self, text):
         time_parts = text.split(':')
         if len(time_parts) == 3:
@@ -193,7 +180,7 @@ class LumCityClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
                 xpath = "//span[text()='Fill Time']/ancestor::div[1]/following-sibling::div"
-                pot_full_value = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15)))
+                pot_full_value = self.extract_time(self.strip_html_and_non_numeric(self.monitor_element(xpath, 15)))
                 return pot_full_value
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
