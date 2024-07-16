@@ -67,7 +67,7 @@ class MDAOClaimer(Claimer):
         def return_minutes(wait_time_text):
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
             remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
-            return remaining_wait_time
+            return remaining_wait_time + 2
 
         self.step = "100"
 
