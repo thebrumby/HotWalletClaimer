@@ -65,10 +65,18 @@ class MDAOAUClaimer(Claimer):
 
     def full_claim(self):
 
-        def return_minutes(wait_time_text):
-            matches = re.findall(r'(\d+)([hm])', wait_time_text)
-            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
-            return remaining_wait_time + 2
+        def return_minutes(wait_time_text, random_offset=0):
+            matches = re.findall(r'(\d+)([hms])', wait_time_text)
+            total_minutes = 0
+            for value, unit in matches:
+                if unit == 'h':
+                    total_minutes += int(value) * 60
+                elif unit == 'm':
+                    total_minutes += int(value)
+                elif unit == 's':
+                    total_minutes += int(value) / 60  # Convert seconds to minutes
+            remaining_wait_time = total_minutes
+            return int(remaining_wait_time)
 
         self.step = "100"
 
