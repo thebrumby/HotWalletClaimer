@@ -1,13 +1,13 @@
 # Telegram Claim Assistant - Mine HOT & More!
-#### Currently supporting 17 crypto-based games and increasing weekly - automate claims and stay informed about their status.
+#### Currently supporting 18 crypto-based games and increasing weekly - automate claims and stay informed about their status.
 
 Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would like to support our ongoing development, consider subscribing to our [Patreon](https://www.patreon.com/TelegramClaimBot), or treat us to a [cup of coffee ☕](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation—both options are just $5. You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. Discover some humorous uses for the channel and more reasons to give a little back [here](docs/YOUTUBE.md).
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
+- **Latest Addition: MDAO Telegram Wallet**: Discover the new MDAO Telegram Wallet game and start claiming faster. [read more](https://www.patreon.com/posts/latest-addition-108240556?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Setting Up a Relay to a Telegram Bot**: A step-by-step guide to get real-time updates to Telegram. [read more](https://www.patreon.com/posts/heres-polished-107773474?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Gamee added & Oxygen improved**: Now claim the Oxygen daily reward, and check out new game Gamee. [read more](https://www.patreon.com/posts/weekend-updates-107599840?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Community Member Contributes 2 More Games!**: SimpleTap & PixelTap join the club. [read more](https://www.patreon.com/posts/simpletap-107475385?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -86,6 +86,8 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh gamee`                  | Launch Gamee on Telegram: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458)                | ✅     |
 | `./launch.sh fuel`                   | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot)            | ✅     |
 | `./launch.sh fuel-autoupgrade        | **Auto-upgrade spends your tokens to increase mining speed**            | ✅     |
+| `./launch.sh mdao`                   | Launch MDAO Wallet on Telegram: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)            | ✅     |
+| `./launch.sh mdao-autoupgrade        | **Auto-upgrade spends your tokens to increase mining speed**            | ✅     |
 
 💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 <a name="videos"></a>
