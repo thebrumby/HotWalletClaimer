@@ -101,7 +101,7 @@ class FuelClaimer(Claimer):
         self.launch_iframe()
 
         self.get_balance(False)
-        self.get_profit_hour(False)
+
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
         if wait_time_text != "Filled":
@@ -143,6 +143,9 @@ class FuelClaimer(Claimer):
                     self.increase_step()
                     self.get_balance(True)
                     self.get_profit_hour(True)
+                    self.increase_step()
+                    self.quit_driver()
+                    self.launch_iframe()
                     self.increase_step()
                     recycle()
                     if wait_time_text == "Filled":
