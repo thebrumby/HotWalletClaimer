@@ -1,3 +1,4 @@
+
 import os
 import shutil
 import sys
@@ -163,6 +164,19 @@ class LumCityClaimer(Claimer):
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
 
         self.increase_step()
+        return balance_part  # Added return statement to ensure balance_part is returned
+
+    def strip_html_tags(self, text):
+        clean = re.compile('<.*?>')
+        text_without_html = re.sub(clean, '', text)
+        text_cleaned = re.sub(r'[^0-9:.]', '', text_without_html)
+        return text_cleaned
+
+    def extract_single_number(self, text):
+        numbers = re.findall(r'[\d.]+', text)
+        if numbers:
+            return numbers[0]
+        return None
 
     def extract_time(self, text):
         time_parts = text.split(':')
@@ -180,7 +194,7 @@ class LumCityClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
                 xpath = "//span[text()='Fill Time']/ancestor::div[1]/following-sibling::div"
-                pot_full_value = self.extract_time(self.strip_html_and_non_numeric(self.monitor_element(xpath, 15)))
+                pot_full_value = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15)))
                 return pot_full_value
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
