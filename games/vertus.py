@@ -754,7 +754,7 @@ def full_claim():
     try:
         element = WebDriverWait(driver, 10).until(
             EC.visibility_of_element_located(
-                (By.XPATH, "//p[contains(text(), 'VERT Balance:')]/following-sibling::div/p[@class='_value_1jcpd_16']")
+                (By.XPATH, "//div[contains(@class, '_balanceCon_qig4y_22')]//p[@class='_value_qig4y_16']")
             )
         )
 
@@ -818,7 +818,7 @@ def full_claim():
                 try:
                     element = WebDriverWait(driver, 10).until(
                         EC.visibility_of_element_located(
-                            (By.XPATH, "//p[contains(text(), 'VERT Balance:')]/following-sibling::div/p")
+                            (By.XPATH, "//div[contains(@class, '_balanceCon_qig4y_22')]//p[@class='_value_qig4y_16']")
                         )
                     )
 
