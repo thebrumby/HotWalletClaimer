@@ -108,7 +108,9 @@ class MDAOAUClaimer(Claimer):
             shortfall = available_balance - upgrade_cost
             if not shortfall:
                 xpath = "//div[contains(text(), 'LVL UP')]"
-                self.move_and_click(xpath, 30, True, "look for cost upgrade tab", self.step, "clickable")
+                self.move_and_click(xpath, 30, True, "click the LVL UP button", self.step, "clickable")
+                xpath = "//div[contains(text(), 'CONFIRM')]"
+                self.move_and_click(xpath, 30, True, "click the Confirm button", self.step, "clickable")
                 self.output(f"STATUS: We have spent {upgrade_cost} ZP to upgrade the mining speed.",1)
             else:
                 self.output(f"Step {self.step} - there is a shortfall of {shortfall} ZP to upgrade the mining speed.",2)
