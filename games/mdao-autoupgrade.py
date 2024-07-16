@@ -80,6 +80,7 @@ class MDAOAUClaimer(Claimer):
 
         if remaining_wait_time == "Filled":
             self.settings['forceClaim'] = True
+            remaining_wait_time = 0
         elif remaining_wait_time == "Unknown":
             return 30
         else:
