@@ -104,9 +104,10 @@ class MDAOAUClaimer(Claimer):
         # Get remaining wait time for after the upgrade.
         remaining_wait_time = return_minutes(self.get_wait_time(self.step, "post-claim"))
         self.increase_step()
+        # Check the mining speed:
+        self.get_profit_hour(True)
         # Let's see if we can upgrade?
         try:
-            self.get_profit_hour(True)
             available_balance = float(available_balance) if available_balance else 0
             xpath = "//div[text()='Workbench']"
             self.move_and_click(xpath, 30, True, "look for cost upgrade tab", self.step, "clickable")
@@ -115,13 +116,16 @@ class MDAOAUClaimer(Claimer):
             upgrade_cost = self.strip_html_and_non_numeric(self.monitor_element(xpath))
             upgrade_cost = float(upgrade_cost.replace(',', '').strip()) if upgrade_cost else 0
             self.output(f"Step {self.step} - the upgrade cost is {upgrade_cost}.",3)
-            shortfall = upgrade_cost - available_balance
-            if shortfall < 0:
+            shortfall = available_balance - upgrade_cost
+            if shortfall > 0:
                 xpath = "//div[contains(text(), 'LVL UP')]"
                 self.move_and_click(xpath, 30, True, "click the LVL UP button", self.step, "clickable")
                 xpath = "//div[contains(text(), 'CONFIRM')]"
-                self.move_and_click(xpath, 30, True, "click the Confirm button", self.step, "clickable")
-                self.output(f"STATUS: We have spent {upgrade_cost} ZP to upgrade the mining speed.",1)
+                button = self.move_and_click(xpath, 30, False, "click the Confirm button", self.step, "clickable")
+                if button:
+                    success = self.driver.execute_script("arguments[0].click();", button)
+                    if success:
+                        self.output(f"STATUS: We have spent {upgrade_cost} ZP to upgrade the mining speed.",1)
             else:
                 self.output(f"Step {self.step} - there is a shortfall of {shortfall} ZP to upgrade the mining speed.",2)
 
@@ -169,29 +173,29 @@ class MDAOAUClaimer(Claimer):
                 return "Unknown"
         return "Unknown"
 
-        def get_profit_hour(self, claimed=False):
-            prefix = "After" if claimed else "Before"
-            default_priority = 2 if claimed else 3
+    def get_profit_hour(self, claimed=False):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
 
-            priority = max(self.settings['verboseLevel'], default_priority)
+        priority = max(self.settings['verboseLevel'], default_priority)
 
-            # Construct the specific profit XPath
-            profit_text = f'{prefix} PROFIT/HOUR:'
-            profit_xpath = "//div[contains(text(), 'per hour')]"
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//div[contains(text(), 'per hour')]"
 
-            try:
-                element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+        try:
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
 
-                # Check if element is not None and process the profit
-                if element:
-                    self.output(f"Step {self.step} - {profit_text} {element}", priority)
+            # Check if element is not None and process the profit
+            if element:
+                self.output(f"Step {self.step} - {profit_text} {element}", priority)
 
-            except NoSuchElementException:
-                self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
         
-            self.increase_step()
+        self.increase_step()
 
 def main():
     claimer = MDAOAUClaimer()
