@@ -75,6 +75,8 @@ class MDAOClaimer(Claimer):
 
         self.get_balance(False)
 
+        remaining_wait_time = self.get_wait_time(self.step, "pre-claim")
+
         if remaining_wait_time == "Filled":
             self.settings['forceClaim'] = True
         elif remaining_wait_time == "Unknown":
