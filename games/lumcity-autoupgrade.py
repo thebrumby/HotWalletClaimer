@@ -53,10 +53,11 @@ class LumCityAUClaimer(LumCityClaimer):
         def get_cost_upgrade():
             try:
                 balance = float(after_balance) if after_balance else 0
-                cost_xpath = "//div[contains(@class, '_price_lnqn0_57')]/span[1]"
+                cost_xpath = "(//div[contains(@class, '_price_lnqn0_57')]/span)[1]"
                 self.move_and_click(cost_xpath, 30, False, "look for cost upgrade", self.step, "visible")
                 cost_upgrade = self.monitor_element(cost_xpath)
-                cost_upgrade = float(cost_upgrade.replace(',', '').strip()) if cost_upgrade else 0
+                cost_upgrade = self.extract_single_number(cost_upgrade)
+                cost_upgrade = float(cost_upgrade) if cost_upgrade else 0
             except (ValueError, AttributeError, TypeError) as e:
                 self.output(f"Step {self.step} - Unable to convert cost or balance to a number: {e}", 2)
                 return
@@ -74,7 +75,7 @@ class LumCityAUClaimer(LumCityClaimer):
             self.increase_step()
 
         def perform_upgrade():
-            lvl_up_xpath = "//button[contains(@class, '_btn_16o80_16') and text()='Lvl Up']"
+            lvl_up_xpath = "(//div[contains(@class, '_updateContainerList_lnqn0_21')]//button[contains(@class, '_btn_16o80_16') and text()='Lvl Up'])[1]"
             confirm_xpath = "//button[contains(@class, '_btn_16o80_16') and text()='Confirm']"
             ok_xpath = "//button[contains(@class, '_btn_16o80_16') and text()='Ok']"
 
@@ -101,6 +102,9 @@ class LumCityAUClaimer(LumCityClaimer):
                 except (ValueError, TypeError) as e:
                     self.output(f"Step {self.step} - Error converting balance or reward value to float: {e}", 2)
                     return 60
+            else:
+                self.output(f"Step {self.step} - Error: reward_value is None.", 2)
+                return 60
 
             ok_xpath = "//div[contains(@class, '_btnContainer')]//button[text()='Ok']"
             self.move_and_click(ok_xpath, 20, True, "click the 'OK' button", self.step, "clickable")
@@ -117,6 +121,9 @@ class LumCityAUClaimer(LumCityClaimer):
         time.sleep(10)
 
         before_balance = self.get_balance(False)
+        if before_balance is None:
+            self.output("Step 100 - Error: before_balance is not initialized properly.", 2)
+            return 60
         after_balance = before_balance
 
         claim_xpath = "//button[contains(normalize-space(.), 'Claim')]"
