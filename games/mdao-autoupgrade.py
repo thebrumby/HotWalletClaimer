@@ -89,7 +89,7 @@ class MDAOAUClaimer(Claimer):
 
         self.increase_step()
 
-        if remaining_wait_time < 5 or self.settings["forceClaim"]:
+        if int(remaining_wait_time) < 5 or self.settings["forceClaim"]:
             self.settings['forceClaim'] = True
             self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
         else:
