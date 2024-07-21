@@ -88,7 +88,7 @@ class TreeClaimer(Claimer):
     def find_working_link(self,old_step):
         self.output(f"Step {self.step} - Attempting to open a link Following Twitter...",2)
 
-        start_app_xpath = "//p[contains(text(), 'RT')]"
+        start_app_xpath = "//p[contains(text(), '& Tag')]"
 
         try:
             start_app_buttons = WebDriverWait(self.driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
