@@ -395,7 +395,7 @@ class SeedClaimer(Claimer):
 
         self.output(f"Step {self.step} - Attempting to open a link for the app...",2)
 
-        start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//button[.//span[contains(text(), 'Open app')]]"
+        start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//button[.//span[contains(text(), 'Open app') or contains(text(), 'Play')]]"
         try:
             start_app_buttons = WebDriverWait(self.driver, 5).until(EC.presence_of_all_elements_located((By.XPATH, start_app_xpath)))
             clicked = False
