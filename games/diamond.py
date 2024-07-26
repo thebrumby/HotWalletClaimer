@@ -28,12 +28,8 @@ from claimer import Claimer
 
 class DiamondClaimer(Claimer):
 
-    def __init__(self):
-
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/diamond.py"
         self.prefix = "Diamond:"
         self.url = "https://web.telegram.org/k/#@holdwallet_bot"
@@ -42,10 +38,15 @@ class DiamondClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//div[text()='Open Wallet']"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+        super().__init__()
 
     def next_steps(self):
         if self.step:
@@ -114,7 +115,7 @@ class DiamondClaimer(Claimer):
 
         # Best on Docker!:
         xpath = "//h2[text()='Mining']"
-        self.move_and_click(xpath, 15, True, "click the alternative 'storage' link", self.step, "clickable")
+        self.move_and_click(xpath, 15, True, "click the alternative 'storage' link (may not be present)", self.step, "clickable")
         self.increase_step
 
         self.get_balance(False)

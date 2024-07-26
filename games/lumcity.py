@@ -29,11 +29,8 @@ from claimer import Claimer
 
 class LumCityClaimer(Claimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 0), max(self.settings['highestClaimOffset'], 0))
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/lumcity.py"
         self.prefix = "LumCity:"
         self.url = "https://web.telegram.org/k/#@LumCity_bot"
@@ -42,10 +39,15 @@ class LumCityClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//span[contains(text(), 'Open the App')]"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 0), max(self.settings['highestClaimOffset'], 0))
+        super().__init__()
 
     def next_steps(self):
         if self.step:

@@ -28,11 +28,8 @@ from claimer import Claimer
 
 class BlumClaimer(Claimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/blum.py"
         self.prefix = "Blum:"
         self.url = "https://web.telegram.org/k/#@BlumCryptoBot"
@@ -41,10 +38,15 @@ class BlumClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = True
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//button[span[contains(text(), 'Launch Blum')]]"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+        super().__init__()
 
     def next_steps(self):
         if self.step:
@@ -69,7 +71,7 @@ class BlumClaimer(Claimer):
 
         self.launch_iframe()
 
-        xpath = "//div[contains(text(), 'Your daily rewards')]"
+        xpath = "//span[contains(text(), 'Your daily rewards')]"
         present = self.move_and_click(xpath, 20, False, "check for daily reward", self.step, "visible")
         self.increase_step()
         reward_text = None
@@ -79,7 +81,7 @@ class BlumClaimer(Claimer):
             xpath = "(//div[@class='count'])[2]"
             days = self.move_and_click(xpath, 10, False, "get consecutive days played", self.step, "visible")
             reward_text = f"Daily rewards: {points.text} points & {days.text} days."
-            xpath = "//button[.//div[text()='Continue']]"
+            xpath = "//button[.//span[text()='Continue']]"
             self.move_and_click(xpath, 10, True, "click continue", self.step, "clickable")
             self.increase_step()
 
@@ -87,8 +89,8 @@ class BlumClaimer(Claimer):
         self.move_and_click(xpath, 10, True, "click continue", self.step, "clickable")
         self.increase_step()
 
-        xpath = "//div[@class='farming-buttons-wrapper']//button"
-        self.move_and_click(xpath, 10, True, "click the 'Start farming' button (may already be running)", self.step, "clickable")
+        xpath = "//button[.//span[contains(text(), 'Start farming')]][1]"
+        self.move_and_click(xpath, 10, True, "click the 'Start farming' button (may not be present)", self.step, "clickable")
         # self.click_element(xpath)
         self.increase_step()
 
@@ -116,12 +118,12 @@ class BlumClaimer(Claimer):
             if wait_time_text == self.pot_full or self.settings['forceClaim']:
                 try:
                     xpath = "//button[.//div[contains(text(), 'Claim')]]"
-                    self.move_and_click(xpath, 10, True, "click the 'Launch' button", self.step, "clickable")
+                    self.move_and_click(xpath, 10, True, "click the 'Claim' button", self.step, "clickable")
                     # self.click_element(xpath)
 
                     time.sleep(5)
 
-                    xpath = "//div[@class='farming-buttons-wrapper']//button"
+                    xpath = "//button[.//span[contains(text(), 'Start farming')]][1]"
                     self.move_and_click(xpath, 10, True, "click the 'Start farming' button", self.step, "clickable")
                     # self.click_element(xpath)
 

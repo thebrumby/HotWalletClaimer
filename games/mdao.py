@@ -29,11 +29,8 @@ from claimer import Claimer
 
 class MDAOClaimer(Claimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(min(self.settings['lowestClaimOffset'], 0), min(self.settings['highestClaimOffset'], 0))
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/mdao.py"
         self.prefix = "MDAO:"
         self.url = "https://web.telegram.org/k/#@Mdaowalletbot"
@@ -42,10 +39,15 @@ class MDAOClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//span[contains(text(), 'Play&Earn')]"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(min(self.settings['lowestClaimOffset'], 0), min(self.settings['highestClaimOffset'], 0))
+        super().__init__()
 
     def next_steps(self):
         if self.step:
@@ -94,7 +96,6 @@ class MDAOClaimer(Claimer):
             remaining_wait_time = return_minutes(remaining_wait_time)
             self.output(f"STATUS: Pot not yet full, let's sleep for {remaining_wait_time} minutes.", 1)
             return remaining_wait_time
-            
 
         self.increase_step()
 

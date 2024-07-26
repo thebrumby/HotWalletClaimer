@@ -24,31 +24,12 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
-# Ensure the `requests` module is installed
-try:
-    import requests
-except ImportError:
-    print("The 'requests' module is not installed. Installing it now...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
-    import requests
+import requests
 
 class Claimer():
-    settings_file = "variables.txt"
-    status_file_path = "status.txt"
-    start_app_xpath = None
-    settings = {}
-    driver = None
-    target_element = None
-    random_offset = 0
-    script = ""
-    prefix = ""
-    url = ""
-    pot_full = "Filled"
-    pot_filling = "to fill"
-    seed_phrase = None
-    wallet_id = ""
 
     def __init__(self):
+        self.initialize_settings()
         self.load_settings()
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         print(f"Initialising the {self.prefix} Wallet Auto-claim Python Script - Good Luck!")
@@ -106,6 +87,19 @@ class Claimer():
             self.output("Use of the built-in proxy is force on for this game.", 2)
         else:
             self.output("Proxy disabled in settings.", 2)
+
+    def initialize_settings(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.start_app_xpath = None
+        self.settings = {}
+        self.driver = None
+        self.target_element = None
+        self.random_offset = 0
+        self.seed_phrase = None
+        self.wallet_id = ""
+        self.script = "default_script.py"
+        self.prefix = "Default:"
 
     def run(self):
         if not self.settings["forceNewSession"]:
@@ -177,6 +171,9 @@ class Claimer():
             self.quit_driver()
 
             now = datetime.now()
+            # Check if wait_time is not a number, assume 30
+            if not isinstance(wait_time, (int, float)):
+                wait_time = 30
             next_claim_time = now + timedelta(minutes=wait_time)
             this_claim_str = now.strftime("%d %B - %H:%M")
             next_claim_time_str = next_claim_time.strftime("%d %B - %H:%M")
@@ -759,7 +756,7 @@ class Claimer():
         self.increase_step()
 
         # Country Code Selection
-        xpath = "//div[@class='input-field-input']"
+        xpath = "//div[contains(@class, 'input-field-input')]"
         self.target_element = self.move_and_click(xpath, 30, True, "update user's country", self.step, "visible")
         if not self.target_element:
             self.output(f"Step {self.step} - Failed to find country input field.", 1)
@@ -771,7 +768,7 @@ class Claimer():
         self.increase_step()
 
         # Phone Number Input
-        xpath = "//div[@class='input-field-input' and @inputmode='decimal']"
+        xpath = "//div[contains(@class, 'input-field-input') and @inputmode='decimal']"
         self.target_element = self.move_and_click(xpath, 30, True, "request user's phone number", self.step, "visible")
         if not self.target_element:
             self.output(f"Step {self.step} - Failed to find phone number input field.", 1)
@@ -817,14 +814,14 @@ class Claimer():
         except TimeoutException:
             # Check for Storage Offline
             xpath = "//button[contains(text(), 'STORAGE_OFFLINE')]"
-            self.move_and_click(xpath, 8, True, "check for 'STORAGE_OFFLINE'", self.step, "visible")
+            self.move_and_click(xpath, 10, True, "check for 'STORAGE_OFFLINE'", self.step, "visible")
             if self.target_element:
                 self.output(f"Step {self.step} - ***Progress is blocked by a 'STORAGE_OFFLINE' button",1)
                 self.output(f"Step {self.step} - If you are re-usi,ng an old Wallet session; try to delete or create a new session.",1)
                 found_error = True
             # Check for flood wait
             xpath = "//button[contains(text(), 'FLOOD_WAIT')]"
-            self.move_and_click(xpath, 8, True, "check for 'FLOOD_WAIT'", self.step, "visible")
+            self.move_and_click(xpath, 10, True, "check for 'FLOOD_WAIT'", self.step, "visible")
             if self.target_element:
                 self.output(f"Step {self.step} - ***Progress is blocked by a 'FLOOD_WAIT' button", 1)
                 self.output(f"Step {self.step} - You need to wait for the specified number of seconds before retrying.", 1)
@@ -850,7 +847,7 @@ class Claimer():
             self.increase_step()
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
             xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
-            fa_input = self.move_and_click(xpath, 10, False, "check for 2FA requirement (will timeout if you don't have 2FA)", self.step, "present")
+            fa_input = self.move_and_click(xpath, 15, False, "check for 2FA requirement (will timeout if you don't have 2FA)", self.step, "present")
         
             if fa_input:
                 if self.settings['hideSensitiveInput']:
@@ -1054,6 +1051,10 @@ class Claimer():
                     target_element = wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
                 elif expectedCondition == "invisible":
                     wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
+                    if self.settings['debugIsOn']:
+                        screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_invisible.png"
+                        self.driver.save_screenshot(screenshot_path)
+                        self.output(f"Screenshot saved to {screenshot_path}", 3)
                     return None
                 elif expectedCondition == "clickable":
                     target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
@@ -1093,6 +1094,10 @@ class Claimer():
                 if click or expectedCondition in ["visible", "clickable"]:
                     self.clear_overlays(target_element, self.step)
 
+                if self.settings['debugIsOn']:
+                    screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_before_click.png"
+                    self.driver.save_screenshot(screenshot_path)
+
                 if click:
                     if self.click_element(xpath, action_description=action_description):
                         self.output(f"Step {self.step} - Successfully clicked {action_description}.", 3)
@@ -1115,6 +1120,9 @@ class Claimer():
 
     def click_element(self, xpath, timeout=30, action_description=""):
         end_time = time.time() + timeout
+        if self.settings['debugIsOn']:
+            screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_click_element.png"
+            self.driver.save_screenshot(screenshot_path)
         while time.time() < end_time:
             try:
                 element = self.driver.find_element(By.XPATH, xpath)
@@ -1185,6 +1193,9 @@ class Claimer():
     def monitor_element(self, xpath, timeout=8, action_description=""):
         end_time = time.time() + timeout
         first_time = True
+        if self.settings['debugIsOn']:
+            screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_monitor_element.png"
+            self.driver.save_screenshot(screenshot_path)
         while time.time() < end_time:
             try:
                 elements = self.driver.find_elements(By.XPATH, xpath)
@@ -1209,13 +1220,8 @@ class Claimer():
         if re.search(r'\(.*?not.*?\)', action_description, re.IGNORECASE):
             # Skip debugging if the condition is met
             return
-    
-        if self.settings['debugIsOn']:
-            # Take a screenshot on error
-            screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_{error_type}.png"
-            self.driver.save_screenshot(screenshot_path)
-            self.output(f"Screenshot saved to {screenshot_path}", 3)
 
+        if self.settings['debugIsOn']:
             # Save the HTML page source on error
             page_source = self.driver.page_source
             with open(f"{self.screenshots_path}/{self.step}_{action_description}_page_source.html", "w", encoding="utf-8") as f:

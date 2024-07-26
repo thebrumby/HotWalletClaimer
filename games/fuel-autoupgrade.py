@@ -28,29 +28,20 @@ from fuel import FuelClaimer
 
 class FuelAUClaimer(FuelClaimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 0), max(self.settings['highestClaimOffset'], 0))
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/fuel-autoupgrade.py"
-        self.prefix = "Fuel-autoupgrade:"
-        self.url = "https://web.telegram.org/k/#@fueljetton_bot"
-        self.pot_full = "Filled"
-        self.pot_filling = "to fill"
+        self.prefix = "Fuel-Auto:"
         self.ad_cycle = 1
-        self.seed_phrase = None
-        self.forceLocalProxy = False
-        self.forceRequestUserAgent = False
 
+    def __init__(self):
         super().__init__()
-
         self.start_app_xpath = "//span[contains(text(), 'Start pumping oil')]"
 
     def recycle_and_upgrade(self):
         steps = [
             {"xpath": "//a[text()='Recycling']", "button_text": "click the 'Recycling' button"},
-            {"xpath": "//button[@class='recycle-button']", "button_text": "Refining Oil to Fuel "},
+            {"xpath": "//button[@class='recycle-button']", "button_text": "Refining Oil to Fuel"},
         ]
 
         for step_info in steps:
@@ -131,21 +122,11 @@ class FuelAUClaimer(FuelClaimer):
     def full_claim(self):
         self.step = "100"
 
-        def adverts():
-            xpath = "//a[text()='Upgrades']"
-            self.move_and_click(xpath, 10, True, "click the 'Upgrades' button", self.step, "clickable")
-            xpath = "//button[contains(., 'Increase multiplier by')]"
-            advert = self.move_and_click(xpath, 10, True, "watch an advert", self.step, "clickable")
-            if advert:
-                self.output(f"Step {self.step} - Waiting 60 seconds for the advert to play.", 3)
-                time.sleep(60)
-                self.increase_step()
-                self.get_balance(True)
-                self.get_profit_hour(True)
-
         self.launch_iframe()
         self.get_balance(False)
         self.get_profit_hour(False)
+        self.quit_driver()
+        self.launch_iframe()
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim")
         if wait_time_text != "Filled":
@@ -161,7 +142,7 @@ class FuelAUClaimer(FuelClaimer):
                     if self.ad_cycle % 12 == 1:
                         self.upgrade_cost()
                     else:
-                        adverts()
+                        self.adverts()
 
                     self.output(f"STATUS: Pot not due for {remaining_wait_time} minutes - let's come back in 30 to check for adverts.", 1)
                     return 30
@@ -185,15 +166,21 @@ class FuelAUClaimer(FuelClaimer):
                     total_wait_time = self.apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                     self.recycle_and_upgrade()
                     self.increase_step()
+                    self.quit_driver()
+                    self.launch_iframe()
                     self.get_balance(True)
                     self.get_profit_hour(True)
                     self.increase_step()
+                    self.quit_driver()
+                    self.launch_iframe()
+                    self.increase_step()
+                    self.recycle()
                     if wait_time_text == "Filled":
                         self.output(f"Step {self.step} - The wait timer is still showing: Filled.", 1)
                         self.output(f"Step {self.step} - This means either the claim failed, or there is >4 minutes lag in the game.", 1)
                         self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                     else:
-                        adverts()
+                        self.adverts()
                         self.output(f"STATUS: Pot full in {total_wait_time} minutes. We'll come back in 30 to check for adverts.", 1)
                     return 30
                 except TimeoutException:

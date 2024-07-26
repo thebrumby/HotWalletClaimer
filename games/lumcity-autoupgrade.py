@@ -28,24 +28,14 @@ from lumcity import LumCityClaimer
 
 class LumCityAUClaimer(LumCityClaimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 0), max(self.settings['highestClaimOffset'], 0))
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/lumcity-autoupgrade.py"
         self.prefix = "LumCity-Auto:"
-        self.url = "https://web.telegram.org/k/#@LumCity_bot"
-        self.pot_full = "Filled"
-        self.pot_filling = "to fill"
-        self.seed_phrase = None
-        self.forceLocalProxy = False
-        self.forceRequestUserAgent = False
 
+    def __init__(self):
         super().__init__()
-
         self.start_app_xpath = "//span[contains(text(), 'Open the App')]"
-
 
     def full_claim(self):
         self.step = "100"
@@ -53,7 +43,7 @@ class LumCityAUClaimer(LumCityClaimer):
         def get_cost_upgrade():
             try:
                 balance = float(after_balance) if after_balance else 0
-                cost_xpath = "//div[contains(@class, '_price_lnqn0_57')]/span[1]"
+                cost_xpath = "(//div[contains(@class, '_price_lnqn0_57')]/span[1])[1]"
                 self.move_and_click(cost_xpath, 30, False, "look for cost upgrade", self.step, "visible")
                 cost_upgrade = self.monitor_element(cost_xpath)
                 cost_upgrade = float(cost_upgrade.replace(',', '').strip()) if cost_upgrade else 0

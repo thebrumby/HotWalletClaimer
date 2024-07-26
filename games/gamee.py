@@ -28,12 +28,8 @@ from claimer import Claimer
 
 class GameeClaimer(Claimer):
 
-    def __init__(self):
-
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/gamee.py"
         self.prefix = "Gamee:"
         self.url = "https://web.telegram.org/k/#@gamee"
@@ -42,10 +38,15 @@ class GameeClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//div[text()='Open app']"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+        super().__init__()
 
     def launch_iframe(self):
         super().launch_iframe()

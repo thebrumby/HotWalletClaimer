@@ -28,11 +28,8 @@ from claimer import Claimer
 
 class PocketFiClaimer(Claimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = -60
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/pocketfi.py"
         self.prefix = "Pocketfi:"
         self.url = "https://web.telegram.org/k/#@pocketfi_bot"
@@ -41,10 +38,15 @@ class PocketFiClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//span[contains(., 'Mining')]"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = -60
+        super().__init__()
 
     def next_steps(self):
         if self.step:

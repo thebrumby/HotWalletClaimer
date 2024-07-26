@@ -29,12 +29,8 @@ from claimer import Claimer
 
 class SeedClaimer(Claimer):
 
-    def __init__(self):
-
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/seed.py"
         self.prefix = "Seed:"
         self.url = "https://web.telegram.org/k/#@seed_coin_bot"
@@ -44,6 +40,12 @@ class SeedClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
 
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
 
     def next_steps(self):

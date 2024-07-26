@@ -13,20 +13,23 @@ from claimer import Claimer
 
 class TreeClaimer(Claimer):
 
-    def __init__(self):
-
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/tree.py"
         self.prefix = "TreeClaimer:"
         self.url = "https://www.treemine.app/login"
         self.pot_full = "0h 0m to fill"
         self.pot_filling = "to fill"
+        self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
 
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
 
     def check_login(self):

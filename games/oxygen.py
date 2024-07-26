@@ -28,11 +28,8 @@ from claimer import Claimer
 
 class OxygenClaimer(Claimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/oxygen.py"
         self.prefix = "Oxygen:"
         self.url = "https://web.telegram.org/k/#@oxygenminerbot"
@@ -42,10 +39,15 @@ class OxygenClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//button[.//span[contains(text(), 'Start App')] or .//span[contains(text(), 'Play Now!')]]"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+        super().__init__()
 
     def next_steps(self):
         if self.step:
@@ -106,7 +108,11 @@ class OxygenClaimer(Claimer):
 
                     wait_time_text = self.get_wait_time(self.step, "post-claim")
                     matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                    total_wait_time = self.apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+
+                    calculated_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
+                    random_offset = self.apply_random_offset(calculated_time)
+                    total_wait_time = random_offset if random_offset > calculated_time else calculated_time
+
                     self.increase_step()
                     self.click_daily_buttons()
                     self.quit_driver()

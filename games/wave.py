@@ -28,11 +28,8 @@ from claimer import Claimer
 
 class WaveClaimer(Claimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset']) + 1
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/wave.py"
         self.prefix = "Wave:"
         self.url = "https://web.telegram.org/k/#@waveonsuibot"
@@ -41,10 +38,15 @@ class WaveClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//a[@href='https://t.me/waveonsuibot/walletapp']"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset']) + 1
+        super().__init__()
 
     def next_steps(self):
         if self.step:

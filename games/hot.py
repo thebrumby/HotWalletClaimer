@@ -27,11 +27,8 @@ from claimer import Claimer
 
 class HotClaimer(Claimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/hot.py"
         self.prefix = "HOT:"
         self.url = "https://web.telegram.org/k/#@herewalletbot"
@@ -42,10 +39,15 @@ class HotClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.step = "01"
         self.imported_seedphrase = None
-
-        super().__init__()
-
         self.start_app_xpath = "//a[@href='https://t.me/herewalletbot/app']"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+        super().__init__()
 
     def next_steps(self):
         try:

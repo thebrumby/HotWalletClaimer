@@ -812,7 +812,7 @@ def full_claim():
                 wait_time_text = get_wait_time(step, "post-claim") 
                 output(f"Step {step} - Post-Claim raw wait time text: {wait_time_text}",3)
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                total_wait_time = self.apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                total_wait_time = apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
                 increase_step()
 
                 try:

@@ -28,12 +28,8 @@ from claimer import Claimer
 
 class SimpleTapClaimer(Claimer):
 
-    def __init__(self):
-
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/simpletap.py"
         self.prefix = "SimpleTap:"
         self.url = "https://web.telegram.org/k/#@Simple_Tap_Bot"
@@ -42,10 +38,15 @@ class SimpleTapClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//div[contains(@class, 'new-message-wrapper')]//div[contains(text(), 'Start')]"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+        super().__init__()
 
     def launch_iframe(self):
         super().launch_iframe()

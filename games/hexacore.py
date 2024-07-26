@@ -28,11 +28,8 @@ from claimer import Claimer
 
 class HexacoreClaimer(Claimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/hexacore.py"
         self.prefix = "Hexacore:"
         self.url = "https://web.telegram.org/k/#@HexacoinBot"
@@ -41,10 +38,15 @@ class HexacoreClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = True
-
-        super().__init__()
-
         self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//a[contains(@href, 'https://t.me/HexacoinBot/wallet?startapp=play')]"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+        super().__init__()
 
     def next_steps(self):
         if hasattr(self, 'step'):
@@ -53,15 +55,11 @@ class HexacoreClaimer(Claimer):
             self.step = "01"
 
         try:
-            
             self.launch_iframe()
             self.increase_step()
-
             self.set_cookies()
-
         except TimeoutException:
             self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.", 1)
-
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 1)
 
@@ -70,7 +68,7 @@ class HexacoreClaimer(Claimer):
 
         self.launch_iframe()
 
-        xpath="//div[@id='modal-root']//button[contains(@class, 'IconButton_button__')]"
+        xpath = "//div[@id='modal-root']//button[contains(@class, 'IconButton_button__')]"
         self.move_and_click(xpath, 10, True, "remove overlays", self.step, "visible")
         self.increase_step()
 
@@ -92,7 +90,7 @@ class HexacoreClaimer(Claimer):
             else:
                 self.output(f"Step {self.step} - Looks like box claim failed.", 3)
         else:
-                self.output(f"Step {self.step} - Looks like box was already claimed.", 3)
+            self.output(f"Step {self.step} - Looks like box was already claimed.", 3)
         self.increase_step()
 
         box_time_text = self.get_box_time(self.step)

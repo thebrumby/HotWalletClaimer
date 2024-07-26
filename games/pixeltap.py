@@ -28,12 +28,8 @@ from claimer import Claimer
 
 class PixelTapClaimer(Claimer):
 
-    def __init__(self):
-
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/pixeltap.py"
         self.prefix = "PixelTap:"
         self.url = "https://web.telegram.org/k/#@pixelversexyzbot"
@@ -42,10 +38,15 @@ class PixelTapClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//div[contains(@class, 'new-message-wrapper')]//div[contains(text(), 'Fight for supply')]"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+        super().__init__()
 
     def launch_iframe(self):
         super().launch_iframe()
@@ -83,11 +84,11 @@ class PixelTapClaimer(Claimer):
 
         # Disable modals
         xpath = "(//div[contains(@class, 'MuiBackdrop-root')])[last()]"
-        button = self.move_and_click(xpath, 8, False, "disable modals", self.step, "clickable")
+        button = self.move_and_click(xpath, 8, False, "disable modals #1 (may not be present)", self.step, "clickable")
         if button: button.click()
 
         xpath = "(//div[contains(@class, 'MuiBackdrop-root')])[last()]"
-        button = self.move_and_click(xpath, 8, False, "disable modals", self.step, "clickable")
+        button = self.move_and_click(xpath, 8, False, "disable modals #2 (may not be present)", self.step, "clickable")
         if button: button.click()
             
         self.increase_step()
@@ -95,7 +96,7 @@ class PixelTapClaimer(Claimer):
         status_text = None
 
         # CLAIM 
-        xpath = "//button[@class='claimButton']"
+        xpath = "//button[contains(@class, 'claimButton')]"
         button = self.move_and_click(xpath, 8, False, "click the 'CLAIM' button", self.step, "clickable")
         if button:button.click()
         self.increase_step()
@@ -135,7 +136,14 @@ class PixelTapClaimer(Claimer):
 
         wait_time = self.get_wait_time(self.step, "pre-claim") 
 
-        return random.randint(60, wait_time)
+        try:
+            wait_time = int(wait_time)
+            if wait_time < 60:
+                wait_time = 60
+        except (ValueError, TypeError):
+             wait_time = 60
+        # Now you can safely call random.randint
+        random_value = random.randint(60, wait_time)
 
 
     def get_balance(self, claimed=False):

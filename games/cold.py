@@ -28,12 +28,8 @@ from claimer import Claimer
 
 class ColdClaimer(Claimer):
 
-    def __init__(self):
-
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/cold.py"
         self.prefix = "BNB-Cold:"
         self.url = "https://web.telegram.org/k/#@Newcoldwallet_bot"
@@ -42,10 +38,16 @@ class ColdClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
+        self.start_app_xpath = "//button//span[contains(text(), 'Open Wallet')]"
 
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
 
-        self.start_app_xpath = "//button//span[contains(text(), 'Open Wallet')]"
 
     def next_steps(self):
         if self.step:
@@ -97,7 +99,7 @@ class ColdClaimer(Claimer):
                 try:
                     original_window = self.driver.current_window_handle
                     xpath = "//button[contains(text(), 'Check News')]"
-                    button = self.move_and_click(xpath, 10, True, "check for NEWS.", self.step, "clickable")
+                    button = self.move_and_click(xpath, 10, True, "check for NEWS (may not be present).", self.step, "clickable")
                     if button:
                         self.output(f"Step {self.step} - Clicked the Check News button...", 2)
                     self.driver.switch_to.window(original_window)

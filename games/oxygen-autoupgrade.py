@@ -26,26 +26,26 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 from oxygen import OxygenClaimer
 
+from oxygen import OxygenClaimer
+import random
+import time
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementClickInterceptedException
+
 class OxygenAUClaimer(OxygenClaimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/oxygen-autoupgrade.py"
         self.prefix = "Oxygen-Auto:"
-        self.url = "https://web.telegram.org/k/#@oxygenminerbot"
-        self.pot_full = "Filled"
-        self.pot_filling = "to fill"
-        self.box_claim = "Never."
-        self.forceLocalProxy = False
-        self.forceRequestUserAgent = False
 
+    def __init__(self):
         super().__init__()
-
         self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//button[.//span[contains(text(), 'Start App')] or .//span[contains(text(), 'Play Now!')]]"
-
+        self.new_cost_oxy = None
+        self.new_cost_food = None
+        self.oxy_upgrade_success = None
+        self.food_upgrade_success = None
 
     def full_claim(self):
         self.step = "100"
@@ -80,8 +80,14 @@ class OxygenAUClaimer(OxygenClaimer):
 
             if wait_time_text == self.pot_full or self.settings['forceClaim']:
                 try:
-                    self.click_claim_button()
+                    xpath = "//div[@class='farm_btn']"
+                    button = self.move_and_click(xpath, 10, True, "click the 'Claim' button", self.step, "clickable")
                     self.increase_step()
+
+                    self.output(f"Step {self.step} - Waiting 10 seconds for the totals and timer to update...", 3)
+                    time.sleep(10)
+                    self.increase_step()
+                    
                     self.click_daily_buttons()
                     self.increase_step()
 
@@ -90,7 +96,11 @@ class OxygenAUClaimer(OxygenClaimer):
 
                     wait_time_text = self.get_wait_time(self.step, "post-claim")
                     matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                    total_wait_time = self.apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                    calculated_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
+                    random_offset = self.apply_random_offset(calculated_time)
+
+                    total_wait_time = random_offset if random_offset > calculated_time else calculated_time
+
                     self.increase_step()
 
                     self.get_balance(True)
@@ -140,43 +150,6 @@ class OxygenAUClaimer(OxygenClaimer):
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
         
-    def click_claim_button(self, max_attempts=5, wait_time=10, timeout=10):
-        xpath = "//div[@class='farm_btn']"
-        for attempt in range(1, max_attempts + 1):
-            try:
-                button = WebDriverWait(self.driver, timeout).until(
-                    EC.presence_of_element_located((By.XPATH, xpath))
-                )
-                
-                self.driver.execute_script("arguments[0].scrollIntoView(true);", button)
-                time.sleep(1)
-                
-                try:
-                    self.driver.execute_script("arguments[0].click();", button)
-                except Exception:
-                    ActionChains(self.driver).move_to_element(button).click().perform()
-                
-                self.increase_step()
-                
-                self.output(f"Step {self.step} - Clicked 'Claim' button (Attempt {attempt}). Waiting {wait_time} seconds...", 3)
-                time.sleep(wait_time)
-                
-                try:
-                    self.driver.find_element(By.XPATH, xpath)
-                except NoSuchElementException:
-                    self.output(f"Button XPath changed after {attempt} clicks. Stopping.", 3)
-                    break
-                    
-            except TimeoutException:
-                self.output(f"Button not found after {timeout} seconds on attempt {attempt}. Stopping.", 2)
-                break
-            except ElementClickInterceptedException:
-                self.output(f"Button click was intercepted on attempt {attempt}. Trying again.", 2)
-                continue
-            except Exception as e:
-                self.output(f"Error on attempt {attempt}: {str(e)}", 2)
-                break
-
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
@@ -188,62 +161,37 @@ class OxygenAUClaimer(OxygenClaimer):
         food_xpath = "//div[@class='indicator_item' and @data='food']/div[@class='indicator_text']"
 
         try:
-            oxy_element = self.driver.find_element(By.XPATH, oxy_xpath)
-            oxy_balance = oxy_element.text if oxy_element else "N/A"
-
-            food_element = self.driver.find_element(By.XPATH, food_xpath)
-            food_balance = food_element.text if food_element else "N/A"
+            oxy_balance = self.monitor_element(oxy_xpath)
+            food_balance = self.monitor_element(food_xpath)
 
             self.output(f"Step {self.step} - {balance_text} Oxygen: {oxy_balance}, Food: {food_balance}", priority)
 
             boost_xpath = "(//div[@class='menu_item' and @data='boosts']/div[@class='menu_icon icon_boosts'])[1]"
-            boost_element = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, boost_xpath))
-            )
-
-            actions = ActionChains(self.driver)
-            actions.move_to_element(boost_element).click().perform()
+            self.move_and_click(boost_xpath, 10, True, "click the boost button", self.step, "clickable")
 
             cost_oxy_xpath = "//span[@class='upgrade_price oxy_upgrade']"
-            cost_food_xpath = "//span[@class='upgrade_price' and not(contains(@class, 'oxy_upgrade'))]"
+            cost_food_xpath = "//span[@class='upgrade_price']"
 
-            WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located((By.XPATH, cost_oxy_xpath)))
+            initial_cost_oxy = self.monitor_element(cost_oxy_xpath)
+            initial_cost_food = self.monitor_element(cost_food_xpath)
 
-            initial_cost_oxy = self.driver.find_element(By.XPATH, cost_oxy_xpath).text
-            initial_cost_food = self.driver.find_element(By.XPATH, cost_food_xpath).text
+            self.output(f"Step {self.step} - Initial Oxygen upgrade cost: {initial_cost_oxy} & Initial Food upgrade cost: {initial_cost_food}", 3)
 
-            self.output(f"Initial Oxygen upgrade cost: {initial_cost_oxy}", 3)
-            self.output(f"Initial Food upgrade cost: {initial_cost_food}", 3)
+            self.attempt_upgrade('oxygen', oxy_balance, initial_cost_oxy, cost_oxy_xpath)
+            self.attempt_upgrade('food', food_balance, initial_cost_food, cost_food_xpath)
 
-            click_oxy_xpath = "//div[@class='upgrade_btn' and @data='oxy'][1]"
-            oxy_upgrade_element = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, click_oxy_xpath))
-            )
-            actions.move_to_element(oxy_upgrade_element).click().perform()
-
-            new_cost_oxy = self.driver.find_element(By.XPATH, cost_oxy_xpath).text
-            oxy_upgrade_success = "Success" if new_cost_oxy != initial_cost_oxy else "Failed"
-            self.output(f"Oxygen upgrade: {oxy_upgrade_success}", 3)
-
-            click_food_xpath = "//div[@class='upgrade_btn' and @data='food'][1]"
-            food_upgrade_element = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, click_food_xpath))
-            )
-            actions.move_to_element(food_upgrade_element).click().perform()
-
-            new_cost_food = self.driver.find_element(By.XPATH, cost_food_xpath).text
-            food_upgrade_success = "Success" if new_cost_food != initial_cost_food else "Failed"
-            self.output(f"Food upgrade: {food_upgrade_success}", 3)
+            close_page_button_xpath = "//div[@class='page_close']"
+            self.move_and_click(close_page_button_xpath, 10, True, "close the pop-up", self.step, "clickable")
 
             return {
                 'oxy': oxy_balance,
                 'food': food_balance,
                 'initial_cost_oxy': initial_cost_oxy,
                 'initial_cost_food': initial_cost_food,
-                'new_cost_oxy': new_cost_oxy,
-                'new_cost_food': new_cost_food,
-                'oxy_upgrade_success': oxy_upgrade_success,
-                'food_upgrade_success': food_upgrade_success
+                'new_cost_oxy': self.new_cost_oxy,
+                'new_cost_food': self.new_cost_food,
+                'oxy_upgrade_success': self.oxy_upgrade_success,
+                'food_upgrade_success': self.food_upgrade_success
             }
 
         except NoSuchElementException:
@@ -255,6 +203,24 @@ class OxygenAUClaimer(OxygenClaimer):
 
         return None
 
+    def attempt_upgrade(self, resource_name, balance, initial_cost, cost_xpath):
+        try:
+            balance = float(balance)
+            initial_cost = float(initial_cost)
+
+            if balance >= initial_cost:
+                click_xpath = f"//div[@class='upgrade_btn' and @data='{resource_name}'][1]"
+                upgrade_element = self.move_and_click(click_xpath, 10, True, f"click the {resource_name} upgrade button", self.step, "clickable")
+                new_cost = float(self.monitor_element(cost_xpath))
+                upgrade_success = "Success" if new_cost != initial_cost else "Failed"
+                self.output(f"Step {self.step} - {resource_name.capitalize()} upgrade: {upgrade_success}", 3)
+                setattr(self, f'new_cost_{resource_name}', new_cost)
+                setattr(self, f'{resource_name}_upgrade_success', upgrade_success)
+            else:
+                shortfall = initial_cost - balance
+                self.output(f"Step {self.step} - Not enough {resource_name.capitalize()} to upgrade, shortfall of: {shortfall}", 3)
+        except ValueError as e:
+            self.output(f"Step {self.step} - Error: Invalid value encountered for {resource_name} upgrade. Details: {str(e)}", 3)
 
 def main():
     claimer = OxygenAUClaimer()

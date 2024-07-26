@@ -28,11 +28,8 @@ from claimer import Claimer
 
 class FuelClaimer(Claimer):
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 0), max(self.settings['highestClaimOffset'], 0))
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/fuel.py"
         self.prefix = "Fuel:"
         self.url = "https://web.telegram.org/k/#@fueljetton_bot"
@@ -41,10 +38,15 @@ class FuelClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = True
-
-        super().__init__()
-
         self.start_app_xpath = "//span[contains(text(), 'Start pumping oil')]"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 0), max(self.settings['highestClaimOffset'], 0))
+        super().__init__()
 
     def next_steps(self):
         if self.step:
@@ -64,43 +66,45 @@ class FuelClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 1)
 
+    def recycle(self):
+        try:
+            xpath = "//a[text()='Recycling']"
+            success = self.move_and_click(xpath, 10, True, "click the 'Recycling' button", self.step, "clickable")
+            if success:
+                self.output(f"Step {self.step} - successful: Clicked on the 'Recycling' link", 2)
+                self.increase_step()
+                time.sleep(20)
+            else:
+                self.output(f"Step {self.step} - failed: Unable to click on the 'Recycling' link", 2)
+                return
+                
+            xpath = "//button[@class='recycle-button']"
+            self.move_and_click(xpath, 10, True, "Refining Oil to Fuel", self.step, "clickable")
+            self.increase_step()
+                
+        except Exception as e:
+            self.output(f"An error occurred: {str(e)}")
+
+    def adverts(self):
+        xpath = "//a[text()='Upgrades']"
+        self.move_and_click(xpath, 10, True, "click the 'Upgrades' button", self.step, "clickable")
+        xpath = "//button[contains(., 'Increase multiplier by')]"
+        advert = self.move_and_click(xpath, 10, True, "watch an advert", self.step, "clickable")
+        if advert:
+            self.output(f"Step {self.step} - Waiting 60 seconds for the advert to play.", 3)
+            time.sleep(60)
+            self.increase_step()
+            self.get_balance(True)
+            self.get_profit_hour(True)
+
     def full_claim(self):
         self.step = "100"
 
-        def recycle():
-            try:
-                xpath = "//a[text()='Recycling']"
-                success = self.move_and_click(xpath, 10, True, "click the 'Recycling' button", self.step, "clickable")
-                if success:
-                    self.output(f"Step {self.step} - successful: Clicked on the 'Recycling' link", 2)
-                    self.increase_step()
-                    time.sleep(20)
-                else:
-                    self.output(f"Step {self.step} - failed: Unable to click on the 'Recycling' link", 2)
-                    return
-                
-                xpath = "//button[@class='recycle-button']"
-                self.move_and_click(xpath, 10, True, "Refining Oil to FuelWith good PH :) AHAH brumb", self.step, "clickable")
-                self.increase_step()
-                
-            except Exception as e:
-                self.output(f"An error occurred: {str(e)}")
-
-        def adverts():
-            xpath = "//a[text()='Upgrades']"
-            self.move_and_click(xpath, 10, True, "click the 'Upgrades' button", self.step, "clickable")
-            xpath = "//button[contains(., 'Increase multiplier by')]"
-            advert = self.move_and_click(xpath, 10, True, "watch an advert", self.step, "clickable")
-            if advert:
-                self.output(f"Step {self.step} - Waiting 60 seconds for the advert to play.", 3)
-                time.sleep(60)
-                self.increase_step()
-                self.get_balance(True)
-                self.get_profit_hour(True)
-
         self.launch_iframe()
-
         self.get_balance(False)
+        self.get_profit_hour(False)
+        self.quit_driver()
+        self.launch_iframe()
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
@@ -115,7 +119,7 @@ class FuelClaimer(Claimer):
                     self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
                 else:
                     remaining_wait_time = 30
-                    adverts()
+                    self.adverts()
                     self.output(f"STATUS: Pot not ready for claiming - let's come back in 30 minutes to check for adverts.", 1)
                     return remaining_wait_time
             except ValueError:
@@ -147,7 +151,7 @@ class FuelClaimer(Claimer):
                     self.quit_driver()
                     self.launch_iframe()
                     self.increase_step()
-                    recycle()
+                    self.recycle()
                     if wait_time_text == "Filled":
                         self.output(f"Step {self.step} - The wait timer is still showing: Filled.", 1)
                         self.output(f"Step {self.step} - This means either the claim failed, or there is >4 minutes lag in the game.", 1)

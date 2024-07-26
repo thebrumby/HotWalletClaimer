@@ -28,13 +28,8 @@ from claimer import Claimer
 
 class TimeFarmClaimer(Claimer):
 
-    def __init__(self):
-
-        # Define sessions and settings files
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.load_settings()
-        self.random_offset = random.randint(max(self.settings['lowestClaimOffset'],0), max(self.settings['highestClaimOffset'],0))
+    def initialize_settings(self):
+        super().initialize_settings()
         self.script = "games/time-farm.py"
         self.prefix = "Time-Farm:"
         self.url = "https://web.telegram.org/k/#@TimeFarmCryptoBot"
@@ -43,10 +38,15 @@ class TimeFarmClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-
-        super().__init__()
-
         self.start_app_xpath = "//span[contains(text(), 'Open App')]"
+
+    def __init__(self):
+        self.settings_file = "variables.txt"
+        self.status_file_path = "status.txt"
+        self.wallet_id = ""
+        self.load_settings()
+        self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 0), max(self.settings['highestClaimOffset'], 0))
+        super().__init__()
 
     def next_steps(self):
 
