@@ -687,6 +687,14 @@ def click_element(xpath, timeout=30):
             break  # Exit loop on unexpected error
     return False  # Return False if the element could not be clicked
 
+def apply_random_offset(unmodifiedTimer, settings, step, output):
+    if settings['lowestClaimOffset'] <= settings['highestClaimOffset']:
+        random_offset = random.randint(settings['lowestClaimOffset'], settings['highestClaimOffset'])
+        modifiedTimer = unmodifiedTimer + random_offset
+        output(f"Step {step} - Random offset applied to the wait timer of: {random_offset} minutes.", 2)
+        return modifiedTimer
+    return unmodifiedTimer
+
 def full_claim():
     global driver, target_element, settings, session_path, step, random_offset
     step = "100"
