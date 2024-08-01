@@ -1043,7 +1043,10 @@ class Claimer():
 
         wait = WebDriverWait(self.driver, wait_time)
         target_element = None
-        for attempt in range(5):  # Retry loop for handling StaleElementReferenceException
+        retry_count = 0  # Counter for retries
+        max_retries = 5  # Maximum number of retries
+
+        for attempt in range(max_retries):  # Retry loop for handling StaleElementReferenceException
             try:
                 if expectedCondition == "visible":
                     target_element = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -1063,33 +1066,13 @@ class Claimer():
                     self.output(f"Step {self.step} - The element was not found for {action_description}.", 2)
                     return None
 
+                # Verify the element's size and location
+                if not self.verify_element_size_and_location(target_element):
+                    retry_count += 1
+                    continue
+
                 actions = ActionChains(self.driver)
                 actions.move_to_element(target_element).pause(timer()).perform()
-
-                self.driver.execute_script("""
-                    var elem = arguments[0];
-                    var rect = elem.getBoundingClientRect();
-                    var isVisible = (
-                        rect.top >= 0 &&
-                        rect.left >= 0 &&
-                        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-                    );
-                    if (!isVisible) {
-                        elem.scrollIntoView({block: 'center'});
-                    }
-                """, target_element)
-
-                is_in_viewport = self.driver.execute_script("""
-                    var elem = arguments[0], box = elem.getBoundingClientRect();
-                    return (box.top >= 0 && box.left >= 0 &&
-                            box.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                            box.right <= (window.innerWidth || document.documentElement.clientWidth));
-                """, target_element)
-
-                if not is_in_viewport:
-                    self.output(f"Step {self.step} - Element still out of bounds after moving with ActionChains and JavaScript scrolling.", 2)
-                    continue
 
                 if click or expectedCondition in ["visible", "clickable"]:
                     self.clear_overlays(target_element, self.step)
@@ -1106,7 +1089,7 @@ class Claimer():
                     return target_element
 
             except StaleElementReferenceException:
-                self.output(f"Step {self.step} - StaleElementReferenceException caught, retrying attempt {attempt + 1} for {action_description}.", 2)
+                retry_count += 1
             except TimeoutException:
                 self.output(f"Step {self.step} - Timeout while trying to {action_description}.", 3)
                 self.debug_information(action_description)
@@ -1116,6 +1099,10 @@ class Claimer():
                 self.debug_information(action_description)
                 break
 
+        # Log a summary message if retries occurred
+        if retry_count > 0:
+            self.output(f"Step {self.step} - {retry_count} retry attempts made for {action_description}.", 2)
+
         return target_element
 
     def click_element(self, xpath, timeout=30, action_description=""):
@@ -1123,25 +1110,19 @@ class Claimer():
         if self.settings['debugIsOn']:
             screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_click_element.png"
             self.driver.save_screenshot(screenshot_path)
+        retry_count = 0  # Counter for retries
+
         while time.time() < end_time:
             try:
                 element = self.driver.find_element(By.XPATH, xpath)
+                
+                # Verify the element's size and location
+                if not self.verify_element_size_and_location(element):
+                    retry_count += 1
+                    continue
+                
                 actions = ActionChains(self.driver)
                 actions.move_to_element(element).perform()
-
-                self.driver.execute_script("""
-                    var elem = arguments[0];
-                    var rect = elem.getBoundingClientRect();
-                    var isVisible = (
-                        rect.top >= 0 &&
-                        rect.left >= 0 &&
-                        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-                    );
-                    if (!isVisible) {
-                        elem.scrollIntoView({block: 'center'});
-                    }
-                """, element)
 
                 overlays_cleared = self.clear_overlays(element, self.step)
                 if overlays_cleared > 0:
@@ -1164,14 +1145,30 @@ class Claimer():
                 alert.accept()
                 self.output(f"Step {self.step} - Unexpected alert handled.", 3)
             except (StaleElementReferenceException, NoSuchElementException):
-                pass
+                retry_count += 1
             except TimeoutException:
                 self.output(f"Step {self.step} - Click timed out.", 2)
                 break
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred: {e}", 3)
                 break
+
+        # Log a summary message if retries occurred
+        if retry_count > 0:
+            self.output(f"Step {self.step} - {retry_count} retry attempts made for {action_description}.", 2)
+
         return False
+
+    def verify_element_size_and_location(self, element):
+        try:
+            size = element.size
+            location = element.location
+            if size['width'] == 0 or size['height'] == 0 or location['x'] == 0 or location['y'] == 0:
+                return False
+            return True
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred while verifying element size and location: {e}", 1)
+            return False
 
     def clear_overlays(self, target_element, step):
         try:
@@ -1214,7 +1211,7 @@ class Claimer():
                     self.debug_information(action_description, "monitor_element_error")
                 return "Unknown"
         return "Unknown"
-
+        
     def debug_information(self, action_description, error_type="error"):
         # Check if "not" is present in the action_description enclosed in brackets
         if re.search(r'\(.*?not.*?\)', action_description, re.IGNORECASE):
