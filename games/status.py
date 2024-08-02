@@ -20,7 +20,7 @@ def parse_time_from_log(line):
         return None
 
 def truncate_and_pad(string, length):
-    string = string or "None"
+    string = string or ""
     return (string[:length-3] + '...').ljust(length) if len(string) > length else string.ljust(length)
 
 def extract_detail(line, keyword):
@@ -79,7 +79,7 @@ def display_processes(processes, status, sort_by="time", start_index=1):
     for i, (name, balance, profit_hour, next_claim_at, log_status) in enumerate(process_list, start=start_index):
         name = truncate_and_pad(name, name_width)
         balance = truncate_and_pad(balance, balance_width)
-        profit_hour = truncate_and_pad(profit_hour, claim_width)
+        profit_hour = truncate_and_pad("" if profit_hour == "None" else profit_hour, profit_hour_width)
         next_claim_at = truncate_and_pad(next_claim_at, claim_width)
         log_status = truncate_and_pad(log_status, status_width)
         print(f"| {str(i).ljust(3)} | {name} | {balance} | {profit_hour} | {next_claim_at} | {log_status} |")
@@ -156,20 +156,26 @@ def get_logs_by_process_name(process_name, lines=30):
     return logs
 
 def show_status_logs(process_id, process_list):
-    print(get_status_logs(process_id, process_list))
+    status_logs = get_status_logs(process_id, process_list)
+    print("\nStatus Logs:\n")
+    print(status_logs)
     input("Press enter to continue...")
 
 def get_status_logs(process_id, process_list):
-    if process_id > len(process_list):
+    if process_id > len(process_list) or process_id < 1:
         return "Invalid process ID."
     
-    return get_logs_by_process_name(process_list[process_id - 1][0])
+    process_name = process_list[process_id - 1][0]
+    return get_status_logs_by_process_name(process_name)
 
 def get_status_logs_by_process_name(process_name):
-    process_name = process_name.strip().replace('_', '-')
-    sanitized_process_name = process_name.replace(':', '-')
+    sanitized_process_name = process_name.strip().replace('_', '-').replace(':', '-')
     log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
     logs = run_command(f"grep -E 'BALANCE:|STATUS:' {log_file} | tail -n 20")
+    
+    if not logs:
+        return "No relevant logs found."
+    
     return logs
 
 def parse_delete_ids(delete_ids_str):
