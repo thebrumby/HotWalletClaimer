@@ -39,13 +39,14 @@ class OxygenClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
+        self.allow_early_claim = False
         self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//button[.//span[contains(text(), 'Start App')] or .//span[contains(text(), 'Play Now!')]]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
         self.status_file_path = "status.txt"
         self.wallet_id = ""
-        self.load_settings()
+        self.load_settings()  # Load settings before initializing other attributes
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
 
@@ -82,7 +83,8 @@ class OxygenClaimer(Claimer):
 
         if wait_time_text != self.pot_full:
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
-            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
+            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+            remaining_wait_time = self.apply_random_offset(remaining_wait_time)
             if remaining_wait_time < 5 or self.settings["forceClaim"]:
                 self.settings['forceClaim'] = True
                 self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)

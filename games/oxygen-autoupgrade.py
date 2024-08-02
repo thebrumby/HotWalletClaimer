@@ -53,7 +53,7 @@ class OxygenAUClaimer(OxygenClaimer):
         self.launch_iframe()
         self.increase_step()
 
-        self.get_balance(True)
+        self.get_balance(False)
         self.increase_step()
 
         self.output(f"Step {self.step} - The last lucky box claim was attempted on {self.box_claim}.", 2)
@@ -63,7 +63,8 @@ class OxygenAUClaimer(OxygenClaimer):
 
         if wait_time_text != self.pot_full:
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
-            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
+            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+            remaining_wait_time = self.apply_random_offset(remaining_wait_time)
             if remaining_wait_time < 5 or self.settings["forceClaim"]:
                 self.settings['forceClaim'] = True
                 self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
@@ -105,8 +106,7 @@ class OxygenAUClaimer(OxygenClaimer):
 
                     self.get_balance(True)
                     self.increase_step()
-                    self.quit_driver()
-                    self.launch_iframe()
+                    self.collect_guildbox()
                     self.output(f"Step {self.step} - check if there are lucky boxes..", 3)
                     xpath = "//div[@class='boxes_cntr']"
                     boxes = self.monitor_element(xpath)
@@ -157,28 +157,26 @@ class OxygenAUClaimer(OxygenClaimer):
         priority = max(self.settings['verboseLevel'], default_priority)
 
         balance_text = f'{prefix} BALANCE:'
-        oxy_xpath = "//span[@class='oxy_counter']"
-        food_xpath = "//div[@class='indicator_item' and @data='food']/div[@class='indicator_text']"
 
         try:
-            oxy_balance = self.monitor_element(oxy_xpath)
-            food_balance = self.monitor_element(food_xpath)
+            oxy_balance_xpath = "//span[@class='oxy_counter']"
+            food_balance_xpath = "//div[@class='indicator_item i_food' and @data='food']/div[@class='indicator_text']"
+            oxy_balance = float(self.monitor_element(oxy_balance_xpath))
+            food_balance = float(self.monitor_element(food_balance_xpath))
 
-            self.output(f"Step {self.step} - {balance_text} Oxygen: {oxy_balance}, Food: {food_balance}", priority)
+            self.output(f"Step {self.step} - {balance_text} Oxygen: {oxy_balance:.1f}, Food: {food_balance:.1f}", priority)
 
             boost_xpath = "(//div[@class='menu_item' and @data='boosts']/div[@class='menu_icon icon_boosts'])[1]"
             self.move_and_click(boost_xpath, 10, True, "click the boost button", self.step, "clickable")
 
-            cost_oxy_xpath = "//span[@class='upgrade_price oxy_upgrade']"
-            cost_food_xpath = "//span[@class='upgrade_price']"
+            cost_oxy_upgrade_xpath = "//span[@class='upgrade_price oxy_upgrade']"
+            cost_food_upgrade_xpath = "//span[@class='upgrade_price']"
 
-            initial_cost_oxy = self.monitor_element(cost_oxy_xpath)
-            initial_cost_food = self.monitor_element(cost_food_xpath)
+            initial_cost_oxy_upgrade = float(self.monitor_element(cost_oxy_upgrade_xpath))
+            initial_cost_food_upgrade = float(self.monitor_element(cost_food_upgrade_xpath))
 
-            self.output(f"Step {self.step} - Initial Oxygen upgrade cost: {initial_cost_oxy} & Initial Food upgrade cost: {initial_cost_food}", 3)
-
-            self.attempt_upgrade('oxygen', oxy_balance, initial_cost_oxy, cost_oxy_xpath)
-            self.attempt_upgrade('food', food_balance, initial_cost_food, cost_food_xpath)
+            self.attempt_upgrade('oxy', 'food', food_balance, initial_cost_oxy_upgrade, cost_oxy_upgrade_xpath)
+            self.attempt_upgrade('food', 'oxygen', oxy_balance, initial_cost_food_upgrade, cost_food_upgrade_xpath)
 
             close_page_button_xpath = "//div[@class='page_close']"
             self.move_and_click(close_page_button_xpath, 10, True, "close the pop-up", self.step, "clickable")
@@ -186,8 +184,8 @@ class OxygenAUClaimer(OxygenClaimer):
             return {
                 'oxy': oxy_balance,
                 'food': food_balance,
-                'initial_cost_oxy': initial_cost_oxy,
-                'initial_cost_food': initial_cost_food,
+                'initial_cost_oxy': initial_cost_oxy_upgrade,
+                'initial_cost_food': initial_cost_food_upgrade,
                 'new_cost_oxy': self.new_cost_oxy,
                 'new_cost_food': self.new_cost_food,
                 'oxy_upgrade_success': self.oxy_upgrade_success,
@@ -203,14 +201,16 @@ class OxygenAUClaimer(OxygenClaimer):
 
         return None
 
-    def attempt_upgrade(self, resource_name, balance, initial_cost, cost_xpath):
+    def attempt_upgrade(self, resource_name, cost_name, balance, initial_cost, cost_xpath):
         try:
             balance = float(balance)
             initial_cost = float(initial_cost)
 
+            self.output(f"Step {self.step} - Upgrade of {resource_name.capitalize()} would cost {initial_cost:.1f} {cost_name.capitalize()} which has a balance of {balance:.1f}.")
+
             if balance >= initial_cost:
                 click_xpath = f"//div[@class='upgrade_btn' and @data='{resource_name}'][1]"
-                upgrade_element = self.move_and_click(click_xpath, 10, True, f"click the {resource_name} upgrade button", self.step, "clickable")
+                upgrade_element = self.move_and_click(click_xpath, 10, True, f"click the {resource_name.capitalize()} upgrade button", self.step, "clickable")
                 new_cost = float(self.monitor_element(cost_xpath))
                 upgrade_success = "Success" if new_cost != initial_cost else "Failed"
                 self.output(f"Step {self.step} - {resource_name.capitalize()} upgrade: {upgrade_success}", 3)
@@ -218,9 +218,98 @@ class OxygenAUClaimer(OxygenClaimer):
                 setattr(self, f'{resource_name}_upgrade_success', upgrade_success)
             else:
                 shortfall = initial_cost - balance
-                self.output(f"Step {self.step} - Not enough {resource_name.capitalize()} to upgrade, shortfall of: {shortfall}", 3)
+                self.output(f"Step {self.step} - Not enough {cost_name.capitalize()} to upgrade the {resource_name.capitalize()}, shortfall of: {shortfall:.1f}", 3)
         except ValueError as e:
             self.output(f"Step {self.step} - Error: Invalid value encountered for {resource_name} upgrade. Details: {str(e)}", 3)
+
+    def collect_guildbox(self, max_attempts=2, wait_time=5, timeout=10):
+        xpath_guild_icon = "//div[@class='menu_icon icon_guilds']"
+        xpath_deposit_button = "//div[@class='guilds_btn guilds_send_oxy' and text()='Deposit']"
+        xpath_check_claimed = "//div[contains(text(), 'The deposit can be made once every 24 hours.')]"
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                # First attempt without relaunching
+                if attempt > 1:
+                    self.quit_driver()
+                    self.launch_iframe()
+
+                # Click on the guild icon
+                if self.move_and_click(xpath_guild_icon, timeout, click=True, action_description="click guild icon", old_step=self.step, expectedCondition="visible"):
+                    
+                    # Click on the deposit button
+                    if self.move_and_click(xpath_deposit_button, timeout, click=True, action_description="click deposit button", old_step=self.step, expectedCondition="visible"):
+                        
+                        # Check if deposit has already been made today
+                        message = self.monitor_element(xpath_check_claimed)
+                        if message:
+                            self.output(f"Step {self.step} - {message}.", 2)
+                            return True
+
+                        self.output(f"Step {self.step} - Success: Both elements were clicked successfully!", 1)
+                        return True
+                    else:
+                        self.output(f"Step {self.step} - Attempt {attempt} - Failed to click 'Deposit' button.", 1)
+                else:
+                    self.output(f"Step {self.step} - Attempt {attempt} - Failed to click guild icon.", 1)
+            except TimeoutException:
+                self.output(f"Step {self.step} - Element not found after {timeout} seconds on attempt {attempt}.", 1)
+            except ElementClickInterceptedException:
+                self.output(f"Step {self.step} - Element click was intercepted on attempt {attempt}. Trying again.", 3)
+            except Exception as e:
+                self.output(f"Step {self.step} - Error on attempt {attempt}: {str(e)}", 1)
+
+        self.output(f"Step {self.step} - Failed to complete the box claim after multiple attempts.", 1)
+        return False
+        
+    def collect_guildbox(self, max_attempts=2, timeout=10):
+        xpath_guild_icon = "//div[@class='menu_icon icon_guilds']"
+        xpath_deposit_button = "//div[@class='guilds_btn guilds_send_oxy' and text()='Deposit']"
+        xpath_check_claimed = "//div[contains(text(), 'You can deposit in:')]"
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                # First attempt without relaunching
+                if attempt > 1:
+                    self.quit_driver()
+                    self.launch_iframe()
+
+                # Click on the guild icon
+                if self.move_and_click(xpath_guild_icon, timeout, True, "click guild icon", self.step, "clickable"):
+                
+                    # Click on the deposit button
+                    if self.move_and_click(xpath_deposit_button, timeout,True, "click deposit button", self.step, "clickable"):
+                    
+                        # Check if deposit has already been made today
+                        message = self.monitor_element(xpath_check_claimed)
+                        if message:
+                            self.output(f"Step {self.step} - Guild box message: {message}.", 2)
+                            close_page_button_xpath = "//div[@class='page_close']"
+                            self.move_and_click(close_page_button_xpath, 10, True, "close the pop-up", self.step, "clickable")
+                            return True
+
+                        self.output(f"Step {self.step} - Guild box claim success: Both elements were clicked successfully!", 2)
+                        close_page_button_xpath = "//div[@class='page_close']"
+                        self.move_and_click(close_page_button_xpath, 10, True, "close the pop-up", self.step, "clickable")
+                        return True
+                    else:
+                        close_page_button_xpath = "//div[@class='page_close']"
+                        self.move_and_click(close_page_button_xpath, 10, True, "close the pop-up", self.step, "clickable")
+                        self.output(f"Step {self.step} - Attempt {attempt} - Failed to click 'Deposit' button, you may not be a member of a guild.", 3)
+                        return True
+                else:
+                    self.output(f"Step {self.step} - Attempt {attempt} - Failed to click guild icon.", 1)
+            except TimeoutException:
+                self.output(f"Step {self.step} - Element not found after {timeout} seconds on attempt {attempt}.", 1)
+            except ElementClickInterceptedException:
+                self.output(f"Step {self.step} - Element click was intercepted on attempt {attempt}. Trying again.", 3)
+            except Exception as e:
+                self.output(f"Step {self.step} - Error on attempt {attempt}: {str(e)}", 1)
+
+        self.output(f"Step {self.step} - Failed to complete the guild box claim after multiple attempts.", 2)
+        close_page_button_xpath = "//div[@class='page_close']"
+        self.move_and_click(close_page_button_xpath, 10, True, "close the pop-up", self.step, "clickable")
+        return False
 
 def main():
     claimer = OxygenAUClaimer()
