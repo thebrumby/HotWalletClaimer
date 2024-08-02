@@ -69,11 +69,11 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh vertus`                 | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot)                                | ✅     |
 | `./launch.sh tree`                   | Launch Tree on BNB Wallet: [@treeminebot](https://t.me/treeminebot/app?startapp=6783218884)         | ❌     |
 | `./launch.sh wave`                   | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774)    | ✅     |
-| `./launch.sh seed`                   | Launch Seed App - Mine Seed: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot)           | 🐞     |
+| `./launch.sh seed`                   | Launch Seed App - Mine Seed: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot)           | ✅     |
 | `./launch.sh oxygen`                 | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot)                         | ✅     |
 | `./launch.sh oxygen-autoupgrade`     | **Auto-upgrade spends your tokens to increase mining speed**                                        | ✅     |
-| `./launch.sh hexacore`               | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot)                             | ✅     |
-| `./launch.sh hexacore-autoupgrade`   | **Auto-upgrade spends your tokens to increase mining speed**                                        | ✅     |
+| `./launch.sh hexacore`               | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot)                             | 🐞     |
+| `./launch.sh hexacore-autoupgrade`   | **Auto-upgrade spends your tokens to increase mining speed**                                        | 🐞     |
 | `./launch.sh pocketfi`               | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot)                             | ✅     |
 | `./launch.sh blum`                   | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot)                         | ✅     |
 | `./launch.sh time-farm`              | Launch Time Farm on Telegram: [@TimeFarmCryptoBot](https://web.telegram.org/k/#@TimeFarmCryptoBot)  | ✅     |
