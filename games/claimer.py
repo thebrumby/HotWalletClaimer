@@ -23,10 +23,9 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
-
 import requests
 
-class Claimer():
+class Claimer:
 
     def __init__(self):
         self.initialize_settings()
@@ -69,11 +68,11 @@ class Claimer():
             user_input = self.get_session_id()
             self.wallet_id = user_input
 
-        self.session_path = "./selenium/{}".format(self.wallet_id)
+        self.session_path = f"./selenium/{self.wallet_id}"
         os.makedirs(self.session_path, exist_ok=True)
-        self.screenshots_path = "./screenshots/{}".format(self.wallet_id)
+        self.screenshots_path = f"./screenshots/{self.wallet_id}"
         os.makedirs(self.screenshots_path, exist_ok=True)
-        self.backup_path = "./backups/{}".format(self.wallet_id)
+        self.backup_path = f"./backups/{self.wallet_id}"
         os.makedirs(self.backup_path, exist_ok=True)
         self.step = "01"
 
@@ -84,7 +83,7 @@ class Claimer():
             self.run_http_proxy()
         elif self.forceLocalProxy:
             self.run_http_proxy()
-            self.output("Use of the built-in proxy is force on for this game.", 2)
+            self.output("Use of the built-in proxy is forced on for this game.", 2)
         else:
             self.output("Proxy disabled in settings.", 2)
 
@@ -100,7 +99,7 @@ class Claimer():
         self.wallet_id = ""
         self.script = "default_script.py"
         self.prefix = "Default:"
-        self.settings['allowEarlyClaim'] = True
+        self.allow_early_claim = True
 
     def run(self):
         if not self.settings["forceNewSession"]:
@@ -1389,14 +1388,15 @@ class Claimer():
         return re.sub(r'[^0-9.]', '', text)
     
     def apply_random_offset(self, unmodifiedTimer):
-        if self.settings['allowEarlyClaim']:
+        if self.allow_early_claim:
             if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
                 self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
                 modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 2)
+                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 3)
                 return modifiedTimer
         else:
-            modifiedTimer = max(unmodifiedTimer, 0)
-            self.output(f"Step {self.step} - Early claim not allowed, timer set to minimum of 0 minutes.", 2)
-            return modifiedTimer
-        return unmodifiedTimer
+            if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
+                self.random_offset = random.randint(max(self.settings['lowestClaimOffset'],0), max(self.settings['highestClaimOffset'],0))
+                modifiedTimer = unmodifiedTimer + self.random_offset
+                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 3)
+                return modifiedTimer
