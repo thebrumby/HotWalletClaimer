@@ -159,10 +159,6 @@ class TreeClaimer(Claimer):
 
         self.driver.get("https://www.treemine.app/missions")
 
-        xpath = "//button[contains(text(), 'AXE')]"
-        self.move_and_click(xpath, 30, True, "click the AXE button", self.step, "clickable")
-        self.increase_step()
-
         def extract_minutes_from_string(text):
             match = re.search(r'(\d+)', text)
             if match:
