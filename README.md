@@ -63,31 +63,31 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 ## Games/apps currently working with this script:
 **Note: All these scripts assume you have already manually started your selected game, completed any one-time screens that require reading, and made at least 1 claim manually - ensuring you have coins for Gas Fee if necessary**
 
-| Game Command                         | Description                                                                                         | Working |
-|--------------------------------------|-----------------------------------------------------------------------------------------------------|---------|
-| `./launch.sh hot`                    | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot)                           | ✅     |
-| `./launch.sh vertus`                 | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot)                                | ✅     |
-| `./launch.sh tree`                   | Launch Tree on BNB Wallet: [@treeminebot](https://t.me/treeminebot/app?startapp=6783218884)         | ✅     |
-| `./launch.sh wave`                   | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774)    | ✅     |
-| `./launch.sh seed`                   | Launch Seed App - Mine Seed: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot)           | ✅     |
-| `./launch.sh oxygen`                 | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot)                         | ✅     |
-| `./launch.sh oxygen-autoupgrade`     | **Auto-upgrade spends your tokens to increase mining speed**                                        | ✅     |
-| `./launch.sh hexacore`               | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot)                             | 🐞     |
-| `./launch.sh hexacore-autoupgrade`   | **Auto-upgrade spends your tokens to increase mining speed**                                        | 🐞     |
-| `./launch.sh pocketfi`               | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot)                             | ✅     |
-| `./launch.sh blum`                   | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot)                         | ✅     |
-| `./launch.sh time-farm`              | Launch Time Farm on Telegram: [@TimeFarmCryptoBot](https://web.telegram.org/k/#@TimeFarmCryptoBot)  | ✅     |
-| `./launch.sh lumcity`                | Launch Lum City on Telegram: [@LumCity_bot](https://web.telegram.org/k/#@LumCity_bot)               | ✅     |
-| `./launch.sh lumcity-autoupgrade`    | **Auto-upgrade spends your tokens to increase mining speed**                                        | ✅     |
-| `./launch.sh diamond`                | Launch Diamond Hands on Telegram: [@holdwallet_bot](https://web.telegram.org/k/#@holdwallet_bot)    | ✅     |
-| `./launch.sh cold`                   | Launch Cold on Telegram: [@Newcoldwallet_bot](https://web.telegram.org/k/#@Newcoldwallet_bot)       | ✅     |
-| `./launch.sh pixeltap`               | Launch PixelTap on Telegram: [@pixelversexyzbot](https://t.me/pixelversexyzbot?start=7254165458)    | ✅     |
-| `./launch.sh simpletap`              | Launch SimpleTap on Telegram: [@Simple_Tap_Bot](https://t.me/Simple_Tap_Bot/app?startapp=1719999344321) | ✅     |
-| `./launch.sh gamee`                  | Launch Gamee on Telegram: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458)                | ❌     |
-| `./launch.sh fuel`                   | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot)            | ✅     |
-| `./launch.sh fuel-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | ✅     |
-| `./launch.sh mdao`                   | Launch MDAO Wallet on Telegram: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)        | ✅     |
-| `./launch.sh mdao-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | ✅     |
+| Game Command                         | Description                                                                                         | Working                                                                 |
+|--------------------------------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
+| `./launch.sh hot`                    | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot)                           | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh vertus`                 | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot)                                | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh tree`                   | Launch Tree on BNB Wallet: [@treeminebot](https://t.me/treeminebot/app?startapp=6783218884)         | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh wave`                   | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774)    | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh seed`                   | Launch Seed App - Mine Seed: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot)           | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh oxygen`                 | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot)                         | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh oxygen-autoupgrade`     | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh hexacore`               | Mine Hexacoin: [@HexacoinBot](https://web.telegram.org/k/#@HexacoinBot) (GUI broken)                | <span title="Game Developer Bug">🐞</span>                             |
+| `./launch.sh hexacore-autoupgrade`   | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Game Developer Bug">🐞</span>                             |
+| `./launch.sh pocketfi`               | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot)                             | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh blum`                   | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot)                         | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh time-farm`              | Launch Time Farm on Telegram: [@TimeFarmCryptoBot](https://web.telegram.org/k/#@TimeFarmCryptoBot)  | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh lumcity`                | Launch Lum City on Telegram: [@LumCity_bot](https://web.telegram.org/k/#@LumCity_bot)               | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh lumcity-autoupgrade`    | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh diamond`                | Launch Diamond Hands on Telegram: [@holdwallet_bot](https://web.telegram.org/k/#@holdwallet_bot)    | <span title="Mining Closed">⛏️🚫</span>                               |
+| `./launch.sh cold`                   | Launch Cold on Telegram: [@Newcoldwallet_bot](https://web.telegram.org/k/#@Newcoldwallet_bot)       | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh pixeltap`               | Launch PixelTap on Telegram: [@pixelversexyzbot](https://t.me/pixelversexyzbot?start=7254165458)    | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh simpletap`              | Launch SimpleTap on Telegram: [@Simple_Tap_Bot](https://t.me/Simple_Tap_Bot/app?startapp=1719999344321) | <span title="Claiming well">✅</span>                              |
+| `./launch.sh gamee`                  | Launch Gamee on Telegram: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458)                | <span title="Mining Closed">⛏️🚫</span>                               |
+| `./launch.sh fuel`                   | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot)            | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh fuel-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh mdao`                   | Launch MDAO Wallet on Telegram: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)        | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh mdao-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
 
 💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 <a name="videos"></a>
