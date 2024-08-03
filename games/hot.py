@@ -103,7 +103,8 @@ class HotClaimer(Claimer):
 
         if wait_time_text != "Filled":
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
-            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
+            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+            remaining_wait_time = self.apply_random_offset(remaining_wait_time)
             if remaining_wait_time < 5 or self.settings["forceClaim"]:
                 self.settings['forceClaim'] = True
                 self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
@@ -134,7 +135,11 @@ class HotClaimer(Claimer):
                     self.increase_step()
                     
                     xpath = "//button[contains(text(), 'Claim HOT')]"
-                    self.move_and_click(xpath, 30, True, "click the claim button", self.step, "clickable")
+                    self.move_and_click(xpath, 10, True, "click the claim button (1st button)", self.step, "clickable")
+                    self.increase_step()
+
+                    xpath = "//button[contains(text(), 'Claim HOT')]"
+                    self.move_and_click(xpath, 10, True, "click the claim button (2nd button - may not be present)", self.step, "clickable")
                     self.increase_step()
 
                     self.output(f"Step {self.step} - Let's wait for the pending Claim spinner to stop spinning...", 2)
