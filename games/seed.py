@@ -91,6 +91,10 @@ class SeedClaimer(Claimer):
 
         xpath = "//button[.//p[contains(text(), 'Sell now')]]"
         self.move_and_click(xpath, 20, True, "sell WORM (may not be present)", self.step, "clickable")
+
+        # Get egg
+        xpath = "//img[contains(@src, 'bird.png')]"
+        self.move_and_click(xpath, 20, True, "check for EGG (may not be present)", self.step, "clickable")
         
         # GET DAILY BONUS
         xpath = "//button[.//img[contains(@src, 'daily')]]"
