@@ -5,9 +5,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
+- **Weekly Update: New Game added!**: Learn about the latest improvements, bug fixes, and new features. [read more](https://www.patreon.com/posts/weekly-update-109449456?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Weekly Update:**: Learn about the latest improvements, bug fixes, and new features added this week. [read more](https://www.patreon.com/posts/weekly-update-108853227?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Latest Addition: MDAO Telegram Wallet**: Discover the new MDAO Telegram Wallet game and start claiming faster. [read more](https://www.patreon.com/posts/latest-addition-108240556?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Setting Up a Relay to a Telegram Bot**: A step-by-step guide to get real-time updates to Telegram. [read more](https://www.patreon.com/posts/heres-polished-107773474?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -88,6 +88,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh fuel-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh mdao`                   | Launch MDAO Wallet on Telegram: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)        | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh mdao-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh spell`                   | Launch Spell Wallet on Telegram: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot)        | <span title="Claiming well">✅</span>                                  |
 
 💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
 <a name="videos"></a>
