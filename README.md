@@ -5,7 +5,7 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
-- **Weekly Update: Spell Game added!**: Learn game staus', bug fixes, and a new game. [read more](https://www.patreon.com/posts/weekly-update-109449456?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **Weekly Update: Spell game added!**: Updated game statuses, bug fixes deployed, and a new game. [read more](https://www.patreon.com/posts/weekly-update-109449456?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Weekly Update:**: Learn about the latest improvements, bug fixes, and new features added this week. [read more](https://www.patreon.com/posts/weekly-update-108853227?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Latest Addition: MDAO Telegram Wallet**: Discover the new MDAO Telegram Wallet game and start claiming faster. [read more](https://www.patreon.com/posts/latest-addition-108240556?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
