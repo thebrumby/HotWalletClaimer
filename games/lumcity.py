@@ -39,6 +39,7 @@ class LumCityClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
+        self.allow_early_claim = False
         self.start_app_xpath = "//span[contains(text(), 'Open the App')]"
 
     def __init__(self):
@@ -71,7 +72,10 @@ class LumCityClaimer(Claimer):
         self.output(f"Step {self.step} - Short wait to let the totals load", 3)
         time.sleep(10)
 
-        self.get_balance(False)
+        try:
+            golt_balance = float(self.get_balance(False))
+        except (ValueError, TypeError):
+            golt_balance = 0.0
 
         xpath = "//button[contains(normalize-space(.), 'Claim')]"
         self.move_and_click(xpath, 20, True, "move to the 'Claim' screen", self.step, "clickable")
@@ -92,59 +96,65 @@ class LumCityClaimer(Claimer):
                 self.output(f"STATUS: Wait time is {remaining_wait_time} minutes and off-set of {self.random_offset}.", 1)
                 return remaining_wait_time + self.random_offset
 
-
         try:
             if remaining_wait_time < 5 or self.settings['forceClaim']:
-                try:
-                    xpath = "//button[contains(normalize-space(.), 'Claim')]"
-                    self.move_and_click(xpath, 20, True, "click the 'Claim' button", self.step, "clickable")
-                    self.increase_step()
+                self.handle_claim_process()
+                self.attempt_upgrade(golt_balance)
+            
+                remaining_wait_time = self.get_wait_time(self.step, "post-claim")
+                self.increase_step()
 
-                    xpath = "//div[contains(@class, '_msgWrapper_7jeg3_57')]//span[1]"
-                    reward_value = self.monitor_element(xpath, 20)
-                    if reward_value:
-                        self.output(f"Step {self.step} - This claim increased the balance: +{reward_value}", 1)
+                xpath = "//button[contains(@class, 'backBtn')]"
+                self.move_and_click(xpath, 20, True, "click the 'backBtn' button", self.step, "clickable")
+                self.increase_step()
+                self.output(f"Step {self.step} - Short wait to let the totals load", 3)
+                time.sleep(10)
 
-                    xpath = "//div[contains(@class, '_btnContainer')]//button[text()='Ok']"
-                    self.move_and_click(xpath, 20, True, "click the 'OK' button", self.step, "clickable")
-                    self.increase_step()
-                    
-                    remaining_wait_time = self.get_wait_time(self.step, "post-claim")
-                    self.increase_step()
+                self.get_balance(True)
 
-                    self.launch_iframe()
-                    self.output(f"Step {self.step} - Short wait to let the totals load", 3)
-                    time.sleep(10)
-
-                    self.get_balance(True)
-
-                    if remaining_wait_time == 0:
-                        self.output(f"Step {self.step} - The wait timer is still showing: Filled.", 1)
-                        self.output(f"Step {self.step} - This means either the claim failed, or there is lag in the game.", 1)
-                        self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
-                        return 60
-                    else:
-                        total_time = self.apply_random_offset(remaining_wait_time)
-                        self.output(f"STATUS: Pot full in {remaining_wait_time} minutes, plus an off-set of {self.random_offset}.", 1)
-                    return total_time
-
-                except TimeoutException:
-                    self.output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.", 1)
+                if remaining_wait_time == 0:
+                    self.output(f"Step {self.step} - The wait timer is still showing: Filled.", 1)
+                    self.output(f"Step {self.step} - This means either the claim failed, or there is lag in the game.", 1)
+                    self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                     return 60
-                except Exception as e:
-                    self.output(f"STATUS: An error occurred while trying to claim: {e}\nLet's wait an hour and try again", 1)
-                    return 60
-            else:
-                if remaining_wait_time:
-                    total_time = self.apply_random_offset(remaining_wait_time)
-                    self.output(f"Step {self.step} - Not Time to claim this wallet yet. Wait for {total_time} minutes until the storage is filled.", 2)
-                    return total_time
                 else:
-                    self.output(f"Step {self.step} - No wait time data found? Let's check again in one hour.", 2)
-                    return 60
+                    total_time = self.apply_random_offset(remaining_wait_time)
+                    self.output(f"STATUS: Pot full in {remaining_wait_time} minutes, plus an off-set of {self.random_offset}.", 1)
+                    return total_time
+
         except Exception as e:
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
+
+    def attempt_upgrade(self):
+        pass
+
+    def handle_claim_process(self):
+        try:
+            xpath = "//button[contains(normalize-space(.), 'Claim')]"
+            self.move_and_click(xpath, 20, True, "click the 'Claim' button", self.step, "clickable")
+            self.increase_step()
+
+            xpath = "//div[contains(@class, '_msgWrapper_7jeg3_57')]//span[1]"
+            reward_value = self.monitor_element(xpath, 20)
+            if reward_value:
+                self.output(f"Step {self.step} - This claim increased the balance: +{reward_value}", 1)
+
+            xpath = "//div[contains(@class, '_btnContainer')]//button[text()='Ok']"
+            self.move_and_click(xpath, 20, True, "click the 'OK' button", self.step, "clickable")
+            self.increase_step()
+
+            xpath = "//button[contains(@class, 'backBtn')]"
+            self.move_and_click(xpath, 20, True, "click the 'backBtn' button", self.step, "clickable")
+            self.increase_step()
+
+            xpath = "//button[contains(normalize-space(.), 'Claim')]"
+            self.move_and_click(xpath, 20, True, "move to the 'Claim' screen", self.step, "clickable")
+
+        except Exception as e:
+            self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
+            return 60
+
 
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
@@ -160,6 +170,7 @@ class LumCityClaimer(Claimer):
             self.move_and_click(balance_xpath, 30, False, "look for Golt balance", self.step, "visible")
             balance_part = self.strip_html_tags(self.monitor_element(balance_xpath))
             self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
+            return balance_part
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
         except Exception as e:
