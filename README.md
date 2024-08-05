@@ -90,7 +90,23 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh mdao-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh spell`                   | Launch Spell Wallet on Telegram: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot)        | <span title="Claiming well">✅</span>                                  |
 
-💻 **TIP:** Each session while in wait status uses around 30mb of memory and virtually no CPU load. During the Claim or Login phases, however, each session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload. Assess your hardware's capacity to determine how many simultaneous sessions it can handle, and adjust the maximum number accordingly by following the [Usage Notes](#usage-notes). Even with a maximum of one allowed claim session, claiming on multiple wallets is easily possible; additional claims just queue until a claim session slot becomes available.
+## General Instructions
+
+💻 **TIP:** This project has no control over the size of your hardware, how many servers or devices you will use, or the number of game sessions that you will initiate on each device. However, it's important to remember that every game session you initiate using the recommended process manager (PM2) has an overhead in system resources.
+
+1) When not actively making a claim, each session uses around 35 MB of RAM (memory) and virtually no CPU load. During the Setup and Claim phases, each concurrent session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload, although if you have a multiple core processor and generous RAM, you can increase this by changing the settings as described in the [Usage Notes](#usage-notes). 
+
+| Hardware Configuration     | Maximum Concurrent Claims |
+|----------------------------|---------------------------|
+| 1 core, 1 GB RAM           | 1                         |
+| 4 cores, 3 GB RAM          | 4                         |
+| 4 cores, 4 GB RAM          | 6                         |
+| 4 cores, 6 GB RAM          | 8                         |
+
+2) Hard disk space: Each game session has a saved browser cache which includes images, CSS, and JavaScript assets used by the game. Depending on the game, this can range from 100 to 400 MB. Additionally, the recommended process manager (PM2) also stores logs. If disk space is a concern, you can set limits on the [PM2-LOGS.md](docs/PM2-LOGS.md).
+
+It is the script user's responsibility to assess the capacity of their hardware, review it regularly, and limit the number of game session instances that they initiate to stay within the limits of their hardware. Failure to do so may lead to slow processing, script/server crashes, and the possibility you will be locked out of your server.
+
 <a name="videos"></a>
 | Step-by-Step Video Walkthrough                                                                                                   | YouTube Link                                                                                                                                                                                                                                     | Video Length |
 |----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
