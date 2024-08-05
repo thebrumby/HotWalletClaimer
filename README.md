@@ -96,10 +96,10 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 
 1) When not actively making a claim, each session uses around 35 MB of RAM (memory) and virtually no CPU load. During the Setup and Claim phases, each concurrent session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload, although if you have a multiple core processor and generous RAM, you can increase this by changing the settings as described in the [Usage Notes](#usage-notes). 
 
-| Hardware Configuration     | Maximum Concurrent Claims |
+| Example Hardware Configuration     | Recommended Maximum Concurrent Claims |
 |----------------------------|---------------------------|
 | 1 core, 1 GB RAM           | 1                         |
-| 4 cores, 3 GB RAM          | 4                         |
+| 2 cores, 3 GB RAM          | 4                         |
 | 4 cores, 4 GB RAM          | 6                         |
 | 4 cores, 6 GB RAM          | 8                         |
 
