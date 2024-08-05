@@ -94,7 +94,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 
 💻 **TIP:** This project has no control over the size of your hardware, how many servers or devices you will use, or the number of game sessions that you will initiate on each device. However, it's important to remember that every game session you initiate using the recommended process manager (PM2) has an overhead in system resources.
 
-1) When not actively making a claim, each session uses around 35 MB of RAM (memory) and virtually no CPU load. During the Setup and Claim phases, each concurrent session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload, although if you have a multiple core processor and generous RAM, you can increase this by changing the settings as described in the [Usage Notes](#usage-notes). 
+1) When not actively making a claim, each session uses around 35 MB of RAM (memory) and virtually no CPU load. During the Setup and Claim phases, each concurrent session requires approximately 450 MB of memory and utilizes a larger portion of your CPU resources. The concurrent claims setting (default value 1) limits the number of active claims to prevent hardware overload, if additional claim sessions become due, they will queue until a concurrent claim slot becomes free. If you have a multiple-core processor and generous RAM, you can increase this by changing the settings as described in the [Usage Notes](#usage-notes). 
 
 | Example Hardware Configuration     | Recommended Maximum Concurrent Claims |
 |----------------------------|---------------------------|
