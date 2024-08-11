@@ -344,7 +344,7 @@ class TreeClaimer(Claimer):
                     self.output(f"Step {self.step} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
                     storage_xpath = "//h4[text()='Storage']"
                     self.move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{self.step} recheck", "clickable")
-                    self.output(f"Step {self.step} - Attempted to select strorage again...",3)
+                    self.output(f"Step {self.step} - Attempted to select storage again...",3)
                 return wait_time_element.text
 
             except TimeoutException:
