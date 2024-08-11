@@ -62,17 +62,32 @@ def response(flow: http.HTTPFlow) -> None:
     if 'X-Frame-Options' in flow.response.headers:
         del flow.response.headers['X-Frame-Options']
 
-    # Modify script to replace tgWebAppPlatform
+    # Modify script to replace WebApp.platform getter
     if flow.response.content:
         content = flow.response.content.decode('utf-8')
         user_agent = flow.request.headers.get('User-Agent', '')
         
-        if any(keyword in user_agent for keyword in ['iPhone', 'iPad']):
-            content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=iOS')
-            content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=iOS')
-        elif 'Android' in user_agent:
-            content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=android')
-            content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=android')
+        # Check if the response is for the JavaScript file and modify it based on User-Agent
+        if 'telegram-web-app.js' in flow.request.pretty_url:
+            if any(keyword in user_agent for keyword in ['iPhone', 'iPad']):
+                content = content.replace(
+                    "Object.defineProperty(WebApp, 'platform', { get: function () { return webAppPlatform; }, enumerable: true, });",
+                    "Object.defineProperty(WebApp, 'platform', { get: function () { return 'ios'; }, enumerable: true, });"
+                )
+            elif 'Android' in user_agent:
+                content = content.replace(
+                    "Object.defineProperty(WebApp, 'platform', { get: function () { return webAppPlatform; }, enumerable: true, });",
+                    "Object.defineProperty(WebApp, 'platform', { get: function () { return 'android'; }, enumerable: true, });"
+                )
+
+        # Modify tgWebAppPlatform if present
+        if 'tgWebAppPlatform=weba' in content or 'tgWebAppPlatform=web' in content:
+            if any(keyword in user_agent for keyword in ['iPhone', 'iPad']):
+                content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=iOS')
+                content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=iOS')
+            elif 'Android' in user_agent:
+                content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=android')
+                content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=android')
 
         flow.response.content = content.encode('utf-8')
 
