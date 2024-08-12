@@ -90,7 +90,7 @@ class SeedClaimer(Claimer):
         self.move_and_click(xpath, 20, True, "check for WORM (may not be present)", self.step, "clickable")
 
         xpath = "//button[.//p[contains(text(), 'Yep')]]"
-        self.move_and_click(xpath, 20, True, "sell WORM (may not be present)", self.step, "clickable")
+        self.move_and_click(xpath, 20, True, "click Yep button WORM (may not be present)", self.step, "clickable")
 
         # Get egg
         xpath = "//img[contains(@src, 'bird.png')]"
@@ -106,7 +106,7 @@ class SeedClaimer(Claimer):
         xpath = "//button[contains(text(), 'Got it')]"
         self.move_and_click(xpath, 20, True, "exit DAILY BONUS (may not be present)", self.step, "clickable")
 
-        xpath = "//div[button[contains(text(), 'Claim ticket')]]"
+        xpath = "//button[contains(text(), 'Claim 1 ticket')]"
         self.move_and_click(xpath, 20, True, "get Ticket (may not be present)", self.step, "clickable")
 
         self.get_balance(False)
