@@ -214,6 +214,34 @@ class LumCityClaimer(Claimer):
                 return "Unknown"
         return "Unknown"
 
+    def send_start(self, old_step):
+        xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
+        
+        def attempt_send_start():
+            chat_input = self.move_and_click(xpath, 5, False, "find the chat window/message input box", self.step, "present")
+            if chat_input:
+                self.increase_step()
+                self.output(f"Step {self.step} - Attempting to send the '/app' command...",2)
+                chat_input.send_keys("/app")
+                chat_input.send_keys(Keys.RETURN)
+                self.output(f"Step {self.step} - Successfully sent the '/app' command.\n",3)
+                if self.settings['debugIsOn']:
+                    screenshot_path = f"{self.screenshots_path}/{self.step}-sent-start.png"
+                    self.driver.save_screenshot(screenshot_path)
+                return True
+            else:
+                self.output(f"Step {self.step} - Failed to find the message input box.\n",1)
+                return False
+
+        if not attempt_send_start():
+            # Attempt failed, try restoring from backup and retry
+            self.output(f"Step {self.step} - Attempting to restore from backup and retry.\n",2)
+            if self.restore_from_backup(self.backup_path):
+                if not attempt_send_start():  # Retry after restoring backup
+                    self.output(f"Step {self.step} - Retried after restoring backup, but still failed to send the '/start' command.\n",1)
+            else:
+                self.output(f"Step {self.step} - Backup restoration failed or backup directory does not exist.\n",1)
+
 def main():
     claimer = LumCityClaimer()
     claimer.run()

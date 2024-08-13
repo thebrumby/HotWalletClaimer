@@ -89,15 +89,15 @@ class SeedClaimer(Claimer):
         xpath = "//img[contains(@src,'inventory/worm')]"
         self.move_and_click(xpath, 20, True, "check for WORM (may not be present)", self.step, "clickable")
 
-        xpath = "//button[.//p[contains(text(), 'Sell now')]]"
-        self.move_and_click(xpath, 20, True, "sell WORM (may not be present)", self.step, "clickable")
+        xpath = "//button[.//p[contains(text(), 'Yep')]]"
+        self.move_and_click(xpath, 20, True, "click Yep button WORM (may not be present)", self.step, "clickable")
 
         # Get egg
         xpath = "//img[contains(@src, 'bird.png')]"
         self.move_and_click(xpath, 20, True, "check for EGG (may not be present)", self.step, "clickable")
         
         # GET DAILY BONUS
-        xpath = "//button[.//img[contains(@src, 'daily')]]"
+        xpath = "//button[.//img[contains(@src, 'fire')]]"
         self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
 
         xpath = "//button[count(.//img) = 1 and .//img[contains(@src, 'daily/')]]"
@@ -105,6 +105,9 @@ class SeedClaimer(Claimer):
 
         xpath = "//button[contains(text(), 'Got it')]"
         self.move_and_click(xpath, 20, True, "exit DAILY BONUS (may not be present)", self.step, "clickable")
+
+        xpath = "//button[contains(text(), 'Claim 1 ticket')]"
+        self.move_and_click(xpath, 20, True, "get Ticket (may not be present)", self.step, "clickable")
 
         self.get_balance(False)
         self.get_profit_hour(False)

@@ -82,36 +82,39 @@ class SimpleTapClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
-        status_text = ""
+        try:
+            # New button to join "Bump"
+            original_window = self.driver.current_window_handle
+            xpath = "//*[text()='Start']"
+            self.move_and_click(xpath, 8, True, "click the 'Start' button (may not be present)", self.step, "clickable")
+    
+            # Switch back to the original window if a new one is opened
+            new_window = [window for window in self.driver.window_handles if window != original_window]
+            if new_window:
+                self.driver.switch_to.window(original_window)
+        except TimeoutException:
+            if self.settings['debugIsOn']:
+                self.output(f"Step {self.step} - 'Start' button not found or no new window opened.", 3)
+        self.increase_step()
 
         # TASKS
         xpath = "//a[contains(@class, 'tasks')]"
 
         while True:
-
             try:
                 button = self.move_and_click(xpath, 30, False, "click the 'TASK POPUP'", self.step, "clickable")
-                if not button: break
-                if button: button.click()
+                if not button: 
+                    break
+                button.click()
             except TimeoutException:
                 break
 
+        # Now get the balance
         self.get_balance(False)
 
-        # # Fortune NOT WORKING
-        # xpath = "//div[contains(@class, 'wheel_link')]"
-        # button = self.move_and_click(xpath, 8, False, "click the 'Fortune' button", self.step, "clickable")
-        # if button: button.click()
-
-        # # If execute move_and_click() fails, because the element is overlapped by another element, try to click the element directly
-        # xpath = "//div[contains(@class, 'wheel_invite_button')]"
-        # try:
-        #     element = self.driver.find_element(By.XPATH, xpath)
-        #     self.driver.execute_script("arguments[0].click();", element)
-        # except Exception:
-        #     pass
-
-        # self.increase_step()
+        # And collect the reward.
+        xpath = "//button[contains(text(), 'Collect')]"
+        self.move_and_click(xpath, 8, True, "click the 'Collect' button (may not be present)", self.step, "clickable")
 
         # Farming
         xpath = "//div[contains(@class, 'home-button')]"
