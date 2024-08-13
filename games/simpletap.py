@@ -97,8 +97,19 @@ class SimpleTapClaimer(Claimer):
                 self.output(f"Step {self.step} - 'Start' button not found or no new window opened.", 3)
         self.increase_step()
 
+        # TASKS
+        xpath = "//a[contains(@class, 'tasks')]"
+
+        while True:
+            try:
+                button = self.move_and_click(xpath, 30, False, "click the 'TASK POPUP'", self.step, "clickable")
+                if not button: 
+                    break
+                button.click()
+            except TimeoutException:
+                break
+
         # Now get the balance
-        status_text = ""
         self.get_balance(False)
 
         # And collect the reward.
