@@ -90,8 +90,8 @@ class GameeClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
-        self.get_balance(False)
-        self.get_profit_hour(False)
+        # self.get_balance(False)
+        # self.get_profit_hour(False)
 
         clicked_it = False
 
@@ -100,7 +100,7 @@ class GameeClaimer(Claimer):
         #  # START MINING - clear_overlays provokes move the element to the top of the page and overlap other items
         try:
 
-            xpath = "//div[contains(@class, 'eWLHYP')]" # START MINING button
+            xpath = "//button[span[contains(text(), 'Claim & start')]]" # START MINING button
             button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
             if button:
                 button.click()
@@ -128,7 +128,7 @@ class GameeClaimer(Claimer):
         # if button: button.click()
         # self.increase_step()
 
-        xpath = "//div[contains(@class, 'wxeDq') and .//text()[contains(., 'Spin')]]"
+        xpath = "//div[contains(@class, 'fDAfvv') and .//text()[contains(., 'Spin')]]"
         button = self.move_and_click(xpath, 8, False, "click the 'Spin TAB'", self.step, "clickable")
         if button: button.click()
         self.increase_step()
@@ -159,12 +159,12 @@ class GameeClaimer(Claimer):
 
     def get_balance(self, claimed=False):
 
-        xpath = "//div[contains(@class, 'wxeDq') and .//text()[contains(., 'Mine')]]"
+        xpath = "//div[contains(@class, 'fDAfvv') and .//text()[contains(., 'Mine')]]"
         button = self.move_and_click(xpath, 8, False, "click the 'Mine TAB'", self.step, "clickable")
         if button: button.click()
         self.increase_step()
 
-        self.driver.execute_script("location.href = 'https://prizes.gamee.com/telegram/mining/12'")
+        self.driver.execute_script("location.href = 'https://prizes.gamee.com/telegram/watdrop'")
 
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
@@ -174,7 +174,7 @@ class GameeClaimer(Claimer):
 
         # Construct the specific balance XPath
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = "//h2[@id='animated-mining-balance-id']"
+        balance_xpath = "//h2[contains(@class, 'kznmla')]"
 
         try:
             element = self.monitor_element(balance_xpath)
@@ -195,6 +195,8 @@ class GameeClaimer(Claimer):
 
     def get_profit_hour(self, claimed=False):
 
+        self.driver.execute_script("location.href = 'https://prizes.gamee.com/telegram/mining/26'")
+
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
 
@@ -203,7 +205,7 @@ class GameeClaimer(Claimer):
 
         # Construct the specific profit XPath
         profit_text = f'{prefix} PROFIT/HOUR:'
-        profit_xpath = "(//p[contains(@class, 'jQUosL')])[1]"
+        profit_xpath = "(//p[contains(@class, 'bXJWuE')])[1]"
 
         try:
             element = self.monitor_element(profit_xpath)
@@ -224,13 +226,13 @@ class GameeClaimer(Claimer):
 
             self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
 
-            xpath = "(//p[contains(@class, 'bEEYcp')])[1]"
+            xpath = "(//p[contains(@class, 'cusDiK')])[1]"
             actual = float(self.monitor_element(xpath, 15))
 
-            xpath = "(//p[contains(@class, 'bEEYcp')])[2]"
+            xpath = "(//p[contains(@class, 'cusDiK')])[2]"
             max = float(self.monitor_element(xpath, 15))
 
-            xpath = "(//p[contains(@class, 'jQUosL')])[1]"
+            xpath = "(//p[contains(@class, 'bXJWuE')])[1]"
             production = float(self.monitor_element(xpath, 15))
 
             wait_time = int(((max-actual)/production)*60)
