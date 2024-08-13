@@ -84,6 +84,18 @@ class SimpleTapClaimer(Claimer):
 
         status_text = ""
 
+        # TASKS
+        xpath = "//a[contains(@class, 'tasks')]"
+
+        while True:
+
+            try:
+                button = self.move_and_click(xpath, 30, False, "click the 'TASK POPUP'", self.step, "clickable")
+                if not button: break
+                if button: button.click()
+            except TimeoutException:
+                break
+
         self.get_balance(False)
 
         # # Fortune NOT WORKING
