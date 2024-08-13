@@ -96,18 +96,21 @@ class SeedClaimer(Claimer):
         xpath = "//img[contains(@src, 'bird.png')]"
         self.move_and_click(xpath, 20, True, "check for EGG (may not be present)", self.step, "clickable")
         
-        # GET DAILY BONUS
-        xpath = "//button[.//img[contains(@src, 'fire')]]"
-        self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
+        def get_daily_bonus():
+            xpath = "//button[.//img[contains(@src, 'fire')]]"
+            self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
 
-        xpath = "//button[count(.//img) = 1 and .//img[contains(@src, 'daily/')]]"
-        self.move_and_click(xpath, 20, True, "get DAILY BONUS (may not be present)", self.step, "clickable")
+            xpath = "//button[count(.//img) = 1 and .//img[contains(@src, 'daily/')]]"
+            self.move_and_click(xpath, 20, True, "get DAILY BONUS (may not be present)", self.step, "clickable")
 
-        xpath = "//button[contains(text(), 'Got it')]"
-        self.move_and_click(xpath, 20, True, "exit DAILY BONUS (may not be present)", self.step, "clickable")
+            xpath = "//button[contains(text(), 'Got it')]"
+            self.move_and_click(xpath, 20, True, "exit DAILY BONUS (may not be present)", self.step, "clickable")
 
-        xpath = "//button[contains(text(), 'Claim 1 ticket')]"
-        self.move_and_click(xpath, 20, True, "get Ticket (may not be present)", self.step, "clickable")
+            xpath = "//button[contains(text(), 'Claim 1 ticket')]"
+            self.move_and_click(xpath, 20, True, "get Ticket (may not be present)", self.step, "clickable")
+
+            xpath = "//button[.//div[contains(@class, 'state-back')]]"
+            self.move_and_click(xpath, 20, True, "back to main page (may not be present)", self.step, "clickable")
 
         self.get_balance(False)
         self.get_profit_hour(False)
@@ -148,6 +151,7 @@ class SeedClaimer(Claimer):
 
                     self.get_balance(True)
                     self.get_profit_hour(True)
+                    get_daily_bonus()
 
                     if wait_time_text == "Filled":
                         self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
