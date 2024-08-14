@@ -141,8 +141,9 @@ class PixelTapClaimer(Claimer):
 
                     if success:
                         status_text += " Daily reward claimed."
-                    else:
-                        status_text += " Daily reward not yet ready."
+                    
+                else:
+                    status_text += " Daily reward not yet ready."
 
 
         if not status_text:
