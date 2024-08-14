@@ -51,9 +51,14 @@ Create your container based on our master image (first run only):
 docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:latest
 ```
 
-Switch to operating within the container to interact with the script, including adding accounts or monitoring:
+To operate within the container to interact with the script, including adding accounts or monitoring:
 ```
 docker exec -it telegram-claim-bot /bin/bash
+```
+
+To exit the container and return to the command promt:
+```
+exit
 ```
 
 To start the session after a reboot or stopping:
