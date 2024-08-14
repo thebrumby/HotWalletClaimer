@@ -102,13 +102,13 @@ class PixelTapClaimer(Claimer):
         success = self.move_and_click(xpath, 8, True, "click the 'CLAIM' button", self.step, "clickable")
         # If the 'CLAIM' button click was successful, check for the presence of the specific div
         if success:
-            xpath = "//div[@class='claimButtonText' and text()='Claim']"
-            element_present = self.move_and_click(xpath, 8, True, "check for 'Claim' text", self.step, "presence_check")
+            xpath = "//button[contains(@class, 'claimButton') and @disabled]"
+            element_present = self.move_and_click(xpath, 15, True, "check for 'Claim' text", self.step, "presence_check")
 
             if element_present:
-                status_text = "Main claim made"
+                status_text = "Main claim made."
             else:
-                status_text = "Main claim not yet ready"
+                status_text = "Main claim not yet ready."
         self.increase_step()
 
         self.get_balance(True)
