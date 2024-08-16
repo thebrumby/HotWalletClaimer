@@ -5,9 +5,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
+- **Timefarm Auto-Staking & Tabi Zoo Integration**: Read this week's news and new additions on Patreon. [read more](https://www.patreon.com/posts/unleashing-new-110243891?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Weekly Update: Spell game added!**: Updated game statuses, bug fixes deployed, and a new game. [read more](https://www.patreon.com/posts/weekly-update-109449456?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Weekly Update:**: Learn about the latest improvements, bug fixes, and new features added this week. [read more](https://www.patreon.com/posts/weekly-update-108853227?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Latest Addition: MDAO Telegram Wallet**: Discover the new MDAO Telegram Wallet game and start claiming faster. [read more](https://www.patreon.com/posts/latest-addition-108240556?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -77,7 +77,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh pocketfi`               | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot)                             | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh blum`                   | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot)                         | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh timefarm`               | Launch Time Farm on Telegram: [@TimeFarmCryptoBot](https://web.telegram.org/k/#@TimeFarmCryptoBot)  | <span title="Claiming well">✅</span>                                  |
-| `./launch.sh timefarm-autostake `    | **Automatically locks your tokens for 3 days**                                        | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh timefarm-autostake `    | **Automatically locks your tokens for 3 days to gain 3% interest**                                        | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh lumcity`                | Launch Lum City on Telegram: [@LumCity_bot](https://web.telegram.org/k/#@LumCity_bot)               | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh lumcity-autoupgrade`    | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh diamond`                | Launch Diamond Hands on Telegram: [@holdwallet_bot](https://web.telegram.org/k/#@holdwallet_bot)    | <span title="Mining Closed">⛏️🚫</span>                               |
@@ -90,6 +90,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh mdao`                   | Launch MDAO Wallet on Telegram: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)        | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh mdao-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh spell`                   | Launch Spell Wallet on Telegram: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot)        | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh tabizoo`                   | Launch TabiZoo Wallet on Telegram: [@tabizoobot](https://web.telegram.org/k/#@tabizoobot)        | <span title="Claiming well">✅</span>                                  |
 
 ## General Instructions
 
