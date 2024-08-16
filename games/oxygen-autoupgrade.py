@@ -164,7 +164,7 @@ class OxygenAUClaimer(OxygenClaimer):
             oxy_balance = float(self.monitor_element(oxy_balance_xpath))
             food_balance = float(self.monitor_element(food_balance_xpath))
 
-            self.output(f"Step {self.step} - {balance_text} Oxygen: {oxy_balance:.1f}, Food: {food_balance:.1f}", priority)
+            self.output(f"Step {self.step} - {balance_text} O2: {oxy_balance:.1f}, 🥕: {food_balance:.1f}", priority)
 
             boost_xpath = "(//div[@class='menu_item' and @data='boosts']/div[@class='menu_icon icon_boosts'])[1]"
             self.move_and_click(boost_xpath, 10, True, "click the boost button", self.step, "clickable")

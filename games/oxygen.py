@@ -213,14 +213,15 @@ class OxygenClaimer(Claimer):
 
         priority = max(self.settings['verboseLevel'], default_priority)
 
-        balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//span[@class='oxy_counter']"
+        balance_text = f'{prefix} BALANCE:'
 
         try:
-            element = self.monitor_element(balance_xpath)
-            if element:
-                balance_part = element
-                self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
+            oxy_balance_xpath = "//span[@class='oxy_counter']"
+            food_balance_xpath = "//div[@class='indicator_item i_food' and @data='food']/div[@class='indicator_text']"
+            oxy_balance = float(self.monitor_element(oxy_balance_xpath))
+            food_balance = float(self.monitor_element(food_balance_xpath))
+
+            self.output(f"Step {self.step} - {balance_text} O2: {oxy_balance:.1f}, 🥕: {food_balance:.1f}", priority)
 
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
