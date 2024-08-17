@@ -38,6 +38,7 @@ class BlumClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = True
         self.forceRequestUserAgent = False
+        self.allow_early_claim = False
         self.start_app_xpath = "//button[span[contains(text(), 'Launch Blum')]]"
 
     def __init__(self):
