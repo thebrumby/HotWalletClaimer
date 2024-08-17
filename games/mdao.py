@@ -39,7 +39,7 @@ class MDAOClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-        self.start_app_xpath = "//span[contains(text(), 'Play&Earn')]"
+        self.start_app_xpath = "//span[contains(text(), 'Play&Earn') or contains(text(), 'START CRAFTING')]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
