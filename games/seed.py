@@ -97,9 +97,12 @@ class SeedClaimer(Claimer):
         self.move_and_click(xpath, 20, True, "check for EGG (may not be present)", self.step, "clickable")
         
         def get_daily_bonus():
-            xpath = "//button[.//img[contains(@src, 'fire')]]"
+            xpath = "//p[contains(text(), 'Missions')]"
             self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
 
+            xpath = "//p[contains(text(), 'Login Bonus')]"
+            self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
+            
             xpath = "//button[count(.//img) = 1 and .//img[contains(@src, 'daily/')]]"
             self.move_and_click(xpath, 20, True, "get DAILY BONUS (may not be present)", self.step, "clickable")
 
@@ -114,7 +117,6 @@ class SeedClaimer(Claimer):
 
         self.get_balance(False)
         self.get_profit_hour(False)
-
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
         if wait_time_text != "Filled":
