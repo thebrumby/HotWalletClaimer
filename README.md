@@ -1,13 +1,13 @@
 # Telegram Claim Assistant - Mine HOT & More!
-#### Currently supporting 18 crypto-based games and increasing weekly - automate claims and stay informed about their status.
+#### Currently supporting 14 crypto-based games and increasing weekly - automate claims and stay informed about their status.
 
 Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would like to support our ongoing development, consider subscribing to our [Patreon](https://www.patreon.com/TelegramClaimBot), or treat us to a [cup of coffee ☕](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation—both options are just $5. You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. Discover some humorous uses for the channel and more reasons to give a little back [here](docs/YOUTUBE.md).
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
+- **Fuel Bot removed by devs?**: Fuel appears to have been deleted - Read more about how this affects your scripts. [read more](https://www.patreon.com/posts/fuel-bot-removed-110318621?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Timefarm Auto-Staking & Tabi Zoo Integration**: Read this week's news and new additions on Patreon. [read more](https://www.patreon.com/posts/unleashing-new-110243891?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Weekly Update: Spell game added!**: Updated game statuses, bug fixes deployed, and a new game. [read more](https://www.patreon.com/posts/weekly-update-109449456?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Weekly Update:**: Learn about the latest improvements, bug fixes, and new features added this week. [read more](https://www.patreon.com/posts/weekly-update-108853227?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -63,7 +63,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 ## Games/apps currently working with this script:
 **Note: All these scripts assume you have already manually started your selected game, completed any one-time screens that require reading, and made at least 1 claim manually - ensuring you have coins for Gas Fee if necessary**
 
-| Game Command                         | Description                                                                                         | Working                                                                 |
+| Game Command                         | Description                                                                                         | Status                                                                 |
 |--------------------------------------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
 | `./launch.sh hot`                    | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot)                           | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh vertus`                 | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot)                                | <span title="Claiming well">✅</span>                                  |
@@ -85,8 +85,8 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | `./launch.sh pixeltap`               | Launch PixelTap on Telegram: [@pixelversexyzbot](https://t.me/pixelversexyzbot?start=7254165458)    | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh simpletap`              | Launch SimpleTap on Telegram: [@Simple_Tap_Bot](https://t.me/Simple_Tap_Bot/app?startapp=1719999344321) | <span title="Currently blocking TG Web">❌</span>                              |
 | `./launch.sh gamee`                  | Launch Gamee on Telegram: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458)                | <span title="Mining Closed">⛏️🚫</span>                               |
-| `./launch.sh fuel`                   | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot)            | <span title="Claiming well">✅</span>                                  |
-| `./launch.sh fuel-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
+| `./launch.sh fuel`                   | Launch $Fuel on Telegram: [@fueljetton_bot](https://web.telegram.org/k/#@fueljetton_bot)            | <span title="Bot removed, action required">⚠️</span>                                  |
+| `./launch.sh fuel-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Bot removed, action required">⚠️</span>                                  |
 | `./launch.sh mdao`                   | Launch MDAO Wallet on Telegram: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)        | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh mdao-autoupgrade`       | **Auto-upgrade spends your tokens to increase mining speed**                                        | <span title="Claiming well">✅</span>                                  |
 | `./launch.sh spell`                   | Launch Spell Wallet on Telegram: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot)        | <span title="Claiming well">✅</span>                                  |
