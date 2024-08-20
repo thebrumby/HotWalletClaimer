@@ -128,6 +128,8 @@ class PocketFiClaimer(Claimer):
         self.get_balance(True)
         self.increase_step()
 
+        self.get_profit_hour(True)
+
         if clicked_it:
             self.output(f"STATUS: Successfully claimed after {attempts} attempts. Mine again in 4 hours.", 1)
             return 240
@@ -180,9 +182,33 @@ class PocketFiClaimer(Claimer):
                         return results
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
+                return False
 
-        return "Unknown"
+        return False
+
+    def get_profit_hour(self, claimed=False):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        priority = max(self.settings['verboseLevel'], default_priority)
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//p[contains(., '$SWITCH')]//span[last()]"
+
+        try:
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+
+            # Check if element is not None and process the profit
+            if element:
+                self.output(f"Step {self.step} - {profit_text} {element}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+        
+        self.increase_step()
 
 def main():
     claimer = PocketFiClaimer()

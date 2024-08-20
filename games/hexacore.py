@@ -41,12 +41,12 @@ class HexacoreClaimer(Claimer):
         self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//a[contains(@href, 'https://t.me/HexacoinBot/wallet?startapp=play')]"
 
     def __init__(self):
+        super().__init__()  # Call the parent class's constructor
         self.settings_file = "variables.txt"
         self.status_file_path = "status.txt"
         self.wallet_id = ""
         self.load_settings()
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-        super().__init__()
 
     def next_steps(self):
         if hasattr(self, 'step'):
@@ -80,27 +80,6 @@ class HexacoreClaimer(Claimer):
 
         self.get_balance(False)
  
-        xpath = "//button[contains(text(), 'Claim') and not(contains(@class, 'disabled'))]"
-        box_exists = self.move_and_click(xpath, 10, False, "check if the lucky box is present...", self.step, "visible")
-        if box_exists is not None:
-            self.output(f"Step {self.step} - It looks like the bonus box exists.", 3)
-            success = self.click_element(xpath, 60)
-            if success:
-                self.output(f"Step {self.step} - Looks like we claimed the box.", 3)
-            else:
-                self.output(f"Step {self.step} - Looks like box claim failed.", 3)
-        else:
-            self.output(f"Step {self.step} - Looks like box was already claimed.", 3)
-        self.increase_step()
-
-        box_time_text = self.get_box_time(self.step)
-        if box_time_text not in [self.pot_full, "Unknown"]:
-            matches = re.findall(r'(\d+)([HM])', box_time_text)
-            box_time = sum(int(value) * (60 if unit == 'H' else 1) for value, unit in matches)
-        self.increase_step()
-
-        self.get_balance(True)
-
         remains = self.get_remains()
         if remains:
             self.output(f"Step {self.step} - The system reports {remains} available to click.", 2)
@@ -117,11 +96,11 @@ class HexacoreClaimer(Claimer):
                 self.settings['forceClaim'] = True
                 self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
             else:
-                optimal_time = min(box_time, remaining_wait_time)
+                optimal_time = min(15, remaining_wait_time)
                 self.output(f"STATUS: Box due in {box_time} mins, and more clicks in {remaining_wait_time} mins, so sleeping for {optimal_time} mins.", 1)
                 return optimal_time
 
-        if wait_time_text == "Unknown":
+        if wait_time_text:
             return 15
 
         try:
@@ -130,7 +109,7 @@ class HexacoreClaimer(Claimer):
 
             if wait_time_text == self.pot_full or self.settings['forceClaim']:
                 try:
-                    self.click_ahoy()
+                    self.click_ahoy(remains)
 
                     self.output(f"Step {self.step} - Waiting 10 seconds for the totals and timer to update...", 3)
                     time.sleep(10)
@@ -145,8 +124,8 @@ class HexacoreClaimer(Claimer):
                         self.output(f"Step {self.step} - This means either the claim failed, or there is lag in the game.", 1)
                         self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                     else:
-                        optimal_time = min(box_time, total_wait_time)
-                        self.output(f"STATUS: Successful claim! Box due {box_time} mins. More clicks in {total_wait_time} mins. Sleeping for {max(60, optimal_time)} mins.", 1)
+                        optimal_time = min(30, total_wait_time)
+                        self.output(f"STATUS: Successful claim! More clicks in {total_wait_time} mins. Sleeping for {max(60, optimal_time)} mins.", 1)
                     return max(60, optimal_time)
 
                 except TimeoutException:
@@ -171,54 +150,51 @@ class HexacoreClaimer(Claimer):
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
         
-    def get_box_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.output(f"Step {self.step} - Get the box full timer...", 3)
-                xpath = "//p[contains(text(), 'Next REWARD IN:')]"
-                elements = self.monitor_element(xpath, 30)
-                if elements:
-                    parts = elements.split("NEXT REWARD IN:")
-                    return parts[1] if len(parts) > 1 else "Unknown"
-                return self.pot_full
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
-        return "Unknown"
-    
     def get_remains(self):
-        remains_xpath = f"//div[contains(@class, 'TapContainer_textContainer')]"
+        remains_xpath = "//p[contains(text(), 'Remains')]/span"
         try:
+            # Move to and click the element if necessary
             first = self.move_and_click(remains_xpath, 10, False, "remove overlays", self.step, "visible")
-            if first is None:
-                return None
-            element = self.monitor_element(remains_xpath)
-            if "TAPS IN" in element:
-                return None
-            if element:
-                return int(element.replace(" REMAINS", ""))
+            
+            # Monitor the element to get its content
+            remains_element = self.monitor_element(remains_xpath)
+            
+            # Check if the remains_element is found and get its text content
+            if remains_element:
+                if remains_element.isdigit():
+                    return int(remains_element)
+                else:
+                    self.output(f"Step {self.step} - The text '{remains_text}' is not a valid number.", 3)
+                    return None
             else:
                 return None
         except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{remains_xpath} Balance:' was not found.", 3)
+            # Handle the case where the element is not found
+            self.output(f"Step {self.step} - Element containing 'Remains' was not found.", 3)
             return None
         except Exception as e:
+            # Handle any other exceptions that might occur
             self.output(f"Step {self.step} - An error occurred: {str(e)}", 3)
             return None
         
-    def click_ahoy(self):
-        remains = self.get_remains()
-        xpath = "//div[contains(@class, 'TapContainer_textContainer')]"
+    def click_ahoy(self, remains):
+        xpath = "//p[contains(text(), 'Remains')]"
         self.output(f"Step {self.step} - We have {remains} targets to click. This might take some time!", 3)
-        action = ActionChains(self.driver)
-        element = self.driver.find_element(By.XPATH, xpath)
     
-        random_y = random.randint(70, 90)
-        random_x = random.randint(-10, 10)
+        try:
+            element = self.driver.find_element(By.XPATH, xpath)
+        except Exception as e:
+            self.output(f"Step {self.step} - Error finding element: {str(e)}", 2)
+            return None
 
+        random_y = random.randint(100, 180)
+        random_x = random.randint(-20, 20)
+
+        action = ActionChains(self.driver)
         action.move_to_element_with_offset(element, random_x, random_y).perform()
 
         if not isinstance(remains, (int, float)):
+            self.output(f"Step {self.step} - Invalid type for 'remains': {type(remains).__name__}", 2)
             return None 
 
         click_count = 0
@@ -226,23 +202,60 @@ class HexacoreClaimer(Claimer):
         start_time = time.time()
 
         while remains > 0 and click_count < max_clicks and (time.time() - start_time) < 3600:
-            if int(remains / 2) == remains / 2:
-                action.move_by_offset(-2, 2).perform()
-            else:
-                action.move_by_offset(2, -2).perform()
-    
-            action.click().perform()
-    
+            try:
+                script = f"""
+                var elem = document.elementFromPoint({random_x}, {random_y});
+                if (elem) {{
+                    var event = new PointerEvent('pointerdown', {{
+                        pointerId: 1,
+                        bubbles: true,
+                        cancelable: true,
+                        view: window,
+                        detail: 1,
+                        screenX: window.screenX + {random_x},
+                        screenY: window.screenY + {random_y},
+                        clientX: {random_x},
+                        clientY: {random_y},
+                        button: 0,
+                        buttons: 1,
+                        pointerType: 'touch'
+                    }});
+                    elem.dispatchEvent(event);
+
+                    var eventUp = new PointerEvent('pointerup', {{
+                        pointerId: 1,
+                        bubbles: true,
+                        cancelable: true,
+                        view: window,
+                        detail: 1,
+                        screenX: window.screenX + {random_x},
+                        screenY: window.screenY + {random_y},
+                        clientX: {random_x},
+                        clientY: {random_y},
+                        button: 0,
+                        buttons: 1,
+                        pointerType: 'touch'
+                    }});
+                    elem.dispatchEvent(eventUp);
+                }}
+                """
+                self.driver.execute_script(script)
+            except Exception as e:
+                self.output(f"Step {self.step} - Error executing JS tap: {str(e)}", 2)
+
             remains -= 1
             click_count += 1
 
             if remains % 100 == 0:
                 self.output(f"Step {self.step} - {remains} clicks remaining...", 2)
 
+            time.sleep(random.uniform(0.05, 0.15))  # Random delay between taps
+
         if remains > 0:
             self.output(f"Step {self.step} - Reached {click_count} clicks or 1 hour limit, returning early.", 2)
         else:
             self.output(f"Step {self.step} - Completed all clicks within limit.", 2)
+
 
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
@@ -250,24 +263,33 @@ class HexacoreClaimer(Claimer):
 
         priority = max(self.settings['verboseLevel'], default_priority)
 
-        balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//div[contains(@class, 'BalanceDisplay_value')]"
+        balance_text = f'{prefix} BALANCE:'
+        balance_xpath = "//div[contains(@class, 'BalanceDisplay_value')]"
 
         try:
+            # Move to and click the element if necessary
             first = self.move_and_click(balance_xpath, 30, False, "remove overlays", self.step, "visible")
+
+            # Monitor the element to get its content
             element = self.monitor_element(balance_xpath)
+        
             if element:
-                balance_part = element
-                self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
+                # Extract the text content of the balance element
+                balance_value = element
+                self.output(f"Step {self.step} - {balance_text} {balance_value}", priority)
                 self.increase_step()
-                return {balance_part}
+                return balance_value
+            else:
+                self.output(f"Step {self.step} - Element for balance not found or has no text.", priority)
+                return None
 
         except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
+            self.output(f"Step {self.step} - Element containing '{balance_text}' was not found.", priority)
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
 
         self.increase_step()
+        return None
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
         for attempt in range(1, max_attempts + 1):
@@ -277,12 +299,12 @@ class HexacoreClaimer(Claimer):
                 elements = self.monitor_element(xpath, 10)
                 if elements:
                     parts = elements.split("TAPS IN ")
-                    return parts[1] if len(parts) > 1 else "Unknown"
+                    return parts[1] if len(parts) > 1 else False
                 return self.pot_full
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
-        return "Unknown"
+                return False
+        return False
 
 def main():
     claimer = HexacoreClaimer()

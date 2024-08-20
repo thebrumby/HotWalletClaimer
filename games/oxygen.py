@@ -50,27 +50,14 @@ class OxygenClaimer(Claimer):
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
 
-    def next_steps(self):
-        if self.step:
-            pass
-        else:
-            self.step = "01"
-
-        try:
-            self.launch_iframe()
-            self.increase_step()
-            self.set_cookies()
-
-        except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.", 1)
-
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {e}", 1)
-
     def full_claim(self):
         self.step = "100"
 
         self.launch_iframe()
+        self.increase_step()
+
+        xpath = "//div[contains(text(),'Get reward')]"
+        self.move_and_click(xpath, 10, True, "click the 'Get Reward' button", self.step, "clickable")
         self.increase_step()
 
         self.get_balance(False)
@@ -80,6 +67,9 @@ class OxygenClaimer(Claimer):
         self.increase_step()
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim")
+
+        if not wait_time_text:
+            return 60
 
         if wait_time_text != self.pot_full:
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
@@ -91,9 +81,6 @@ class OxygenClaimer(Claimer):
             else:
                 self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
                 return remaining_wait_time
-
-        if wait_time_text == "Unknown":
-            return 15
 
         try:
             self.output(f"Step {self.step} - The pre-claim wait time is : {wait_time_text} and random offset is {self.random_offset} minutes.", 1)
@@ -120,21 +107,28 @@ class OxygenClaimer(Claimer):
                     self.quit_driver()
                     self.launch_iframe()
                     self.get_balance(True)
+                    self.get_profit_hour(True)
                     self.increase_step()
 
                     self.output(f"Step {self.step} - check if there are lucky boxes..", 3)
                     xpath = "//div[@class='boxes_cntr']"
                     boxes = self.monitor_element(xpath)
                     self.output(f"Step {self.step} - Detected there are {boxes} boxes to claim.", 3)
-                    if int(boxes) > 0:
-                        xpath = "//div[@class='boxes_d_wrap']"
-                        self.move_and_click(xpath, 10, True, "click the boxes button", self.step, "clickable")
-                        xpath = "//div[@class='boxes_d_open' and contains(text(), 'Open box')]"
-                        box = self.move_and_click(xpath, 10, True, "open the box...", self.step, "clickable")
-                        if box:
-                            self.box_claim = datetime.now().strftime("%d %B %Y, %I:%M %p")
-                            self.output(f"Step {self.step} - The date and time of the box claim has been updated to {self.box_claim}.", 3)
-
+                    if boxes:  # This will check if boxes is not False
+                        self.output(f"Step {self.step} - Detected there are {boxes} boxes to claim.", 3)
+                        if boxes.isdigit() and int(boxes) > 0:
+                            xpath = "//div[@class='boxes_d_wrap']"
+                            self.move_and_click(xpath, 10, True, "click the boxes button", self.step, "clickable")
+                            xpath = "//div[@class='boxes_d_open' and contains(text(), 'Open box')]"
+                            box = self.move_and_click(xpath, 10, True, "open the box...", self.step, "clickable")
+                            if box:
+                                self.box_claim = datetime.now().strftime("%d %B %Y, %I:%M %p")
+                                self.output(f"Step {self.step} - The date and time of the box claim has been updated to {self.box_claim}.", 3)
+                        else:
+                            self.output(f"Step {self.step} - No valid number of boxes detected or zero boxes.", 3)
+                    else:
+                        self.output(f"Step {self.step} - No elements found for boxes.", 3)
+                        
                     if wait_time_text == self.pot_full:
                         self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
                         self.output(f"Step {self.step} - This means either the claim failed, or there is lag in the game.", 1)
@@ -213,14 +207,15 @@ class OxygenClaimer(Claimer):
 
         priority = max(self.settings['verboseLevel'], default_priority)
 
-        balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//span[@class='oxy_counter']"
+        balance_text = f'{prefix} BALANCE:'
 
         try:
-            element = self.monitor_element(balance_xpath)
-            if element:
-                balance_part = element
-                self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
+            oxy_balance_xpath = "//span[@class='oxy_counter']"
+            food_balance_xpath = "//div[@class='indicator_item i_food' and @data='food']/div[@class='indicator_text']"
+            oxy_balance = float(self.monitor_element(oxy_balance_xpath))
+            food_balance = float(self.monitor_element(food_balance_xpath))
+
+            self.output(f"Step {self.step} - {balance_text} {oxy_balance:.0f} O2, {food_balance:.0f}  food", priority)
 
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
@@ -232,21 +227,55 @@ class OxygenClaimer(Claimer):
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
         for attempt in range(1, max_attempts + 1):
             try:
-                self.output(f"Step {self.step} - Get the wait time...", 3)
-                xpath = "//div[@class='farm_btn']"
-                elements = self.monitor_element(xpath, 10)
-                if re.search(r"[СC]ollect food", elements, re.IGNORECASE):
+                            
+                # Step 1: Check for the "Collect food" button
+                xpath_collect = "//div[@class='farm_btn']"
+                elements_collect = self.monitor_element(xpath_collect, 10, "check if the pot is full")
+                if isinstance(elements_collect, str) and re.search(r"[СC]ollect food", elements_collect, re.IGNORECASE):
                     return self.pot_full
-                xpath = "//div[@class='farm_wait']"
-                elements = self.monitor_element(xpath, 10)
-                if elements:
-                    return elements
-                return "Unknown"
+            
+                # Step 2: Check for the wait time element
+                xpath_wait = "//div[@class='farm_wait']"
+                elements_wait = self.monitor_element(xpath_wait, 10, "check the remaining time")
+                if elements_wait:
+                    return elements_wait
+            
+                return False
+        
+            except TypeError as e:
+                self.output(f"Step {self.step} - TypeError on attempt {attempt}: {e}", 3)
+                return False
+        
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
+                return False
 
-        return "Unknown"
+        return False
+
+    def get_profit_hour(self, claimed=False):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        priority = max(self.settings['verboseLevel'], default_priority)
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//span[@id='oxy_coef']"
+
+        try:
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+
+            # Check if element is not None and process the profit
+            if element:
+                element = float(element)*3600
+                self.output(f"Step {self.step} - {profit_text} {element}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+        
+        self.increase_step()
 
 def main():
     claimer = OxygenClaimer()

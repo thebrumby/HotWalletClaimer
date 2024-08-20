@@ -39,7 +39,7 @@ class MDAOClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-        self.start_app_xpath = "//span[contains(text(), 'Play&Earn')]"
+        self.start_app_xpath = "//span[contains(text(), 'Play')]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
@@ -90,7 +90,7 @@ class MDAOClaimer(Claimer):
         if remaining_wait_time == "Filled":
             self.settings['forceClaim'] = True
             remaining_wait_time = 0
-        elif remaining_wait_time == "Unknown":
+        elif not remaining_wait_time:
             return 30
         else:
             remaining_wait_time = return_minutes(remaining_wait_time)
@@ -106,14 +106,19 @@ class MDAOClaimer(Claimer):
             self.output(f"STATUS: Wait time is {remaining_wait_time} minutes and off-set of {self.random_offset}.", 1)
             return remaining_wait_time + self.random_offset
 
-        xpath = "//div[text()='CLAIM']"
-        self.move_and_click(xpath, 30, True, "Click the claim button", self.step, "clickable")
+        xpath = "//div[text()='CLAIM']/parent::div"
+        button = self.move_and_click(xpath, 30, False, "Click the claim button", self.step, "clickable")
+
+        # If the button is found, attempt to click it using JavaScript
+        if button:
+            self.driver.execute_script("arguments[0].click();", button)
 
         self.get_balance(True)
         self.get_profit_hour(True)
 
         remaining_wait_time = return_minutes(self.get_wait_time(self.step, "post-claim"))
         self.increase_step()
+        self.attempt_upgrade()
         self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 0), max(self.settings['highestClaimOffset'], 0))
         self.output(f"STATUS: Wait time is {remaining_wait_time} minutes and off-set of {self.random_offset}.", 1)
         return remaining_wait_time + self.random_offset
@@ -146,14 +151,14 @@ class MDAOClaimer(Claimer):
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
                 xpath = "//div[contains(text(), 'until claim')]"
                 pot_full_value = self.monitor_element(xpath, 15)
-                if pot_full_value != "Unknown":
+                if pot_full_value:
                     return pot_full_value
                 else:
                     return "Filled"
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
-        return "Unknown"
+                return False
+        return False
 
     def get_profit_hour(self, claimed=False):
         prefix = "After" if claimed else "Before"
@@ -167,7 +172,6 @@ class MDAOClaimer(Claimer):
 
         try:
             element = self.strip_non_numeric(self.monitor_element(profit_xpath))
-
             # Check if element is not None and process the profit
             if element:
                 self.output(f"Step {self.step} - {profit_text} {element}", priority)
@@ -178,6 +182,9 @@ class MDAOClaimer(Claimer):
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
         
         self.increase_step()
+
+    def attempt_upgrade(self):
+        pass
 
 def main():
     claimer = MDAOClaimer()

@@ -199,8 +199,8 @@ class TreeClaimer(Claimer):
                 self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
                 return remaining_wait_time
 
-        if wait_time_text == "Unknown":
-            return 15
+        if not wait_time_text:
+            return 60
 
         try:
             self.output(f"Step {self.step} - The pre-claim wait time is : {wait_time_text} and random offset is {self.random_offset} minutes.",1)
@@ -344,7 +344,7 @@ class TreeClaimer(Claimer):
                     self.output(f"Step {self.step} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...",3)
                     storage_xpath = "//h4[text()='Storage']"
                     self.move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{self.step} recheck", "clickable")
-                    self.output(f"Step {self.step} - Attempted to select storage again...",3)
+                    self.output(f"Step {self.step} - Attempted to select strorage again...",3)
                 return wait_time_element.text
 
             except TimeoutException:
@@ -359,7 +359,7 @@ class TreeClaimer(Claimer):
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}",3)
 
         # If all attempts fail         
-        return "Unknown"
+        return False
 
 
 def main():

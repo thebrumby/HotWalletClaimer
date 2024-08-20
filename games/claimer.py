@@ -902,7 +902,7 @@ class Claimer:
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
             self.output(f"Step {self.step} - Attempting to verify if we are logged in (hopefully QR code is not present).", 3)
             xpath = "//canvas[@class='qr-canvas']"
-            wait = WebDriverWait(self.driver, 5)
+            wait = WebDriverWait(self.driver, 10)
             wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
             if self.settings['debugIsOn']:
                 screenshot_path = f"{self.screenshots_path}/Step {self.step} - Test QR code after session is resumed.png"
@@ -921,9 +921,7 @@ class Claimer:
         # There is a very unlikely scenario that the chat might have been cleared.
         # In this case, the "START" button needs pressing to expose the chat window!
         xpath = "//button[contains(., 'START')]"
-        button = self.move_and_click(xpath, 3, False, "check for the start button (should not be present)", self.step, "clickable")
-        if button:
-            button.click()
+        button = self.move_and_click(xpath, 8, True, "check for the start button (should not be present)", self.step, "clickable")
         self.increase_step()
 
         # New link logic to avoid finding an expired link
@@ -937,9 +935,7 @@ class Claimer:
 
         # Now let's move to and JS click the "Launch" Button
         xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Launch' button (probably not present)", self.step, "clickable")
-        if button:
-            button.click()
+        button = self.move_and_click(xpath, 8, True, "click the 'Launch' button (probably not present)", self.step, "clickable")
         self.increase_step()
 
         # HereWalletBot Pop-up Handling
@@ -1123,54 +1119,71 @@ class Claimer:
         if self.settings['debugIsOn']:
             screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_click_element.png"
             self.driver.save_screenshot(screenshot_path)
+
+        try:
+            element = self.driver.find_element(By.XPATH, xpath)
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element not found: {xpath}. Skipping click.", 2)
+            return False
+
         while time.time() < end_time:
             try:
-                element = self.driver.find_element(By.XPATH, xpath)
                 actions = ActionChains(self.driver)
                 actions.move_to_element(element).perform()
 
-                self.driver.execute_script("""
-                    var elem = arguments[0];
-                    var rect = elem.getBoundingClientRect();
-                    var isVisible = (
-                        rect.top >= 0 &&
-                        rect.left >= 0 &&
-                        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-                    );
-                    if (!isVisible) {
-                        elem.scrollIntoView({block: 'center'});
-                    }
-                """, element)
-
+                # Clear any overlays before attempting to click
                 overlays_cleared = self.clear_overlays(element, self.step)
                 if overlays_cleared > 0:
                     self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s), retrying click...", 3)
 
-                actions.click(element).perform()
-                return True
-            except ElementClickInterceptedException as e:
-                intercepting_element = self.driver.execute_script(
-                    "var elem = arguments[0];"
-                    "var rect = elem.getBoundingClientRect();"
-                    "var x = rect.left + (rect.width / 2);"
-                    "var y = rect.top + (rect.height / 2);"
-                    "return document.elementFromPoint(x, y);", element)
-                if intercepting_element:
-                    self.driver.execute_script("arguments[0].style.display = 'none';", intercepting_element)
-                    self.output(f"Step {self.step} - Intercepting element hidden, retrying click...", 3)
+                # Attempt to click with ActionChains
+                try:
+                    actions.click(element).perform()
+                    return True
+                except ElementClickInterceptedException as e:
+                    self.output(f"Step {self.step} - Element click intercepted: {e}, attempting to resolve...", 3)
+                    
+                    # Try to identify the intercepting element
+                    intercepting_element = self.driver.execute_script(
+                        "var elem = arguments[0];"
+                        "var rect = elem.getBoundingClientRect();"
+                        "var x = rect.left + (rect.width / 2);"
+                        "var y = rect.top + (rect.height / 2);"
+                        "return document.elementFromPoint(x, y);", element)
+
+                    if intercepting_element:
+                        self.driver.execute_script("arguments[0].style.display = 'none';", intercepting_element)
+                        self.output(f"Step {self.step} - Intercepting element hidden (class: {intercepting_element.get_attribute('class')}), retrying click...", 3)
+                        continue  # Retry the click after hiding the intercepting element
+                    else:
+                        self.output(f"Step {self.step} - No intercepting element identified, trying JavaScript click.", 3)
+
             except UnexpectedAlertPresentException:
                 alert = self.driver.switch_to.alert
                 alert.accept()
                 self.output(f"Step {self.step} - Unexpected alert handled.", 3)
+
             except (StaleElementReferenceException, NoSuchElementException):
-                pass
+                self.output(f"Step {self.step} - Element not found or stale, retrying...", 3)
+
             except TimeoutException:
                 self.output(f"Step {self.step} - Click timed out.", 2)
                 break
+
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred: {e}", 3)
                 break
+            
+            # Fallback to clicking with JavaScript if ActionChains fails
+            try:
+                self.driver.execute_script("arguments[0].click();", element)
+                self.output(f"Step {self.step} - Fallback to JS click successful.", 3)
+                return True
+            except Exception as e:
+                self.output(f"Step {self.step} - Fallback JS click failed: {e}", 3)
+                break
+        
+        self.output(f"Step {self.step} - Failed to click element after all retries.", 2)
         return False
 
     def clear_overlays(self, target_element, step):
@@ -1212,8 +1225,8 @@ class Claimer:
                 self.output(f"An error occurred: {e}", 3)
                 if self.settings['debugIsOn']:
                     self.debug_information(action_description, "monitor_element_error")
-                return "Unknown"
-        return "Unknown"
+                return False
+        return False
 
     def debug_information(self, action_description, error_type="error"):
         # Check if "not" is present in the action_description enclosed in brackets

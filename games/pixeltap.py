@@ -33,7 +33,7 @@ class PixelTapClaimer(Claimer):
         self.script = "games/pixeltap.py"
         self.prefix = "PixelTap:"
         self.url = "https://web.telegram.org/k/#@pixelversexyzbot"
-        self.pot_full = "Filled"
+        self.pot_full = "FULL"
         self.pot_filling = "Mining"
         self.seed_phrase = None
         self.forceLocalProxy = False
@@ -84,57 +84,70 @@ class PixelTapClaimer(Claimer):
 
         # Disable modals
         xpath = "(//div[contains(@class, 'MuiBackdrop-root')])[last()]"
-        button = self.move_and_click(xpath, 8, False, "disable modals #1 (may not be present)", self.step, "clickable")
+        button = self.move_and_click(xpath, 10, False, "disable modals #1 (may not be present)", self.step, "clickable")
         if button: button.click()
 
         xpath = "(//div[contains(@class, 'MuiBackdrop-root')])[last()]"
-        button = self.move_and_click(xpath, 8, False, "disable modals #2 (may not be present)", self.step, "clickable")
+        button = self.move_and_click(xpath, 5, False, "disable modals #2 (may not be present)", self.step, "clickable")
         if button: button.click()
             
         self.increase_step()
 
-        status_text = None
+        self.get_balance(False)
 
         # CLAIM 
         xpath = "//button[contains(@class, 'claimButton')]"
-        button = self.move_and_click(xpath, 8, False, "click the 'CLAIM' button", self.step, "clickable")
-        if button:button.click()
+        success = self.move_and_click(xpath, 8, True, "click the 'CLAIM' button", self.step, "clickable")
+        # If the 'CLAIM' button click was successful, check for the presence of the specific div
+        if success:
+            status_text = "Main claim made."
+        else:
+            status_text = "Main claim not yet ready."
         self.increase_step()
+
+        time.sleep(10)
+
+        self.get_balance(True)
+
+        wait_time = self.get_wait_time(self.step, "post-claim")
 
         # Select the 'Rewards' tab
         xpath = "//a[contains(span/text(), 'Rewards')]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Rewards TAB'", self.step, "clickable")
-        if button:
-            button.click()
-            status_text = "Reward claimed. "
+        success = self.move_and_click(xpath, 8, True, "click the 'Rewards TAB'", self.step, "clickable")
         self.increase_step()
 
-        # Select the 'Rewards' tab
-        xpath = "//button//span[contains(text(), 'Claim')]"
-        button = self.move_and_click(xpath, 8, False, "open the 'CLAIM' pop-up", self.step, "clickable")
-        if button:
-            button.click()
+        # If 'Rewards' tab selection was successful, proceed
+        if success:
+            # Open the 'CLAIM' pop-up
+            xpath = "//button//span[contains(text(), 'Claim')]"
+            success = self.move_and_click(xpath, 8, True, "open the 'CLAIM' pop-up", self.step, "clickable")
+            self.increase_step()
+    
+            if success:
+                # Click the 'CLAIM' button
+                xpath = "//div[contains(text(), 'Claim') and not(contains(@class, 'disabled'))]"
+                success = self.move_and_click(xpath, 8, True, "click the 'CLAIM' button", self.step, "clickable")
+                self.increase_step()
 
-            xpath = "//div[contains(text(), 'Claim') and not(contains(@class, 'disabled'))]"
-            button = self.move_and_click(xpath, 8, False, "click the 'CLAIM' button", self.step, "clickable")
-            if button: button.click()
+                if success:
+                    # Exit the 'CLAIM' pop-up
+                    xpath = "//button[@class='closeBtn']"
+                    success = self.move_and_click(xpath, 8, True, "exit the 'CLAIM' pop-up", self.step, "clickable")
+                    self.increase_step()
 
-            xpath = "//button[@class='closeBtn']"
-            button = self.move_and_click(xpath, 8, False, "exit the 'CLAIM' pop-up", self.step, "clickable")
-            if button: 
-                button.click()
-                status_text += "Claim made."
+                    if success:
+                        status_text += " Daily reward claimed."
+                    
+                else:
+                    status_text += " Daily reward not yet ready."
+
 
         if not status_text:
             status_text = "No reward or claim made on this occassion."
 
         self.output(f"STATUS: {status_text}",1)
 
-        self.increase_step()
-
-        self.get_balance(False)
-
-        wait_time = self.get_wait_time(self.step, "pre-claim") 
+        self.increase_step() 
 
         try:
             wait_time = int(wait_time)
@@ -144,23 +157,10 @@ class PixelTapClaimer(Claimer):
              wait_time = 60
         # Now you can safely call random.randint
         random_value = random.randint(60, wait_time)
+        return random_value
 
 
     def get_balance(self, claimed=False):
-
-        xpath = "//a[contains(span/text(), 'Earn')]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Earn TAB'", self.step, "clickable")
-        if button: button.click()
-        self.increase_step()
-
-        def strip_html_and_non_numeric(text):
-            """Remove HTML tags and keep only numeric characters and decimal points."""
-            # Remove HTML tags
-            clean = re.compile('<.*?>')
-            text_without_html = clean.sub('', text)
-            # Keep only numeric characters and decimal points
-            # numeric_text = re.sub(r'[^0-9.]', '', text_without_html)
-            return text_without_html
 
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
@@ -170,15 +170,14 @@ class PixelTapClaimer(Claimer):
 
         # Construct the specific balance XPath
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = "//div[@class='_balance_11ewj_19']" 
+        balance_xpath = "//div[@class='_balance_1erzm_18']/span[following-sibling::img]" 
 
         try:
             element = self.monitor_element(balance_xpath)
-
+            cleaned_text = self.strip_html(element)
             # Check if element is not None and process the balance
             if element:
-                cleaned_balance = strip_html_and_non_numeric(element)
-                self.output(f"Step {self.step} - {balance_text} {cleaned_balance}", priority)
+                self.output(f"Step {self.step} - {balance_text} {cleaned_text}", priority)
 
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
@@ -196,7 +195,7 @@ class PixelTapClaimer(Claimer):
             xpath = "//div[contains(@class, 'claimTimer')]"
             wait_time_str = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15)))
 
-            if wait_time_str == "Unknown":
+            if not wait_time_str:
                 wait_time = 60
             else:
                 wait_time = int(wait_time_str)
@@ -221,8 +220,8 @@ class PixelTapClaimer(Claimer):
                 minutes = int(time_parts[1].strip())
                 return hours * 60 + minutes
             except ValueError:
-                return "Unknown"
-        return "Unknown"
+                return False
+        return False
     
     def strip_html_tags(self, text):
         clean = re.compile('<.*?>')
