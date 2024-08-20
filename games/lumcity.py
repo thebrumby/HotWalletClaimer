@@ -81,6 +81,7 @@ class LumCityClaimer(Claimer):
         self.move_and_click(xpath, 20, True, "move to the 'Claim' screen", self.step, "clickable")
 
         remaining_wait_time = self.get_wait_time(self.step, "pre-claim")
+        self.get_profit_hour(False)
 
         try:
             remaining_wait_time = int(remaining_wait_time)
@@ -241,6 +242,29 @@ class LumCityClaimer(Claimer):
                     self.output(f"Step {self.step} - Retried after restoring backup, but still failed to send the '/start' command.\n",1)
             else:
                 self.output(f"Step {self.step} - Backup restoration failed or backup directory does not exist.\n",1)
+
+    def get_profit_hour(self, claimed=False):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        priority = max(self.settings['verboseLevel'], default_priority)
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//div[contains(@class, 'pickaxeUpgrade')]//div[last()]"
+
+        try:
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            # Check if element is not None and process the profit
+            if element:
+                self.output(f"Step {self.step} - {profit_text} {element}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+        
+        self.increase_step()
 
 def main():
     claimer = LumCityClaimer()
