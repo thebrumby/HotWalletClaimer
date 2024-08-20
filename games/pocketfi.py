@@ -69,34 +69,16 @@ class PocketFiClaimer(Claimer):
 
     def full_claim(self):
 
-        def claim_daily_bonus():
-            xpath = "//button[.//p[contains(text(), 'Tasks')]]"
-            button = self.move_and_click(xpath, 20, True, "click on tasks tab", self.step, "clickable")
-            if button:
-                self.driver.execute_script("arguments[0].click();", button)
-            time.sleep(5)
-            # xpath = "//div[.//img[contains(@src, 'gift')]]"
-            # self.move_and_click(xpath, 20, True, "click on earn daily", self.step, "clickable")
-
-            xpath = "//p[contains(text(), 'Daily boost')]"
-            button = self.move_and_click(xpath, 20, True, "click on earn daily", self.step, "clickable")
-            if button:
-                self.driver.execute_script("arguments[0].click();", button)
-            time.sleep(5)
-            
-            xpath = "//button[contains(text(), 'Claim daily reward')]"
-            button = self.move_and_click(xpath, 20, True, "claim daily reward", self.step, "clickable")
-            if button:
-                self.driver.execute_script("arguments[0].click();", button)
-
-
         self.step = "100"
 
         self.launch_iframe()
         self.increase_step()
 
-        claim_daily_bonus()
-        
+        time.sleep(15)
+        xpath = "//div[contains(@class, 'popup-footer') and contains(@class, 'is-visible')]//button[text()='Go to mining']"
+        button = self.move_and_click(xpath, 20, True, "click 'Go to mining' (may not be present)", self.step, "clickable")
+        self.increase_step()
+
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
         if wait_time_text and isinstance(wait_time_text[0], int) and wait_time_text[0] > 330:
             self.output("STATUS: Looks like the pot isn't ready to claim yet. Let's come back in 30 minutes.", 1)
