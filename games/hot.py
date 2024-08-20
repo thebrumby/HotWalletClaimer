@@ -54,7 +54,7 @@ class HotClaimer(Claimer):
             self.launch_iframe()
             self.increase_step()
 
-            xpath = "//button[p[contains(text(), 'Log in')]]"
+            xpath = "//button[p[contains(text(), 'Import account')]]"
             target_element = self.move_and_click(xpath, 30, False, "find the HereWallet log-in button", "08", "visible")
             self.driver.execute_script("arguments[0].click();", target_element)
             self.increase_step()
@@ -91,9 +91,29 @@ class HotClaimer(Claimer):
 
         self.launch_iframe()
 
+        xpath = "(//div[div/img[contains(@src, 'near.png')]])//p[last()]"
+        near = self.monitor_element(xpath, 10, "obtain your 'Near' Balance")
+        if near:
+            try:
+                # Split the string by spaces and take the last element
+                last_value_str = near.split()[-1]
+        
+                # Convert the last element to a float
+                last_value_float = float(last_value_str)
+                if last_value_float < 0.2:
+                    low_near = True
+                else:
+                    low_near = False
+        
+                self.output(f"Step {self.step} - Successfully extracted Near balance: {last_value_float}", 3)
+            except ValueError:
+                self.output("Step {self.step} - Conversion of Near Balance to float failed.", 3)
+        else:
+            self.output("Step {self.step} - The 'near' variable is empty or not defined.", 3)
+        self.increase_step()
+
         xpath = "//h4[text()='Storage']"
         self.move_and_click(xpath, 20, True, "click the 'storage' link", self.step, "clickable")
-
         self.increase_step()
 
         self.get_balance(False)
@@ -112,8 +132,8 @@ class HotClaimer(Claimer):
                 self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
                 return remaining_wait_time
 
-        if wait_time_text == "Unknown":
-            return 15
+        if not wait_time_text:
+            return 60
 
         try:
             self.output(f"Step {self.step} - The pre-claim wait time is : {wait_time_text} and random offset is {self.random_offset} minutes.", 1)
@@ -161,11 +181,17 @@ class HotClaimer(Claimer):
                     self.get_profit_hour(True)
 
                     if wait_time_text == "Filled":
-                        self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
-                        self.output(f"Step {self.step} - This means either the claim failed, or there is >4 minutes lag in the game.", 1)
-                        self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
+                        if low_near:
+                            self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
+                            self.output(f"STATUS: It appears your NEAR balance is low, which may have caused the claim to fail.", 1)
+                            self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not, try again.", 2)
+                        else:
+                            self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
+                            self.output(f"Step {self.step} - This means either the claim failed, or there is >4 minutes lag in the game.", 1)
+                            self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not, try again.", 2)
                     else:
                         self.output(f"STATUS: Successful Claim: Next claim {wait_time_text} / {total_wait_time} minutes.", 1)
+
                     return max(60, total_wait_time)
 
                 except TimeoutException:
@@ -235,32 +261,29 @@ class HotClaimer(Claimer):
         
         self.increase_step()
 
-    def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=2):
-        for attempt in range(1, max_attempts + 1):
-            try:
-                xpath = f"//div[contains(., 'Storage')]//p[contains(., '{self.pot_full}') or contains(., '{self.pot_filling}')]"
-                wait_time_element = self.move_and_click(xpath, 20, True, f"get the {beforeAfter} wait timer", self.step, "visible")
+    def get_wait_time(self, step_number="108", beforeAfter="pre-claim"):
+        try:
+            xpath = f"//div[contains(., 'Storage')]//p[contains(., '{self.pot_full}') or contains(., '{self.pot_filling}')]"
+            wait_time_element = self.monitor_element(xpath, 15, "get the wait time")
+            if wait_time_element is not None:
+                return wait_time_element
+            else:
+                self.output(f"Step {self.step}: Wait time element not found. Clicking the 'Storage' link and retrying...", 3)
+                storage_xpath = "//h4[text()='Storage']"
+                self.move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{self.step} recheck", "clickable")
+                wait_time_element = self.monitor_element(xpath, 15, "get the wait time after retry")
                 if wait_time_element is not None:
-                    return wait_time_element.text
+                    return wait_time_element
                 else:
-                    self.output(f"Step {self.step} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...", 3)
-                    storage_xpath = "//h4[text()='Storage']"
-                    self.move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{self.step} recheck", "clickable")
-                    self.output(f"Step {self.step} - Attempted to select storage again...", 3)
-                return wait_time_element.text
+                    self.output(f"Step {self.step}: Wait time element still not found after retry.", 3)
+                
+        except TimeoutException:
+            self.output(f"Step {self.step}: Timeout occurred while trying to get the wait time.", 3)
 
-            except TimeoutException:
-                if attempt < max_attempts:
-                    self.output(f"Step {self.step} - Attempt {attempt}: Wait time element not found. Clicking the 'Storage' link and retrying...", 3)
-                    storage_xpath = "//h4[text()='Storage']"
-                    self.move_and_click(storage_xpath, 30, True, "click the 'storage' link", f"{self.step} recheck", "clickable")
-                else:
-                    self.output(f"Step {self.step} - Attempt {attempt}: Wait time element not found.", 3)
+        except Exception as e:
+            self.output(f"Step {self.step}: An error occurred: {e}", 3)
 
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-
-        return "Unknown"
+        return False
 
 def main():
     claimer = HotClaimer()

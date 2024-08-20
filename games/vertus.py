@@ -160,6 +160,8 @@ class VertusClaimer(Claimer):
 
         balance_before_claim = self.get_balance(claimed=False)
 
+        self.get_profit_hour(False)
+
         wait_time_text = self.get_wait_time(self.step, "pre-claim")
         self.output(f"Step {self.step} - Pre-Claim raw wait time text: {wait_time_text}", 3)
 
@@ -174,8 +176,8 @@ class VertusClaimer(Claimer):
                 self.output(f"STATUS: {island_text}We'll go back to sleep for {remaining_wait_time} minutes.", 1)
                 return remaining_wait_time
 
-        if wait_time_text == "Unknown":
-            return 15
+        if not wait_time_text:
+            return 60
 
         try:
             self.output(f"Step {self.step} - The pre-claim wait time is : {wait_time_text} and random offset is {self.random_offset} minutes.", 1)
@@ -241,6 +243,29 @@ class VertusClaimer(Claimer):
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
 
+    def get_profit_hour(self, claimed=False):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        priority = max(self.settings['verboseLevel'], default_priority)
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "(//p[@class='_descInfo_19xzr_38'])[last()]"
+
+        try:
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            # Check if element is not None and process the profit
+            if element:
+                self.output(f"Step {self.step} - {profit_text} {element}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+        
+        self.increase_step()
+
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
@@ -291,7 +316,7 @@ class VertusClaimer(Claimer):
             except Exception as e:
                 self.output(f"Step {step_number} - An error occurred on attempt {attempt}: {e}", 3)
 
-        return "Unknown"
+        return False
 
     def get_driver(self):
         if self.driver is None:  # Check if driver needs to be initialized

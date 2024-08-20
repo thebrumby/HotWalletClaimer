@@ -234,7 +234,7 @@ class ColdClaimer(Claimer):
                 screenshot_path = f"{self.screenshots_path}/{self.step}_get_wait_time_error.png"
                 self.driver.save_screenshot(screenshot_path)
                 self.output(f"Screenshot saved to {screenshot_path}", 3)
-            return "Unknown"
+            return False
 
 def main():
     claimer = ColdClaimer()

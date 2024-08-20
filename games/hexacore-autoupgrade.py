@@ -101,8 +101,8 @@ class HexacoreAUClaimer(HexacoreClaimer):
                 self.output(f"STATUS: Box due in {box_time} mins, and more clicks in {remaining_wait_time} mins, so sleeping for {optimal_time} mins.", 1)
                 return optimal_time
 
-        if wait_time_text == "Unknown":
-            return 15
+        if wait_time_text:
+            return 60
 
         try:
             self.output(f"Step {self.step} - The pre-claim wait time is : {wait_time_text} and random offset is {self.random_offset} minutes.", 1)
@@ -150,119 +150,6 @@ class HexacoreAUClaimer(HexacoreClaimer):
         except Exception as e:
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
-        
-    def get_box_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.output(f"Step {self.step} - Get the box full timer...", 3)
-                xpath = "//p[contains(text(), 'Next REWARD IN:')]"
-                elements = self.monitor_element(xpath, 30)
-                if elements:
-                    parts = elements.split("NEXT REWARD IN:")
-                    return parts[1] if len(parts) > 1 else "Unknown"
-                return self.pot_full
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
-        return "Unknown"
-    
-    def get_remains(self):
-        remains_xpath = f"//div[contains(@class, 'TapContainer_textContainer')]"
-        try:
-            first = self.move_and_click(remains_xpath, 10, False, "remove overlays", self.step, "visible")
-            if first is None:
-                return None
-            element = self.monitor_element(remains_xpath)
-            if "TAPS IN" in element:
-                return None
-            if element:
-                return int(element.replace(" REMAINS", ""))
-            else:
-                return None
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{remains_xpath} Balance:' was not found.", 3)
-            return None
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", 3)
-            return None
-        
-    def click_ahoy(self):
-        remains = self.get_remains()
-        xpath = "//div[contains(@class, 'TapContainer_textContainer')]"
-        self.output(f"Step {self.step} - We have {remains} targets to click. This might take some time!", 3)
-        action = ActionChains(self.driver)
-        element = self.driver.find_element(By.XPATH, xpath)
-    
-        random_y = random.randint(70, 90)
-        random_x = random.randint(-10, 10)
-
-        action.move_to_element_with_offset(element, random_x, random_y).perform()
-
-        if not isinstance(remains, (int, float)):
-            return None 
-
-        click_count = 0
-        max_clicks = 500
-        start_time = time.time()
-
-        while remains > 0 and click_count < max_clicks and (time.time() - start_time) < 3600:
-            if int(remains / 2) == remains / 2:
-                action.move_by_offset(-2, 2).perform()
-            else:
-                action.move_by_offset(2, -2).perform()
-    
-            action.click().perform()
-    
-            remains -= 1
-            click_count += 1
-
-            if remains % 100 == 0:
-                self.output(f"Step {self.step} - {remains} clicks remaining...", 2)
-
-        if remains > 0:
-            self.output(f"Step {self.step} - Reached {click_count} clicks or 1 hour limit, returning early.", 2)
-        else:
-            self.output(f"Step {self.step} - Completed all clicks within limit.", 2)
-
-    def get_balance(self, claimed=False):
-        prefix = "After" if claimed else "Before"
-        default_priority = 2 if claimed else 3
-
-        priority = max(self.settings['verboseLevel'], default_priority)
-
-        balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//div[contains(@class, 'BalanceDisplay_value')]"
-
-        try:
-            first = self.move_and_click(balance_xpath, 30, False, "remove overlays", self.step, "visible")
-            element = self.monitor_element(balance_xpath)
-            if element:
-                balance_part = element
-                self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
-                self.increase_step()
-                return {balance_part}
-
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
-
-        self.increase_step()
-
-    def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.output(f"Step {self.step} - Get the wait time...", 3)
-                xpath = "//span[contains(text(), 'TAPS IN')]"
-                elements = self.monitor_element(xpath, 10)
-                if elements:
-                    parts = elements.split("TAPS IN ")
-                    return parts[1] if len(parts) > 1 else "Unknown"
-                return self.pot_full
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
-        return "Unknown"
 
     def upgrade(self):
         # Custom upgrade logic specific to auto-upgrade

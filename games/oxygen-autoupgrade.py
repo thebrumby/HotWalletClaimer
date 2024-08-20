@@ -53,13 +53,20 @@ class OxygenAUClaimer(OxygenClaimer):
         self.launch_iframe()
         self.increase_step()
 
+        xpath = "//div[contains(text(),'Get reward')]"
+        self.move_and_click(xpath, 10, True, "click the 'Get Reward' button", self.step, "clickable")
+        self.increase_step()
+
         self.get_balance(False)
         self.increase_step()
 
         self.output(f"Step {self.step} - The last lucky box claim was attempted on {self.box_claim}.", 2)
         self.increase_step()
 
-        wait_time_text = self.get_wait_time(self.step, "pre-claim") 
+        wait_time_text = self.get_wait_time(self.step, "pre-claim")
+
+        if not wait_time_text:
+            return 60
 
         if wait_time_text != self.pot_full:
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
@@ -72,8 +79,6 @@ class OxygenAUClaimer(OxygenClaimer):
                 self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
                 return remaining_wait_time
 
-        if wait_time_text == "Unknown":
-            return 15
 
         try:
             self.output(f"Step {self.step} - The pre-claim wait time is : {wait_time_text} and random offset is {self.random_offset} minutes.", 1)
@@ -105,21 +110,27 @@ class OxygenAUClaimer(OxygenClaimer):
                     self.increase_step()
 
                     self.get_balance(True)
+                    self.get_profit_hour(True)
                     self.increase_step()
                     self.collect_guildbox()
                     self.output(f"Step {self.step} - check if there are lucky boxes..", 3)
                     xpath = "//div[@class='boxes_cntr']"
                     boxes = self.monitor_element(xpath)
                     self.output(f"Step {self.step} - Detected there are {boxes} boxes to claim.", 3)
-                    if int(boxes) > 0:
-                        xpath = "//div[@class='boxes_d_wrap']"
-                        self.move_and_click(xpath, 10, True, "click the boxes button", self.step, "clickable")
-                        xpath = "//div[@class='boxes_d_open' and contains(text(), 'Open box')]"
-                        box = self.move_and_click(xpath, 10, True, "open the box...", self.step, "clickable")
-                        if box:
-                            self.box_claim = datetime.now().strftime("%d %B %Y, %I:%M %p")
-                            self.output(f"Step {self.step} - The date and time of the box claim has been updated to {self.box_claim}.", 3)
-
+                    if boxes:  # This will check if boxes is not False
+                        self.output(f"Step {self.step} - Detected there are {boxes} boxes to claim.", 3)
+                        if boxes.isdigit() and int(boxes) > 0:
+                            xpath = "//div[@class='boxes_d_wrap']"
+                            self.move_and_click(xpath, 10, True, "click the boxes button", self.step, "clickable")
+                            xpath = "//div[@class='boxes_d_open' and contains(text(), 'Open box')]"
+                            box = self.move_and_click(xpath, 10, True, "open the box...", self.step, "clickable")
+                            if box:
+                                self.box_claim = datetime.now().strftime("%d %B %Y, %I:%M %p")
+                                self.output(f"Step {self.step} - The date and time of the box claim has been updated to {self.box_claim}.", 3)
+                        else:
+                            self.output(f"Step {self.step} - No valid number of boxes detected or zero boxes.", 3)
+                    else:
+                        self.output(f"Step {self.step} - No elements found for boxes.", 3)
                     if wait_time_text == self.pot_full:
                         self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
                         self.output(f"Step {self.step} - This means either the claim failed, or there is lag in the game.", 1)
@@ -164,7 +175,7 @@ class OxygenAUClaimer(OxygenClaimer):
             oxy_balance = float(self.monitor_element(oxy_balance_xpath))
             food_balance = float(self.monitor_element(food_balance_xpath))
 
-            self.output(f"Step {self.step} - {balance_text} O2: {oxy_balance:.1f}, 🥕: {food_balance:.1f}", priority)
+            self.output(f"Step {self.step} - {balance_text} {oxy_balance:.0f} O2, {food_balance:.0f} food", priority)
 
             boost_xpath = "(//div[@class='menu_item' and @data='boosts']/div[@class='menu_icon icon_boosts'])[1]"
             self.move_and_click(boost_xpath, 10, True, "click the boost button", self.step, "clickable")

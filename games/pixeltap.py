@@ -84,36 +84,32 @@ class PixelTapClaimer(Claimer):
 
         # Disable modals
         xpath = "(//div[contains(@class, 'MuiBackdrop-root')])[last()]"
-        button = self.move_and_click(xpath, 8, False, "disable modals #1 (may not be present)", self.step, "clickable")
+        button = self.move_and_click(xpath, 10, False, "disable modals #1 (may not be present)", self.step, "clickable")
         if button: button.click()
 
         xpath = "(//div[contains(@class, 'MuiBackdrop-root')])[last()]"
-        button = self.move_and_click(xpath, 8, False, "disable modals #2 (may not be present)", self.step, "clickable")
+        button = self.move_and_click(xpath, 5, False, "disable modals #2 (may not be present)", self.step, "clickable")
         if button: button.click()
             
         self.increase_step()
 
         self.get_balance(False)
 
-        status_text = None
-
         # CLAIM 
         xpath = "//button[contains(@class, 'claimButton')]"
         success = self.move_and_click(xpath, 8, True, "click the 'CLAIM' button", self.step, "clickable")
         # If the 'CLAIM' button click was successful, check for the presence of the specific div
         if success:
-            xpath = "//button[contains(@class, 'claimButton') and @disabled]"
-            element_present = self.move_and_click(xpath, 15, True, "check for 'Claim' text", self.step, "presence_check")
-
-            if element_present:
-                status_text = "Main claim made."
-            else:
-                status_text = "Main claim not yet ready."
+            status_text = "Main claim made."
+        else:
+            status_text = "Main claim not yet ready."
         self.increase_step()
+
+        time.sleep(10)
 
         self.get_balance(True)
 
-        wait_time = self.get_wait_time(self.step, "pre-claim")
+        wait_time = self.get_wait_time(self.step, "post-claim")
 
         # Select the 'Rewards' tab
         xpath = "//a[contains(span/text(), 'Rewards')]"
@@ -161,6 +157,7 @@ class PixelTapClaimer(Claimer):
              wait_time = 60
         # Now you can safely call random.randint
         random_value = random.randint(60, wait_time)
+        return random_value
 
 
     def get_balance(self, claimed=False):
@@ -198,7 +195,7 @@ class PixelTapClaimer(Claimer):
             xpath = "//div[contains(@class, 'claimTimer')]"
             wait_time_str = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15)))
 
-            if wait_time_str == "Unknown":
+            if not wait_time_str:
                 wait_time = 60
             else:
                 wait_time = int(wait_time_str)
@@ -223,8 +220,8 @@ class PixelTapClaimer(Claimer):
                 minutes = int(time_parts[1].strip())
                 return hours * 60 + minutes
             except ValueError:
-                return "Unknown"
-        return "Unknown"
+                return False
+        return False
     
     def strip_html_tags(self, text):
         clean = re.compile('<.*?>')

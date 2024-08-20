@@ -166,8 +166,8 @@ class TimeFarmClaimer(Claimer):
                 # seconds = int(time_parts[2].strip())
                 return hours * 60 + minutes
             except ValueError:
-                return "Unknown"
-        return "Unknown"
+                return False
+        return False
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
 
@@ -185,10 +185,10 @@ class TimeFarmClaimer(Claimer):
                 return wait_time_in_minutes
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
+                return False
 
         # If all attempts fail         
-        return "Unknown"
+        return False
 
 def main():
     claimer = TimeFarmClaimer()

@@ -90,7 +90,7 @@ class MDAOClaimer(Claimer):
         if remaining_wait_time == "Filled":
             self.settings['forceClaim'] = True
             remaining_wait_time = 0
-        elif remaining_wait_time == "Unknown":
+        elif not remaining_wait_time:
             return 30
         else:
             remaining_wait_time = return_minutes(remaining_wait_time)
@@ -151,14 +151,14 @@ class MDAOClaimer(Claimer):
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
                 xpath = "//div[contains(text(), 'until claim')]"
                 pot_full_value = self.monitor_element(xpath, 15)
-                if pot_full_value != "Unknown":
+                if pot_full_value:
                     return pot_full_value
                 else:
                     return "Filled"
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
-        return "Unknown"
+                return False
+        return False
 
     def get_profit_hour(self, claimed=False):
         prefix = "After" if claimed else "Before"
@@ -172,7 +172,6 @@ class MDAOClaimer(Claimer):
 
         try:
             element = self.strip_non_numeric(self.monitor_element(profit_xpath))
-
             # Check if element is not None and process the profit
             if element:
                 self.output(f"Step {self.step} - {profit_text} {element}", priority)

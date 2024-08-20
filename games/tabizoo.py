@@ -98,6 +98,10 @@ class TabizooClaimer(Claimer):
                 self.get_balance(True)
         self.increase_step()
 
+
+        self.get_profit_hour(True)
+        self.attempt_upgrade()
+
         try:
             wait_time_text = self.get_wait_time(self.step, "post-claim")
 
@@ -244,12 +248,39 @@ class TabizooClaimer(Claimer):
                 elements = self.monitor_element(xpath, 10)
                 if elements:
                     return elements
-                return "Unknown"
+                return False
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
+                return False
 
-        return "Unknown"
+        return False
+
+    def get_profit_hour(self, claimed=False):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        priority = max(self.settings['verboseLevel'], default_priority)
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//p[text()='Mining Rate']/following-sibling::div[@class='mining-value']//span[last()]"
+
+        try:
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+
+            # Check if element is not None and process the profit
+            if element:
+                self.output(f"Step {self.step} - {profit_text} {element}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+        
+        self.increase_step()
+
+    def attempt_upgrade(self):
+        pass
 
 def main():
     claimer = TabizooClaimer()

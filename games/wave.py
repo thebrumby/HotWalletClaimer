@@ -120,6 +120,7 @@ class WaveClaimer(Claimer):
         self.increase_step()
 
         self.get_balance(False)
+        self.get_profit_hour(False)
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim")
 
@@ -134,8 +135,8 @@ class WaveClaimer(Claimer):
                 self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
                 return remaining_wait_time
 
-        if wait_time_text == "Unknown":
-            return 15
+        if not wait_time_text:
+            return 60
 
         try:
             self.output(f"Step {self.step} - The pre-claim wait time is : {wait_time_text} and random offset is {self.random_offset} minutes.", 1)
@@ -240,7 +241,30 @@ class WaveClaimer(Claimer):
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
 
-        return "Unknown"
+        return False
+
+    def get_profit_hour(self, claimed=False):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        priority = max(self.settings['verboseLevel'], default_priority)
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//span[text()='Aqua Cat']/following-sibling::span[1]"
+
+        try:
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            # Check if element is not None and process the profit
+            if element:
+                self.output(f"Step {self.step} - {profit_text} {element}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+        
+        self.increase_step()
 
 def main():
     claimer = WaveClaimer()

@@ -1225,8 +1225,8 @@ class Claimer:
                 self.output(f"An error occurred: {e}", 3)
                 if self.settings['debugIsOn']:
                     self.debug_information(action_description, "monitor_element_error")
-                return "Unknown"
-        return "Unknown"
+                return False
+        return False
 
     def debug_information(self, action_description, error_type="error"):
         # Check if "not" is present in the action_description enclosed in brackets

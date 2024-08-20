@@ -229,8 +229,8 @@ class SimpleTapClaimer(Claimer):
                 minutes = int(time_parts[1].strip())
                 return hours * 60 + minutes
             except ValueError:
-                return "Unknown"
-        return "Unknown"
+                return False
+        return False
     
     def strip_html_tags(self, text):
         clean = re.compile('<.*?>')

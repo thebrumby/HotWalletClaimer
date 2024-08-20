@@ -99,6 +99,9 @@ class BlumClaimer(Claimer):
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
+        if not wait_time_text:
+            return 60
+
         if wait_time_text != self.pot_full:
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
             remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
@@ -108,9 +111,6 @@ class BlumClaimer(Claimer):
             else:
                 self.output(f"STATUS: Still {wait_time_text} and {self.random_offset} minute offset - Let's sleep. {reward_text}", 1)
                 return remaining_wait_time
-
-        if wait_time_text == "Unknown":
-            return 15
 
         try:
             self.output(f"Step {self.step} - The pre-claim wait time is : {wait_time_text} and random offset is {self.random_offset} minutes.", 1)
@@ -201,20 +201,20 @@ class BlumClaimer(Claimer):
                 self.output(f"Step {self.step} - First check if the time is still elapsing...", 3)
                 xpath = "//div[@class='time-left']"
                 wait_time_value = self.monitor_element(xpath, 10)
-                if wait_time_value != "Unknown":
+                if wait_time_value:
                     return wait_time_value
 
                 self.output(f"Step {self.step} - Then check if the pot is full...", 3)
                 xpath = "//button[.//div[contains(text(), 'Claim')]]"
                 pot_full_value = self.monitor_element(xpath, 10)
-                if pot_full_value != "Unknown":
+                if pot_full_value:
                     return self.pot_full
-                return "Unknown"
+                return False
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return "Unknown"
+                return False
 
-        return "Unknown"
+        return False
 
 def main():
     claimer = BlumClaimer()
