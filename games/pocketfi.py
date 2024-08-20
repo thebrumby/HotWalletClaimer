@@ -79,15 +79,15 @@ class PocketFiClaimer(Claimer):
         button = self.move_and_click(xpath, 20, True, "click 'Go to mining' (may not be present)", self.step, "clickable")
         self.increase_step()
 
+        self.get_balance(False)
+        self.increase_step()
+
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
         if wait_time_text and isinstance(wait_time_text[0], int) and wait_time_text[0] > 330:
             self.output("STATUS: Looks like the pot isn't ready to claim yet. Let's come back in 30 minutes.", 1)
             return 30 
 
         self.output(f"Step {self.step} - the pre-claim timer shows {wait_time_text} minutes until burn.", 2)
-
-        self.get_balance(False)
-        self.increase_step()
 
         xpath = "//div[@class='absolute flex items-center justify-center flex-col text-white']/span[contains(text(), 'claim')]"
         attempts = 1
