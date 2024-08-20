@@ -81,9 +81,13 @@ class SeedClaimer(Claimer):
         self.move_and_click(xpath, 10, True, "check for EGG (may not be present)", self.step, "clickable")
         
         def get_daily_bonus():
-            xpath = "//button[.//img[contains(@src, 'fire')]]"
-            self.move_and_click(xpath, 10, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
 
+            xpath = "//p[contains(text(), 'Missions')]"
+            self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
+
+            xpath = "//p[contains(text(), 'Login Bonus')]"
+            self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
+            
             xpath = "//button[count(.//img) = 1 and .//img[contains(@src, 'daily/')]]"
             self.move_and_click(xpath, 10, True, "get DAILY BONUS (may not be present)", self.step, "clickable")
 
@@ -94,7 +98,11 @@ class SeedClaimer(Claimer):
             self.move_and_click(xpath, 10, True, "get Ticket (may not be present)", self.step, "clickable")
 
             xpath = "//button[.//div[contains(@class, 'state-back')]]"
-            self.move_and_click(xpath, 10, True, "back to main page (may not be present)", self.step, "clickable")
+
+            self.move_and_click(xpath, 20, True, "back to main page (may not be present)", self.step, "clickable")
+
+        self.get_balance(False)
+        self.get_profit_hour(False)
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
