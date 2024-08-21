@@ -44,7 +44,7 @@ def prompt_user_for_proxy_details():
 
 def test_proxy_connection(host, port, username, password):
     proxy = f"http://{username}:{password}@{host}:{port}"
-    test_url = 'https://google.co.uk'
+    test_url = 'https://web.telegram.org'
     print("Testing the proxy credentials...")
 
     try:
