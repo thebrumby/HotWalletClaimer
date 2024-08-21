@@ -91,7 +91,7 @@ class HotClaimer(Claimer):
 
         self.launch_iframe()
 
-        xpath = "(//div[div/img[contains(@src, 'near.png')]])//p[last()]"
+        xpath = "(//div[div/img[contains(@src, '/ft/near.png')]])//p[last()]"
         near = self.monitor_element(xpath, 10, "obtain your 'Near' Balance")
         if near:
             try:
