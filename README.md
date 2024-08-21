@@ -8,9 +8,11 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
+- **Tabizoo Script Gets Auto-Upgrade Function**: Discover the latest feature and how to use it. [read more](https://www.patreon.com/posts/tabizoo-script-110532859?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Support added for 3rd Party Proxy Connections**: Learn how to enable this new feature in your bot. [read more](https://www.patreon.com/posts/support-added-110409861?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Fuel Bot removed by devs?**: Read more about how this affects your scripts. [read more](https://www.patreon.com/posts/fuel-bot-removed-110318621?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Timefarm Auto-Staking & Tabi Zoo Integration**: Read this week's news and new additions on Patreon. [read more](https://www.patreon.com/posts/unleashing-new-110243891?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
@@ -134,12 +136,17 @@ After executing the script with ```./launch.sh```, you will be prompted to updat
       - `screenshotQRCode`: Prefer to log in via QR code; the alternative is manual login via phone number and OTP.
       - `maxSessions`: Set the maximum number of concurrent claim sessions; additional wallets will wait for an available slot.
       - `verboseLevel`: Adjust the verbosity of console messages; options range from 1 (minimal) to 3 (all messages).
+      - `telegramVerboseLevel`: Adjust the verbosity of messages sent to the Telegram bot; options range from 0 (none) to 3 (all messages).
       - `forceNewSession`: Forces a new login, useful if the existing session encounters errors.
       - `lowestClaimOffset` and `highestClaimOffset`: Define the range for randomized claim timing relative to when the pot is filled.
          - **Examples of Random Claim Timing based on Claim Offset:**
             - `-30, -15`: Early claims randomly between 30 and 15 minutes before the pot is full.
             - `30, 60`: Late claims randomly 30 minutes to 1 hour after the pot is full.
             - `-15, 15`: Random claims within a 15-minute window either side of the pot being filled.
+      - `useProxy`: Decide whether to use the built-in proxy or not.
+      - `requestUserAgent`: If enabled, the script will prompt the user to enter their user-agent each time.
+      - `telegramBotToken`: Allows users to relay information to a Botfather Telegram bot.
+      - `enableCache`: If disabled, reduces the amount of data cached to disk, with the trade-off of higher data transmission volume.
 
 ### Session Name Configuration
    - Sessions are auto-named numerically in the format "Wallet1", or can be customized to your own choice. Reusing a name attempts to resume that session.
