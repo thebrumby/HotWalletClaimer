@@ -148,8 +148,12 @@ After executing the script with ```./launch.sh```, you will be prompted to updat
       - `telegramBotToken`: Allows users to relay information to a Botfather Telegram bot.
       - `enableCache`: If disabled, reduces the amount of data cached to disk, with the trade-off of higher data transmission volume.
 
+### Proxy Configuration
+   - You can now configure the Telegram Claim Bot to use a third-party proxy connection to bypass geo-location blocks or enhance privacy. Detailed instructions on how to configure a third-party proxy can be found [here](docs/CONFIGUREPROXY.md).
+
 ### Session Name Configuration
    - Sessions are auto-named numerically in the format "Wallet1", or can be customized to your own choice. Reusing a name attempts to resume that session.
+
 
 ### Telegram Login: Saved Account Options
    - If the script detects you have a saved Telegram session, you can choose it from a numbered list. 
