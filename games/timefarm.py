@@ -78,7 +78,7 @@ class TimeFarmClaimer(Claimer):
         self.launch_iframe()
 
         xpath = "//div[@class='app-container']//div[@class='btn-text' and contains(., 'Claim')]"
-        start_present = self.move_and_click(xpath, 8, False, "make opening screen 'Claim' (may not be present)", self.step, "clickable")
+        start_present = self.move_and_click(xpath, 8, True, "make opening screen 'Claim' (may not be present)", self.step, "clickable")
 
         self.get_balance(False)
         self.increase_step()
@@ -89,18 +89,27 @@ class TimeFarmClaimer(Claimer):
             self.click_element(xpath, 20)
         self.increase_step()
 
-        remaining_time = self.get_wait_time()
+        remaining_time = self.get_wait_time(False)
         self.increase_step()
         
-        if isinstance(remaining_time, (int, float)):
-            remaining_time = self.apply_random_offset(remaining_time)
-            self.output(f"STATUS: We still have {remaining_time} minutes left to wait - sleeping.", 1)
-            self.stake_coins()
-            return remaining_time
+        if remaining_time:
+            if isinstance(remaining_time, (int, float)):
+                remaining_time = self.apply_random_offset(remaining_time)
+                self.output(f"STATUS: We still have {remaining_time} minutes left to wait - sleeping.", 1)
+                self.stake_coins()
+                return remaining_time
 
         xpath = "//div[@class='farming-button-block'][.//span[text()='Claim']]"
-        self.move_and_click(xpath, 20, False, "look for the claim button.", self.step, "visible")
-        success = self.click_element(xpath, 20)
+        success = self.move_and_click(xpath, 20, False, "look for the claim button.", self.step, "visible")
+
+        remaining_time = self.get_wait_time(True)
+        self.increase_step()
+        
+        if remaining_time:
+            if isinstance(remaining_time, (int, float)):
+                remaining_time = self.apply_random_offset(remaining_time)
+                remaining_time = int(remaining_time)
+        
         if success:
             self.increase_step()
             self.output(f"STATUS: We appear to have correctly clicked the claim button.",1)
@@ -134,7 +143,7 @@ class TimeFarmClaimer(Claimer):
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
         balance_xpath = f"//div[@class='balance']"
         try:
-            balance_part = self.monitor_element(balance_xpath)
+            balance_part = self.monitor_element(balance_xpath, 15, "monitor balance")
             # Strip any HTML tags and unwanted characters
             balance_part = "$" + self.strip_html_tags(balance_part)
             # Check if element is not None and process the balance
@@ -175,7 +184,7 @@ class TimeFarmClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
                 xpath = "//table[@class='scroller-table']"
-                pot_full_value = self.monitor_element(xpath, 15)
+                pot_full_value = self.monitor_element(xpath, 15, "get wait time")
                 
                 # Strip any HTML tags and unwanted characters
                 pot_full_value = self.strip_html_tags(pot_full_value)
