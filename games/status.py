@@ -29,6 +29,11 @@ def extract_detail(line, keyword):
 def fetch_and_process_logs(process_name):
     sanitized_process_name = process_name.replace(':', '-').replace('_', '-')
     log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
+
+    if not os.path.exists(log_file):
+        print(f"Log file not found for process: {process_name}, skipping...")
+        return process_name, "None", "None", "None", "Log file missing"
+
     logs = run_command(f"tail -n 200 {log_file}")
 
     balance = "None"
@@ -68,6 +73,7 @@ def display_processes(processes, status, sort_by="time", start_index=1):
     process_list = []
     for process_name in processes:
         if process_name.strip():
+            # Removed debugging lines
             name, balance, profit_hour, next_claim_at, log_status = fetch_and_process_logs(process_name.strip())
             process_list.append((name, balance, profit_hour, next_claim_at, log_status))
 
