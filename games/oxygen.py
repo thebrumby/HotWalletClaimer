@@ -57,7 +57,7 @@ class OxygenClaimer(Claimer):
         self.increase_step()
 
         xpath = "//div[contains(text(),'Get reward')]"
-        self.move_and_click(xpath, 10, True, "click the 'Get Reward' button", self.step, "clickable")
+        self.move_and_click(xpath, 10, True, "click the opening 'Get Reward' button (may not be present)", self.step, "clickable")
         self.increase_step()
 
         self.get_balance(False)
@@ -104,15 +104,13 @@ class OxygenClaimer(Claimer):
 
                     self.increase_step()
                     self.click_daily_buttons()
-                    self.quit_driver()
-                    self.launch_iframe()
                     self.get_balance(True)
                     self.get_profit_hour(True)
                     self.increase_step()
 
                     self.output(f"Step {self.step} - check if there are lucky boxes..", 3)
                     xpath = "//div[@class='boxes_cntr']"
-                    boxes = self.monitor_element(xpath)
+                    boxes = self.monitor_element(xpath,15,"lucky boxes")
                     self.output(f"Step {self.step} - Detected there are {boxes} boxes to claim.", 3)
                     if boxes:  # This will check if boxes is not False
                         self.output(f"Step {self.step} - Detected there are {boxes} boxes to claim.", 3)
@@ -159,48 +157,31 @@ class OxygenClaimer(Claimer):
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
         
-    def click_daily_buttons(self, max_attempts=5, wait_time=10, timeout=10):
-        xpath_button_wrap = "//div[@class='daily_btn_wrap']"
-        xpath_button_get_reward = "//div[@class='daily_get' and contains(text(), 'Get reward')]"
-        
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.quit_driver()
-                self.launch_iframe()
-                
-                # Click the first button
-                if self.move_and_click(xpath_button_wrap, timeout, True, "click 'daily_btn_wrap'", self.step, "visible"):
-                    self.increase_step()
-                    self.output(f"Step {self.step} - Clicked 'daily_btn_wrap' button (Attempt {attempt}). Waiting {wait_time} seconds...", 2)
-                    time.sleep(wait_time)
+    def click_daily_buttons(self, wait_time=10, timeout=10):
+        try:
+            # Click the first button
+            xpath_first_button = "//div[@class='daily_btn_wrap']"
+            self.move_and_click(xpath_first_button, timeout, True, "click 'daily_btn_wrap'", self.step, "clickable")
 
-                    # Click the second button
-                    if self.move_and_click(xpath_button_get_reward, timeout, True, "click 'Get reward'", self.step, "visible"):
-                        self.increase_step()
-                        self.output(f"Step {self.step} - Clicked 'Get reward' button (Attempt {attempt}). Waiting {wait_time} seconds...", 2)
-                        
-                        # Check for already claimed reward message
-                        if self.monitor_element("//div[contains(text(), 'You have already claimed this reward')]", timeout, "check claimed reward"):
-                            self.output("You have already claimed this reward.", 1)
-                            return
+            # Click the second button
+            xpath_second_button = "//div[@class='daily_get' and contains(text(), 'Get reward')]"
+            self.move_and_click(xpath_second_button, timeout, True, "click 'Get reward'", self.step, "clickable")
 
-                        time.sleep(wait_time)
-                        self.quit_driver()
-                        self.launch_iframe()
-                    else:
-                        self.output(f"Step {self.step} - Failed to click 'Get reward' button (Attempt {attempt}).", 1)
-                else:
-                    self.output(f"Step {self.step} - Failed to click 'daily_btn_wrap' button (Attempt {attempt}).", 1)
-            except TimeoutException:
-                self.output(f"Button not found after {timeout} seconds on attempt {attempt}. Stopping.", 1)
-                break
-            except ElementClickInterceptedException:
-                self.output(f"Button click was intercepted on attempt {attempt}. Trying again.", 3)
-                continue
-            except Exception as e:
-                self.output(f"Error on attempt {attempt}: {str(e)}", 1)
-                break
-                
+            # Check if the reward has been claimed
+            xpath_reward_message = "//div[contains(text(), 'You have already claimed this reward')]"
+            if self.move_and_click(xpath_reward_message, timeout, False, "check if already claimed", self.step, "visible"):
+                self.output(f"Step {self.step} - Daily reward already claimed.", 2)
+
+            # Click close
+            xpath_close_button = "//div[@class='page_close']"
+            self.move_and_click(xpath_close_button, timeout, True, "click close the tab", self.step, "clickable")
+
+            return True
+
+        except Exception as e:
+            self.output(f"Error during clicking daily buttons: {e}", 1)
+            return False
+            
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
@@ -212,8 +193,8 @@ class OxygenClaimer(Claimer):
         try:
             oxy_balance_xpath = "//span[@class='oxy_counter']"
             food_balance_xpath = "//div[@class='indicator_item i_food' and @data='food']/div[@class='indicator_text']"
-            oxy_balance = float(self.monitor_element(oxy_balance_xpath))
-            food_balance = float(self.monitor_element(food_balance_xpath))
+            oxy_balance = float(self.monitor_element(oxy_balance_xpath,15,"oxygen balance"))
+            food_balance = float(self.monitor_element(food_balance_xpath,15,"food balance"))
 
             self.output(f"Step {self.step} - {balance_text} {oxy_balance:.0f} O2, {food_balance:.0f}  food", priority)
 
@@ -263,7 +244,7 @@ class OxygenClaimer(Claimer):
         profit_xpath = "//span[@id='oxy_coef']"
 
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath,15,"profit per hour"))
 
             # Check if element is not None and process the profit
             if element:

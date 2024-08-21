@@ -110,20 +110,14 @@ class SpellClaimer(Claimer):
 
         # Click on the Storage link:
         xpath = "//p[contains(text(), 'Claim')]"
-        if self.move_and_click(xpath, 60, True, "click the 'Claim' link (60 second timer)", self.step, "clickable"):
+        if self.move_and_click(xpath, 10, True, "click the 'Claim' link", self.step, "clickable"):
             self.output(f"Step {self.step} - Claim was available and clicked.", 3)
-            xpath = "//*[contains(text(), 'Success!')]"
-            if self.move_and_click(xpath, 30, False, "check for success", self.step, "visible"):
-                self.output(f"STATUS: We clicked the claim link and it confirmed success.", 1)
-                success_text="Claim confirmed successful. "
-            else:
-                self.output(f"STATUS: We clicked the claim link but could not confirm success.", 1)
-                success_text="Claim attempted. "
+            self.increase_step()
+            success_text="Claim attempted. "
+            self.increase_step()
         xpath = "//*[contains(text(), 'Got it')]"
         self.move_and_click(xpath, 10, True, "check for 'Got it' message (may not be present)", self.step, "clickable")
-        self.increase_step
-
-        self.get_balance(True)
+        self.increase_step()
 
         try:
             # Calculate the remaining time in hours
@@ -145,6 +139,8 @@ class SpellClaimer(Claimer):
             print(f"An error occurred: {e} - Assigning 1 hour timer")
             theoretical_timer = 60
 
+        self.get_balance(True)
+
         theoretical_timer_rounded = round(theoretical_timer, 1)
         modified_timer = self.apply_random_offset(theoretical_timer)
         modified_timer_rounded = round(modified_timer, 1)
@@ -165,7 +161,7 @@ class SpellClaimer(Claimer):
         balance_xpath = f"//h2[text()='Mana Balance']/following-sibling::h2[1]"
 
         try:
-            element = self.strip_html_and_non_numeric(self.monitor_element(balance_xpath))
+            element = self.strip_html_and_non_numeric(self.monitor_element(balance_xpath, 15, "get balance"))
 
             # Check if element is not None and process the balance
             if element:
@@ -190,7 +186,7 @@ class SpellClaimer(Claimer):
         profit_xpath = "//p[contains(text(), 'Mana per hour:')]/following-sibling::p[1]"
 
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "profit per hour"))
 
             # Check if element is not None and process the profit
             if element:

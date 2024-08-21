@@ -254,7 +254,7 @@ class WaveClaimer(Claimer):
         profit_xpath = "//span[text()='Aqua Cat']/following-sibling::span[1]"
 
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "profit per hour"))
             # Check if element is not None and process the profit
             if element:
                 self.output(f"Step {self.step} - {profit_text} {element}", priority)

@@ -802,8 +802,7 @@ class Claimer:
             # Attempt to locate and interact with the OTP field
             wait = WebDriverWait(self.driver, 20)
             if self.settings['debugIsOn']:
-                time.sleep(3)
-                self.driver.save_screenshot(f"{self.screenshots_path}/Step {self.step} - Ready_for_OTP.png")
+                self.debug_information("preparing for TG OTP","check")
             password = wait.until(EC.visibility_of_element_located((By.XPATH, "//input[@type='tel']")))
             otp = input(f"Step {self.step} - What is the Telegram OTP from your app? ")
             password.click()
@@ -833,14 +832,13 @@ class Claimer:
         except Exception as e:  # Catch any other unexpected errors
             self.output(f"Step {self.step} - Login failed. Error: {e}", 1) 
             if self.settings['debugIsOn']:
-                self.driver.save_screenshot(f"{self.screenshots_path}/Step {self.step} - error_Something_Occured.png")
+                self.debug_information("telegram login failed","error")
 
         self.increase_step()
         self.test_for_2fa()
 
         if self.settings['debugIsOn']:
-            time.sleep(3)
-            self.driver.save_screenshot(f"{self.screenshots_path}/Step {self.step} - After_Entering_OTP.png")
+            self.debug_information("telegram OTP successfully entered","check")
 
     def test_for_2fa(self):
         try:
@@ -863,8 +861,7 @@ class Claimer:
                     incorrect_password = WebDriverWait(self.driver, 3).until(EC.visibility_of_element_located((By.XPATH, xpath)))
                     self.output(f"Step {self.step} - 2FA password is marked as incorrect by Telegram - check your debug screenshot if active.", 1)
                     if self.settings['debugIsOn']:
-                        screenshot_path = f"{self.screenshots_path}/Step {self.step} - Incorrect 2FA Password.png"
-                        self.driver.save_screenshot(screenshot_path)
+                        self.debug_information("incorrect telegram 2FA entered","error")
                     self.quit_driver()
                     sys.exit()  # Exit if incorrect password is detected
                 except TimeoutException:
@@ -887,8 +884,7 @@ class Claimer:
         except Exception as e:  # Catch any other unexpected errors
             self.output(f"Step {self.step} - Login failed. 2FA Error - you'll probably need to restart the script: {e}", 1)
             if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/Step {self.step} - error_Something_Bad_Occurred.png"
-                self.driver.save_screenshot(screenshot_path)
+                self.debug_information("unspecified error during telegram 2FA","error")
 
     def next_steps(self):
         # Must OVERRIDE this function in the child class
@@ -897,16 +893,20 @@ class Claimer:
     def launch_iframe(self):
         self.driver = self.get_driver()
 
+        # let's start with clean screenshots directory
+        if os.path.exists(self.screenshots_path):
+            shutil.rmtree(self.screenshots_path)
+        os.makedirs(self.screenshots_path)
+
         try:
             self.driver.get(self.url)
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
             self.output(f"Step {self.step} - Attempting to verify if we are logged in (hopefully QR code is not present).", 3)
             xpath = "//canvas[@class='qr-canvas']"
+            if self.settings['debugIsOn']:
+                self.debug_information("QR code check during session start","check")
             wait = WebDriverWait(self.driver, 10)
             wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-            if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/Step {self.step} - Test QR code after session is resumed.png"
-                self.driver.save_screenshot(screenshot_path)
             self.output(f"Step {self.step} - Chrome driver reports the QR code is visible: It appears we are no longer logged in.", 2)
             self.output(f"Step {self.step} - Most likely you will get a warning that the central input box is not found.", 2)
             self.output(f"Step {self.step} - System will try to restore session, or restart the script from CLI to force a fresh log in.\n", 2)
@@ -960,36 +960,33 @@ class Claimer:
         else:
             os.system('clear')
 
-    def select_iframe(self, old_step):
-        self.output(f"Step {self.step} - Attempting to switch to the app's iFrame...",2)
+    def select_iframe(self, old_step, iframe_name="popup-body"):
+        self.output(f"Step {self.step} - Attempting to switch to the app's iFrame within '{iframe_name}'...", 2)
 
         try:
             wait = WebDriverWait(self.driver, 20)
-            popup_body = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "popup-body")))
-            iframe = popup_body.find_element(By.TAG_NAME, "iframe")
+            container = wait.until(EC.presence_of_element_located((By.CLASS_NAME, iframe_name)))
+            iframe = container.find_element(By.TAG_NAME, "iframe")
             self.driver.switch_to.frame(iframe)
-            self.output(f"Step {self.step} - Was successfully able to switch to the app's iFrame.\n",3)
+            self.output(f"Step {self.step} - Was successfully able to switch to the app's iFrame within '{iframe_name}'.\n", 3)
 
             if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/{self.step}-iframe-switched.png"
-                self.driver.save_screenshot(screenshot_path)
+                self.debug_information("successfully switched to iFrame","success")
 
         except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.\n",3)
+            self.output(f"Step {self.step} - Failed to find or switch to the iframe within '{iframe_name}' within the timeout period.\n", 3)
             if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/{self.step}-iframe-timeout.png"
-                self.driver.save_screenshot(screenshot_path)
+                self.debug_information("timeout while trying to switch to iFrame","error")
         except Exception as e:
-            self.output(f"Step {self.step} - An error occurred while attempting to switch to the iframe: {e}\n",3)
+            self.output(f"Step {self.step} - An error occurred while attempting to switch to the iframe within '{iframe_name}': {e}\n", 3)
             if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/{self.step}-iframe-error.png"
-                self.driver.save_screenshot(screenshot_path)
+                self.debug_information("an unspecified error occured during switch to iFrame","error")
 
     def send_start(self, old_step):
         xpath = "//div[contains(@class, 'input-message-container')]/div[contains(@class, 'input-message-input')][1]"
         
         def attempt_send_start():
-            chat_input = self.move_and_click(xpath, 5, False, "find the chat window/message input box", self.step, "present")
+            chat_input = self.move_and_click(xpath, 5, False, "find the chat window message input box", self.step, "present")
             if chat_input:
                 self.increase_step()
                 self.output(f"Step {self.step} - Attempting to send the '/start' command...",2)
@@ -997,8 +994,7 @@ class Claimer:
                 chat_input.send_keys(Keys.RETURN)
                 self.output(f"Step {self.step} - Successfully sent the '/start' command.\n",3)
                 if self.settings['debugIsOn']:
-                    screenshot_path = f"{self.screenshots_path}/{self.step}-sent-start.png"
-                    self.driver.save_screenshot(screenshot_path)
+                    self.debug_information("we sent the start command to the chat window","success")
                 return True
             else:
                 self.output(f"Step {self.step} - Failed to find the message input box.\n",1)
@@ -1035,7 +1031,7 @@ class Claimer:
         def timer():
             return random.randint(1, 3) / 10
 
-        self.output(f"Step {self.step} - Attempting to {action_description}... [{xpath}]", 2)
+        self.output(f"Step {self.step} - Attempting to {action_description}... {xpath}", 2)
 
         wait = WebDriverWait(self.driver, wait_time)
         target_element = None
@@ -1048,15 +1044,14 @@ class Claimer:
                 elif expectedCondition == "invisible":
                     wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
                     if self.settings['debugIsOn']:
-                        screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_invisible.png"
-                        self.driver.save_screenshot(screenshot_path)
-                        self.output(f"Screenshot saved to {screenshot_path}", 3)
+                        self.debug_information(f"MoveClick {action_description} was invisible","check")
                     return None
                 elif expectedCondition == "clickable":
                     target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
 
                 if target_element is None:
                     self.output(f"Step {self.step} - The element was not found for {action_description}.", 2)
+                    self.debug_information(f"MoveClick {action_description} not found","error")
                     return None
 
                 actions = ActionChains(self.driver)
@@ -1085,31 +1080,35 @@ class Claimer:
 
                 if not is_in_viewport:
                     self.output(f"Step {self.step} - Element still out of bounds after moving with ActionChains and JavaScript scrolling.", 2)
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"MoveClick {action_description} out of bounds","error")
                     continue
 
                 if click or expectedCondition in ["visible", "clickable"]:
                     self.clear_overlays(target_element, self.step)
 
-                if self.settings['debugIsOn']:
-                    screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_before_click.png"
-                    self.driver.save_screenshot(screenshot_path)
-
                 if click:
                     if self.click_element(xpath, action_description=action_description):
                         self.output(f"Step {self.step} - Successfully clicked {action_description}.", 3)
+                        if self.settings['debugIsOn']:
+                            self.debug_information(f"MoveClick successfully {action_description}","success")
                         return target_element
                 else:
-                    return target_element
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"MoveClick move only to {action_description}","no click")
+                        return target_element
 
             except StaleElementReferenceException:
                 self.output(f"Step {self.step} - StaleElementReferenceException caught, retrying attempt {attempt + 1} for {action_description}.", 2)
             except TimeoutException:
                 self.output(f"Step {self.step} - Timeout while trying to {action_description}.", 3)
-                self.debug_information(action_description)
+                if self.settings['debugIsOn']:
+                        self.debug_information(f"MoveClick move timeout during {action_description}","error")
                 break
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred while trying to {action_description}: {e}", 1)
-                self.debug_information(action_description)
+                if self.settings['debugIsOn']:
+                        self.debug_information(f"MoveClick {action_description} fatal error","error")
                 break
 
         return target_element
@@ -1117,13 +1116,14 @@ class Claimer:
     def click_element(self, xpath, timeout=30, action_description=""):
         end_time = time.time() + timeout
         if self.settings['debugIsOn']:
-            screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_click_element.png"
-            self.driver.save_screenshot(screenshot_path)
+            self.debug_information(f"ClicElem preparing to click {action_description}","info")
 
         try:
             element = self.driver.find_element(By.XPATH, xpath)
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element not found: {xpath}. Skipping click.", 2)
+            if self.settings['debugIsOn']:
+                self.debug_information(f"ClicElem {action_description} was not found","error")
             return False
 
         while time.time() < end_time:
@@ -1168,19 +1168,27 @@ class Claimer:
 
             except TimeoutException:
                 self.output(f"Step {self.step} - Click timed out.", 2)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClicElem {action_description} timeout","error")
                 break
 
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred: {e}", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClicElem {action_description} fatal error","error")
                 break
             
             # Fallback to clicking with JavaScript if ActionChains fails
             try:
                 self.driver.execute_script("arguments[0].click();", element)
                 self.output(f"Step {self.step} - Fallback to JS click successful.", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClicElem {action_description} JS Fallback","success")
                 return True
             except Exception as e:
                 self.output(f"Step {self.step} - Fallback JS click failed: {e}", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClicElem {action_description} JS Fallback Failed","error")
                 break
         
         self.output(f"Step {self.step} - Failed to click element after all retries.", 2)
@@ -1197,18 +1205,18 @@ class Claimer:
                     overlay_rect['y'] <= element_location['y'] <= overlay_rect['y'] + overlay_rect['height']):
                     self.driver.execute_script("arguments[0].style.display = 'none';", overlay)
                     overlays_cleared += 1
-            self.output(f"Step {step} - Removed {overlays_cleared} overlay(s) covering the target.", 3)
+            if overlays_cleared > 0:
+                self.output(f"Step {step} - Removed {overlays_cleared} overlay(s) covering the target.", 3)
             return overlays_cleared
         except Exception as e:
             self.output(f"Step {step} - An error occurred while trying to clear overlays: {e}", 1)
             return 0
 
-    def monitor_element(self, xpath, timeout=8, action_description=""):
+    def monitor_element(self, xpath, timeout=8, action_description="no description"):
         end_time = time.time() + timeout
         first_time = True
         if self.settings['debugIsOn']:
-            screenshot_path = f"{self.screenshots_path}/{self.step}_{action_description}_monitor_element.png"
-            self.driver.save_screenshot(screenshot_path)
+            self.debug_information(f"MonElem {action_description}","check")
         while time.time() < end_time:
             try:
                 elements = self.driver.find_elements(By.XPATH, xpath)
@@ -1224,27 +1232,29 @@ class Claimer:
             except Exception as e:
                 self.output(f"An error occurred: {e}", 3)
                 if self.settings['debugIsOn']:
-                    self.debug_information(action_description, "monitor_element_error")
+                    self.debug_information(f"MonElem failed on {action_description}","error")
                 return False
         return False
 
     def debug_information(self, action_description, error_type="error"):
+        # Replace characters that might corrupt the intended filename structure
+        sanitized_description = re.sub(r'[\/\0\\\*\?\:\|\<\>\"\&\;\$~ ]', '-', action_description)
+
+        # Take a screenshot if the element should have been present
+        time.sleep(3)
+        screenshot_path = f"{self.screenshots_path}/{self.step}_{sanitized_description}.png"
+        self.driver.save_screenshot(screenshot_path)
+
         # Check if "not" is present in the action_description enclosed in brackets
         if re.search(r'\(.*?not.*?\)', action_description, re.IGNORECASE):
             # Skip debugging if the condition is met
             return
 
-        if self.settings['debugIsOn']:
-            # Save the HTML page source on error
+        # Save the HTML page source on error
+        if error_type == "error":
             page_source = self.driver.page_source
-            with open(f"{self.screenshots_path}/{self.step}_{action_description}_page_source.html", "w", encoding="utf-8") as f:
+            with open(f"{self.screenshots_path}/{self.step}_{sanitized_description}_page_source.html", "w", encoding="utf-8") as f:
                 f.write(page_source)
-
-            # Save browser console logs on error
-            logs = self.driver.get_log("browser")
-            with open(f"{self.screenshots_path}/{self.step}_{action_description}_browser_console_logs.txt", "w", encoding="utf-8") as f:
-                for log in logs:
-                    f.write(f"{log['level']}: {log['message']}\n")
 
     def find_working_link(self, old_step):
 
@@ -1261,8 +1271,7 @@ class Claimer:
             if not start_app_buttons:
                 self.output(f"Step {self.step} - No buttons found with XPath: {start_app_xpath}\n", 1)
                 if self.settings['debugIsOn']:
-                    screenshot_path = f"{self.screenshots_path}/{self.step}-no-buttons-found.png"
-                    self.driver.save_screenshot(screenshot_path)
+                    self.debug_information("find working link - no buttons found","error")
                 return False
 
             # Iterate through the buttons in reverse order
@@ -1272,7 +1281,7 @@ class Claimer:
                 try:
                     # Save screenshot if debug is on
                     if self.settings['debugIsOn']:
-                        self.driver.save_screenshot(f"{self.screenshots_path}/{self.step} - Find working link.png")
+                        self.debug_information("iterating through launch game buttons","check")
                     # Perform actions and click the button using JavaScript
                     actions.perform()
                     self.driver.execute_script("arguments[0].click();", button)
@@ -1286,27 +1295,23 @@ class Claimer:
             if not clicked:
                 self.output(f"Step {self.step} - None of the 'Open Wallet' buttons were clickable.\n", 1)
                 if self.settings['debugIsOn']:
-                    screenshot_path = f"{self.screenshots_path}/{self.step}-no-clickable-button.png"
-                    self.driver.save_screenshot(screenshot_path)
+                    self.debug_information("no working game link","error")
                 return False
             else:
                 self.output(f"Step {self.step} - Successfully able to open a link for the app..\n", 3)
                 if self.settings['debugIsOn']:
-                    screenshot_path = f"{self.screenshots_path}/{self.step}-app-opened.png"
-                    self.driver.save_screenshot(screenshot_path)
+                    self.debug_information("successfully opened a game start link","success")
                 return True
 
         except TimeoutException:
             self.output(f"Step {self.step} - Failed to find the 'Open Wallet' button within the expected timeframe.\n", 1)
             if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/{self.step}-timeout-finding-button.png"
-                self.driver.save_screenshot(screenshot_path)
+                self.debug_information("timeout while trying to open the game","error")
             return False
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred while trying to open the app: {e}\n", 1)
             if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/{self.step}-unexpected-error-opening-app.png"
-                self.driver.save_screenshot(screenshot_path)
+                self.debug_information("unspecified error while trying to launch the game","error")
             return False
 
     def validate_seed_phrase(self):

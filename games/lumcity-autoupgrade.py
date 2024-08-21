@@ -60,7 +60,7 @@ class LumCityAUClaimer(LumCityClaimer):
     def get_upgrade_cost(self):
         cost_xpath = "(//div[contains(@class, '_price_lnqn0_57')]/span[1])[1]"
         self.move_and_click(cost_xpath, 30, False, "look for cost upgrade", self.step, "visible")
-        cost_upgrade = self.monitor_element(cost_xpath)
+        cost_upgrade = self.monitor_element(cost_xpath, 15, "cost of upgrade")
         return float(cost_upgrade.replace(',', '').strip()) if cost_upgrade else 0
 
     def perform_upgrade(self):

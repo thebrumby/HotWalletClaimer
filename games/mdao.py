@@ -135,7 +135,7 @@ class MDAOClaimer(Claimer):
 
         try:
             self.move_and_click(balance_xpath, 30, False, "look for ZP balance", self.step, "visible")
-            balance_part = self.strip_html(self.monitor_element(balance_xpath))
+            balance_part = self.strip_html(self.monitor_element(balance_xpath,15,"ZP points"))
             self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
@@ -150,7 +150,7 @@ class MDAOClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
                 xpath = "//div[contains(text(), 'until claim')]"
-                pot_full_value = self.monitor_element(xpath, 15)
+                pot_full_value = self.monitor_element(xpath, 15, "claim timer")
                 if pot_full_value:
                     return pot_full_value
                 else:
@@ -171,7 +171,7 @@ class MDAOClaimer(Claimer):
         profit_xpath = "//div[contains(text(), 'per hour')]"
 
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath,15,"profit per hour"))
             # Check if element is not None and process the profit
             if element:
                 self.output(f"Step {self.step} - {profit_text} {element}", priority)

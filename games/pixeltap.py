@@ -173,7 +173,7 @@ class PixelTapClaimer(Claimer):
         balance_xpath = "//div[@class='_balance_1erzm_18']/span[following-sibling::img]" 
 
         try:
-            element = self.monitor_element(balance_xpath)
+            element = self.monitor_element(balance_xpath,15,"balance")
             cleaned_text = self.strip_html(element)
             # Check if element is not None and process the balance
             if element:
@@ -193,7 +193,7 @@ class PixelTapClaimer(Claimer):
             self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
         
             xpath = "//div[contains(@class, 'claimTimer')]"
-            wait_time_str = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15)))
+            wait_time_str = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15, "claim timer")))
 
             if not wait_time_str:
                 wait_time = 60

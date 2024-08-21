@@ -120,13 +120,13 @@ class BlumClaimer(Claimer):
                 try:
                     xpath = "//button[.//div[contains(text(), 'Claim')]]"
                     self.move_and_click(xpath, 10, True, "click the 'Claim' button", self.step, "clickable")
-                    # self.click_element(xpath)
+                    self.increase_step()
 
                     time.sleep(5)
 
                     xpath = "//button[.//span[contains(text(), 'Start farming')]][1]"
                     self.move_and_click(xpath, 10, True, "click the 'Start farming' button", self.step, "clickable")
-                    # self.click_element(xpath)
+                    self.increase_step()
 
                     self.output(f"Step {self.step} - Waiting 10 seconds for the totals and timer to update...", 3) 
                     time.sleep(10)
@@ -200,13 +200,13 @@ class BlumClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - First check if the time is still elapsing...", 3)
                 xpath = "//div[@class='time-left']"
-                wait_time_value = self.monitor_element(xpath, 10)
+                wait_time_value = self.monitor_element(xpath, 10, "wait timer pot elapsing")
                 if wait_time_value:
                     return wait_time_value
 
                 self.output(f"Step {self.step} - Then check if the pot is full...", 3)
                 xpath = "//button[.//div[contains(text(), 'Claim')]]"
-                pot_full_value = self.monitor_element(xpath, 10)
+                pot_full_value = self.monitor_element(xpath, 10, "wait timer pot full")
                 if pot_full_value:
                     return self.pot_full
                 return False

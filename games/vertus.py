@@ -254,7 +254,7 @@ class VertusClaimer(Claimer):
         profit_xpath = "(//p[@class='_descInfo_19xzr_38'])[last()]"
 
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "profit per hour"))
             # Check if element is not None and process the profit
             if element:
                 self.output(f"Step {self.step} - {profit_text} {element}", priority)
@@ -277,7 +277,7 @@ class VertusClaimer(Claimer):
         balance_xpath = "//div[contains(@class, '_balanceCon_qig4y_22')]//p[@class='_value_qig4y_16']"
 
         try:
-            balance_part = self.monitor_element(balance_xpath)
+            balance_part = self.monitor_element(balance_xpath, 15, "balance")
 
             if balance_part:
                 self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
@@ -295,7 +295,7 @@ class VertusClaimer(Claimer):
             try:
                 xpath = "//p[contains(@class, 'descInfo') and contains(text(), 'to')]"
                 self.move_and_click(xpath, 10, False, f"get the {beforeAfter} wait timer", self.step, "visible")
-                wait_time_element = self.monitor_element(xpath, 10)
+                wait_time_element = self.monitor_element(xpath, 10, "claim timer")
                 
                 if wait_time_element is not None:
                     return wait_time_element

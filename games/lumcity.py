@@ -137,7 +137,7 @@ class LumCityClaimer(Claimer):
             self.increase_step()
 
             xpath = "//div[contains(@class, '_msgWrapper_7jeg3_57')]//span[1]"
-            reward_value = self.monitor_element(xpath, 20)
+            reward_value = self.monitor_element(xpath, 20, "balance increase value")
             if reward_value:
                 self.output(f"Step {self.step} - This claim increased the balance: +{reward_value}", 1)
 
@@ -169,7 +169,7 @@ class LumCityClaimer(Claimer):
 
         try:
             self.move_and_click(balance_xpath, 30, False, "look for Golt balance", self.step, "visible")
-            balance_part = self.strip_html_tags(self.monitor_element(balance_xpath))
+            balance_part = self.strip_html_tags(self.monitor_element(balance_xpath,15,"golt balance"))
             self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
             return balance_part
         except NoSuchElementException:
@@ -208,7 +208,7 @@ class LumCityClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
                 xpath = "//span[text()='Fill Time']/ancestor::div[1]/following-sibling::div"
-                pot_full_value = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15)))
+                pot_full_value = self.extract_time(self.strip_html_tags(self.monitor_element(xpath, 15, "wait time")))
                 return pot_full_value
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
@@ -254,7 +254,7 @@ class LumCityClaimer(Claimer):
         profit_xpath = "//div[contains(@class, 'pickaxeUpgrade')]//div[last()]"
 
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath,15,"profit per hour"))
             # Check if element is not None and process the profit
             if element:
                 self.output(f"Step {self.step} - {profit_text} {element}", priority)

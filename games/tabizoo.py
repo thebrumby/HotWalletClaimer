@@ -183,7 +183,7 @@ class TabizooClaimer(Claimer):
             self.output(f"Step {self.step} - Removed 'disable' class from element matching: {xpath}", 3)
         except Exception as e:
             if self.settings['debugIsOn']:
-                self.output(f"Step {self.step} - Could not remove 'disable' class: {e}", 3)
+                self.output(f"Step {self.step} - Could not remove 'disable' class:", 3)
 
     def click_go_and_check_buttons(self):
         original_window = self.driver.current_window_handle
@@ -228,7 +228,7 @@ class TabizooClaimer(Claimer):
         balance_xpath = f"//div[@class='balance']/p"
 
         try:
-            element = self.monitor_element(balance_xpath)
+            element = self.monitor_element(balance_xpath, 15, "get balance")
             if element:
                 balance_part = element
                 self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
@@ -245,7 +245,7 @@ class TabizooClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - Get the wait time...", 3)
                 xpath = "//div[@class='mining']/p"
-                elements = self.monitor_element(xpath, 10)
+                elements = self.monitor_element(xpath, 10, "get claim timer")
                 if elements:
                     return elements
                 return False
@@ -266,7 +266,7 @@ class TabizooClaimer(Claimer):
         profit_xpath = "//p[text()='Mining Rate']/following-sibling::div[@class='mining-value']//span[last()]"
 
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "profit per hour"))
 
             # Check if element is not None and process the profit
             if element:

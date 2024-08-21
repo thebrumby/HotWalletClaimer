@@ -130,7 +130,7 @@ class PocketFiClaimer(Claimer):
 
         try:
             first = self.move_and_click(balance_xpath, 30, False, "remove overlays", self.step, "visible")
-            element = self.monitor_element(balance_xpath)
+            element = self.monitor_element(balance_xpath, 15, "get balance")
             if element:
                 balance_part = element
                 self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
@@ -155,7 +155,7 @@ class PocketFiClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - Get the wait time...", 3)
                 xpath = "//p[contains(text(), 'burn in')]"
-                elements = self.monitor_element(xpath, 10)
+                elements = self.monitor_element(xpath, 10, "get claim timer")
                 if elements:
                     match = re.search(r"burn in\s*(\d{2}:\d{2}:\d{2})", elements)
                     if match:
@@ -179,7 +179,7 @@ class PocketFiClaimer(Claimer):
         profit_xpath = "//p[contains(., '$SWITCH')]//span[last()]"
 
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "profit per hour"))
 
             # Check if element is not None and process the profit
             if element:

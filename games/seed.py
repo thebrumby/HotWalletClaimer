@@ -184,7 +184,7 @@ class SeedClaimer(Claimer):
         balance_xpath = "//img[@alt='token']/following-sibling::p"
 
         try:
-            element = self.monitor_element(balance_xpath)
+            element = self.monitor_element(balance_xpath, 15, "get balance")
             if element:
                 # If element exists, send it as it is
                 self.output(f"Step {self.step} - {prefix} BALANCE: {element}", priority)
@@ -210,7 +210,7 @@ class SeedClaimer(Claimer):
         profit_xpath = "//p[contains(text(), 'SEED/hour')]"
 
         try:
-            element = self.monitor_element(profit_xpath)
+            element = self.monitor_element(profit_xpath, 15, "profit per hour")
             if isinstance(element, str):
                 # Split element at the colon (if present) and assign the right side (excluding ":")
                 if ' ' in element:
@@ -235,7 +235,7 @@ class SeedClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - Get the wait time...", 3)
                 xpath = "//div[p[text() = 'Storage']]/div[1]"
-                elements = self.monitor_element(xpath, 10)
+                elements = self.monitor_element(xpath, 10, "claim timer")
                 # Replace occurrences of " h" with "h" and " m" with "m" (including the space)
                 elements = elements.replace(" h ", "h ").replace(" m ", "m ")
                 if elements:

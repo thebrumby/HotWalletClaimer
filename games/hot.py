@@ -225,7 +225,7 @@ class HotClaimer(Claimer):
         balance_xpath = f"//p[contains(text(), 'HOT')]/following-sibling::img/following-sibling::p"
 
         try:
-            element = self.monitor_element(balance_xpath)
+            element = self.monitor_element(balance_xpath, 15, "get balance")
             if element:
                 balance_part = element # .text.strip()
                 self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
@@ -248,7 +248,7 @@ class HotClaimer(Claimer):
         profit_xpath = "//div[div[p[text()='Storage']]]//p[last()]"
 
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "get profit per hour"))
 
             # Check if element is not None and process the profit
             if element:
