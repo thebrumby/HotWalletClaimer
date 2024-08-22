@@ -24,6 +24,10 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
+import requests
+
+import urllib.request
+import requests
 from claimer import Claimer
 
 class SpellClaimer(Claimer):
@@ -98,14 +102,16 @@ class SpellClaimer(Claimer):
             self.output(f"Step {self.step} - An error occurred: {e}",1)
 
     def full_claim(self):
+        # Launch iframe
         self.step = "100"
-
         self.launch_iframe()
 
+        # Wait for 'Roadmap' to disappear
         xpath = "//*[contains(text(), 'Roadmap')]"
         self.target_element = self.move_and_click(xpath, 30, False, "wait until 'Roadmap' disappears (may not be present)", self.step, "invisible")
         self.increase_step()
 
+        # Get balance
         self.get_balance(False)
 
         # Click on the Storage link:
@@ -113,40 +119,109 @@ class SpellClaimer(Claimer):
         if self.move_and_click(xpath, 10, True, "click the 'Claim' link", self.step, "clickable"):
             self.output(f"Step {self.step} - Claim was available and clicked.", 3)
             self.increase_step()
-            success_text="Claim attempted. "
+            success_text = "Claim attempted. "
             self.increase_step()
+
+        # Check for 'Got it' message
         xpath = "//*[contains(text(), 'Got it')]"
         self.move_and_click(xpath, 10, True, "check for 'Got it' message (may not be present)", self.step, "clickable")
+        #self.daily_reward()
         self.increase_step()
 
+        # Calculate remaining time in hours
         try:
-            # Calculate the remaining time in hours
             hourly_profit = float(self.get_profit_hour(True))
-    
             xpath = "//div[@id='slider-root-:r5:']/following-sibling::p"
             elapsed = self.monitor_element(xpath, 10, "Get the timer bar")
-    
-            # Split elapsed into current and max
             current, max_value = map(float, elapsed.split('/'))
-    
-            # Perform the calculation
             remaining_time_hours = (max_value - current) / hourly_profit
-    
-            # Convert the remaining time to minutes
             theoretical_timer = remaining_time_hours * 60
         except Exception as e:
-            # If there's an error, assign a default value of 60 minutes
             print(f"An error occurred: {e} - Assigning 1 hour timer")
             theoretical_timer = 60
 
+        # Get balance again
         self.get_balance(True)
 
-        theoretical_timer_rounded = round(theoretical_timer, 1)
+        # Execute the JavaScript to detect the green dot
+        js_code = """
+        let shadowHost = document.querySelector('.css-4g6ai3');
+        let shadowRoot = shadowHost.shadowRoot || shadowHost;
+        let greenDot = shadowRoot.querySelector('circle[fill="#01DC01"]');
+        return greenDot !== null;
+        """
+
+        # Get the daily reward if the dot is green
+        if self.driver.execute_script(js_code):
+            self.output(
+                f"Step {self.step} - Starting the Daily Reward claim. "
+                "Answer is uploaded manually, do not report this function "
+                "as faulty if the code doesn't match!", 2
+            )
+            self.daily_reward()
+        else:
+            self.output(f"Step {self.step} - Skipping the daily rewards, it appears to have been claimed.", 3)
+
+        # Calculate modified timer with random offset
         modified_timer = self.apply_random_offset(theoretical_timer)
         modified_timer_rounded = round(modified_timer, 1)
-
-        self.output(f"STATUS: {success_text}Claim again in {modified_timer_rounded} minutes (originally {theoretical_timer_rounded})", 3)
+        self.output(f"STATUS: {success_text}Claim again in {modified_timer_rounded} minutes (originally {theoretical_timer:.1f})", 1)
         return int(modified_timer)
+
+    def daily_reward(self):
+            self.quit_driver()
+            self.launch_iframe()
+            xpath = "//div[contains(@class, 'css-4g6ai3')]"
+            self.move_and_click(xpath, 30, True, "click on Daily Quests tab", self.step, "clickable")
+
+            self.increase_step()
+
+            # Fetch the 4-digit code from the GitHub file using urllib
+            url = "https://raw.githubusercontent.com/thebrumby/HotWalletClaimer/main/extras/rewardtest"
+            try:
+                with urllib.request.urlopen(url) as response:
+                    content = response.read().decode('utf-8').strip()
+                self.output(f"Step {self.step} - Fetched code from GitHub: {content}", 3)
+            except Exception as e:
+                # Handle failure to fetch code
+                self.output(f"Step {self.step} - Failed to fetch code from GitHub: {str(e)}", 2)
+                return
+
+            self.increase_step()
+
+            # Define the indices you can be careful, but not used_indices = []
+            for index, digit in enumerate(content):
+                xpath = f"//div[@class='css-k0i5go'][{digit}]"
+                
+                if self.move_and_click(xpath, 30, True, f"click on the path corresponding to digit {digit}", self.step, "clickable"):
+                    self.output(f"Step {self.step} - Clicked on element corresponding to digit {digit}.", 2)
+                else:
+                    # Handle failure to click on an element
+                    self.output(f"Step {self.step} - Element corresponding to digit {digit} not found or not clickable.", 1)
+
+            # Increment the step counter
+            self.increase_step()
+
+            # Check if alert is present
+            invalid_puzzle_xpath = "//div[contains(text(), 'Invalid puzzle code')]/ancestor::div[contains(@class, 'chakra-alert')]"
+            if self.move_and_click(invalid_puzzle_xpath, 30, True, "check if alert is present", self.step, "visible"):
+                # Alert for invalid puzzle code is present
+                self.output(f"Step {self.step} - Alert for invalid puzzle code is present.", 2)
+            else:
+                # Alert for invalid puzzle code is not present
+                self.output(f"Step {self.step} - Alert for invalid puzzle code is not present.", 1)
+
+            self.output(f"Step {self.step} - Completed daily reward sequence successfully.", 2)
+
+            # add verification element for  "Invalid puzzle code"
+            invalid_puzzle_xpath = "//div[contains(text(), 'Invalid puzzle code')]/ancestor::div[contains(@class, 'chakra-alert')]"
+            if self.move_and_click(invalid_puzzle_xpath, 30, True, "check if alert is present", self.step, "visible"):
+                self.output(f"Step {self.step} - Alert for invalid puzzle code is present.", 2)
+            else:
+                self.output(f"Step {self.step} - Alert for invalid puzzle code is not present.", 1)
+
+            self.output(f"Step {self.step} - Completed daily reward sequence successfully.", 2)
+
 
     def get_balance(self, claimed=False):
 
