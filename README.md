@@ -8,10 +8,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on Patreon!
 
+- **Daily Reward Claim Added to Spell**: Save time and get free rewards automatically. [read more](https://www.patreon.com/posts/daily-reward-to-110591201?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Tabizoo Script Gets Auto-Upgrade Function**: Discover the latest feature and how to use it. [read more](https://www.patreon.com/posts/tabizoo-script-110532859?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Support added for 3rd Party Proxy Connections**: Learn how to enable this new feature in your bot. [read more](https://www.patreon.com/posts/support-added-110409861?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Fuel Bot removed by devs?**: Read more about how this affects your scripts. [read more](https://www.patreon.com/posts/fuel-bot-removed-110318621?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Timefarm Auto-Staking & Tabi Zoo Integration**: Read this week's news and new additions on Patreon. [read more](https://www.patreon.com/posts/unleashing-new-110243891?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
