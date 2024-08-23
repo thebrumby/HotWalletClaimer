@@ -91,7 +91,7 @@ class HotClaimer(Claimer):
 
         self.launch_iframe()
 
-        xpath = "(//div[div/img[contains(@src, 'near.png')]])//p[last()]"
+        xpath = "(//div[div/img[contains(@src, '/ft/near.png')]])//p[last()]"
         near = self.monitor_element(xpath, 10, "obtain your 'Near' Balance")
         if near:
             try:
@@ -100,7 +100,7 @@ class HotClaimer(Claimer):
         
                 # Convert the last element to a float
                 last_value_float = float(last_value_str)
-                if last_value_float < 0.2:
+                if last_value_float < 0.1:
                     low_near = True
                 else:
                     low_near = False
@@ -161,6 +161,13 @@ class HotClaimer(Claimer):
                     xpath = "//button[contains(text(), 'Claim HOT')]"
                     self.move_and_click(xpath, 10, True, "click the claim button (2nd button - may not be present)", self.step, "clickable")
                     self.increase_step()
+
+                    if low_near:
+                        time.sleep(5)
+                        xpath = "//button[contains(text(), 'Continue with HOT')]"
+                        self.move_and_click(xpath, 10, True, "click the claim button (2nd button - may not be present)", self.step, "clickable")
+                        self.increase_step()
+
 
                     self.output(f"Step {self.step} - Let's wait for the pending Claim spinner to stop spinning...", 2)
                     time.sleep(5)
@@ -225,7 +232,7 @@ class HotClaimer(Claimer):
         balance_xpath = f"//p[contains(text(), 'HOT')]/following-sibling::img/following-sibling::p"
 
         try:
-            element = self.monitor_element(balance_xpath)
+            element = self.monitor_element(balance_xpath, 15, "get balance")
             if element:
                 balance_part = element # .text.strip()
                 self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
@@ -248,7 +255,7 @@ class HotClaimer(Claimer):
         profit_xpath = "//div[div[p[text()='Storage']]]//p[last()]"
 
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath))
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "get profit per hour"))
 
             # Check if element is not None and process the profit
             if element:
