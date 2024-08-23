@@ -3,6 +3,8 @@ import subprocess
 from datetime import datetime
 import re
 import os
+import time
+from fcntl import flock, LOCK_EX, LOCK_UN, LOCK_NB
 
 def run_command(command):
     return subprocess.run(command, text=True, shell=True, capture_output=True).stdout
@@ -29,11 +31,6 @@ def extract_detail(line, keyword):
 def fetch_and_process_logs(process_name):
     sanitized_process_name = process_name.replace(':', '-').replace('_', '-')
     log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
-
-    if not os.path.exists(log_file):
-        print(f"Log file not found for process: {process_name}, skipping...")
-        return process_name, "None", "None", "None", "Log file missing"
-
     logs = run_command(f"tail -n 200 {log_file}")
 
     balance = "None"
@@ -73,7 +70,6 @@ def display_processes(processes, status, sort_by="time", start_index=1):
     process_list = []
     for process_name in processes:
         if process_name.strip():
-            # Removed debugging lines
             name, balance, profit_hour, next_claim_at, log_status = fetch_and_process_logs(process_name.strip())
             process_list.append((name, balance, profit_hour, next_claim_at, log_status))
 
@@ -195,6 +191,27 @@ def parse_delete_ids(delete_ids_str):
             ids.add(int(part))
     return sorted(ids)
 
+def sessions(command):
+    status_file_path = "status.txt"
+    if command == "active":         # change in active sessions
+        current_sessions = {}
+        while True:
+            with open(status_file_path, "r+") as file:
+                status = json.load(file)
+
+                # Check for available slots, exclude current session from count
+                active_sessions = {k: v for k, v in status.items()}
+
+                if current_sessions != active_sessions:
+                    current_sessions = active_sessions                  
+                    print(f"active sessions: {active_sessions}")        # TODO : maybe some text beautify on names would be better
+                time.sleep(5)
+    elif command == "stop":         # stop all sessions
+        pass
+    elif command == "restart":      # restart all sessions
+        pass
+            
+
 def main():
     print("Reading the data from PM2 - this may take some time if you have a lot of games.")
     while True:
@@ -215,6 +232,7 @@ def main():
         print("'delete [pattern]' - Delete all processes matching the pattern (e.g. HOT, Blum, Wave)")
         print("'status [ID]' - Show the last 20 balances and status of the selected process")
         print("'logs [ID] [lines]' - Show the last 'n' lines of PM2 logs for the process (default: 30)")
+        print("'sessions [Command]' - Show active sessions, stop all sessions and restart all sessions [status, stop, restart]")
         print("'exit' or hit enter - Exit the program")
 
         user_input = input("\nEnter your choice: ").strip()
@@ -248,6 +266,16 @@ def main():
                     show_logs(logs_id, stopped_process_list, lines)
                 else:
                     show_logs(logs_id - len(stopped_process_list), running_process_list, lines)
+            except ValueError:
+                print("Invalid input.")
+        elif user_input.startswith("sessions"):
+            try:
+                command = user_input.split()[1]
+                right_commands = ["status", "stop", "restart"]
+                if command in right_commands:
+                    sessions(command)
+                else:
+                    print("Invalid input.")
             except ValueError:
                 print("Invalid input.")
         elif user_input == "exit" or user_input == "":
