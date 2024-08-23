@@ -100,7 +100,7 @@ class HotClaimer(Claimer):
         
                 # Convert the last element to a float
                 last_value_float = float(last_value_str)
-                if last_value_float < 0.2:
+                if last_value_float < 0.1:
                     low_near = True
                 else:
                     low_near = False
@@ -161,6 +161,13 @@ class HotClaimer(Claimer):
                     xpath = "//button[contains(text(), 'Claim HOT')]"
                     self.move_and_click(xpath, 10, True, "click the claim button (2nd button - may not be present)", self.step, "clickable")
                     self.increase_step()
+
+                    if low_near:
+                        time.sleep(5)
+                        xpath = "//button[contains(text(), 'Continue with HOT')]"
+                        self.move_and_click(xpath, 10, True, "click the claim button (2nd button - may not be present)", self.step, "clickable")
+                        self.increase_step()
+
 
                     self.output(f"Step {self.step} - Let's wait for the pending Claim spinner to stop spinning...", 2)
                     time.sleep(5)
