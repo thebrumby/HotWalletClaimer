@@ -4,6 +4,10 @@ from datetime import datetime
 import re
 import os
 
+def should_exclude_process(process_name):
+    excluded_keywords = ["solver-tg-bot", "Telegram-Bot", "http-proxy", "Activating", "Initialising"]
+    return any(keyword in process_name for keyword in excluded_keywords)
+
 def run_command(command):
     return subprocess.run(command, text=True, shell=True, capture_output=True).stdout
 
@@ -31,7 +35,6 @@ def fetch_and_process_logs(process_name):
     log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
 
     if not os.path.exists(log_file):
-        print(f"Log file not found for process: {process_name}, skipping...")
         return process_name, "None", "None", "None", "Log file missing"
 
     logs = run_command(f"tail -n 200 {log_file}")
@@ -205,9 +208,11 @@ def main():
         print(f"Found {len(inactive_directories)} inactive directories in Selenium.")
 
         print("\nInactive Processes:")
-        stopped_process_list = display_processes(stopped_processes + inactive_directories, "Stopped", sort_by="name", start_index=1)
+        combined_processes = list(set(p for p in (stopped_processes + inactive_directories) if not should_exclude_process(p)))
+        stopped_process_list = display_processes(combined_processes, "Stopped", sort_by="name", start_index=1)
         print("\nActive Processes:")
-        running_process_list = display_processes(running_processes, "Running", sort_by="name", start_index=len(stopped_process_list) + 1)
+        running_processes_filtered = [p for p in running_processes if not should_exclude_process(p)]
+        running_process_list = display_processes(running_processes_filtered, "Running", sort_by="name", start_index=len(stopped_process_list) + 1)
 
         print("\nOptions:")
         print("'t' - Sort by time of next claim")
