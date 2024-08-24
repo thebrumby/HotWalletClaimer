@@ -771,7 +771,7 @@ class Claimer:
             
                 xpath = "//*[contains(text(), 'Incorrect password')]"
                 try:
-                    incorrect_password = WebDriverWait(self.driver, 3).until(EC.visibility_of_element_located((By.XPATH, xpath)))
+                    incorrect_password = WebDriverWait(self.driver, 8).until(EC.visibility_of_element_located((By.XPATH, xpath)))
                     self.output(f"Step {self.step} - 2FA password is marked as incorrect by Telegram - check your debug screenshot if active.", 1)
                     if self.settings['debugIsOn']:
                         self.debug_information("incorrect telegram 2FA entered","error")
