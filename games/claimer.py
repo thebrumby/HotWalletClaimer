@@ -815,7 +815,7 @@ class Claimer:
         try:
             self.driver.get(self.url)
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            self.output(f"Step {self.step} - Attempting to verify if we are logged in (hopefully QR code is not present).", 3)
+            self.output(f"Step {self.step} - Attempting to verify if we are logged in (hopefully QR code is not present).", 2)
             xpath = "//canvas[@class='qr-canvas']"
             if self.settings['debugIsOn']:
                 self.debug_information("QR code check during session start","check")

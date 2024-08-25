@@ -85,8 +85,11 @@ class SpellClaimer(Claimer):
 
             while time.time() - start_time < timeout:
                 if self.move_and_click(recover_wallet_xpath, 10, False, "check for success", self.step, "visible"):
+                    self.increase_step()
                     self.click_element(recover_wallet_xpath, 30, "Click 'Recover Wallet'")
+                    self.increase_step()
                     if self.move_and_click(wallet_check_xpath, 10, False, "check if wallet tab visible (may not be present)", "08", "visible"):
+                        self.increase_step()
                         self.output(f"Step {self.step} - The wallet tab is now visible...",3)
                         break  # Exit loop if the Wallet check element is found
 
