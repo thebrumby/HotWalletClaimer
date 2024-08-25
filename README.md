@@ -8,9 +8,9 @@ Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would 
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
+- **Crypto Rank Added, and Updates to Timefarm, Vertus, and LumCity**: Check out the latest blog. [read more](https://www.patreon.com/posts/new-features-and-110765516?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Daily Reward Claim Added to Spell**: Save time and get free rewards automatically. [read more](https://www.patreon.com/posts/daily-reward-to-110591201?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Tabizoo Script Gets Auto-Upgrade Function**: Effortlessly improve your Tabizoo mining speed. [read more](https://www.patreon.com/posts/tabizoo-script-110532859?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Support added for 3rd Party Proxy Connections**: Learn how to enable this new feature in your bot. [read more](https://www.patreon.com/posts/support-added-110409861?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
