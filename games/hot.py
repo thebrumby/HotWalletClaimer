@@ -88,6 +88,7 @@ class HotClaimer(Claimer):
 
     def full_claim(self):
         self.step = "100"
+        low_near = True
 
         self.launch_iframe()
 
@@ -100,9 +101,7 @@ class HotClaimer(Claimer):
         
                 # Convert the last element to a float
                 last_value_float = float(last_value_str)
-                if last_value_float < 0.1:
-                    low_near = True
-                else:
+                if last_value_float > 0.1:
                     low_near = False
         
                 self.output(f"Step {self.step} - Successfully extracted Near balance: {last_value_float}", 3)
@@ -162,13 +161,6 @@ class HotClaimer(Claimer):
                     self.move_and_click(xpath, 10, True, "click the claim button (2nd button - may not be present)", self.step, "clickable")
                     self.increase_step()
 
-                    if low_near:
-                        time.sleep(5)
-                        xpath = "//button[contains(text(), 'Continue with HOT')]"
-                        self.move_and_click(xpath, 10, True, "click the claim button (2nd button - may not be present)", self.step, "clickable")
-                        self.increase_step()
-
-
                     self.output(f"Step {self.step} - Let's wait for the pending Claim spinner to stop spinning...", 2)
                     time.sleep(5)
                     wait = WebDriverWait(self.driver, 240)
@@ -190,10 +182,10 @@ class HotClaimer(Claimer):
                     if wait_time_text == "Filled":
                         if low_near:
                             self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
-                            self.output(f"STATUS: It appears your NEAR balance is low, which may have caused the claim to fail.", 1)
+                            self.output(f"STATUS: We could not confirm you have >0.1 Near, which may have caused the claim to fail.", 1)
                             self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not, try again.", 2)
                         else:
-                            self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
+                            self.output(f"STATUS: The wait timer is still showing: Filled - claim failed.", 1)
                             self.output(f"Step {self.step} - This means either the claim failed, or there is >4 minutes lag in the game.", 1)
                             self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not, try again.", 2)
                     else:
