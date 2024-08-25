@@ -983,7 +983,7 @@ class Claimer:
                 """, target_element)
 
                 if not is_in_viewport:
-                    self.output(f"Step {self.step} - Element was out of bounds but has been scrolled into view.", 2)
+                    self.output(f"Step {self.step} - Element was out of bounds but has been scrolled into view.", 3)
                     if self.settings['debugIsOn']:
                         self.debug_information(f"{action_description} was out of bounds and scrolled into view", "info")
 
