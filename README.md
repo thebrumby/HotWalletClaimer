@@ -1,6 +1,6 @@
 # Telegram Claim Assistant - Mine HOT & More!
 
-Supporting 14 crypto-based games and growing weekly. Automate claims and stay informed about their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
+Supporting 15 crypto-based games and growing weekly. Automate claims and stay informed about their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
 
 ---
 
