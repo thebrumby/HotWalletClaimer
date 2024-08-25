@@ -945,11 +945,12 @@ class Claimer:
         def timer():
             return random.randint(1, 3) / 10
 
-        self.output(f"Step {self.step} - Attempting to {action_description}... {xpath}", 2)
+        self.output(f"Step {self.step} - Attempting to {action_description}...", 2)
 
         wait = WebDriverWait(self.driver, wait_time)
         target_element = None
-        for attempt in range(5):  # Retry loop for handling StaleElementReferenceException
+    
+        for attempt in range(5):  # Retry loop for handling issues like StaleElementReferenceException
             try:
                 if expectedCondition == "visible":
                     target_element = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -958,45 +959,33 @@ class Claimer:
                 elif expectedCondition == "invisible":
                     wait.until(EC.invisibility_of_element_located((By.XPATH, xpath)))
                     if self.settings['debugIsOn']:
-                        self.debug_information(f"MoveClick {action_description} was invisible","check")
+                        self.debug_information(f"{action_description} was found to be invisible", "check")
                     return None
                 elif expectedCondition == "clickable":
                     target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
 
                 if target_element is None:
                     self.output(f"Step {self.step} - The element was not found for {action_description}.", 2)
-                    self.debug_information(f"MoveClick {action_description} not found","error")
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"{action_description} not found", "error")
                     return None
 
-                actions = ActionChains(self.driver)
-                actions.move_to_element(target_element).pause(timer()).perform()
-
-                self.driver.execute_script("""
-                    var elem = arguments[0];
-                    var rect = elem.getBoundingClientRect();
-                    var isVisible = (
-                        rect.top >= 0 &&
-                        rect.left >= 0 &&
-                        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-                    );
-                    if (!isVisible) {
-                        elem.scrollIntoView({block: 'center'});
-                    }
-                """, target_element)
-
+                # Scroll element into view if it's not visible
                 is_in_viewport = self.driver.execute_script("""
                     var elem = arguments[0], box = elem.getBoundingClientRect();
-                    return (box.top >= 0 && box.left >= 0 &&
-                            box.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                            box.right <= (window.innerWidth || document.documentElement.clientWidth));
+                    if (!(box.top >= 0 && box.left >= 0 &&
+                        box.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                        box.right <= (window.innerWidth || document.documentElement.clientWidth))) {
+                        elem.scrollIntoView({block: 'center'});
+                        return false;
+                    }
+                    return true;
                 """, target_element)
 
                 if not is_in_viewport:
-                    self.output(f"Step {self.step} - Element still out of bounds after moving with ActionChains and JavaScript scrolling.", 2)
+                    self.output(f"Step {self.step} - Element was out of bounds but has been scrolled into view.", 2)
                     if self.settings['debugIsOn']:
-                        self.debug_information(f"MoveClick {action_description} out of bounds","error")
-                    continue
+                        self.debug_information(f"{action_description} was out of bounds and scrolled into view", "info")
 
                 if click or expectedCondition in ["visible", "clickable"]:
                     self.clear_overlays(target_element, self.step)
@@ -1005,24 +994,27 @@ class Claimer:
                     if self.click_element(xpath, action_description=action_description):
                         self.output(f"Step {self.step} - Successfully clicked {action_description}.", 3)
                         if self.settings['debugIsOn']:
-                            self.debug_information(f"MoveClick successfully {action_description}","success")
+                            self.debug_information(f"Successfully clicked {action_description}", "success")
                         return target_element
                 else:
                     if self.settings['debugIsOn']:
-                        self.debug_information(f"MoveClick move only to {action_description}","no click")
-                        return target_element
+                        self.debug_information(f"Moved to {action_description} without clicking", "no click")
+                    return target_element
 
             except StaleElementReferenceException:
-                self.output(f"Step {self.step} - StaleElementReferenceException caught, retrying attempt {attempt + 1} for {action_description}.", 2)
+                self.output(f"Step {self.step} - Element reference is stale. Retrying ({attempt + 1}/5) for {action_description}.", 2)
             except TimeoutException:
-                self.output(f"Step {self.step} - Timeout while trying to {action_description}.", 3)
+                self.output(f"Step {self.step} - Timeout while attempting to {action_description}.", 3)
                 if self.settings['debugIsOn']:
-                        self.debug_information(f"MoveClick move timeout during {action_description}","error")
+                    self.debug_information(f"Timeout during {action_description}", "error")
                 break
             except Exception as e:
-                self.output(f"Step {self.step} - An error occurred while trying to {action_description}: {e}", 1)
+                error_message = f"Step {self.step} - Error during {action_description}: {str(e)}"
+                if 'size and location' in str(e):
+                    error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
+                self.output(error_message, 1)
                 if self.settings['debugIsOn']:
-                        self.debug_information(f"MoveClick {action_description} fatal error","error")
+                    self.debug_information(f"Fatal error during {action_description}: {str(e)}", "error")
                 break
 
         return target_element
