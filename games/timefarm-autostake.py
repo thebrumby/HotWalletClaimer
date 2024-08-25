@@ -81,7 +81,9 @@ class TimeFarmAUClaimer(TimeFarmClaimer):
         xpath = "//div[@class='btn-text' and (contains(., 'Stake') or contains(., 'Start staking')) and not(ancestor::div[contains(@class, 'disabled')])]"
         success = self.move_and_click(xpath, 20, True, "click the 'Stake' button'", self.step, "clickable")
         if not success:
-            self.output(f"Step {self.step} - It appears that no further staking is currently available", 2)
+            self.output(f"Step {self.step} - It appears that no further staking is currently available, restarting browser.", 2)
+            self.quit_driver()
+            self.launch_iframe()
             return
         self.increase_step()
 

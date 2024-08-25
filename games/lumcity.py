@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import sys
@@ -99,19 +98,34 @@ class LumCityClaimer(Claimer):
 
         try:
             if remaining_wait_time < 5 or self.settings['forceClaim']:
+                
                 self.handle_claim_process()
-                self.attempt_upgrade(golt_balance)
-            
+
+                claim_drop = False
+                if self.attempt_upgrade(golt_balance):
+                    claim_drop = True
+
                 remaining_wait_time = self.get_wait_time(self.step, "post-claim")
                 self.increase_step()
 
                 xpath = "//button[contains(@class, 'backBtn')]"
                 self.move_and_click(xpath, 20, True, "click the 'backBtn' button", self.step, "clickable")
                 self.increase_step()
+                
                 self.output(f"Step {self.step} - Short wait to let the totals load", 3)
                 time.sleep(10)
+                
+                try:
+                    golt_balance = float(self.get_balance(True))
+                except (ValueError, TypeError):
+                    golt_balance = 0.0
 
-                self.get_balance(True)
+                if claim_drop and golt_balance > 1:
+                    self.output(f"Step {self.step} - Preparing to claim Drop", 3)
+                    self.claim_drop(golt_balance) 
+                elif claim_drop and not golt_balance > 1:
+                    self.output(f"Step {self.step} - Insufficient Galt to claim Drop", 3)
+
 
                 if remaining_wait_time == 0:
                     self.output(f"Step {self.step} - The wait timer is still showing: Filled.", 1)
@@ -155,7 +169,8 @@ class LumCityClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
-
+    def claim_drop(self):
+        pass
 
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"

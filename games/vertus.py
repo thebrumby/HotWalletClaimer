@@ -22,11 +22,11 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
+import requests
 
 from claimer import Claimer
 
 class VertusClaimer(Claimer):
-
     def initialize_settings(self):
         super().initialize_settings()
         self.script = "games/vertus.py"
@@ -50,108 +50,96 @@ class VertusClaimer(Claimer):
         self.driver = None  # Initialize the driver to None
         super().__init__()
 
-    def setup_driver(self):
-        chrome_options = Options()
-        chrome_options.add_argument(f"user-data-dir={self.session_path}")
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
-        chrome_options.add_argument(f"user-agent={user_agent}")
-        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
+    def cipher_daily(self):
+        cipher_xpath = "//div[contains(@class, 'btnLeft')]"
+        self.move_and_click(cipher_xpath, 10, True, "move to the Cipher island link", self.step, "clickable")
 
-        if self.settings["useProxy"]:
-            proxy_server = self.settings["proxyAddress"]
-            chrome_options.add_argument(f"--proxy-server={proxy_server}")
+        # Define the possible XPath expressions for each image
+        xpaths = {
+            '1': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/farmIsland.png']",
+            '2': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/mineIsland.png']",
+            '3': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/buildIsland.png']",
+            '4': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/forestIsland.png']"
+        }
 
-        chrome_options.add_argument("--ignore-certificate-errors")
-        chrome_options.add_argument("--allow-running-insecure-content")
-        chrome_options.add_argument("--test-type")
-
-        chromedriver_path = shutil.which("chromedriver")
-        if chromedriver_path is None:
-            self.output("ChromeDriver not found in PATH. Please ensure it is installed.", 1)
-            exit(1)
-
-        try:
-            service = Service(chromedriver_path)
-            self.driver = webdriver.Chrome(service=service, options=chrome_options)
-            return self.driver
-        except Exception as e:
-            self.output(f"Initial ChromeDriver setup may have failed: {e}", 1)
-            self.output("Please ensure you have the correct ChromeDriver version for your system.", 1)
-            exit(1)
-
-    def next_steps(self):
-        if self.step:
-            pass
+        xpath_empty = "//img[contains(@class, 'itemEmpty')]"
+        if not self.move_and_click(xpath_empty, 10, False, "look for empty slots", self.step, "visible"):
+            self.output(f"Step {self.step} - The daily puzzle is already completed.", 2)
         else:
-            self.step = "01"
+            self.output(f"Step {self.step} - Attempting to solve the daily puzzle.", 2)
 
-        try:
-            self.launch_iframe()
+            try:
+                response = requests.get('https://raw.githubusercontent.com/thebrumby/HotWalletClaimer/main/extras/vertuscipher')
+                response.raise_for_status()  # Check if the request was successful
+                sequence = response.text.strip()
+            except requests.exceptions.RequestException as e:
+                self.output(f"Error fetching the sequence: {e}", 1)
+                return
+
+            for i, digit in enumerate(sequence):
+                self.output(f"Step {self.step} - Digit found: {digit}", 3)
+                xpath = xpaths.get(digit)
+                if xpath:
+                    success = self.click_element(xpath)
+                    if success:
+                        self.output(f"Step {self.step} - Successfully clicked element for digit {digit} using XPath {xpath}", 3)
+                    else:
+                        self.output(f"Step {self.step} - Failed to click element for digit {digit} using XPath {xpath}", 3)
+                else:
+                    self.output(f"Step {self.step} - No XPath found for digit {digit}", 3)
+
+    def check_daily_reward(self):
+        action = ActionChains(self.driver)
+        mission_xpath = "//p[contains(text(), 'Missions')]"
+        self.move_and_click(mission_xpath, 10, False, "move to the missions link", self.step, "visible")
+        success = self.click_element(mission_xpath)
+        if success:
+            self.output(f"Step {self.step} - Successfully able to click the 'Missions' link.", 3)
+        else:
+            self.output(f"Step {self.step} - Failed to click the 'Missions' link.", 3)
+        self.increase_step()
+        
+
+        daily_xpath = "//p[contains(text(), 'Daily')]"
+        self.move_and_click(daily_xpath, 10, False, "move to the daily missions link", self.step, "visible")
+        success = self.click_element(daily_xpath)
+        if success:
+            self.output(f"Step {self.step} - Successfully able to click the 'Daily Missions' link.", 3)
+        else:
+            self.output(f"Step {self.step} - Failed to click the 'Daily Missions' link.", 2)
+        self.increase_step()
+
+        claim_xpath = "//p[contains(text(), 'Claim')]"
+        button = self.move_and_click(claim_xpath, 10, False, "move to the claim daily missions link", self.step, "visible")
+        if button:
+            self.driver.execute_script("arguments[0].click();", button)
+        success = self.click_element(claim_xpath)
+        if success:
             self.increase_step()
-            self.set_cookies()
-        except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.", 1)
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {e}", 1)
+            self.output(f"Step {self.step} - Successfully able to click the 'Claim Daily' link.", 3)
+            return "Daily bonus claimed."
+
+        come_back_tomorrow_xpath = "//p[contains(text(), 'Come back tomorrow')]"
+        come_back_tomorrow_msg = self.move_and_click(come_back_tomorrow_xpath, 10, False, "check if the bonus is for tomorrow", self.step, "visible")
+        if come_back_tomorrow_msg:
+            self.increase_step()
+            return "The daily bonus will be available tomorrow."
+
+        self.increase_step()
+        return "Daily bonus status unknown."
 
     def full_claim(self):
         self.step = "100"
         self.launch_iframe()
 
-        def check_daily_reward():
-            action = ActionChains(self.driver)
-            mission_xpath = "//p[contains(text(), 'Missions')]"
-            self.move_and_click(mission_xpath, 10, False, "move to the missions link", self.step, "visible")
-            success = self.click_element(mission_xpath)
-            if success:
-                self.output(f"Step {self.step} - Successfully able to click the 'Missions' link.", 3)
-            else:
-                self.output(f"Step {self.step} - Failed to click the 'Missions' link.", 3)
-            self.increase_step()
-
-            daily_xpath = "//p[contains(text(), 'Daily')]"
-            self.move_and_click(daily_xpath, 10, False, "move to the daily missions link", self.step, "visible")
-            success = self.click_element(daily_xpath)
-            if success:
-                self.output(f"Step {self.step} - Successfully able to click the 'Daily Missions' link.", 3)
-            else:
-                self.output(f"Step {self.step} - Failed to click the 'Daily Missions' link.", 3)
-            self.increase_step()
-
-            claim_xpath = "//p[contains(text(), 'Claim')]"
-            button = self.move_and_click(claim_xpath, 10, False, "move to the claim daily missions link", self.step, "visible")
-            if button:
-                self.driver.execute_script("arguments[0].click();", button)
-            success = self.click_element(claim_xpath)
-            if success:
-                self.increase_step()
-                self.output(f"Step {self.step} - Successfully able to click the 'Claim Daily' link.", 3)
-                return "Daily bonus claimed."
-
-            come_back_tomorrow_xpath = "//p[contains(text(), 'Come back tomorrow')]"
-            come_back_tomorrow_msg = self.move_and_click(come_back_tomorrow_xpath, 10, False, "check if the bonus is for tomorrow", self.step, "visible")
-            if come_back_tomorrow_msg:
-                self.increase_step()
-                return "The daily bonus will be available tomorrow."
-
-            self.increase_step()
-            return "Daily bonus status unknown."
-
         xpath = "//p[text()='Collect']"
         island_text = ""
-        button = self.move_and_click(xpath, 10, False, "collect the Island bonus", self.step, "visible")
+        button = self.move_and_click(xpath, 10, False, "collect the Island bonus (may not be present)", self.step, "visible")
         if button:
             self.driver.execute_script("arguments[0].click();", button)
-            island_text = "Island bonus claimed. "
+            island_text = "Island bonus claimed."
         self.increase_step()    
 
-        # Click on the Storage link:
         xpath = "//p[text()='Mining']"
         button = self.move_and_click(xpath, 10, False, "collect the Storage link", self.step, "visible")
         if button:
@@ -168,13 +156,13 @@ class VertusClaimer(Claimer):
         if wait_time_text != "Ready to collect":
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
             remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
-            if remaining_wait_time < 5 or self.settings["forceClaim"]:
+            if remaining_wait_time < 5:
                 self.settings['forceClaim'] = True
                 self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
-            else:
-                remaining_wait_time = min(180, remaining_wait_time)
-                self.output(f"STATUS: {island_text}We'll go back to sleep for {remaining_wait_time} minutes.", 1)
-                return remaining_wait_time
+        if not self.settings["forceClaim"]:
+            remaining_wait_time = min(120, remaining_wait_time)
+            self.output(f"STATUS: {island_text}We'll go back to sleep for {remaining_wait_time} minutes.", 1)
+            return remaining_wait_time
 
         if not wait_time_text:
             return 60
@@ -186,21 +174,17 @@ class VertusClaimer(Claimer):
             if wait_time_text == "Ready to collect" or self.settings['forceClaim']:
                 try:
                     xpath = "//div[p[text()='Collect']]"
-                    success = self.click_element(xpath)
-                    if success:
-                        self.output(f"Step {self.step} - We successfully clicked the Collect button.", 2)
-                    else:
-                        self.output(f"Step {self.step} - We failed to the Collect button.", 2)
-
-                    xpath = "//p[contains(@class, '_text_16x1w_17') and text()='Claim']"
-                    success = self.click_element(xpath)
-                    if success:
-                        self.output(f"Step {self.step} - Successfully Claimed The new splash from vertus :)", 2)
-                    else:
-                        self.output(f"Step {self.step} Failed to click 'the newest Claim' button", 2)
+                    self.move_and_click(xpath, 10, True, "collect the main reward", self.step, "clickable")
                     self.increase_step()
 
-                    time.sleep(5)
+                    xpath = "//div[div/p[text()='Claim']]/div/p"
+                    self.move_and_click(xpath, 10, True, "claim without connecting wallet (may not present)", self.step, "clickable")
+                    self.increase_step()
+
+                    # xpath = "//p[contains(@class, '_text_16x1w_17') and text()='Claim']"
+                    # success = self.click_element(xpath)
+                    # self.move_and_click(xpath, 10, True, "collect the 'splash' reward", self.step, "clickable")
+                    # self.increase_step()
 
                     wait_time_text = self.get_wait_time(self.step, "post-claim")
                     self.output(f"Step {self.step} - Post-Claim raw wait time text: {wait_time_text}", 3)
@@ -210,7 +194,9 @@ class VertusClaimer(Claimer):
 
                     balance_after_claim = self.get_balance(claimed=True)
 
-                    daily_reward_text = check_daily_reward()
+                    self.cipher_daily() 
+
+                    daily_reward_text = self.check_daily_reward()
                     self.increase_step()
 
                     if wait_time_text == "Ready to collect":
@@ -218,7 +204,7 @@ class VertusClaimer(Claimer):
                         self.output(f"Step {self.step} - This means either the claim failed, or there is >4 minutes lag in the game.", 1)
                         self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                     else:
-                        self.output(f"STATUS: {island_text}. Successful Claim & {daily_reward_text}: Next claim in {min(60, total_wait_time)} minutes.", 1)
+                        self.output(f"STATUS: {island_text}. Successful Claim & {daily_reward_text}", 1)
                     return min(180, total_wait_time)
 
                 except TimeoutException:
@@ -274,7 +260,7 @@ class VertusClaimer(Claimer):
         priority = max(self.settings['verboseLevel'], default_priority)
 
         balance_text = f'{prefix} BALANCE:'
-        balance_xpath = "//div[contains(@class, '_balanceCon_qig4y_22')]//p[@class='_value_qig4y_16']"
+        balance_xpath = "//div[p[contains(text(), 'Vert balance')]]/div/p"
 
         try:
             balance_part = self.monitor_element(balance_xpath, 15, "balance")
@@ -317,90 +303,6 @@ class VertusClaimer(Claimer):
                 self.output(f"Step {step_number} - An error occurred on attempt {attempt}: {e}", 3)
 
         return False
-
-    def get_driver(self):
-        if self.driver is None:  # Check if driver needs to be initialized
-            self.manage_session()  # Ensure we can start a session
-            self.driver = self.setup_driver()
-            self.output("\nCHROME DRIVER INITIALISED: Try not to exit the script before it detaches.", 2)
-        return self.driver
-
-    def quit_driver(self):
-        if self.driver:
-            self.driver.quit()
-            self.output("\nCHROME DRIVER DETACHED: It is now safe to exit the script.", 2)
-            self.driver = None
-            self.release_session()  # Mark the session as closed
-
-    def manage_session(self):
-        current_session = self.session_path
-        current_timestamp = int(time.time())
-        session_started = False
-        new_message = True
-        output_priority = 1
-
-        while True:
-            try:
-                with open(self.status_file_path, "r+") as file:
-                    flock(file, LOCK_EX)
-                    status = json.load(file)
-
-                    # Clean up expired sessions
-                    for session_id, timestamp in list(status.items()):
-                        if current_timestamp - timestamp > 300:  # 5 minutes
-                            del status[session_id]
-                            self.output(f"Removed expired session: {session_id}", 3)
-
-                    # Check for available slots, exclude current session from count
-                    active_sessions = {k: v for k, v in status.items() if k != current_session}
-                    if len(active_sessions) < self.settings['maxSessions']:
-                        status[current_session] = current_timestamp
-                        file.seek(0)
-                        json.dump(status, file)
-                        file.truncate()
-                        self.output(f"Session started: {current_session} in {self.status_file_path}", 3)
-                        flock(file, LOCK_UN)
-                        session_started = True
-                        break
-                    flock(file, LOCK_UN)
-
-                if not session_started:
-                    self.output(f"Waiting for slot. Current sessions: {len(active_sessions)}/{self.settings['maxSessions']}", output_priority)
-                    if new_message:
-                        new_message = False
-                        output_priority = 3
-                    time.sleep(random.randint(5, 15))
-                else:
-                    break
-
-            except FileNotFoundError:
-                # Create file if it doesn't exist
-                with open(self.status_file_path, "w") as file:
-                    flock(file, LOCK_EX)
-                    json.dump({}, file)
-                    flock(file, LOCK_UN)
-            except json.decoder.JSONDecodeError:
-                # Handle empty or corrupt JSON
-                with open(self.status_file_path, "w") as file:
-                    flock(file, LOCK_EX)
-                    self.output("Corrupted status file. Resetting...", 3)
-                    json.dump({}, file)
-                    flock(file, LOCK_UN)
-
-    def release_session(self):
-        current_session = self.session_path
-        current_timestamp = int(time.time())
-
-        with open(self.status_file_path, "r+") as file:
-            flock(file, LOCK_EX)
-            status = json.load(file)
-            if current_session in status:
-                del status[current_session]
-                file.seek(0)
-                json.dump(status, file)
-                file.truncate()
-            flock(file, LOCK_UN)
-            self.output(f"Session released: {current_session}", 3)
 
 def main():
     claimer = VertusClaimer()

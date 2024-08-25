@@ -39,49 +39,141 @@ class LumCityAUClaimer(LumCityClaimer):
         self.start_app_xpath = "//span[contains(text(), 'Open the App')]"
 
     def attempt_upgrade(self, balance):
+        
         try:
-            cost_upgrade = self.get_upgrade_cost()
+            # Get the current level using the new function
+            current_level = self.get_current_level()
+            
+            # If the current level is greater than 20, return True, indicating no further upgrade needed
+            upgrade_threshold = 40
+            if current_level > upgrade_threshold:
+                self.output(f"Step {self.step} - {current_level} > {upgrade_threshold} let's burn for Drop instead.", 2)
+                return True
+            else:
+                self.output(f"Step {self.step} - {current_level} < {upgrade_threshold} so let's attempt to upgrade.", 2)
+            
         except (ValueError, AttributeError, TypeError) as e:
-            self.output(f"Step {self.step} - Unable to convert cost or balance to a number: {e}", 2)
+            # Log the exception with a step number and a severity level of 2
+            self.output(f"Step {self.step} - Unable to get the current level.", 2)
+            return
+
+        try:
+            # Get the upgrade cost
+            cost_upgrade = self.get_upgrade_cost()
+
+        except (ValueError, AttributeError, TypeError) as e:
+            # Log the exception with a step number and a severity level of 2
+            self.output(f"Step {self.step} - Unable to convert cost or balance to a number.", 2)
             return
 
         shortfall = balance - cost_upgrade
         shortfall_text = f", Shortfall of {round(shortfall, 5)}" if shortfall < 0 else ""
-        self.output(f"Step {self.step} - Balance: {balance}, Upgrade cost: {cost_upgrade}{shortfall_text}", 2)
+        self.output(
+            f"Step {self.step} - Balance: {balance}, Upgrade cost: {cost_upgrade}{shortfall_text}",
+            2,
+        )
 
+        # Check if there is sufficient balance to upgrade
         if balance > cost_upgrade:
             self.output(f"Step {self.step} - We can upgrade, processing...", 2)
             self.perform_upgrade()
         else:
-            self.output(f"Step {self.step} - Not enough balance to upgrade. Cost: {cost_upgrade}, Balance: {balance}", 2)
+            # Log the insufficient balance with a step number and severity level of 2
+            self.output(
+                f"Step {self.step} - Not enough balance to upgrade. Cost: {cost_upgrade}, Balance: {balance}",
+                2,
+            )
 
+        # Increment the step after attempting the upgrade
         self.increase_step()
 
     def get_upgrade_cost(self):
+        
         cost_xpath = "(//div[contains(@class, '_price_lnqn0_57')]/span[1])[1]"
-        self.move_and_click(cost_xpath, 30, False, "look for cost upgrade", self.step, "visible")
-        cost_upgrade = self.monitor_element(cost_xpath, 15, "cost of upgrade")
-        return float(cost_upgrade.replace(',', '').strip()) if cost_upgrade else 0
+
+        try:
+            # Attempt to locate and click on the upgrade cost element
+            self.move_and_click(cost_xpath, 30, False, "look for cost upgrade", self.step, "visible")
+            
+            # Monitor the upgrade cost element for up to 15 seconds
+            cost_upgrade = self.monitor_element(cost_xpath, 15, "cost of upgrade")
+
+            if cost_upgrade is None:
+                raise ValueError("Upgrade cost element not found")
+
+            # Return the upgrade cost as a float, handling possible formatting issues
+            return float(cost_upgrade.replace(',', '').strip())
+        
+        except Exception as e:
+            self.output(f"Step {self.step} - Error retrieving upgrade cost: {e}", 2)
+            return None
+    
+    def get_current_level(self):
+        
+        level_xpath = "//span[text()='pickaxe']/following-sibling::span"
+
+        try:
+            # Attempt to locate and click on the current level element
+            self.move_and_click(level_xpath, 30, False, "look for current level", self.step, "visible")
+            
+            # Monitor the current level element for up to 15 seconds
+            current_level = self.monitor_element(level_xpath, 15, "current level")
+
+            if current_level is None:
+                raise ValueError("Current level element not found")
+
+            # Extract the level number from the text, assuming the format is ' / XX LVL '
+            level_number = current_level.strip().split()[1]
+            
+            # Return the level number as an integer
+            return int(level_number)
+        
+        except Exception as e:
+            self.output(f"Step {self.step} - Error retrieving current level: {e}", 2)
+            return None
 
     def perform_upgrade(self):
+        
         try:
-            lvl_up_xpath = "//button[contains(@class, '_btn_16o80_16') and text()='Lvl Up']"
-            confirm_xpath = "//button[contains(@class, '_btn_16o80_16') and text()='Confirm']"
-            ok_xpath = "//button[contains(@class, '_btn_16o80_16') and text()='Ok']"
+            # Define XPaths for the buttons
+            buttons = {
+                'Lvl Up': "//button[contains(@class, '_btn_16o80_16') and text()='Lvl Up']",
+                'Confirm': "//button[contains(@class, '_btn_16o80_16') and text()='Confirm']",
+                'Ok': "//button[contains(@class, '_btn_16o80_16') and text()='Ok']"
+            }
 
-            self.move_and_click(lvl_up_xpath, 20, True, "click the 'Lvl Up' button", self.step, "clickable")
-            self.increase_step()
-
-            self.move_and_click(confirm_xpath, 20, True, "click the 'Confirm' button", self.step, "clickable")
-            self.increase_step()
-
-            self.move_and_click(ok_xpath, 20, True, "click the 'Ok' button", self.step, "clickable")
-            self.increase_step()
+            for action, xpath in buttons.items():
+                self.move_and_click(xpath, 20, True, f"click the '{action}' button", self.step, "clickable")
+                self.increase_step()
 
             self.output(f"STATUS: Upgrade performed successfully.", 1)
+        
         except Exception as e:
             self.output(f"Step {self.step} - Unable to perform upgrade. Error: {e}", 2)
 
+
+    def claim_drop(self, balance):
+        
+        try:
+            buttons = {
+                'Participate white': "//button[text()='Participate']",
+                'Big participate blue ': "//button[text()='Participate']",
+                'Burn': "//button[text()='Burn']",
+                'OK': "//button[text()='Ok']",
+                'Back': "//button[contains(@class, 'backBtn')]"
+            }
+
+            for action, xpath in buttons.items():
+                self.move_and_click(xpath, 30, True, f"click the '{action}' button", self.step, "clickable")
+                self.increase_step()
+
+            # Adding a fixed delay to ensure the 'Burn' action is processed
+            time.sleep(10)
+        
+        except Exception as e:
+            self.output(f"Step {self.step} - Error during drop claiming: {e}", 2)
+
+            
 def main():
     claimer = LumCityAUClaimer()
     claimer.run()

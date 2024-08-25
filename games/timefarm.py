@@ -23,8 +23,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
-
 from claimer import Claimer
+import requests
+from datetime import date
+import urllib.request
 
 class TimeFarmClaimer(Claimer):
 
@@ -38,7 +40,6 @@ class TimeFarmClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-        self.allow_early_claim = False
         self.start_app_xpath = "//span[contains(text(), 'Open App')]"
 
     def __init__(self):
@@ -76,9 +77,14 @@ class TimeFarmClaimer(Claimer):
         self.step = "100"
 
         self.launch_iframe()
+        xpath = "//div[not(@class='farming-button-block')]//span[contains(text(), 'Claim')]"
+        start_present = self.move_and_click(xpath, 8, True, "click loading page 'Claim' (may not be present)", self.step, "clickable")
+        self.increase_step()
 
-        xpath = "//div[@class='app-container']//div[@class='btn-text' and contains(., 'Claim')]"
-        start_present = self.move_and_click(xpath, 8, True, "make opening screen 'Claim' (may not be present)", self.step, "clickable")
+        # Navigate to the 'Home' tab
+        FREN_TAB_XPATH = "//div[@class='tab-title' and text()='Home']"
+        self.move_and_click(FREN_TAB_XPATH, 20, True, "Switch to the 'Home' tab", self.step, "clickable")
+        self.increase_step()
 
         self.get_balance(False)
         self.increase_step()
@@ -89,27 +95,18 @@ class TimeFarmClaimer(Claimer):
             self.click_element(xpath, 20)
         self.increase_step()
 
-        remaining_time = self.get_wait_time(False)
+        remaining_time = self.get_wait_time()
         self.increase_step()
         
-        if remaining_time:
-            if isinstance(remaining_time, (int, float)):
-                remaining_time = self.apply_random_offset(remaining_time)
-                self.output(f"STATUS: We still have {remaining_time} minutes left to wait - sleeping.", 1)
-                self.stake_coins()
-                return remaining_time
-
+        if isinstance(remaining_time, (int, float)) and not self.settings['forceClaim']:
+            remaining_time = self.apply_random_offset(remaining_time)
+            self.output(f"STATUS: We still have {remaining_time} minutes left to wait - sleeping.", 1)
+            return remaining_time
+    
         xpath = "//div[@class='farming-button-block'][.//span[text()='Claim']]"
-        success = self.move_and_click(xpath, 20, False, "look for the claim button.", self.step, "visible")
-
-        remaining_time = self.get_wait_time(True)
-        self.increase_step()
-        
-        if remaining_time:
-            if isinstance(remaining_time, (int, float)):
-                remaining_time = self.apply_random_offset(remaining_time)
-                remaining_time = int(remaining_time)
-        
+        self.move_and_click(xpath, 20, False, "look for the claim button.", self.step, "visible")
+        success = self.click_element(xpath, 20)
+        #self.claim_oracle()
         if success:
             self.increase_step()
             self.output(f"STATUS: We appear to have correctly clicked the claim button.",1)
@@ -122,15 +119,168 @@ class TimeFarmClaimer(Claimer):
             self.increase_step()
             self.get_balance(True)
             self.stake_coins()
+            self.claim_frens()
+            self.claim_oracle()
             return self.apply_random_offset(remaining_time)
+        
         else:
             self.output(f"STATUS: The claim button wasn't clickable on this occassion.",1)
             self.stake_coins()
+            self.claim_frens()
+            self.claim_oracle()
             return 60
+        
+    def claim_frens(self):
 
-    def stake_coins(self):
-        pass
+        # Navigate to the 'Frens' tab
+        FREN_TAB_XPATH = "//div[@class='tab-title' and text()='Frens']"
+        if not self.move_and_click(FREN_TAB_XPATH, 20, True, "Switch to the 'Frens' tab", self.step, "clickable"):
+            self.increase_step()
+            return
+        self.increase_step()
+
+        # Click on the 'Claim' button        
+        CLAIM_BUTTON_XPATH = "//div[@class='btn-text' and text()='Claim']"
+        self.move_and_click(CLAIM_BUTTON_XPATH, 20, True, "Click on the 'Claim' button", self.step, "clickable")
+        self.increase_step()
             
+
+    def navigate_to_date_input(self):
+        # Step 1: Navigate to the 'Earn' tab
+        EARN_TAB_XPATH = "//div[@class='tab-title'][contains(., 'Earn')]"
+        if not self.move_and_click(EARN_TAB_XPATH, 20, True, "Switch to the 'Earn' tab", self.step, "clickable"):
+            self.increase_step()
+            return False
+
+        self.increase_step()
+
+        # Step 2: Click on the 'Oracle of Time' button
+        ORACLE_BUTTON_XPATH = "//div[contains(text(), 'Oracle of Time')]"
+        if not self.move_and_click(ORACLE_BUTTON_XPATH, 20, True, "Click on the 'Oracle of Time' button", self.step, "clickable"):
+            self.increase_step()
+            return False
+
+        # Step 3: Check if it's already been answered
+        CHECK_XPATH = "//div[contains(text(), 'You have already answered')]"
+        if self.move_and_click(CHECK_XPATH, 10, True, "check if already answered", self.step, "clickable"):
+            self.increase_step()
+            self.output(f"Step {self.step} - You have already answered today\'s Oracle of Time", 2)
+            return False
+
+        self.increase_step()
+        return True
+
+    def claim_oracle(self):
+        # Step 1-3: Navigate to the correct place to input the date
+        if not self.navigate_to_date_input():
+            return
+
+        # Step 4: Fetch the content from the GitHub file using urllib
+        url = "https://raw.githubusercontent.com/thebrumby/HotWalletClaimer/main/extras/timefarmdaily"
+        try:
+            with urllib.request.urlopen(url) as response:
+                content = response.read().decode('utf-8').strip()
+            self.output(f"Step {self.step} - Fetched content from GitHub: {content}", 3)
+        except Exception as e:
+            self.output(f"Step {self.step} - Failed to fetch Oracle of Time from GitHub: {str(e)}", 2)
+            return
+
+        self.increase_step()
+
+        # Step 4: Process the content as a date
+        content = self.strip_non_numeric(content)
+        if len(content) == 8 and content.isdigit():
+            day = content[:2]
+            month = content[2:4]
+            year = content[4:]
+            date_string = f"{day}{month}{year}"  # Format as 'DDMMYYYY'
+            self.output(f"Step {self.step} - Date extracted: {day}/{month}/{year}", 3)
+        else:
+            self.output(f"Step {self.step} - Content is not a valid 8-digit date: {content}", 2)
+            return
+
+        self.increase_step()
+
+        # Step 5: Try entering the date in 'dd/mm/yyyy' format first
+        if not self.enter_date(day, month, year, date_string, "dd/mm/yyyy"):
+            self.output(f"Step {self.step} - dd/mm/yyyy format failed. Retrying with mm/dd/yyyy.", 3)
+            self.quit_driver()  # Quit the driver
+            time.sleep(5)  # Wait a bit before relaunching
+            self.launch_iframe()  # Relaunch the driver
+
+            # Re-navigate to the correct place
+            if not self.navigate_to_date_input():
+                return
+
+            # Retry entering the date in 'mm/dd/yyyy' format
+            if not self.enter_date(day, month, year, date_string, "mm/dd/yyyy"):
+                self.output(f"Step {self.step} - mm/dd/yyyy format also failed. Exiting.", 2)
+                return
+
+        self.increase_step()
+
+        # Step 6: Navigate to the 'checkzedate' tab
+        CHECKDATE_XPATH = "//div[text()='Check the date']"
+        self.move_and_click(CHECKDATE_XPATH, 10, True, "check if date correct", self.step, "clickable")
+
+        TRYAGAIN_XPATH = "//div[text()='Try again']"
+        failure = self.move_and_click(TRYAGAIN_XPATH, 10, True, "check if completion error", self.step, "clickable")
+        if not failure:
+            CLAIM_XPATH = "//div[contains(text(),'Claim')]"
+            self.move_and_click(CLAIM_XPATH, 10, True, "claim after success", self.step, "clickable")
+            self.output(f"Step {self.step} - Oracle of Time verified as complete.", 2)
+        else:
+            self.output(f"Step {self.step} - The oracle of time date was wrong for the current puzzle.", 3)
+
+    def enter_date(self, day, month, year, date_string, date_format):
+        DATE_XPATH = "//input[@name='trip-start']"
+        TRYAGAIN_XPATH = "//div[text()='Try again']"
+        CHECKDATE_XPATH = "//div[text()='Check the date']"
+    
+        try:
+            trip_start_field = self.move_and_click(DATE_XPATH, 10, True, "click on date picker", self.step, "clickable")
+            trip_start_field.clear()  # Clear any pre-existing value in the field
+            self.increase_step()
+
+            if date_format == "dd/mm/yyyy":
+                # Send day first
+                self.output(f"Step {self.step} - Trying format dd/mm/yyyy", 3)
+                self.output(f"Step {self.step} - Sending day: {day}", 3)
+                trip_start_field.send_keys(day)
+                time.sleep(1)
+                self.output(f"Step {self.step} - Sending month: {month}", 3)
+                trip_start_field.send_keys(month)
+            else:
+                # Send month first
+                self.output(f"Step {self.step} - Trying format mm/dd/yyyy", 3)
+                self.output(f"Step {self.step} - Sending month: {month}", 3)
+                trip_start_field.send_keys(month)
+                time.sleep(1)
+                self.output(f"Step {self.step} - Sending day: {day}", 3)
+                trip_start_field.send_keys(day)
+
+            # Send the year
+            time.sleep(1)
+            self.output(f"Step {self.step} - Sending year: {year}", 3)
+            trip_start_field.send_keys(year)
+        
+            # Confirm the date input
+            time.sleep(2)
+            self.move_and_click(CHECKDATE_XPATH, 10, True, "confirm date", self.step, "visible")
+            self.output(f"Step {self.step} - Date submitted successfully in format {date_format}: {date_string[:2]}/{date_string[2:4]}/{date_string[4:]}", 3)
+
+            # Check if the "Try again" button is present, indicating failure
+            if self.move_and_click(TRYAGAIN_XPATH, 10, True, "check if answer was wrong", self.step, "visible"):
+                self.output(f"Step {self.step} - 'Try again' button detected. Date format {date_format} was incorrect.", 2)
+                return False  # Trigger retry
+
+            return True  # Success
+
+        except Exception as e:
+            self.output(f"Step {self.step} - Error submitting the date: {str(e)}", 2)
+            return False  # Failure
+
+
     def get_balance(self, claimed=False):
 
         prefix = "After" if claimed else "Before"
@@ -143,7 +293,7 @@ class TimeFarmClaimer(Claimer):
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
         balance_xpath = f"//div[@class='balance']"
         try:
-            balance_part = self.monitor_element(balance_xpath, 15, "monitor balance")
+            balance_part = self.monitor_element(balance_xpath)
             # Strip any HTML tags and unwanted characters
             balance_part = "$" + self.strip_html_tags(balance_part)
             # Check if element is not None and process the balance
@@ -175,8 +325,8 @@ class TimeFarmClaimer(Claimer):
                 # seconds = int(time_parts[2].strip())
                 return hours * 60 + minutes
             except ValueError:
-                return False
-        return False
+                return "Unknown"
+        return "Unknown"
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
 
@@ -184,7 +334,7 @@ class TimeFarmClaimer(Claimer):
             try:
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
                 xpath = "//table[@class='scroller-table']"
-                pot_full_value = self.monitor_element(xpath, 15, "get wait time")
+                pot_full_value = self.monitor_element(xpath, 15)
                 
                 # Strip any HTML tags and unwanted characters
                 pot_full_value = self.strip_html_tags(pot_full_value)
@@ -194,10 +344,13 @@ class TimeFarmClaimer(Claimer):
                 return wait_time_in_minutes
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return False
+                return "Unknown"
 
         # If all attempts fail         
-        return False
+        return "Unknown"
+
+    def stake_coins(self):
+        pass
 
 def main():
     claimer = TimeFarmClaimer()
