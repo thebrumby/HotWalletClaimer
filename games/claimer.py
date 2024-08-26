@@ -438,9 +438,8 @@ class Claimer:
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
-        if not self.settings.get("enableCache", True):
+        if not self.settings.get("enableCache", True) and step_int >= 100:
             chrome_options.add_argument("--disable-application-cache")
-
 
         if self.settings["useProxy"]:
             proxy_server = self.settings["proxyAddress"]
