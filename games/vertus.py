@@ -161,7 +161,7 @@ class VertusClaimer(Claimer):
                     self.settings['forceClaim'] = True
                     self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
                 if not self.settings["forceClaim"]:
-                    remaining_wait_time = min(120, remaining_wait_time)
+                    remaining_wait_time = min(30, remaining_wait_time)
                     self.output(f"STATUS: {island_text}We'll go back to sleep for {remaining_wait_time} minutes.", 1)
                     return remaining_wait_time
             else:
@@ -209,7 +209,7 @@ class VertusClaimer(Claimer):
                         self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                     else:
                         self.output(f"STATUS: {island_text}. Successful Claim & {daily_reward_text}", 1)
-                    return min(180, total_wait_time)
+                    return min(30, total_wait_time)
 
                 except TimeoutException:
                     self.output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.", 1)
