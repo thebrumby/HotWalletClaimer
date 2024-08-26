@@ -77,7 +77,7 @@ class HexacoreClaimer(Claimer):
         xpath = "//div[contains(@class, 'NavBar_agoContainer')]"
         self.move_and_click(xpath, 10, True, "click main tab", self.step, "visible")
         self.increase_step()
-
+        self.daily_claim()
         self.get_balance(False)
  
         remains = self.get_remains()
@@ -149,7 +149,25 @@ class HexacoreClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
+            
+    def daily_claim(self):
+        xpath = "//div[@class='DailyClaimButton_redDot__zH5Kc']"
+        success = self.move_and_click(xpath, 10, True, "Click on daily reward", self.step, "visible")
         
+        if success:
+            print("Daily reward button clicked successfully.")
+            
+            # XPath for the 'Claim Reward' button
+            xpath = "//button[contains(@class, 'DailyClaimModal_button__c-C7Y') and not(@disabled) and contains(text(), 'Claim Reward')]"
+            
+            # Attempt to click the 'Claim Reward' button
+            if self.move_and_click(xpath, 10, True, "Click on claim daily reward", self.step, "visible"):
+                print("Claim daily reward button clicked successfully.")
+            else:
+                print("Failed to click on the claim daily reward button.")
+        else:
+            print("Failed to click on the daily reward button Maybe already claimed .")    
+            
     def get_remains(self):
         remains_xpath = "//p[contains(text(), 'Remains')]/span"
         try:
