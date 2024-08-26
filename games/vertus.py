@@ -155,15 +155,19 @@ class VertusClaimer(Claimer):
 
         if wait_time_text != "Ready to collect":
             matches = re.findall(r'(\d+)([hm])', wait_time_text)
-            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
-            if remaining_wait_time < 5:
-                self.settings['forceClaim'] = True
-                self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
-        if not self.settings["forceClaim"]:
-            remaining_wait_time = min(120, remaining_wait_time)
-            self.output(f"STATUS: {island_text}We'll go back to sleep for {remaining_wait_time} minutes.", 1)
-            return remaining_wait_time
-
+            if matches:
+                remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)) + self.random_offset
+                if remaining_wait_time < 5:
+                    self.settings['forceClaim'] = True
+                    self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
+                if not self.settings["forceClaim"]:
+                    remaining_wait_time = min(120, remaining_wait_time)
+                    self.output(f"STATUS: {island_text}We'll go back to sleep for {remaining_wait_time} minutes.", 1)
+                    return remaining_wait_time
+            else:
+                self.output("No matches found in wait_time_text, assigning a default wait time.", 2)
+                return 60  # Default return if no matches found
+                
         if not wait_time_text:
             return 60
 
