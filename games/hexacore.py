@@ -101,7 +101,7 @@ class HexacoreClaimer(Claimer):
                 return optimal_time
 
         if wait_time_text:
-            return 15
+            return 360
 
         try:
             self.output(f"Step {self.step} - The pre-claim wait time is : {wait_time_text} and random offset is {self.random_offset} minutes.", 1)
