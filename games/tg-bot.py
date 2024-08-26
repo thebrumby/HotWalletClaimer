@@ -322,7 +322,7 @@ async def status_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 def should_exclude_process(process_name):
-    excluded_keywords = ["solver-tg-bot", "Telegram:", "http-proxy", "Activating", "Initialising"]
+    excluded_keywords = ["solver-tg-bot", "Telegram", "http-proxy", "Activating", "Initialising"]
     return any(keyword in process_name for keyword in excluded_keywords)
 
 def show_logs(process) -> str:
