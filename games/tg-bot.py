@@ -303,27 +303,34 @@ def find_index(lst, value):
 #region All Processes
 
 async def status_all(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    global stopped_processes, running_processes, inactive_directories, stopped_process_list, running_process_list
+    global stopped_processes, running_processes, inactive_directories
 
     await get_processes()
 
     for process in stopped_processes:
-        await send_message(update, context, show_logs(process.strip()))
+        if not should_exclude_process(process):
+            await send_message(update, context, show_logs(process.strip()))
 
     for process in running_processes:
-        await send_message(update, context, show_logs(process.strip()))
+        if not should_exclude_process(process):
+            await send_message(update, context, show_logs(process.strip()))
 
     for directory in inactive_directories:
-        await send_message(update, context, show_logs(directory.strip()))
+        if not should_exclude_process(directory):
+            await send_message(update, context, show_logs(directory.strip()))
 
     return ConversationHandler.END
+
+def should_exclude_process(process_name):
+    excluded_keywords = ["solver-tg-bot", "Telegram:", "http-proxy", "Activating", "Initialising"]
+    return any(keyword in process_name for keyword in excluded_keywords)
 
 def show_logs(process) -> str:
     """Send a message with the status of the bot."""
 
     try:
-        name, balance, next_claim_at, log_status = fetch_and_process_logs(process.strip())
-        return f"{name}:\n\t BALANCE: {balance}\n\tNEXT CLAIM AT: {next_claim_at}\n\tLOG STATUS: {log_status}"
+        name, balance, profit_hour, next_claim_at, log_status = fetch_and_process_logs(process.strip())
+        return f"{name}\n\tBALANCE: {balance}\n\tPROFIT/HOUR: {profit_hour}\n\tNEXT CLAIM AT: {next_claim_at}\n\tLOG STATUS:\n\t{log_status}"
     except Exception as e:
         print(f"Error: {e}")
         return f"{process}: ERROR getting information."
