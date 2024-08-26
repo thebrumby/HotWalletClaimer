@@ -88,6 +88,21 @@ class VertusClaimer(Claimer):
                 else:
                     self.output(f"Step {self.step} - No XPath found for digit {digit}", 3)
 
+    def next_steps(self):
+        if self.step:
+            pass
+        else:
+            self.step = "01"
+
+        try:
+            self.launch_iframe()
+            self.increase_step()
+            self.set_cookies()
+        except TimeoutException:
+            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.", 1)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {e}", 1)
+
     def check_daily_reward(self):
         action = ActionChains(self.driver)
         mission_xpath = "//p[contains(text(), 'Missions')]"
