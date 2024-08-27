@@ -153,23 +153,41 @@ class LumCityAUClaimer(LumCityClaimer):
 
 
     def claim_drop(self, balance):
-        
         try:
+            # Define button xpaths
             buttons = {
                 'Participate white': "//button[text()='Participate']",
-                'Big participate blue ': "//button[text()='Participate']",
+                'Big participate blue': "//button[text()='Participate']",
                 'Burn': "//button[text()='Burn']",
                 'OK': "//button[text()='Ok']",
                 'Back': "//button[contains(@class, 'backBtn')]"
             }
 
+            # Define the xpath for the pre button ('Claim')
+            pre_button_xpath = "//button[contains(@class, '_btn_16o80_16') and contains(@class, '_btnTheme-primary_16o80_74') and contains(@class, '_btn_oc7tm_48')]"
+
+            # Click 'Participate white' button first
+            self.move_and_click(buttons['Participate white'], 30, True, "click the 'Participate white' button", self.step, "clickable")
+            self.increase_step()
+
+            # Attempt to click the 'Claim' button after 'Participate white'
+            try:
+                self.move_and_click(pre_button_xpath, 30, True, "click the 'Claim' button", self.step, "clickable")
+                self.increase_step()
+            except Exception as e:
+                self.output(f"Step {self.step} - 'Claim' button not found or not clickable: {e}", 2)
+                # Continue without clicking the 'Claim' button
+
+            # Continue with other buttons, starting with 'Big participate blue'
             for action, xpath in buttons.items():
+                if action == 'Participate white':  # Skip 'Participate white' as it's already handled
+                    continue
                 self.move_and_click(xpath, 30, True, f"click the '{action}' button", self.step, "clickable")
                 self.increase_step()
 
             # Adding a fixed delay to ensure the 'Burn' action is processed
             time.sleep(10)
-        
+
         except Exception as e:
             self.output(f"Step {self.step} - Error during drop claiming: {e}", 2)
 
