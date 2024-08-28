@@ -120,16 +120,20 @@ class HotClaimer(Claimer):
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
-        if wait_time_text != "Filled":
-            matches = re.findall(r'(\d+)([hm])', wait_time_text)
-            remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
-            remaining_wait_time = self.apply_random_offset(remaining_wait_time)
-            if remaining_wait_time < 5 or self.settings["forceClaim"]:
-                self.settings['forceClaim'] = True
-                self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
-            else:
-                self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
-                return remaining_wait_time
+        try:
+            if wait_time_text != "Filled":
+                matches = re.findall(r'(\d+)([hm])', wait_time_text)
+                remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                remaining_wait_time = self.apply_random_offset(remaining_wait_time)
+                if remaining_wait_time < 5 or self.settings["forceClaim"]:
+                    self.settings['forceClaim'] = True
+                    self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
+               else:
+                    self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
+                    return remaining_wait_time
+        except Exception as e:
+            self.output(f"Error encountered: {str(e)}", 2)
+            return 120
 
         if not wait_time_text:
             return 60
