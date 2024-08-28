@@ -128,7 +128,7 @@ class HotClaimer(Claimer):
                 if remaining_wait_time < 5 or self.settings["forceClaim"]:
                     self.settings['forceClaim'] = True
                     self.output(f"Step {self.step} - the remaining time to claim is less than the random offset, so applying: settings['forceClaim'] = True", 3)
-               else:
+                else:
                     self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
                     return remaining_wait_time
         except Exception as e:
