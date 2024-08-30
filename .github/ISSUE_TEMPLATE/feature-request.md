@@ -1,6 +1,6 @@
 ---
 name: "Feature Request"
-about: "Suggest a new feature or enhancement for the project"
+about: "Suggest a new feature to an existing game or request the modification of an existing feature."
 title: "Feature Request: [Describe your suggestion briefly]"
 labels: ["enhancement", "feature request"]
 ---
