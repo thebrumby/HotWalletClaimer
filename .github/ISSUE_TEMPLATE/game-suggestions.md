@@ -1,7 +1,7 @@
 ---
 name: "Game Suggestions"
 about: "Suggest a game for the Telegram Claim Bot. Ensure it’s accessible via Telegram Web. Games needing virtual video gameplay, like racing or falling objects, may not be suitable."
-title: "Game Suggestion: [Your Game Name Here]"
+title: "Game Suggestion: "
 labels: ["suggestion", "game"]
 ---
 
