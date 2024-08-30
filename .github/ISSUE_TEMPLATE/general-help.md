@@ -1,11 +1,14 @@
 ---
 name: "General Help"
-about: "Request general help or support"
+about: "Request general help or support. Note, we have an extensive step-by-step video library, a detailed README, a troubleshooting guide, and multiple instructional guides on specific topics. Complete all the self-help steps before raising an issue."
 title: "Help Me: [Describe your issue briefly]"
 labels: ["help wanted", "support"]
 ---
 
-**Before raising a ticket, please ensure you've followed these specific instructions (required):**
+**Introduction:**
+Before raising a help request, please make sure you’ve followed the necessary setup and troubleshooting steps. This ensures we can assist you more effectively and efficiently.
+
+**Please ensure you've followed these specific instructions (required):**
 
 - [ ] Configured a Proxy: Make sure you’ve correctly configured a proxy by following [this guide](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/proxy-setup.md).
 - [ ] Set Up Docker: Follow the steps outlined in [Docker Setup](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/docker-setup.md).
