@@ -64,6 +64,14 @@ class TabizooAUClaimer(TabizooClaimer):
                 self.move_and_click(xpath, 10, True, "click the 'upgrade' confirmation button", self.step, "clickable")
                 self.increase_step()
 
+                self.quit_driver()
+                self.launch_iframe()
+                xpath = "//span[contains(text(), 'Lv')]"
+                new_level = self.monitor_element(xpath, 15, "current level")
+                self.increase_step()
+                if current_level:
+                    self.output(f"STATUS: Upgraded from {current_level} to {new_level } for {upgrade_cost} coins.", 3)
+
         except NoSuchElementException as e:
             self.output(f"Step {self.step} - Element not found: {str(e)}", 1)
         except TimeoutException as e:
