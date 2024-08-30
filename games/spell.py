@@ -134,7 +134,7 @@ class SpellClaimer(Claimer):
         # Calculate remaining time in hours
         try:
             hourly_profit = float(self.get_profit_hour(True))
-            xpath = "//div[@id='slider-root-:r5:']/following-sibling::p"
+            xpath = "//p[contains(., '/')]"
             elapsed = self.monitor_element(xpath, 10, "Get the timer bar")
             current, max_value = map(float, elapsed.split('/'))
             remaining_time_hours = (max_value - current) / hourly_profit
