@@ -8,7 +8,7 @@ labels: ["suggestion", "game"]
 **Bot Name (required):**
 Enter the name of the bot here.
 
-**Bot Handle (required):**
+**Bot Handle (required):** 
 Enter the bot's Telegram handle, e.g., @HereWalletBot.
 
 **Reason for Inclusion:**
