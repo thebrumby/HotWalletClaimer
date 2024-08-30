@@ -1,7 +1,7 @@
 ---
 name: "General Help"
 about: "Request help. Before raising an issue, follow our step-by-step videos, detailed README, troubleshooting guide, and instructional guides."
-title: "Help Me: [Describe your issue briefly]"
+title: "Help Me: "
 labels: ["help wanted", "support"]
 ---
 
