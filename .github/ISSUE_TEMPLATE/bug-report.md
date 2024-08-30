@@ -1,6 +1,6 @@
 ---
 name: "Bug Report"
-about: "Report a bug. Before reporting, ensure you've followed the steps in the [troubleshooting guide](https://github.com/thebrumby/HotWalletClaimer/issues/166) to confirm the issue isn't with your session."
+about: "Report a bug in the project. Before reporting a bug, ensure you have completed all the steps in the troubleshooting guide to confirm the issue is not with your session."
 title: "Bug: [Describe the issue briefly]"
 labels: ["bug"]
 ---
