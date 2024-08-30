@@ -1,6 +1,6 @@
 ---
 name: "Bug Report"
-about: "Report a bug in the project"
+about: "Report a bug in the project. Before reporting a bug, ensure you have completed all the steps in the troubleshooting guide to confirm the issue is not with your session."
 title: "Bug: [Describe the issue briefly]"
 labels: ["bug"]
 ---
@@ -9,7 +9,7 @@ labels: ["bug"]
 A clear and concise description of what the bug is.
 
 **Have you followed the [troubleshooting guide](https://github.com/thebrumby/HotWalletClaimer/issues/166) (required):**
-Please confirm that you've reviewed the troubleshooting guide linked above.
+Please confirm that you've reviewed the troubleshooting guide linked above and completed all steps to ensure the issue is not with your session.
 
 **Steps to Reproduce (required):**
 List the steps to reproduce the bug.
