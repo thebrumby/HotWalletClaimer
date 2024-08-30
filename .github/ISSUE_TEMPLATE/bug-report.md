@@ -8,8 +8,8 @@ labels: ["bug"]
 **Describe the Bug (required):**
 A clear and concise description of what the bug is.
 
-**Have you (required):**
-A clear and concise description of what the bug is.
+**Have you followed the [troubleshooting guide](https://github.com/thebrumby/HotWalletClaimer/issues/166) (required):**
+Please confirm that you've reviewed the troubleshooting guide linked above.
 
 **Steps to Reproduce (required):**
 List the steps to reproduce the bug.
