@@ -91,14 +91,14 @@ class TabizooClaimer(Claimer):
         success = self.move_and_click(xpath, 10, True, "click the main 'Claim' button...", self.step, "clickable")
         if success:
             self.output(f"Step {self.step} - Main reward claimed.", 1)
-            self.get_balance(True)
+        balance = self.get_balance(True)
         self.increase_step()
 
         self.get_profit_hour(True)
 
         try:
             wait_time_text = self.get_wait_time(self.step, "post-claim")
-            self.attempt_upgrade()
+            self.attempt_upgrade(balance)
 
             if wait_time_text:
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
@@ -171,6 +171,7 @@ class TabizooClaimer(Claimer):
             if element:
                 balance_part = element
                 self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
+                return balance_part
 
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)

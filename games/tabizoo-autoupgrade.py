@@ -35,7 +35,7 @@ class TabizooAUClaimer(TabizooClaimer):
     def __init__(self):
         super().__init__()
 
-    def attempt_upgrade(self):
+    def attempt_upgrade(self, balance):
         try:
             # attempts one upgrade per claim session
             xpath = "//span[contains(text(), 'Lv')]"
@@ -51,7 +51,14 @@ class TabizooAUClaimer(TabizooClaimer):
                 upgrade_cost = self.monitor_element(xpath, 15, "upgrade cost")
                 self.increase_step()
                 if upgrade_cost:
-                    self.output(f"Step {self.step} - Upgrade cost is: {upgrade_cost}", 2)
+                    self.output(f"Step {self.step} - Upgrade cost is: {upgrade_cost}", 3)
+
+                xpath = "//div[text()='Insufficient Balance']"
+                no_money = self.move_and_click(xpath, 10, True, "check if we have enough funds", self.step, "clickable")
+                self.increase_step()
+                if no_money:
+                    self.output(f"Step {self.step} - Upgrade costs {upgrade_cost} but you only have {balance}.", 3)
+                    return
 
                 xpath = "//div[text()='Upgrade']"
                 self.move_and_click(xpath, 10, True, "click the 'upgrade' confirmation button", self.step, "clickable")
