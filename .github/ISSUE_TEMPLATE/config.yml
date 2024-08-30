@@ -1,25 +1,25 @@
 blank_issues_enabled: false
 issue_templates:
   - name: "Game Suggestions"
-    description: "Recommend a game for inclusion in the Telegram Claim Bot"
+    description: "Recommend a game for inclusion in the Telegram Claim Bot. Before making the recommendation, you should open it in Telegram Web and ensure it is accessible. Games which require virtual video gameplay, such as racing games or clicking falling objects, are unlikely to be suitable."
     title: "Game Suggestion: [Your Game Name Here]"
     labels: ["suggestion", "game"]
     file: game-suggestions.md
 
   - name: "Bug Report"
-    description: "Report a bug in the project"
+    description: "Report a bug. Before reporting a bug, ensure you have completed all the steps in the troubleshooting guide to confirm the issue is not with your session."
     title: "Bug: [Describe the issue briefly]"
     labels: ["bug"]
     file: bug-report.md
 
   - name: "Feature Request"
-    description: "Suggest a new feature for the project"
+    description: "Suggest a new feature to an existing game or request the modification of an existing feature."
     title: "Feature Request: [Describe your suggestion briefly]"
     labels: ["enhancement", "feature request"]
     file: feature-request.md
 
   - name: "General Help"
-    description: "Request general help or support"
+    description: "Request general help. Note, we have an extensive step-by-step video library, a detailed README, a troubleshooting guide, and multiple instructional guides on specific topics. Complete all the self-help steps before raising an issue."
     title: "Help Me: [Describe your issue briefly]"
     labels: ["help wanted", "support"]
     file: general-help.md
