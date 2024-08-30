@@ -38,36 +38,24 @@ class TabizooAUClaimer(TabizooClaimer):
     def attempt_upgrade(self):
         try:
             # attempts one upgrade per claim session
-            xpath = "//p[@class='level']/span"
+            xpath = "//span[contains(text(), 'Lv')]"
             current_level = self.monitor_element(xpath, 15, "current level")
             self.increase_step()
             if current_level:
                 self.output(f"Step {self.step} - Current level is: {current_level}", 2)
 
-            xpath = "//div[@class='upgrade']"
+            xpath = "//img[contains(@src, 'upgrade_icon')]"
             if self.move_and_click(xpath, 10, True, "click the 'upgrade' button", self.step, "clickable"):
                 self.increase_step()
-                xpath = "//div[@class='addition']/p"
+                xpath = "//img[contains(@src, 'coin')]/following-sibling::span"
                 upgrade_cost = self.monitor_element(xpath, 15, "upgrade cost")
                 self.increase_step()
                 if upgrade_cost:
                     self.output(f"Step {self.step} - Upgrade cost is: {upgrade_cost}", 2)
 
-                xpath = "//p[text()='Upgrade']"
+                xpath = "//div[text()='Upgrade']"
                 self.move_and_click(xpath, 10, True, "click the 'upgrade' confirmation button", self.step, "clickable")
                 self.increase_step()
-
-                xpath = "//div[@class='close']"
-                self.move_and_click(xpath, 10, True, "close the pop-up", self.step, "clickable")
-                self.increase_step()
-
-                xpath = "//p[@class='level']/span"
-                finish_level = self.monitor_element(xpath, 15, "current level")
-                if finish_level:
-                    self.output(f"Step {self.step} - New level is: {finish_level}", 2)
-                self.increase_step()
-
-                self.get_profit_hour(True)
 
         except NoSuchElementException as e:
             self.output(f"Step {self.step} - Element not found: {str(e)}", 1)

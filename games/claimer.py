@@ -805,6 +805,8 @@ class Claimer:
 
     def launch_iframe(self):
         self.driver = self.get_driver()
+        # Set viewport size for iPhone 12/13/14 in portrait mode
+        self.driver.set_window_size(1024, 768)
 
         # let's start with clean screenshots directory
         if os.path.exists(self.screenshots_path):

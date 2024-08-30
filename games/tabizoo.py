@@ -72,7 +72,7 @@ class TabizooClaimer(Claimer):
     def full_claim(self):
         self.step = "100"
 
-        # Open the driver and proced to the game.
+        # Open the driver and proceed to the game.
         self.launch_iframe()
         self.increase_step()
 
@@ -87,27 +87,22 @@ class TabizooClaimer(Claimer):
         self.get_balance(False)
         self.increase_step()
 
-        xpath = "//div[@class='claim']/p[text()='Claim']"
+        xpath = "//div[contains(text(), 'Claim')]"
         success = self.move_and_click(xpath, 10, True, "click the main 'Claim' button...", self.step, "clickable")
         if success:
-            # Confirm success
-            xpath = "//div[@class='theme-button']/p[contains(text(), 'Confirm')]"
-            success = self.move_and_click(xpath, 10, True, "confirm the main claim...", self.step, "clickable")
-            if success:
-                self.output(f"Step {self.step} - Main reward claimed.", 1)
-                self.get_balance(True)
+            self.output(f"Step {self.step} - Main reward claimed.", 1)
+            self.get_balance(True)
         self.increase_step()
 
-
         self.get_profit_hour(True)
-        self.attempt_upgrade()
 
         try:
             wait_time_text = self.get_wait_time(self.step, "post-claim")
+            self.attempt_upgrade()
 
             if wait_time_text:
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
+                remaining_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
                 remaining_wait_time = self.apply_random_offset(remaining_wait_time)
                 self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
                 return remaining_wait_time
@@ -115,109 +110,53 @@ class TabizooClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
+
         self.output(f"STATUS: We seemed to have reached the end without confirming the action!", 1)
         return 60
         
     def click_daily_reward(self):
         # Check the Daily rewards.
-        xpath = "//div[@class='check-in']"
-        success = self.move_and_click(xpath, 10, True, "check in...", self.step, "clickable")
+        xpath = "//img[contains(@src, 'checkin_icon')]/following-sibling::div[contains(@class, 'bg-[#FF5C01]')]"
+        success = self.move_and_click(xpath, 10, True, "check if the daily reward can be claimed (may not be present)", self.step, "clickable")
+        if not success:
+            self.output(f"Step {self.step} - The daily reward appears to have already been claimed.", 2)
+            self.increase_step()
+            return
+        xpath = "//img[contains(@src, 'checkin_icon')]"
+        success = self.move_and_click(xpath, 10, True, "click 'check in'...", self.step, "clickable")
+        self.increase_step()
         if success:
-            # And make the claim.
-            xpath = "//div[@class='theme-button']/p[contains(text(), 'Claim')]"
-            success = self.move_and_click(xpath, 10, True, "claim daily reward", self.step, "clickable")
+            xpath = "//h4[contains(text(), 'Daily Reward')]"
+            success = self.move_and_click(xpath, 10, True, "click daily reward", self.step, "clickable")
+            self.increase_step()
             if success:
                 # And confirm success.
-                xpath = "//div[@class='theme-button']/p[contains(text(), 'Confirm')]"
-                success = self.move_and_click(xpath, 10, True, "confirm daily reward", self.step, "clickable")
+                xpath = "//div[contains(text(), 'Claim')]"
+                success = self.move_and_click(xpath, 10, True, "claim daily reward", self.step, "clickable")
+                self.increase_step()
                 if success:
-                    self.output(f"Step {self.step} - Successfully claimed the daily reward.", 2)
-        else:
-            self.output(f"Step {self.step} - The daily reward appears to have already been claimed.", 2)
+                    xpath = "//div[contains(text(), 'Come Back Tomorrow')]"
+                    success = self.move_and_click(xpath, 10, False, "check for 'Come Back Tomorrow'", self.step, "visible")
+                    self.increase_step()
+                    if success:
+                        self.output(f"STATUS: Successfully claimed the daily reward.", 2)
+        self.quit_driver()
+        self.launch_iframe()
 
     def check_initial_screens(self):
-        # Check for the initial screens.
-        xpath_claim_now = "//div[@class='theme-button claim-btn']/p[contains(text(), 'Claim Now')]"
-        success = self.move_and_click(xpath_claim_now, 10, True, "see if we need to complete initial screens", self.step, "clickable")
-        if success:
-            self.increase_step()
-
-            # First 'Next Step' button
-            xpath_next_step_first = "(//div[@class='theme-button next-btn']/p[contains(text(), 'Next Step')])[1]"
-            success = self.move_and_click(xpath_next_step_first, 10, True, "move to 'Next Step'", self.step, "clickable")
-            if success:
-                self.increase_step()
-
-                # Combined 'go' and 'check' button functionality
-                combined_success = self.click_go_and_check_buttons()
-                if combined_success:
-                    self.increase_step()
-
-                    # Remove 'disable' class from the second 'Next Step' button
-                    xpath_parent_button = "//div[@class='theme-button next-btn disable']"
-                    self.remove_disable_class(xpath_parent_button)
-
-                    xpath_child_button = "(//p[contains(text(), 'Next Step')])[2]"
-                    # Second 'Next Step' button
-                    success = self.move_and_click(xpath_child_button, 20, True, "move to 'Next Step' again", self.step, "clickable")
-                    self.move_and_click(xpath_child_button, 20, True, "move to 'Next Step' again (may not be present)", self.step, "clickable")
-                    if success:
-                        self.increase_step()
-
-                        # 'Get More' button
-                        xpath_get_more = "//div[@class='theme-button get-more-btn']/p[contains(text(), 'Get More')]"
-                        success = self.move_and_click(xpath_get_more, 10, True, "'Get More'", self.step, "clickable")
-                        self.increase_step()
-        else:
+        # First 'Next Step' button
+        xpath = "(//div[contains(text(), 'Next Step')])[1]"
+        if not self.move_and_click(xpath, 10, True, "click the 1st 'Next Step' button", self.step, "clickable"):
             self.output(f"Step {self.step} - You have already cleared the initial screens.", 2)
             self.increase_step()
+            return True
 
-    def remove_disable_class(self, xpath):
-        try:
-            # Wait for the element to be present and fully loaded
-            element = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, xpath)))
+        self.increase_step()
+        self.output(f"Step {self.step} - Tabizoo is still at the initial screens.", 1)
+        self.output(f"STATUS: Navigate to make your initial claim in GUI.", 1)
+        sys.exit()
+        
 
-            # Directly remove the 'disable' class from the element
-            self.driver.execute_script("arguments[0].classList.remove('disable');", element)
-
-            self.output(f"Step {self.step} - Removed 'disable' class from element matching: {xpath}", 3)
-        except Exception as e:
-            if self.settings['debugIsOn']:
-                self.output(f"Step {self.step} - Could not remove 'disable' class:", 3)
-
-    def click_go_and_check_buttons(self):
-        original_window = self.driver.current_window_handle
-        go_success = False
-        check_success = False
-
-        try:
-            # Attempt to click the 'go' button
-            xpath_go = "//img[@class='go']"
-            go_success = self.move_and_click(xpath_go, 10, True, "click the 'go' button", self.step, "clickable")
-            if not go_success:
-                raise TimeoutException("Failed to click the 'go' button.")
-            
-            # Attempt to click the 'check' button
-            xpath_check = "//div[@class='theme-button']/p[text()='Check']"
-            check_success = self.move_and_click(xpath_check, 10, True, "click the 'check' button", self.step, "clickable")
-            if not check_success:
-                raise TimeoutException("Failed to click the 'check' button.")
-
-        except TimeoutException as e:
-            if self.settings['debugIsOn']:
-                self.output(f"Step {self.step} - {str(e)}", 3)
-
-        finally:
-            # Switch back to the original window, regardless of success or failure
-            try:
-                pass
-                # self.driver.switch_to.window(original_window)
-            except Exception as e:
-                if self.settings['debugIsOn']:
-                    self.output(f"Step {self.step} - Could not switch to the original window: {e}", 3)
-
-        return go_success and check_success
-  
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
@@ -225,7 +164,7 @@ class TabizooClaimer(Claimer):
         priority = max(self.settings['verboseLevel'], default_priority)
 
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//div[@class='balance']/p"
+        balance_xpath = f"//img[contains(@src, 'coin2')]/following-sibling::span"
 
         try:
             element = self.monitor_element(balance_xpath, 15, "get balance")
@@ -244,7 +183,7 @@ class TabizooClaimer(Claimer):
         for attempt in range(1, max_attempts + 1):
             try:
                 self.output(f"Step {self.step} - Get the wait time...", 3)
-                xpath = "//div[@class='mining']/p"
+                xpath = "//div[contains(text(), 'h') and contains(text(), ':') and contains(text(), 'm')]"
                 elements = self.monitor_element(xpath, 10, "get claim timer")
                 if elements:
                     return elements
@@ -263,7 +202,7 @@ class TabizooClaimer(Claimer):
 
         # Construct the specific profit XPath
         profit_text = f'{prefix} PROFIT/HOUR:'
-        profit_xpath = "//p[text()='Mining Rate']/following-sibling::div[@class='mining-value']//span[last()]"
+        profit_xpath = "//label[text()='Mining Rate']/following-sibling::p//span[1]"
 
         try:
             element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "profit per hour"))
