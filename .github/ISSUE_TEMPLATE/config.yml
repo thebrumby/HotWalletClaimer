@@ -17,3 +17,9 @@ issue_templates:
     title: "Feature Request: [Describe your suggestion briefly]"
     labels: ["enhancement", "feature request"]
     file: feature-request.md
+
+  - name: "General Help"
+    description: "Request general help or support"
+    title: "Help Me: [Describe your issue briefly]"
+    labels: ["help wanted", "support"]
+    file: general-help.md
