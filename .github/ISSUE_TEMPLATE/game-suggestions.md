@@ -1,6 +1,6 @@
 ---
 name: "Game Suggestions"
-about: "Recommend a game for inclusion in the Telegram Claim Bot. Before making the recommendation, you should open it in Telegram Web and ensure it is accessible. Games which require virtual video gameplay, such as racing games or clicking falling objects, are unlikely to be suitable."
+about: "Suggest a game for the Telegram Claim Bot. Ensure it’s accessible via Telegram Web. Games needing virtual video gameplay, like racing or falling objects, may not be suitable."
 title: "Game Suggestion: [Your Game Name Here]"
 labels: ["suggestion", "game"]
 ---
@@ -8,7 +8,7 @@ labels: ["suggestion", "game"]
 **Bot Name (required):**
 Enter the name of the bot here.
 
-**Bot Handle (required):** 
+**Bot Handle (required):**
 Enter the bot's Telegram handle, e.g., @HereWalletBot.
 
 **Reason for Inclusion:**
