@@ -1,1 +1,19 @@
 blank_issues_enabled: false
+issue_templates:
+  - name: "Game Suggestions"
+    description: "Recommend a game for inclusion in the Telegram Claim Bot"
+    title: "Game Suggestion: [Your Game Name Here]"
+    labels: ["suggestion", "game"]
+    file: game-suggestions.md
+
+  - name: "Bug Report"
+    description: "Report a bug in the project"
+    title: "Bug: [Describe the issue briefly]"
+    labels: ["bug"]
+    file: bug-report.md
+
+  - name: "Feature Request"
+    description: "Suggest a new feature for the project"
+    title: "Feature Request: [Describe your suggestion briefly]"
+    labels: ["enhancement", "feature request"]
+    file: feature-request.md
