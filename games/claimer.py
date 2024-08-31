@@ -805,8 +805,6 @@ class Claimer:
 
     def launch_iframe(self):
         self.driver = self.get_driver()
-        # Set viewport size for iPhone 12/13/14 in portrait mode
-        self.driver.set_window_size(1024, 768)
 
         # let's start with clean screenshots directory
         if os.path.exists(self.screenshots_path):
@@ -875,28 +873,25 @@ class Claimer:
         else:
             os.system('clear')
 
-    def select_iframe(self, old_step, iframe_container_class="web-app-body"):
-        self.output(f"Step {self.step} - Attempting to switch to the app's iFrame within '{iframe_container_class}'...", 2)
+    def select_iframe(self, old_step, iframe_name="popup-body"):
+        self.output(f"Step {self.step} - Attempting to switch to the app's iFrame within '{iframe_name}'...", 2)
 
         try:
             wait = WebDriverWait(self.driver, 20)
-            # Locate the container div with the specified class name
-            container = wait.until(EC.presence_of_element_located((By.CLASS_NAME, iframe_container_class)))
-            # Find the iframe within the located container
+            container = wait.until(EC.presence_of_element_located((By.CLASS_NAME, iframe_name)))
             iframe = container.find_element(By.TAG_NAME, "iframe")
-            # Switch to the iframe
             self.driver.switch_to.frame(iframe)
-            self.output(f"Step {self.step} - Was successfully able to switch to the app's iFrame within '{iframe_container_class}'.\n", 3)
+            self.output(f"Step {self.step} - Was successfully able to switch to the app's iFrame within '{iframe_name}'.\n", 3)
 
             if self.settings['debugIsOn']:
                 self.debug_information("successfully switched to iFrame","success")
 
         except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find or switch to the iframe within '{iframe_container_class}' within the timeout period.\n", 3)
+            self.output(f"Step {self.step} - Failed to find or switch to the iframe within '{iframe_name}' within the timeout period.\n", 3)
             if self.settings['debugIsOn']:
                 self.debug_information("timeout while trying to switch to iFrame","error")
         except Exception as e:
-            self.output(f"Step {self.step} - An error occurred while attempting to switch to the iframe within '{iframe_container_class}': {e}\n", 3)
+            self.output(f"Step {self.step} - An error occurred while attempting to switch to the iframe within '{iframe_name}': {e}\n", 3)
             if self.settings['debugIsOn']:
                 self.debug_information("an unspecified error occured during switch to iFrame","error")
 
@@ -1023,19 +1018,17 @@ class Claimer:
 
         return target_element
 
-    def click_element(self, xpath, timeout=30, action_description="", max_overlay_attempts=3):
+    def click_element(self, xpath, timeout=30, action_description=""):
         end_time = time.time() + timeout
-        overlay_attempts = 0
-
         if self.settings['debugIsOn']:
-            self.debug_information(f"ClicElem preparing to click {action_description}", "info")
+            self.debug_information(f"ClicElem preparing to click {action_description}","info")
 
         try:
             element = self.driver.find_element(By.XPATH, xpath)
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element not found: {xpath}. Skipping click.", 2)
             if self.settings['debugIsOn']:
-                self.debug_information(f"ClicElem {action_description} was not found", "error")
+                self.debug_information(f"ClicElem {action_description} was not found","error")
             return False
 
         while time.time() < end_time:
@@ -1043,50 +1036,68 @@ class Claimer:
                 actions = ActionChains(self.driver)
                 actions.move_to_element(element).perform()
 
-                # Attempt to clear overlays up to a limited number of times
-                if overlay_attempts < max_overlay_attempts:
-                    overlays_cleared = self.clear_overlays(element, self.step)
-                    if overlays_cleared > 0:
-                        overlay_attempts += 1
-                        if overlay_attempts == 1 or overlay_attempts == max_overlay_attempts:
-                            self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s), retrying click...", 3)
+                # Clear any overlays before attempting to click
+                overlays_cleared = self.clear_overlays(element, self.step)
+                if overlays_cleared > 0:
+                    self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s), retrying click...", 3)
 
                 # Attempt to click with ActionChains
                 try:
                     actions.click(element).perform()
+                    return True
                 except ElementClickInterceptedException as e:
-                    self.handle_interception(element, e, xpath)
-                    continue  # Retry the click
+                    self.output(f"Step {self.step} - Element click intercepted: {e}, attempting to resolve...", 3)
+                    
+                    # Try to identify the intercepting element
+                    intercepting_element = self.driver.execute_script(
+                        "var elem = arguments[0];"
+                        "var rect = elem.getBoundingClientRect();"
+                        "var x = rect.left + (rect.width / 2);"
+                        "var y = rect.top + (rect.height / 2);"
+                        "return document.elementFromPoint(x, y);", element)
 
-                # Immediately follow up with a JavaScript click to confirm
-                try:
-                    self.driver.execute_script("arguments[0].click();", element)
-                except StaleElementReferenceException:
-                    self.output(f"Step {self.step} - Element became stale after ActionChains click. Assuming click was successful.", 3)
-                    return True  # Assume click was successful if element becomes stale
-                except Exception as e:
-                    self.output(f"Step {self.step} - JS click failed after ActionChains: {e}. Assuming previous click was successful.", 3)
-                    return True  # Assume ActionChains was successful if JS fails
+                    if intercepting_element:
+                        self.driver.execute_script("arguments[0].style.display = 'none';", intercepting_element)
+                        self.output(f"Step {self.step} - Intercepting element hidden (class: {intercepting_element.get_attribute('class')}), retrying click...", 3)
+                        continue  # Retry the click after hiding the intercepting element
+                    else:
+                        self.output(f"Step {self.step} - No intercepting element identified, trying JavaScript click.", 3)
 
-                # Final verification: Check if the element is still interactable
-                if not self.element_still_exists(xpath):
-                    return True  # Element is gone, so the click was likely successful
+            except UnexpectedAlertPresentException:
+                alert = self.driver.switch_to.alert
+                alert.accept()
+                self.output(f"Step {self.step} - Unexpected alert handled.", 3)
 
-            except StaleElementReferenceException:
-                self.output(f"Step {self.step} - Element became stale during the process. Assuming click was successful.", 3)
-                return True  # Assume the click was successful if the element becomes stale
-            except (UnexpectedAlertPresentException, NoSuchElementException) as e:
-                self.output(f"Step {self.step} - Exception occurred: {e}, retrying...", 3)
+            except (StaleElementReferenceException, NoSuchElementException):
+                self.output(f"Step {self.step} - Element not found or stale, retrying...", 3)
 
+            except TimeoutException:
+                self.output(f"Step {self.step} - Click timed out.", 2)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClicElem {action_description} timeout","error")
+                break
+
+            except Exception as e:
+                self.output(f"Step {self.step} - An error occurred: {e}", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClicElem {action_description} fatal error","error")
+                break
+            
+            # Fallback to clicking with JavaScript if ActionChains fails
+            try:
+                self.driver.execute_script("arguments[0].click();", element)
+                self.output(f"Step {self.step} - Fallback to JS click successful.", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClicElem {action_description} JS Fallback","success")
+                return True
+            except Exception as e:
+                self.output(f"Step {self.step} - Fallback JS click failed: {e}", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClicElem {action_description} JS Fallback Failed","error")
+                break
+        
         self.output(f"Step {self.step} - Failed to click element after all retries.", 2)
         return False
-
-    def element_still_exists(self, xpath):
-        try:
-            element = self.driver.find_element(By.XPATH, xpath)
-            return element.is_displayed()
-        except NoSuchElementException:
-            return False
 
     def clear_overlays(self, target_element, step):
         try:
@@ -1103,7 +1114,7 @@ class Claimer:
                 self.output(f"Step {step} - Removed {overlays_cleared} overlay(s) covering the target.", 3)
             return overlays_cleared
         except Exception as e:
-            self.output(f"Step {step} - An error occurred while trying to clear overlays.", 3)
+            self.output(f"Step {step} - An error occurred while trying to clear overlays: {e}", 1)
             return 0
 
     def monitor_element(self, xpath, timeout=8, action_description="no description"):
