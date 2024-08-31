@@ -87,7 +87,7 @@ class OxygenAUClaimer(OxygenClaimer):
             if wait_time_text == self.pot_full or self.settings['forceClaim']:
                 try:
                     xpath = "//div[@class='farm_btn']"
-                    button = self.move_and_click(xpath, 10, True, "click the 'Claim' button", self.step, "clickable")
+                    button = self.brute_click(xpath, 10, "click the 'Claim' button")
                     self.increase_step()
 
                     self.output(f"Step {self.step} - Waiting 10 seconds for the totals and timer to update...", 3)
