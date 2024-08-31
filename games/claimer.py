@@ -1103,7 +1103,7 @@ class Claimer:
                 self.output(f"Step {step} - Removed {overlays_cleared} overlay(s) covering the target.", 3)
             return overlays_cleared
         except Exception as e:
-            self.output(f"Step {step} - An error occurred while trying to clear overlays.", 1)
+            self.output(f"Step {step} - An error occurred while trying to clear overlays.", 3)
             return 0
 
     def monitor_element(self, xpath, timeout=8, action_description="no description"):
