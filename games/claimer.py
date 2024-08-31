@@ -1080,12 +1080,15 @@ class Claimer:
             return False
 
     def brute_click(self, xpath, timeout=30, action_description=""):
+        start_time = time.time()  # Record the start time
+
         try:
             # Wait until the element is found or timeout occurs
             element = WebDriverWait(self.driver, timeout).until(
                 EC.presence_of_element_located((By.XPATH, xpath))
             )
             previous_element_id = element.get_attribute("id")  # Initial element ID to start with
+            self.output(f"Step {self.step} - XPath found: {xpath}", 3)  # Priority 3 message that XPath was found
         except TimeoutException:
             self.output(f"Step {self.step} - Element not found within timeout: {xpath}. Skipping click.", 2)
             if self.settings['debugIsOn']:
@@ -1108,7 +1111,7 @@ class Claimer:
             unique_ids = {previous_element_id}  # Set to track unique element IDs encountered
             click_attempts = 0  # Counter to track click attempts
 
-            while True:
+            while time.time() - start_time < timeout:  # Constrain loop by timeout
                 click_attempts += 1
 
                 # Attempt to click with ActionChains
@@ -1121,7 +1124,8 @@ class Claimer:
                 try:
                     self.driver.execute_script("arguments[0].click();", element)
                 except Exception as e:
-                    self.output(f"Step {self.step} - JS click failed: {e}", 3)
+                    pass
+                    # self.output(f"Step {self.step} - JS click failed: {e}", 3)
 
                 # Try to locate the element again by XPath
                 try:
@@ -1134,8 +1138,12 @@ class Claimer:
                     previous_element_id = current_element_id
 
                 except (NoSuchElementException, StaleElementReferenceException):
-                    self.output(f"Step {self.step} - Element no longer exists after {click_attempts} attempts. Total unique IDs encountered: {len(unique_ids)}", 2)
+                    self.output(f"Step {self.step} - Click Successful: Element no longer exists after {click_attempts} attempts. Total unique IDs encountered: {len(unique_ids)}", 2)
                     return True
+
+            # If the loop exits due to timeout
+            self.output(f"Step {self.step} - Brute click timed out after {click_attempts} attempts. Total unique IDs encountered: {len(unique_ids)}", 2)
+            return False
 
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
