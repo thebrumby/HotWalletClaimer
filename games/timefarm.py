@@ -132,6 +132,9 @@ class TimeFarmClaimer(Claimer):
         
     def claim_frens(self):
 
+        self.quit_driver()
+        self.launch_iframe()
+
         # Navigate to the 'Frens' tab
         FREN_TAB_XPATH = "//div[@class='tab-title' and text()='Frens']"
         if not self.move_and_click(FREN_TAB_XPATH, 20, True, "Switch to the 'Frens' tab", self.step, "clickable"):
