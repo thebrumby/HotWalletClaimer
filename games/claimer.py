@@ -1060,6 +1060,11 @@ class Claimer:
             # Attempt to click with ActionChains
             try:
                 actions.click(element).perform()
+                try:
+                    self.driver.execute_script("arguments[0].click();", element)
+                    self.output(f"Step {self.step} - Backed up with JS click.", 3)
+                except Exception as e:
+                    pass
             except ElementClickInterceptedException as e:
                 self.output(f"Step {self.step} - Element click intercepted: {e}, attempting to resolve...", 3)
                 return False
