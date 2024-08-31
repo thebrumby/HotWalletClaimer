@@ -875,25 +875,28 @@ class Claimer:
         else:
             os.system('clear')
 
-    def select_iframe(self, old_step, iframe_name="popup-body"):
-        self.output(f"Step {self.step} - Attempting to switch to the app's iFrame within '{iframe_name}'...", 2)
+    def select_iframe(self, old_step, iframe_container_class="web-app-body"):
+        self.output(f"Step {self.step} - Attempting to switch to the app's iFrame within '{iframe_container_class}'...", 2)
 
         try:
             wait = WebDriverWait(self.driver, 20)
-            container = wait.until(EC.presence_of_element_located((By.CLASS_NAME, iframe_name)))
+            # Locate the container div with the specified class name
+            container = wait.until(EC.presence_of_element_located((By.CLASS_NAME, iframe_container_class)))
+            # Find the iframe within the located container
             iframe = container.find_element(By.TAG_NAME, "iframe")
+            # Switch to the iframe
             self.driver.switch_to.frame(iframe)
-            self.output(f"Step {self.step} - Was successfully able to switch to the app's iFrame within '{iframe_name}'.\n", 3)
+            self.output(f"Step {self.step} - Was successfully able to switch to the app's iFrame within '{iframe_container_class}'.\n", 3)
 
             if self.settings['debugIsOn']:
                 self.debug_information("successfully switched to iFrame","success")
 
         except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find or switch to the iframe within '{iframe_name}' within the timeout period.\n", 3)
+            self.output(f"Step {self.step} - Failed to find or switch to the iframe within '{iframe_container_class}' within the timeout period.\n", 3)
             if self.settings['debugIsOn']:
                 self.debug_information("timeout while trying to switch to iFrame","error")
         except Exception as e:
-            self.output(f"Step {self.step} - An error occurred while attempting to switch to the iframe within '{iframe_name}': {e}\n", 3)
+            self.output(f"Step {self.step} - An error occurred while attempting to switch to the iframe within '{iframe_container_class}': {e}\n", 3)
             if self.settings['debugIsOn']:
                 self.debug_information("an unspecified error occured during switch to iFrame","error")
 
