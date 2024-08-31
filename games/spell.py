@@ -172,7 +172,58 @@ class SpellClaimer(Claimer):
         return int(modified_timer)
 
     def daily_reward(self):
-        pass
+        self.quit_driver()
+        self.launch_iframe()
+        xpath = "//div[contains(@class, 'css-4g6ai3')]"
+        self.move_and_click(xpath, 30, True, "click on Daily Quests tab", self.step, "clickable")
+
+        self.increase_step()
+
+        # Fetch the 4-digit code from the GitHub file using urllib
+        url = "https://raw.githubusercontent.com/thebrumby/HotWalletClaimer/main/extras/rewardtest"
+        try:
+            with urllib.request.urlopen(url) as response:
+                content = response.read().decode('utf-8').strip()
+            self.output(f"Step {self.step} - Fetched code from GitHub: {content}", 3)
+        except Exception as e:
+            # Handle failure to fetch code
+            self.output(f"Step {self.step} - Failed to fetch code from GitHub: {str(e)}", 2)
+            return
+
+        self.increase_step()
+
+        # Define the indices you can be careful, but not used_indices = []
+        for index, digit in enumerate(content):
+            xpath = f"//div[@class='css-k0i5go'][{digit}]"
+            
+            if self.move_and_click(xpath, 30, True, f"click on the path corresponding to digit {digit}", self.step, "clickable"):
+                self.output(f"Step {self.step} - Clicked on element corresponding to digit {digit}.", 2)
+            else:
+                # Handle failure to click on an element
+                self.output(f"Step {self.step} - Element corresponding to digit {digit} not found or not clickable.", 1)
+
+        # Increment the step counter
+        self.increase_step()
+
+        # Check if alert is present
+        invalid_puzzle_xpath = "//div[contains(text(), 'Invalid puzzle code')]/ancestor::div[contains(@class, 'chakra-alert')]"
+        if self.move_and_click(invalid_puzzle_xpath, 30, True, "check if alert is present", self.step, "visible"):
+            # Alert for invalid puzzle code is present
+            self.output(f"Step {self.step} - Alert for invalid puzzle code is present.", 2)
+        else:
+            # Alert for invalid puzzle code is not present
+            self.output(f"Step {self.step} - Alert for invalid puzzle code is not present.", 1)
+
+        self.output(f"Step {self.step} - Completed daily reward sequence successfully.", 2)
+
+        # add verification element for  "Invalid puzzle code"
+        invalid_puzzle_xpath = "//div[contains(text(), 'Invalid puzzle code')]/ancestor::div[contains(@class, 'chakra-alert')]"
+        if self.move_and_click(invalid_puzzle_xpath, 30, True, "check if alert is present", self.step, "visible"):
+            self.output(f"Step {self.step} - Alert for invalid puzzle code is present.", 2)
+        else:
+            self.output(f"Step {self.step} - Alert for invalid puzzle code is not present.", 1)
+
+        self.output(f"Step {self.step} - Completed daily reward sequence successfully.", 2)
 
     def get_balance(self, claimed=False):
 
