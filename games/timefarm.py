@@ -78,7 +78,7 @@ class TimeFarmClaimer(Claimer):
 
         self.launch_iframe()
         xpath = "//div[not(@class='farming-button-block')]//span[contains(text(), 'Claim')]"
-        start_present = self.move_and_click(xpath, 8, True, "click loading page 'Claim' (may not be present)", self.step, "clickable")
+        start_present = self.brute_click(xpath, 10, "click loading page 'Claim' (may not be present)")
         self.increase_step()
 
         # Navigate to the 'Home' tab
@@ -92,7 +92,7 @@ class TimeFarmClaimer(Claimer):
         xpath = "//div[@class='farming-button-block'][.//span[text()='Start']]"
         start_present = self.move_and_click(xpath, 8, False, "click the 'Start' button (may not be present)", self.step, "clickable")
         if start_present:
-            self.click_element(xpath, 20)
+            self.brute_click(xpath, 10, "click the 'Start' button (may not be present)")
         self.increase_step()
 
         remaining_time = self.get_wait_time()
@@ -105,7 +105,7 @@ class TimeFarmClaimer(Claimer):
     
         xpath = "//div[@class='farming-button-block'][.//span[text()='Claim']]"
         self.move_and_click(xpath, 20, False, "look for the claim button.", self.step, "visible")
-        success = self.click_element(xpath, 20)
+        success = self.brute_click(xpath, 10, "look for the claim button.")
         #self.claim_oracle()
         if success:
             self.increase_step()
@@ -113,7 +113,7 @@ class TimeFarmClaimer(Claimer):
             xpath = "//div[@class='farming-button-block'][.//span[text()='Start']]"
             start_present = self.move_and_click(xpath, 20, False, "click the 'Start' button", self.step, "clickable")
             if start_present:
-                self.click_element(xpath, 20)
+                self.brute_click(xpath, 10, "click the 'Start' button")
                 self.increase_step()
             remaining_time = self.get_wait_time()
             self.increase_step()
