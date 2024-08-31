@@ -45,17 +45,38 @@ def prompt_user_for_proxy_details():
 def test_proxy_connection(host, port, username, password):
     proxy = f"http://{username}:{password}@{host}:{port}"
     test_url = 'https://web.telegram.org'
+    expected_word_count = 3
     print("Testing the proxy credentials...")
 
+    # Clear proxy-related environment variables
+    env = os.environ.copy()
+    env.pop('HTTP_PROXY', None)
+    env.pop('HTTPS_PROXY', None)
+    env.pop('http_proxy', None)
+    env.pop('https_proxy', None)
+
     try:
-        result = requests.get(test_url, proxies={'http': proxy, 'https': proxy}, timeout=10)
+        result = requests.get(
+            test_url,
+            proxies={'http': proxy, 'https': proxy},
+            timeout=10,
+            allow_redirects=False  # Disable redirects to prevent potential fallback to non-proxy routes
+        )
+
+        # Ensure the request was successful and made through the proxy
         if result.status_code == 200:
-            print("Proxy connection successful.")
-            print(f"Response: 200")
-            return True
+            telegram_count = result.text.count("Telegram")
+            if telegram_count > expected_word_count:
+                print("Proxy connection successful.")
+                print(f"Response: 200, Telegram word count: {telegram_count}")
+                return True
+            else:
+                print(f"Proxy connection failed: Doesn't appear to be TG site. 'Telegram' count is {telegram_count}.")
+                return False
         else:
             print(f"Proxy connection failed with status code: {result.status_code}")
             return False
+
     except requests.RequestException as e:
         print(f"Proxy connection failed: {e}")
         return False
