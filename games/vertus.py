@@ -53,6 +53,7 @@ class VertusClaimer(Claimer):
     def cipher_daily(self):
         cipher_xpath = "//div[contains(@class, 'btnLeft')]"
         self.move_and_click(cipher_xpath, 10, True, "move to the Cipher island link", self.step, "clickable")
+        self.brute_click(cipher_xpath, 10, "move to the Cipher island link")
 
         # Define the possible XPath expressions for each image
         xpaths = {
@@ -193,11 +194,11 @@ class VertusClaimer(Claimer):
             if wait_time_text == "Ready to collect" or self.settings['forceClaim']:
                 try:
                     xpath = "//div[p[text()='Collect']]"
-                    self.move_and_click(xpath, 10, True, "collect the main reward", self.step, "clickable")
+                    self.brute_click(xpath, 10, "collect the main reward")
                     self.increase_step()
 
                     xpath = "//div[div/p[text()='Claim']]/div/p"
-                    self.move_and_click(xpath, 10, True, "claim without connecting wallet (may not present)", self.step, "clickable")
+                    self.brute_click(xpath, 10, "claim without connecting wallet (may not present)")
                     self.increase_step()
 
                     # xpath = "//p[contains(@class, '_text_16x1w_17') and text()='Claim']"
