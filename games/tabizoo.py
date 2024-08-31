@@ -88,7 +88,7 @@ class TabizooClaimer(Claimer):
         self.increase_step()
 
         xpath = "//div[contains(text(), 'Claim')]"
-        success = self.move_and_click(xpath, 10, True, "click the main 'Claim' button...", self.step, "clickable")
+        success = self.brute_click(xpath, 10, "click the 'Claim' button")
         if success:
             self.output(f"Step {self.step} - Main reward claimed.", 1)
         balance = self.get_balance(True)
@@ -117,29 +117,33 @@ class TabizooClaimer(Claimer):
     def click_daily_reward(self):
         # Check the Daily rewards.
         xpath = "//img[contains(@src, 'checkin_icon')]/following-sibling::div[contains(@class, 'bg-[#FF5C01]')]"
-        success = self.move_and_click(xpath, 10, True, "check if the daily reward can be claimed (may not be present)", self.step, "clickable")
+        success = self.move_and_click(xpath, 10, False, "check if the daily reward can be claimed (may not be present)", self.step, "clickable")
         if not success:
             self.output(f"Step {self.step} - The daily reward appears to have already been claimed.", 2)
             self.increase_step()
             return
-        xpath = "//img[contains(@src, 'checkin_icon')]"
-        success = self.move_and_click(xpath, 10, True, "click 'check in'...", self.step, "clickable")
+        xpath = "//div[contains(text(), 'Task')]"
+        success = self.brute_click(xpath, 10, "click the 'Check Login' tab")
         self.increase_step()
-        if success:
-            xpath = "//h4[contains(text(), 'Daily Reward')]"
-            success = self.move_and_click(xpath, 10, True, "click daily reward", self.step, "clickable")
-            self.increase_step()
-            if success:
-                # And confirm success.
-                xpath = "//div[contains(text(), 'Claim')]"
-                success = self.move_and_click(xpath, 10, True, "claim daily reward", self.step, "clickable")
-                self.increase_step()
-                if success:
-                    xpath = "//div[contains(text(), 'Come Back Tomorrow')]"
-                    success = self.move_and_click(xpath, 10, False, "check for 'Come Back Tomorrow'", self.step, "visible")
-                    self.increase_step()
-                    if success:
-                        self.output(f"STATUS: Successfully claimed the daily reward.", 2)
+
+        xpath = "//h4[contains(text(), 'Daily Reward')]"
+        success = self.brute_click(xpath, 10, "click the 'Daily Reward' button")
+        self.increase_step()
+
+        xpath = "//div[contains(text(), 'Claim')]"
+        success = self.brute_click(xpath, 10, "claim the 'Daily Reward'")
+        self.increase_step()
+
+        xpath = "//div[contains(text(), 'Come Back Tomorrow')]"
+        success = self.move_and_click(xpath, 10, False, "check for 'Come Back Tomorrow'", self.step, "visible")
+        self.increase_step()
+
+        if not success:
+            self.output(f"Step {self.step}: It seems the sequence to claim the daily reward failed.", 2)
+            return
+
+        self.output(f"STATUS: Successfully claimed the daily reward.", 2)
+
         self.quit_driver()
         self.launch_iframe()
 

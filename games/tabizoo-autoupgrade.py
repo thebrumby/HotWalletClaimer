@@ -37,6 +37,8 @@ class TabizooAUClaimer(TabizooClaimer):
 
     def attempt_upgrade(self, balance):
         try:
+            start_lvl = None
+            end_lvl = None
             # attempts one upgrade per claim session
             xpath = "//span[contains(text(), 'Lv')]"
             current_level = self.monitor_element(xpath, 15, "current level")
@@ -45,23 +47,29 @@ class TabizooAUClaimer(TabizooClaimer):
                 self.output(f"Step {self.step} - Current level is: {current_level}", 2)
 
             xpath = "//img[contains(@src, 'upgrade_icon')]"
-            if self.move_and_click(xpath, 10, True, "click the 'upgrade' button", self.step, "clickable"):
+            if self.brute_click(xpath, 10, "click the 'Upgrade' tab"):
                 self.increase_step()
-                xpath = "//img[contains(@src, 'coin')]/following-sibling::span"
+                xpath = "//label[text()='Consume']/following-sibling::p//span"
                 upgrade_cost = self.monitor_element(xpath, 15, "upgrade cost")
                 self.increase_step()
                 if upgrade_cost:
                     self.output(f"Step {self.step} - Upgrade cost is: {upgrade_cost}", 3)
 
                 xpath = "//div[text()='Insufficient Balance']"
-                no_money = self.move_and_click(xpath, 10, True, "check if we have enough funds", self.step, "clickable")
+                no_money = self.move_and_click(xpath, 10, False, "check if we have enough funds", self.step, "clickable")
                 self.increase_step()
                 if no_money:
                     self.output(f"Step {self.step} - Upgrade costs {upgrade_cost} but you only have {balance}.", 3)
                     return
 
                 xpath = "//div[text()='Upgrade']"
-                self.move_and_click(xpath, 10, True, "click the 'upgrade' confirmation button", self.step, "clickable")
+                self.move_and_click(xpath, 10, True, "click the 'Upgrade' button", self.step, "clickable")
+                self.increase_step()
+                self.brute_click(xpath, 10, "double-check we got the 'upgrade' button")
+                self.increase_step()
+                self.brute_click(xpath, 10, "double-check we got the 'upgrade' button")
+                self.increase_step()
+                self.move_and_click(xpath, 10, True, "click the 'Upgrade' button", self.step, "clickable")
                 self.increase_step()
 
                 self.quit_driver()
@@ -70,7 +78,16 @@ class TabizooAUClaimer(TabizooClaimer):
                 new_level = self.monitor_element(xpath, 15, "current level")
                 self.increase_step()
                 if current_level:
-                    self.output(f"STATUS: Upgraded from {current_level} to {new_level } for {upgrade_cost} coins.", 3)
+                    start_lvl = float(self.strip_html_and_non_numeric(current_level))
+                if new_level:
+                    end_lvl = float(self.strip_html_and_non_numeric(new_level))
+                if start_lvl and new_level:
+                    if end_lvl > start_lvl:
+                        self.output(f"STATUS: Upgraded from {current_level} to {new_level} for {upgrade_cost} coins.", 2)
+                    else:
+                        self.output(f"Step {self.step} - Looks like the upgrade sequence failed.", 2)
+                else:
+                    self.output(f"Step {self.step} - We failed to read some of the levels.", 2)
 
         except NoSuchElementException as e:
             self.output(f"Step {self.step} - Element not found: {str(e)}", 1)

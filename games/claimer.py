@@ -23,7 +23,13 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
-import requests
+try:
+    import requests
+except ImportError:
+    import subprocess
+    import sys
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
+    import requests
 
 class Claimer:
 
@@ -809,9 +815,10 @@ class Claimer:
         self.driver.set_window_size(1024, 768)
 
         # let's start with clean screenshots directory
-        if os.path.exists(self.screenshots_path):
-            shutil.rmtree(self.screenshots_path)
-        os.makedirs(self.screenshots_path)
+        if int(self.step) < 101:
+            if os.path.exists(self.screenshots_path):
+                shutil.rmtree(self.screenshots_path)
+            os.makedirs(self.screenshots_path)
 
         try:
             self.driver.get(self.url)
