@@ -53,91 +53,58 @@ class VertusClaimer(Claimer):
     def cipher_daily(self):
         cipher_xpath = "//div[contains(@class, 'btnLeft')]"
         self.move_and_click(cipher_xpath, 10, True, "move to the Cipher island link", self.step, "clickable")
-        self.brute_click(cipher_xpath, 10, "click on the Cipher island link")
-
+        self.increase_step()
+        
         xpaths = {
             '1': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/farmIsland.png']",
             '2': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/mineIsland.png']",
             '3': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/buildIsland.png']",
             '4': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/forestIsland.png']"
         }
-
-        empty_slots_xpaths = [
-            "(//img[contains(@class, 'itemEmpty')])[1]",
-            "(//img[contains(@class, 'itemEmpty')])[2]",
-            "(//img[contains(@class, 'itemEmpty')])[3]",
-            "(//img[contains(@class, 'itemEmpty')])[4]"
-        ]
-
-        if not self.move_and_click(empty_slots_xpaths[0], 10, False, "look for the first empty slot", self.step, "visible"):
+        
+        empty_slots_xpaths = "(//img[contains(@class, 'itemEmpty')])"
+        
+        if not self.move_and_click(empty_slots_xpaths, 10, False, "look for the first empty slot", self.step, "visible"):
             self.output(f"Step {self.step} - The daily puzzle is already completed.", 2)
+            return
         else:
             self.output(f"Step {self.step} - Attempting to solve the daily puzzle.", 2)
-
+            self.increase_step()
+            
             try:
                 response = requests.get('https://raw.githubusercontent.com/thebrumby/HotWalletClaimer/main/extras/vertuscipher')
                 response.raise_for_status()
                 sequence = response.text.strip()
             except requests.exceptions.RequestException as e:
-                self.output(f"Error fetching the sequence: {e}", 1)
+                self.output(f"Error fetching the sequence: {e}", 2)
                 return
 
             for i, digit in enumerate(sequence):
+                n = i + 1
                 xpath = xpaths.get(digit)
-                check_xpath = empty_slots_xpaths[i]  # Use the specific empty slot XPath
-                
+                check_xpath = f"{empty_slots_xpaths}[{n}]"
+
                 if xpath:
-                    if self.brute_puzzle(xpath, check_xpath, digit):
-                        self.output(f"Step {self.step} - Successfully filled slot {i+1} with digit {digit}.", 2)
-                    else:
-                        self.output(f"Step {self.step} - Failed to fill slot {i+1} with digit {digit}.", 2)
+                    # Move and click the element
+                    self.move_and_click(xpath, 10, False, f"put digit {digit} in slot {n}", self.step, "visible")
                     
-                    self.increase_step()
+                    # Find the element and click it using JS
+                    element = self.driver.find_element(By.XPATH, xpath)
+                    self.driver.execute_script("arguments[0].click();", element)
                 else:
                     self.output(f"Step {self.step} - No XPath found for digit {digit}", 2)
 
-                    
-    def brute_puzzle(self, xpath, check_xpath, digit, timeout=30):
-        start_time = time.time()
-        filled = False
-        attempts = 0
+                # Increase the step counter
+                self.increase_step()
 
-        if self.settings['debugIsOn']:
-                self.debug_information(f"Preparing to submist DR digit {digit}","check")
-
-        while time.time() - start_time < timeout:
-            try:
-                attempts += 1
-                element = self.driver.find_element(By.XPATH, xpath)
-                actions = ActionChains(self.driver)
-                actions.move_to_element(element).click().perform()
-                
-                if self.is_slot_filled(check_xpath):
-                    filled = True
-                    break
-
-                # If ActionChains click didn't work, try JS click
-                self.driver.execute_script("arguments[0].click();", element)
-
-                if self.is_slot_filled(check_xpath):
-                    filled = True
-                    break
-
-            except (NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException):
-                pass
-
-        if filled:
-            self.output(f"Step {self.step} - Successfully filled slot with digit {digit} after {attempts} attempts.", 2)
-            if self.settings['debugIsOn']:
-                self.debug_information(f"Successfully submitted DR digit {digit}","check")
-            return True
+        if not self.move_and_click(empty_slots_xpaths, 10, False, "double-check for puzzle completion", self.step, "visible"):
+            self.output(f"Step {self.step} - The daily puzzle has been completed.", 2)
         else:
-            self.output(f"Step {self.step} - Failed to fill slot with digit {digit} after {attempts} attempts.", 2)
-            if self.settings['debugIsOn']:
-                self.debug_information(f"Unsuccessfully submitted DR digit {digit}","check")
-            return False
+            self.output(f"Step {self.step} - The daily puzzle hasn't been solved, maybe we're waiting for a new solution.", 2)
+            self.increase_step()
 
     def is_slot_filled(self, check_xpath):
+        time.sleep(2)
         try:
             # Check if the element corresponding to check_xpath is no longer empty
             filled_element = self.driver.find_element(By.XPATH, check_xpath)
@@ -256,11 +223,11 @@ class VertusClaimer(Claimer):
             if wait_time_text == "Ready to collect" or self.settings['forceClaim']:
                 try:
                     xpath = "//div[p[text()='Collect']]"
-                    self.brute_click(xpath, 10, "collect the main reward")
+                    self.move_and_click(xpath, 10, True, "collect the main reward", self.step, "clickable")
                     self.increase_step()
 
                     xpath = "//div[div/p[text()='Claim']]/div/p"
-                    self.brute_click(xpath, 10, "claim without connecting wallet (may not present)")
+                    self.move_and_click(xpath, 10, True, "claim without connecting wallet (may not present)", self.step, "clickable")
                     self.increase_step()
 
                     # xpath = "//p[contains(@class, '_text_16x1w_17') and text()='Claim']"
