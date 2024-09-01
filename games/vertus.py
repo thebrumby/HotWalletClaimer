@@ -53,9 +53,8 @@ class VertusClaimer(Claimer):
     def cipher_daily(self):
         cipher_xpath = "//div[contains(@class, 'btnLeft')]"
         self.move_and_click(cipher_xpath, 10, True, "move to the Cipher island link", self.step, "clickable")
-        self.brute_click(cipher_xpath, 10, "move to the Cipher island link")
+        self.brute_click(cipher_xpath, 10, "click on the Cipher island link")
 
-        # Define the possible XPath expressions for each image
         xpaths = {
             '1': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/farmIsland.png']",
             '2': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/mineIsland.png']",
@@ -63,31 +62,94 @@ class VertusClaimer(Claimer):
             '4': "//img[contains(@class, '_img_131qd_41') and @src='/icons/islands/forestIsland.png']"
         }
 
-        xpath_empty = "//img[contains(@class, 'itemEmpty')]"
-        if not self.move_and_click(xpath_empty, 10, False, "look for empty slots", self.step, "visible"):
+        empty_slots_xpaths = [
+            "(//img[contains(@class, 'itemEmpty')])[1]",
+            "(//img[contains(@class, 'itemEmpty')])[2]",
+            "(//img[contains(@class, 'itemEmpty')])[3]",
+            "(//img[contains(@class, 'itemEmpty')])[4]"
+        ]
+
+        if not self.move_and_click(empty_slots_xpaths[0], 10, False, "look for the first empty slot", self.step, "visible"):
             self.output(f"Step {self.step} - The daily puzzle is already completed.", 2)
         else:
             self.output(f"Step {self.step} - Attempting to solve the daily puzzle.", 2)
 
             try:
                 response = requests.get('https://raw.githubusercontent.com/thebrumby/HotWalletClaimer/main/extras/vertuscipher')
-                response.raise_for_status()  # Check if the request was successful
+                response.raise_for_status()
                 sequence = response.text.strip()
             except requests.exceptions.RequestException as e:
                 self.output(f"Error fetching the sequence: {e}", 1)
                 return
 
             for i, digit in enumerate(sequence):
-                self.output(f"Step {self.step} - Digit found: {digit}", 3)
                 xpath = xpaths.get(digit)
+                check_xpath = empty_slots_xpaths[i]  # Use the specific empty slot XPath
+                
                 if xpath:
-                    success = self.click_element(xpath)
-                    if success:
-                        self.output(f"Step {self.step} - Successfully clicked element for digit {digit} using XPath {xpath}", 3)
+                    if self.brute_puzzle(xpath, check_xpath, digit):
+                        self.output(f"Step {self.step} - Successfully filled slot {i+1} with digit {digit}.", 2)
                     else:
-                        self.output(f"Step {self.step} - Failed to click element for digit {digit} using XPath {xpath}", 3)
+                        self.output(f"Step {self.step} - Failed to fill slot {i+1} with digit {digit}.", 2)
+                    
+                    self.increase_step()
                 else:
-                    self.output(f"Step {self.step} - No XPath found for digit {digit}", 3)
+                    self.output(f"Step {self.step} - No XPath found for digit {digit}", 2)
+
+                    
+    def brute_puzzle(self, xpath, check_xpath, digit, timeout=30):
+        start_time = time.time()
+        filled = False
+        attempts = 0
+
+        if self.settings['debugIsOn']:
+                self.debug_information(f"Preparing to submist DR digit {digit}","check")
+
+        while time.time() - start_time < timeout:
+            try:
+                attempts += 1
+                element = self.driver.find_element(By.XPATH, xpath)
+                actions = ActionChains(self.driver)
+                actions.move_to_element(element).click().perform()
+                
+                if self.is_slot_filled(check_xpath):
+                    filled = True
+                    break
+
+                # If ActionChains click didn't work, try JS click
+                self.driver.execute_script("arguments[0].click();", element)
+
+                if self.is_slot_filled(check_xpath):
+                    filled = True
+                    break
+
+            except (NoSuchElementException, ElementClickInterceptedException, StaleElementReferenceException):
+                pass
+
+        if filled:
+            self.output(f"Step {self.step} - Successfully filled slot with digit {digit} after {attempts} attempts.", 2)
+            if self.settings['debugIsOn']:
+                self.debug_information(f"Successfully submitted DR digit {digit}","check")
+            return True
+        else:
+            self.output(f"Step {self.step} - Failed to fill slot with digit {digit} after {attempts} attempts.", 2)
+            if self.settings['debugIsOn']:
+                self.debug_information(f"Unsuccessfully submitted DR digit {digit}","check")
+            return False
+
+    def is_slot_filled(self, check_xpath):
+        try:
+            # Check if the element corresponding to check_xpath is no longer empty
+            filled_element = self.driver.find_element(By.XPATH, check_xpath)
+            if filled_element.is_displayed():
+                self.output(f"Step {self.step} - Slot filled as expected for XPath: {check_xpath}", 3)
+                return True
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Slot not filled, or element not found: {check_xpath}", 3)
+            return False
+
+        return False
+
 
     def next_steps(self):
         if self.step:
