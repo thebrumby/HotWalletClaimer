@@ -77,58 +77,38 @@ class TimeFarmClaimer(Claimer):
         self.step = "100"
 
         self.launch_iframe()
-        xpath = "//div[not(@class='farming-button-block')]//span[contains(text(), 'Claim')]"
-        start_present = self.brute_click(xpath, 10, "click loading page 'Claim' (may not be present)")
-        self.increase_step()
-
-        # Navigate to the 'Home' tab
-        FREN_TAB_XPATH = "//div[@class='tab-title' and text()='Home']"
-        self.move_and_click(FREN_TAB_XPATH, 20, True, "Switch to the 'Home' tab", self.step, "clickable")
+        xpath = "//div[@class='app-container']//div[@class='btn-text' and contains(., 'Claim')]"
+        start_present = self.move_and_click(xpath, 8, False, "make splash screen 'Claim' (may not be present)", self.step, "clickable")
         self.increase_step()
 
         self.get_balance(False)
         self.increase_step()
 
         xpath = "//div[@class='farming-button-block'][.//span[text()='Start']]"
-        start_present = self.move_and_click(xpath, 8, False, "click the 'Start' button (may not be present)", self.step, "clickable")
-        if start_present:
-            self.brute_click(xpath, 10, "click the 'Start' button (may not be present)")
+        start_present = self.move_and_click(xpath, 10, True, "click the 'Start' button (may not be present)", self.step, "clickable")
         self.increase_step()
+
+        xpath = "//div[@class='farming-button-block'][.//span[text()='Claim']]"
+        success = self.move_and_click(xpath, 20, True, "look for the claim button (may not be present)", self.step, "clickable")
+        self.increase_step()
+        if success:
+            self.output(f"STATUS: We appear to have correctly clicked the claim button.",1)
+        else:
+            self.output(f"STATUS: The Claim button wasn't clickable on this occassion.",1)
+
+        xpath = "//div[@class='farming-button-block'][.//span[text()='Start']]"
+        self.move_and_click(xpath, 20, True, "click the 'Start' button (may not be present)", self.step, "clickable")
 
         remaining_time = self.get_wait_time()
         self.increase_step()
-        
-        if isinstance(remaining_time, (int, float)) and not self.settings['forceClaim']:
-            remaining_time = self.apply_random_offset(remaining_time)
-            self.output(f"STATUS: We still have {remaining_time} minutes left to wait - sleeping.", 1)
-            return remaining_time
-    
-        xpath = "//div[@class='farming-button-block'][.//span[text()='Claim']]"
-        self.move_and_click(xpath, 20, False, "look for the claim button.", self.step, "visible")
-        success = self.brute_click(xpath, 10, "look for the claim button.")
-        #self.claim_oracle()
-        if success:
-            self.increase_step()
-            self.output(f"STATUS: We appear to have correctly clicked the claim button.",1)
-            xpath = "//div[@class='farming-button-block'][.//span[text()='Start']]"
-            start_present = self.move_and_click(xpath, 20, False, "click the 'Start' button", self.step, "clickable")
-            if start_present:
-                self.brute_click(xpath, 10, "click the 'Start' button")
-                self.increase_step()
-            remaining_time = self.get_wait_time()
-            self.increase_step()
-            self.get_balance(True)
-            self.stake_coins()
-            self.claim_frens()
-            self.claim_oracle()
+        self.get_balance(True)
+        self.stake_coins()
+        self.claim_frens()
+        self.claim_oracle()
+        if isinstance(remaining_time, (int, float)):
             return self.apply_random_offset(remaining_time)
-        
         else:
-            self.output(f"STATUS: The claim button wasn't clickable on this occassion.",1)
-            self.stake_coins()
-            self.claim_frens()
-            self.claim_oracle()
-            return 60
+            return 120
         
     def claim_frens(self):
 
