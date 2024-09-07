@@ -41,7 +41,7 @@ By following these steps, you'll have a fully configured relay from your script 
 - `/list <pattern>` - List only games matching the pattern
    - `/list hot` - Lists all games with "hot" in the name.   
 - `/start <pattern>` - Start all PM2 processes matching the pattern
-   - `/start HOT:Wallet1` - Starts the `HOT:Wallet1` sessions.
+   - `/start HOT:Wallet1` - Starts the `HOT:Wallet1` session.
 - `/restart <pattern>` - Restart all PM2 processes matching the pattern
    - `/restart :Wallet1` - Restarts all PM2 processes matching account `Wallet1`.
 - `/stop <pattern>` - Stop processes matching the pattern
