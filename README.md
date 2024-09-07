@@ -6,7 +6,7 @@ Supporting 16 crypto-based games and growing weekly. Automate claims and stay in
 
 Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would like to support our ongoing development, consider subscribing to our [Patreon](https://www.patreon.com/TelegramClaimBot), or treat us to a [cup of coffee ☕](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation—both options are just $5. You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. Discover some humorous uses for the channel and more reasons to give a little back [here](docs/YOUTUBE.md).
 
-Prefer crypto? You can send donations on BSC, Polygon, or Ethereum networks to **0x070411DD6D9Ef8331F57349dD1952D3921456AA6**. Every bit helps us continue to build and improve the Telegram Claim Bot!
+Prefer crypto? You can send donations on BSC, Polygon, or Ethereum networks to **0x070411DD6D9Ef8331F57349dD1952D3921456AA6**. Maintaining the Telegram Claim Bot takes around 40 hours a week, and we currently receive $20 a month in donations. Chip in today to help keep the project actively maintained and expanding!
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
