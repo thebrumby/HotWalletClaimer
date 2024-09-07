@@ -31,3 +31,4 @@
 | `./launch.sh tabizoo`                | Launch TabiZoo Wallet on Telegram: [@tabizoobot](https://web.telegram.org/k/#@tabizoobot)           | <span title="Claiming well">✅</span>                                                    |
 | `./launch.sh cryptorank`    | Launch Crypto Rank Wallet on Telegram: [@CryptoRank_app_bot](https://web.telegram.org/k/#@CryptoRank_app_bot) | <span title="Claiming well">✅</span>                                                    |
 | `./launch.sh iceberg`    | Launch your Iceberg account on Telegram: [@IcebergAppBot](https://web.telegram.org/k/#@IcebergAppBot) | <span title="Claiming well">✅</span>                                                    |
+| `./launch.sh hamsterkombat`    | Launch your Hamster Kombat account on Telegram: [@hamster_kombat_bot](https://web.telegram.org/k/#@hamster_kombat_bot) | <span title="Claiming well">✅</span>                                                    |
