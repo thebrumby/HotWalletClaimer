@@ -5,6 +5,9 @@ import asyncio
 import logging
 import subprocess
 import requests
+import re
+
+from status import list_pm2_processes, list_all_pm2_processes, get_inactive_directories, get_logs_by_process_name, get_status_logs_by_process_name, fetch_and_process_logs, should_exclude_process
 
 def download_file(url, dest):
     """Download a file from a URL to a destination path."""
@@ -148,24 +151,39 @@ def run() -> None:
 
     application = Application.builder().token(token).build()
 
+    # Add new commands as entry points
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=[
+            CommandHandler('start', start),
+            CommandHandler('list', list_games),
+            CommandHandler('list_pattern', list_games_with_pattern),
+            CommandHandler('start_game', start_game),
+            CommandHandler('restart', restart_game),
+            CommandHandler('stop', stop_game),
+            CommandHandler('update', update_game_files)  # New command for updating
+        ],
         states={
             COMMAND_DECISION: [CallbackQueryHandler(command_decision)],
             SELECT_PROCESS: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_process)],
             PROCESS_DECISION: [CallbackQueryHandler(process_decision)],
             PROCESS_COMMAND_DECISION: [CallbackQueryHandler(process_command_decision)]
         },
-        fallbacks=[CommandHandler('exit', exit)],
+        fallbacks=[CommandHandler('exit', exit),
+           CommandHandler('list', list_games),
+           CommandHandler('list_pattern', list_games_with_pattern),
+           CommandHandler('start_game', start_game),
+           CommandHandler('restart', restart_game),
+           CommandHandler('stop', stop_game),
+           CommandHandler('update', update_game_files)]  # Add fallback for the update command
     )
 
     application.add_handler(conv_handler)
 
-    # Handle the case when a user sends /start but they're not in a conversation
-    application.add_handler(CommandHandler('start', start))
+    # Other global commands
     application.add_handler(CommandHandler("status", status_all))
     application.add_handler(CommandHandler("help", help))
     application.add_handler(CommandHandler("exit", exit))
+    application.add_handler(CommandHandler('list', list_games))
 
     application.run_polling()
 
@@ -209,12 +227,217 @@ async def command_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return ConversationHandler.END
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Send a message with the help of the bot."""
-    return await send_message(update, context, "Available commands:\n/start - Start the bot\n/status - Check the status of all processes\n/help - Show this help message\n/exit - Exit the bot")
+    return await send_message(update, context, """
+    Available commands:
+    /start - Start the original bot
+    /status - Check the status of all processes
+    /list - List all games
+    /list_pattern <pattern> - List games matching a pattern
+    /start <pattern> - Start processes matching the pattern
+    /restart <pattern> - Restart processes matching the pattern
+    /stop <pattern> - Stop processes matching the pattern
+    /update - Update the game files (try pull-games.sh, then git pull)
+    /help - Show this help message
+    /exit - Exit the bot
+    """)
 
 async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Exit the bot."""
     return await send_message(update, context, "Goodbye!")
+
+async def list_games(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """List all games, excluding unwanted and empty entries, and showing if they are running/stopped."""
+    if context.args:
+        # If there are arguments (a pattern), switch to pattern matching mode
+        await list_games_with_pattern(update, context)
+    else:
+        # Otherwise, list all games
+        games = list_all_pm2_processes()
+        running_processes = list_pm2_processes("online")  # Get running processes
+
+        for game in games:
+            # Exclude processes that match excluded keywords
+            if should_exclude_process(game.strip()):
+                continue  # Skip this process if it's in the exclusion list
+
+            # Fetch and process logs for each game
+            name, balance, _, _, status = fetch_and_process_logs(game.strip())
+
+            # Filter out empty or incomplete entries
+            if not name or balance == "None" or status == "Log file missing":
+                continue  # Skip if the entry is incomplete
+
+            # Determine if the process is running or stopped
+            process_state = "Running" if game.strip() in running_processes else "Stopped"
+
+            # Send each game's details as a separate message
+            response = f"Session Name: {name}\nBalance: {balance}\nStatus: {status}\nState: {process_state}\n"
+            await send_message(update, context, response)
+
+async def list_games_with_pattern(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """List games matching a pattern, excluding certain processes and showing if they are running/stopped."""
+    if not context.args:
+        await send_message(update, context, "Please provide a pattern to match.")
+        return
+
+    pattern = context.args[0]
+    games = list_all_pm2_processes()  # Get all PM2 processes
+    running_processes = list_pm2_processes("online")  # Get running processes
+    response = ""
+
+    for game in games:
+        # Exclude processes that match excluded keywords
+        if should_exclude_process(game.strip()):
+            continue
+
+        # Check if the pattern matches the session name (case-insensitive)
+        if re.search(pattern, game.strip(), re.IGNORECASE):
+            name, balance, _, _, status = fetch_and_process_logs(game.strip())
+
+            # Filter out empty or incomplete entries
+            if not name or balance == "None" or status == "Log file missing":
+                continue  # Skip if the entry is incomplete
+
+            # Determine if the process is running or stopped
+            process_state = "Running" if game.strip() in running_processes else "Stopped"
+
+            # Build the response
+            response += f"Session Name: {name}\nBalance: {balance}\nStatus: {status}\nState: {process_state}\n\n"
+
+    if not response:
+        response = f"No games found matching the pattern: {pattern}"
+
+    await send_message(update, context, response)
+
+async def manage_process(update: Update, context: ContextTypes.DEFAULT_TYPE, action: str):
+    """Manage processes (start/restart/stop) using PM2 and provide feedback."""
+    if not context.args:
+        await send_message(update, context, f"Usage: /{action} <pattern>")
+        return
+    
+    pattern = context.args[0]  # Get the pattern provided by the user
+    games = list_all_pm2_processes()  # Fetch all processes from PM2
+
+    # Find processes that match the given pattern
+    matched_games = [game for game in games if re.search(pattern, game)]
+
+    if not matched_games:
+        await send_message(update, context, f"No matching processes found for pattern: {pattern}")
+        return
+
+    # For each matched process, execute the desired PM2 action and provide feedback
+    for game in matched_games:
+        command = f"pm2 {action} {game.strip()}"
+        result = await run_command(command)  # Run the PM2 command and capture the result
+
+        # Send feedback to the user in Telegram
+        if "Process not found" in result:
+            await send_message(update, context, f"Process not found: {game.strip()}")
+        else:
+            # Adjust feedback based on the action performed
+            if action == "start":
+                await send_message(update, context, f"Successfully started: {game.strip()}")
+            elif action == "restart":
+                await send_message(update, context, f"Successfully restarted: {game.strip()}")
+            elif action == "stop":
+                await send_message(update, context, f"Successfully stopped: {game.strip()}")
+
+async def update_game_files(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Update the game files by trying pull-games.sh first, then git pull if that fails."""
+    pull_games_script = "./pull-games.sh"
+    
+    # Check if pull-games.sh exists
+    if os.path.exists(pull_games_script):
+        # Try to run pull-games.sh
+        result = await run_command(pull_games_script)
+        if "not found" in result.lower() or "failed" in result.lower():
+            await send_message(update, context, "Failed to execute pull-games.sh. Attempting git pull...")
+            # Attempt git pull if pull-games.sh fails
+            git_result = await run_git_pull(update, context)
+            return
+        else:
+            await send_message(update, context, f"pull-games.sh executed successfully:\n{result}")
+    else:
+        await send_message(update, context, "pull-games.sh not found. Attempting git pull...")
+        # Attempt git pull if pull-games.sh does not exist
+        git_result = await run_git_pull(update, context)
+
+async def run_git_pull(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Run git pull and handle output within the 4k message size limit."""
+    git_result = await run_command("git pull")
+    
+    if "error" in git_result.lower() or "aborting" in git_result.lower():
+        # If there are errors, capture and send the error result
+        await send_limited_message(update, context, git_result)
+    else:
+        # If it's a success, send the update result
+        await send_limited_message(update, context, git_result)
+
+async def run_command(command: str) -> str:
+    """Execute a shell command and return its output including both stdout and stderr."""
+    proc = await asyncio.create_subprocess_shell(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    stdout, stderr = await proc.communicate()
+
+    # Combine stdout and stderr into one response to capture all output
+    return stdout.decode() + "\nError: " + stderr.decode()
+
+async def send_limited_message(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, limit: int = 4096):
+    """Send messages in chunks limited to 4k characters."""
+    # Split the text into chunks of 4096 characters and send each as a separate message
+    for i in range(0, len(text), limit):
+        await send_message(update, context, text[i:i + limit])
+
+async def send_message(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str) -> int:
+    """Send a message with the help of the bot."""
+    if update.callback_query:
+        chat_id = update.callback_query.message.chat_id
+        await context.bot.send_message(chat_id=chat_id, text=text, parse_mode='HTML')
+        await update.callback_query.answer()
+    elif update.message:
+        await update.message.reply_text(text)
+
+# Handlers for /start, /restart, /stop
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Start the bot or handle process start based on provided arguments."""
+    # Check if there are any arguments (i.e., /start <pattern>)
+    if context.args:
+        # If arguments are provided, assume it's for starting a specific process
+        await manage_process(update, context, "start")
+        return ConversationHandler.END
+    else:
+        # No arguments provided, start the bot's conversation as usual
+        await update.message.reply_text(
+            '<b>Telegram Claim Bot!\n'
+            'How can I help you?</b>',
+            parse_mode='HTML',
+            reply_markup=ReplyKeyboardRemove(),
+        )
+
+        # Define inline buttons for bot options
+        keyboard = [
+            [InlineKeyboardButton('ALL STATUS', callback_data='status')],
+            [InlineKeyboardButton('SELECT PROCESS', callback_data='process')],
+            [InlineKeyboardButton('Help', callback_data='help')],
+            [InlineKeyboardButton('Exit', callback_data='exit')],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text('<b>Please choose:</b>', parse_mode='HTML', reply_markup=reply_markup)
+
+        return COMMAND_DECISION
+
+async def restart_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await manage_process(update, context, "restart")
+
+async def stop_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await manage_process(update, context, "stop")
+
+async def start_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Start a process based on a pattern using the manage_process function."""
+    await manage_process(update, context, "start")
 
 #region Unique Process
 
@@ -412,18 +635,6 @@ def main() -> None:
             sys.exit()
 
     run()
-
-async def run_command(command: str) -> str:
-    """Execute a shell command and return its output."""
-    proc = await asyncio.create_subprocess_shell(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    stdout, stderr = await proc.communicate()
-    if stderr:
-        print(f"Error: {stderr.decode()}")
-    return stdout.decode()
 
 if __name__ == '__main__':
     main()
