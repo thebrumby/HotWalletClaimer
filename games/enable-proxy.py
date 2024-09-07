@@ -75,18 +75,22 @@ def response(flow: http.HTTPFlow) -> None:
                 if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
                     content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=ios')
                     content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=ios')
+                    print("Substituted tgWebAppPlatform with 'ios' for iOS platform.")
                 elif 'Android' in user_agent:
                     content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=android')
                     content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=android')
+                    print("Substituted tgWebAppPlatform with 'android' for Android platform.")
 
             # Now, check if the request is for the telegram-web-app.js file and redirect based on platform
             if 'telegram-web-app.js' in flow.request.pretty_url:
                 if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
                     # Redirect for iOS
                     flow.request.path = flow.request.path.replace('telegram-web-app.js', 'games/utils/ios-60-telegram-web-app.js')
+                    print(f"Substituted telegram-web-app.js with ios-60-telegram-web-app.js for iOS platform.")
                 elif 'Android' in user_agent:
                     # Redirect for Android
                     flow.request.path = flow.request.path.replace('telegram-web-app.js', 'games/utils/android-60-telegram-web-app.js')
+                    print(f"Substituted telegram-web-app.js with android-60-telegram-web-app.js for Android platform.")
 
             # Update the response content with modifications
             flow.response.content = content.encode('utf-8')
