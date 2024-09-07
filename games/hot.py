@@ -71,7 +71,7 @@ class HotClaimer(Claimer):
             self.move_and_click(xpath, 30, True, "click continue after seedphrase entry", self.step, "clickable")
             self.increase_step()
 
-            xpath = "//button[contains(text(), 'Select account')]"
+            xpath = "//button[contains(text(), 'Continue')]"
             self.move_and_click(xpath, 180, True, "click continue at account selection screen", self.step, "clickable")
             self.increase_step()
 
