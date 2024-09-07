@@ -864,6 +864,14 @@ class Claimer:
         self.select_iframe(self.step)
         self.increase_step()
 
+        self.driver.switch_to.default_content()
+
+        iframe = self.driver.find_element(By.TAG_NAME, "iframe")
+        iframe_url = iframe.get_attribute("src")
+        iframe_url = iframe_url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=ios")
+
+        self.driver.execute_script("location.href = '" + iframe_url + "'")
+
 
     def full_claim(self):
         # Must OVERRIDE this function in the child class
@@ -1178,7 +1186,7 @@ class Claimer:
                 self.output(f"Step {step} - Removed {overlays_cleared} overlay(s) covering the target.", 3)
             return overlays_cleared
         except Exception as e:
-            self.output(f"Step {step} - An error occurred while trying to clear overlays: {e}", 1)
+            self.output(f"Step {step} - An error occurred while trying to clear overlays.", 1)
             return 0
 
     def element_still_exists_by_id(self, element_id):
