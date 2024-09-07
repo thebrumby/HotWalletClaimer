@@ -666,7 +666,7 @@ class Claimer:
             except TimeoutException:
                 self.output(f"Step {self.step} - Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.", 1)
 
-        # OTP Login Method
+        # OTP Login Me,thod
         self.increase_step()
         self.output(f"Step {self.step} - Initiating the One-Time Password (OTP) method...\n",1)
         self.driver.get(self.url)
@@ -863,15 +863,6 @@ class Claimer:
         # HereWalletBot Pop-up Handling
         self.select_iframe(self.step)
         self.increase_step()
-
-        self.driver.switch_to.default_content()
-
-        iframe = self.driver.find_element(By.TAG_NAME, "iframe")
-        iframe_url = iframe.get_attribute("src")
-        iframe_url = iframe_url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=ios")
-
-        self.driver.execute_script("location.href = '" + iframe_url + "'")
-
 
     def full_claim(self):
         # Must OVERRIDE this function in the child class
@@ -1267,7 +1258,7 @@ class Claimer:
                     # Save screenshot if debug is on
                     if self.settings['debugIsOn']:
                         self.debug_information("iterating through launch game buttons","check")
-                    # Perform actions and click the button using JavaScript
+                    # Perform actions and click the button u,sing JavaScript
                     actions.perform()
                     self.driver.execute_script("arguments[0].click();", button)
                     clicked = True

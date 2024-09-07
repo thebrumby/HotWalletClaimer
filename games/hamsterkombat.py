@@ -65,30 +65,47 @@ class ColdClaimer(Claimer):
 
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}",1)
+            
+    def launch_iframe(self):
+        super().launch_iframe()
+
+        # Open tab in main window
+        self.driver.switch_to.default_content()
+
+        iframe = self.driver.find_element(By.TAG_NAME, "iframe")
+        iframe_url = iframe.get_attribute("src")
+        iframe_url = iframe_url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=android")
+
+        self.driver.execute_script("location.href = '" + iframe_url + "'")
 
     def full_claim(self):
         self.step = "100"
         self.launch_iframe()
+    
+        # Capture initial values before the claim
+        initial_remains = self.get_remains()  # Capture the initial remains
+        initial_balance = self.get_balance(False)  # Capture the initial balance (before the claim)
         
+        # Output the captured initial values
+        self.output(f"Step {self.step} - Initial Remains: {initial_remains}, Initial Balance: {initial_balance}", 3)
+    
         # Try to claim the daily reward if it's there
         xpath = "//button[span[text()='Claim']]"
         success = self.move_and_click(xpath, 20, True, "look for the Daily Reward claim button.", self.step, "clickable")
         self.increase_step()
-        
+    
         # And the "thank you hamster"
         xpath = "//button[span[text()='Thank you, Hamster']]"
         success = self.move_and_click(xpath, 20, True, "look for the 'Thank you hamster' bonus.", self.step, "clickable")
         self.increase_step()
     
-        # Fetch balance
-        self.get_balance(False)
-        
-        # Get remains value
-        remains = self.get_remains()
+        # Fetch remains after claiming but before clicking
+        starting_clicks = self.get_remains()
+        self.output(f"Step {self.step} - Starting clicks (Remains after claim): {starting_clicks}", 3)
     
-        # Only call click_ahoy if remains is a number and greater than 0
-        if isinstance(remains, (int, float)) and remains > 0:
-            self.click_ahoy(remains)
+        # Only call click_ahoy if starting_clicks is a number and greater than 0
+        if isinstance(starting_clicks, (int, float)) and starting_clicks > 0:
+            self.click_ahoy(starting_clicks)
     
             # Fetch remains again after click_ahoy
             remains_after_clicks = self.get_remains()
@@ -99,11 +116,18 @@ class ColdClaimer(Claimer):
             else:
                 self.output(f"Step {self.step} - Unable to retrieve valid remains after clicks.", 3)
         else:
-            self.output(f"Step {self.step} - No valid targets to click, remains: {remains}", 3)
+            self.output(f"Step {self.step} - No valid targets to click, remains: {starting_clicks}", 3)
     
-        # Fetch balance again after clicks
-        self.get_balance(True)
-        
+        # Fetch the final balance after clicks
+        final_balance = self.get_balance(True)
+    
+        # Calculate differences
+        remains_diff = initial_remains - remains_after_clicks if isinstance(initial_remains, (int, float)) and isinstance(remains_after_clicks, (int, float)) else 0
+        balance_diff = final_balance - initial_balance if isinstance(initial_balance, (int, float)) and isinstance(final_balance, (int, float)) else 0
+    
+        # Output the result with priority 1
+        self.output(f"STATUS: We used {remains_diff} energy to gain {balance_diff} more tokens.", 1)
+
         random_timer = random.randint(20, 60)
         self.output(f"Step {self.step} - Recharging energy for {random_timer} minutes.", 3)
         return random_timer
