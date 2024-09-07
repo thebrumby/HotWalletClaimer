@@ -1,16 +1,18 @@
 # Telegram Claim Assistant - Mine HOT & More!
 
-Supporting 15 crypto-based games and growing weekly. Automate claims and stay informed about their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
+Supporting 16 crypto-based games and growing weekly. Automate claims and stay informed about their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
 
 ---
 
 Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would like to support our ongoing development, consider subscribing to our [Patreon](https://www.patreon.com/TelegramClaimBot), or treat us to a [cup of coffee ☕](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation—both options are just $5. You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. Discover some humorous uses for the channel and more reasons to give a little back [here](docs/YOUTUBE.md).
 
+Prefer crypto? You can send donations on BSC, Polygon, or Ethereum networks to **0x070411DD6D9Ef8331F57349dD1952D3921456AA6**. Every bit helps us continue to build and improve the Telegram Claim Bot!
+
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
+- **Big Fixes, New Features, and a Cool New Game!**: Read about the latest updates and improvements. [read more](https://www.patreon.com/posts/big-fixes-new-111597164?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Crypto Rank Added, and Updates to Timefarm, Vertus, and LumCity**: Check out the latest blog. [read more](https://www.patreon.com/posts/new-features-and-110765516?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Daily Reward Claim Added to Spell**: Save time and get free rewards automatically. [read more](https://www.patreon.com/posts/daily-reward-to-110591201?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Tabizoo Script Gets Auto-Upgrade Function**: Effortlessly improve your Tabizoo mining speed. [read more](https://www.patreon.com/posts/tabizoo-script-110532859?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
