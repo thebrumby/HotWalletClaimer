@@ -56,6 +56,6 @@ You may use pattern matching with certain commands. When using `/list`, it is **
 #### Examples:
 
 - `/list hot` - Lists all games with "hot" in the name, case insensitive.
-- `/start HOT:Wallet1` - Starts all `HOT:Wallet1` sessions.
-- `/restart Wallet1` - Restarts all `Wallet1` sessions.
-- `/stop Vertus` - Stops all sessions with "Vertus" in the name.
+- `/start HOT:Wallet1` - Starts the `HOT:Wallet1` sessions.
+- `/restart :Wallet1` - Restarts all sessions matching account `Wallet1`.
+- `/stop Vertus:` - Stops all sessions for the game "Vertus".
