@@ -74,6 +74,11 @@ class ColdClaimer(Claimer):
         xpath = "//button[span[text()='Claim']]"
         success = self.move_and_click(xpath, 20, True, "look for the Daily Reward claim button.", self.step, "clickable")
         self.increase_step()
+        
+        # And the "thank you hamster"
+        xpath = "//button[span[text()='Thank you, Hamster']]"
+        success = self.move_and_click(xpath, 20, True, "look for the 'Thank you hamster' bonus.", self.step, "clickable")
+        self.increase_step()
     
         # Fetch balance
         self.get_balance(False)
