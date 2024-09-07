@@ -38,10 +38,14 @@ By following these steps, you'll have a fully configured relay from your script 
 
 - `/start` - Start the original bot
 - `/list` - List all active and inactive games from PM2
-- `/list <pattern>` - List only games matching the pattern 
-- `/start <pattern>` - Start processes matching the pattern
-- `/restart <pattern>` - Restart processes matching the pattern
+- `/list <pattern>` - List only games matching the pattern
+   - `/list hot` - Lists all games with "hot" in the name.   
+- `/start <pattern>` - Start all PM2 processes matching the pattern
+   - `/start HOT:Wallet1` - Starts the `HOT:Wallet1` sessions.
+- `/restart <pattern>` - Restart all PM2 processes matching the pattern
+   - `/restart :Wallet1` - Restarts all PM2 processes matching account `Wallet1`.
 - `/stop <pattern>` - Stop processes matching the pattern
+   - `/stop Vertus:` - Stops all PM2 processes for the game "Vertus".
 - `/update` - Update the game files (try `pull-games.sh`, then `git pull`)
 - `/help` - Show this help message
 - `/exit` - Exit the bot
@@ -52,10 +56,3 @@ You may use pattern matching with certain commands. When using `/list`, it is **
 
 - `/stop HOT:` will stop all HOT games, regardless of the account name.
 - `/restart :Wallet1` will restart all `Wallet1` sessions across any available game.
-
-#### Examples:
-
-- `/list hot` - Lists all games with "hot" in the name, case insensitive.
-- `/start HOT:Wallet1` - Starts the `HOT:Wallet1` sessions.
-- `/restart :Wallet1` - Restarts all sessions matching account `Wallet1`.
-- `/stop Vertus:` - Stops all sessions for the game "Vertus".
