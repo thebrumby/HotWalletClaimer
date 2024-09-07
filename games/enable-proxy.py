@@ -62,38 +62,44 @@ def response(flow: http.HTTPFlow) -> None:
     if 'X-Frame-Options' in flow.response.headers:
         del flow.response.headers['X-Frame-Options']
 
-    # Modify script to replace WebApp.platform getter
-    if flow.response.content:
-        content = flow.response.content.decode('utf-8')
-        user_agent = flow.request.headers.get('User-Agent', '')
-        
-        # Check if the response is for the JavaScript file and modify it based on User-Agent
-        if 'telegram-web-app.js' in flow.request.pretty_url:
-            if any(keyword in user_agent for keyword in ['iPhone', 'iPad']):
-                content = content.replace(
-                    "Object.defineProperty(WebApp, 'platform', { get: function () { return webAppPlatform; }, enumerable: true, });",
-                    "Object.defineProperty(WebApp, 'platform', { get: function () { return 'ios'; }, enumerable: true, });"
-                )
-            elif 'Android' in user_agent:
-                content = content.replace(
-                    "Object.defineProperty(WebApp, 'platform', { get: function () { return webAppPlatform; }, enumerable: true, });",
-                    "Object.defineProperty(WebApp, 'platform', { get: function () { return 'android'; }, enumerable: true, });"
-                )
+    # Check if the response is likely to be text-based (e.g., JavaScript, HTML)
+    content_type = flow.response.headers.get('Content-Type', '').lower()
 
-        # Modify tgWebAppPlatform if present
-        if 'tgWebAppPlatform=weba' in content or 'tgWebAppPlatform=web' in content:
-            if any(keyword in user_agent for keyword in ['iPhone', 'iPad']):
-                content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=iOS')
-                content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=iOS')
-            elif 'Android' in user_agent:
-                content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=android')
-                content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=android')
+    if 'javascript' in content_type or 'text' in content_type:
+        try:
+            content = flow.response.content.decode('utf-8')  # Decode the response
+            user_agent = flow.request.headers.get('User-Agent', '')
 
-        flow.response.content = content.encode('utf-8')
+            # Modify tgWebAppPlatform if present
+            if 'tgWebAppPlatform=weba' in content or 'tgWebAppPlatform=web' in content:
+                if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
+                    content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=ios')
+                    content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=ios')
+                elif 'Android' in user_agent:
+                    content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=android')
+                    content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=android')
+
+            # Now, check if the request is for the telegram-web-app.js file and redirect based on platform
+            if 'telegram-web-app.js' in flow.request.pretty_url:
+                if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
+                    # Redirect for iOS
+                    flow.request.path = flow.request.path.replace('telegram-web-app.js', 'games/utils/ios-60-telegram-web-app.js')
+                elif 'Android' in user_agent:
+                    # Redirect for Android
+                    flow.request.path = flow.request.path.replace('telegram-web-app.js', 'games/utils/android-60-telegram-web-app.js')
+
+            # Update the response content with modifications
+            flow.response.content = content.encode('utf-8')
+
+        except UnicodeDecodeError as e:
+            print(f"Decoding error: {e}")  # Log decoding errors
+        except Exception as e:
+            print(f"Unexpected error while processing content: {e}")  # Catch any other errors
 
     # Log the modified response headers
     print(f"Modified Response Headers: {flow.response.headers}")
 """
+
     os.makedirs(PROXY_DIR, exist_ok=True)
     with open(os.path.join(PROXY_DIR, 'modify_requests_responses.py'), 'w') as file:
         file.write(script_content)
