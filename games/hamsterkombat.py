@@ -81,14 +81,7 @@ class ColdClaimer(Claimer):
     def full_claim(self):
         self.step = "100"
         self.launch_iframe()
-    
-        # Capture initial values before the claim
-        initial_remains = self.get_remains()  # Capture the initial remains
-        initial_balance = self.get_balance(False)  # Capture the initial balance (before the claim)
         
-        # Output the captured initial values
-        self.output(f"Step {self.step} - Initial Remains: {initial_remains}, Initial Balance: {initial_balance}", 3)
-    
         # Try to claim the daily reward if it's there
         xpath = "//button[span[text()='Claim']]"
         success = self.move_and_click(xpath, 20, True, "look for the Daily Reward claim button.", self.step, "clickable")
@@ -98,9 +91,19 @@ class ColdClaimer(Claimer):
         xpath = "//button[span[text()='Thank you, Hamster']]"
         success = self.move_and_click(xpath, 20, True, "look for the 'Thank you hamster' bonus.", self.step, "clickable")
         self.increase_step()
+        
+        # Capture initial values before the claim
+        initial_remains = self.get_remains()  # Capture the initial remains
+        initial_balance = self.get_balance(False)  # Capture the initial balance (before the claim)
+        
+        # Ensure initial balance is captured correctly
+        if initial_balance is None:
+            self.output(f"Step {self.step} - Failed to retrieve the initial balance.", 2)
+
+        self.output(f"Step {self.step} - Initial Remains: {initial_remains}, Initial Balance: {initial_balance}", 3)
     
         # Fetch remains after claiming but before clicking
-        starting_clicks = self.get_remains()
+        starting_clicks = initial_remains
         self.output(f"Step {self.step} - Starting clicks (Remains after claim): {starting_clicks}", 3)
     
         # Only call click_ahoy if starting_clicks is a number and greater than 0
@@ -108,19 +111,21 @@ class ColdClaimer(Claimer):
             self.click_ahoy(starting_clicks)
     
             # Fetch remains again after click_ahoy
-            remains_after_clicks = self.get_remains()
+        remains_after_clicks = self.get_remains()
     
-            # Display remaining clicks if it's a valid number
-            if isinstance(remains_after_clicks, (int, float)):
-                self.output(f"Step {self.step} - Remaining clicks: {remains_after_clicks}", 3)
-            else:
-                self.output(f"Step {self.step} - Unable to retrieve valid remains after clicks.", 3)
+        # Display remaining clicks if it's a valid number
+        if isinstance(remains_after_clicks, (int, float)):
+            self.output(f"Step {self.step} - Remaining clicks: {remains_after_clicks}", 3)
         else:
-            self.output(f"Step {self.step} - No valid targets to click, remains: {starting_clicks}", 3)
+            self.output(f"Step {self.step} - Unable to retrieve valid remains after clicks.", 3)
     
         # Fetch the final balance after clicks
         final_balance = self.get_balance(True)
     
+        # Ensure final balance is captured correctly
+        if final_balance is None:
+            self.output(f"Step {self.step} - Failed to retrieve the final balance.", 2)
+
         # Calculate differences
         remains_diff = initial_remains - remains_after_clicks if isinstance(initial_remains, (int, float)) and isinstance(remains_after_clicks, (int, float)) else 0
         balance_diff = final_balance - initial_balance if isinstance(initial_balance, (int, float)) and isinstance(final_balance, (int, float)) else 0
@@ -151,7 +156,7 @@ class ColdClaimer(Claimer):
             if element:
                 cleaned_balance = self.strip_html_and_non_numeric(element)
                 self.output(f"Step {self.step} - {balance_text} {cleaned_balance}", priority)
-
+                return float(cleaned_balance)
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
         except Exception as e:
