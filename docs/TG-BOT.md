@@ -1,4 +1,4 @@
-# Setting Up a Relay from this script to a Telegram Bot
+# Setting Up a Relay from this Script to a Telegram Bot
 
 ## Step 1: Create a Telegram Bot Using BotFather
 
@@ -34,3 +34,15 @@ By following these steps, you'll have a fully configured relay from your script 
 
 **Massive thanks to community member JBR1999 for developing and contributing this code!**
 
+### Available Commands:
+
+- `/start` - Start the original bot
+- `/status` - Check the status of all processes
+- `/list` - List all games
+- `/list_pattern <pattern>` - List games matching a pattern
+- `/start <pattern>` - Start processes matching the pattern
+- `/restart <pattern>` - Restart processes matching the pattern
+- `/stop <pattern>` - Stop processes matching the pattern
+- `/update` - Update the game files (try `pull-games.sh`, then `git pull`)
+- `/help` - Show this help message
+- `/exit` - Exit the bot
