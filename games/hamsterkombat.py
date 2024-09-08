@@ -36,7 +36,7 @@ class ColdClaimer(Claimer):
         self.pot_full = "Filled"
         self.pot_filling = "Mining"
         self.seed_phrase = None
-        self.forceLocalProxy = False
+        self.forceLocalProxy = True
         self.forceRequestUserAgent = False
         self.start_app_xpath = "//button//span[contains(text(), 'Play in 1')] | //div[contains(@class, 'new-message-bot-commands-view') and contains(text(), 'Play')]"
 
