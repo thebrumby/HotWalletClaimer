@@ -92,15 +92,11 @@ class HotClaimer(Claimer):
 
         self.launch_iframe()
 
-        xpath = "(//div[div/img[contains(@src, '/ft/near.png')]])//p[last()]"
+        xpath = "(//div[div/img[contains(@src, '/ft/near.png')]])//div[last()]/p[last()]"
         near = self.monitor_element(xpath, 10, "obtain your 'Near' Balance")
         if near:
             try:
-                # Split the string by spaces and take the last element
-                last_value_str = near.split()[-1]
-        
-                # Convert the last element to a float
-                last_value_float = float(last_value_str)
+                last_value_float = float(near)
                 if last_value_float > 0.1:
                     low_near = False
         
