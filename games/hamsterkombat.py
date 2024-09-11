@@ -238,21 +238,33 @@ class ColdClaimer(Claimer):
             # Define the JavaScript function to simulate `batch_clicks` on the button
             click_script = f"""
             return new Promise((resolve) => {{
-                const clickEvent1 = new PointerEvent('pointerdown', {{clientX: 150, clientY: 300}});
-                const clickEvent2 = new PointerEvent('pointerup', {{clientX: 150, clientY: 300}});
                 let clicks = 0;
-                const interval = setInterval(function() {{
+                const xPositions = [135, 150, 165];  // Cycle through these x positions
+
+                function performClick() {{
                     const clickButton = document.getElementsByClassName('user-tap-button')[0];
                     if (clickButton && clicks < {batch_clicks}) {{
-                        clickButton.dispatchEvent(clickEvent1);
-                        clickButton.dispatchEvent(clickEvent2);
-                        clicks++;
+                        xPositions.forEach((xPos) => {{
+                            // Random y position between 290 and 310
+                            const randomY = Math.floor(Math.random() * 21) + 290;
+                            const clickEvent1 = new PointerEvent('pointerdown', {{clientX: xPos, clientY: randomY}});
+                            const clickEvent2 = new PointerEvent('pointerup', {{clientX: xPos, clientY: randomY}});
+                            clickButton.dispatchEvent(clickEvent1);
+                            clickButton.dispatchEvent(clickEvent2);
+                        }});
+                        clicks += 3;  // Increment by 3 after each set of clicks
+
+                        // Random delay between 200 and 400 milliseconds for the next set of clicks
+                        const randomDelay = Math.floor(Math.random() * 201) + 200;  
+                        setTimeout(performClick, randomDelay);
                     }} else {{
-                        clearInterval(interval);
                         console.log('Finished clicking: ' + clicks + ' times');
                         resolve(clicks);  // Resolve the Promise with the final click count for this batch
                     }}
-                }}, 300);  
+                }}
+
+                // Start the first set of clicks immediately
+                performClick();
             }});
             """
     
