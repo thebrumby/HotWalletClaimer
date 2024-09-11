@@ -92,19 +92,23 @@ class HotClaimer(Claimer):
 
         self.launch_iframe()
 
-        xpath = "(//div[div/img[contains(@src, '/ft/near.png')]])//div[last()]/p[last()]"
+        xpath = "(//div[div/img[contains(@src, '/ft/near.png')]])//p[last()]"
         near = self.monitor_element(xpath, 10, "obtain your 'Near' Balance")
         if near:
             try:
-                last_value_float = float(near)
+                # Split the string by spaces and take the last element
+                last_value_str = near.split()[-1]
+
+                # Convert the last element to a float
+                last_value_float = float(last_value_str)
                 if last_value_float > 0.1:
                     low_near = False
         
                 self.output(f"Step {self.step} - Successfully extracted Near balance: {last_value_float}", 3)
             except ValueError:
-                self.output("Step {self.step} - Conversion of Near Balance to float failed.", 3)
+                self.output(f"Step {self.step} - Conversion of Near Balance to float failed.", 3)
         else:
-            self.output("Step {self.step} - The 'near' variable is empty or not defined.", 3)
+            self.output(f"Step {self.step} - The 'near' variable is empty or not defined.", 3)
         self.increase_step()
 
         xpath = "//h4[text()='Storage']"
