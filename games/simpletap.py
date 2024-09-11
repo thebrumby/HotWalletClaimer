@@ -82,12 +82,14 @@ class SimpleTapClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
+        status_text = None  # Initialize status_text early
+
         try:
             # New button to join "Bump"
             original_window = self.driver.current_window_handle
             xpath = "//*[text()='Start']"
             self.move_and_click(xpath, 8, True, "click the 'Start' button (may not be present)", self.step, "clickable")
-    
+
             # Switch back to the original window if a new one is opened
             new_window = [window for window in self.driver.window_handles if window != original_window]
             if new_window:
@@ -97,37 +99,41 @@ class SimpleTapClaimer(Claimer):
                 self.output(f"Step {self.step} - 'Start' button not found or no new window opened.", 3)
         self.increase_step()
 
-        # TASKS
-        xpath = "//a[contains(@class, 'tasks')]"
+        opening_balance = self.get_balance(False)  # Capture starting balance
 
-        while True:
-            try:
-                button = self.move_and_click(xpath, 30, False, "click the 'TASK POPUP'", self.step, "clickable")
-                if not button: 
-                    break
-                button.click()
-            except TimeoutException:
-                break
-
-        # Now get the balance
-        self.get_balance(False)
-
-        # And collect the reward.
+        # Collect the reward.
         xpath = "//button[contains(text(), 'Collect')]"
         self.move_and_click(xpath, 8, True, "click the 'Collect' button (may not be present)", self.step, "clickable")
 
         # Farming
-        xpath = "//div[contains(@class, 'home-button')]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Farming' button", self.step, "clickable")
+        xpath = "//button[contains(text(), 'Start farming')]"
+        button = self.move_and_click(xpath, 8, False, "click the 'Start farming' button", self.step, "clickable")
         if button: 
-            classes = button.get_attribute("class")
-            if "block" in classes:
-                status_text = "STATUS: Farming"
-            else:
-                button.click()
-                status_text = "STATUS: Start Farming"
+            button.click()
+            status_text = "STATUS: Starting to farm now"
+        else:
+            status_text = "STATUS: Already farming"
 
         self.increase_step()
+
+        closing_balance = self.get_balance(True)  # Capture closing balance
+
+        try:
+            # Convert both balances to float and calculate the balance change
+            opening_balance = float(opening_balance)
+            closing_balance = float(closing_balance)
+            balance_increase = closing_balance - opening_balance
+
+            # Update status_text based on balance change
+            if balance_increase > 0:
+                status_text += f". Balance increased by {balance_increase:.2f}"
+            else:
+                status_text += ". No balance increase"
+        except ValueError:
+            # Handle conversion errors
+            self.output("Error converting balances to float", 3)
+
+        wait_time = self.get_wait_time(self.step, "pre-claim") 
 
         # Take friends points
         xpath = "(//div[@class='appbar-tab'])[last()]"
@@ -143,12 +149,8 @@ class SimpleTapClaimer(Claimer):
             xpath = "//div[contains(@class, 'invite_claimed-button')]"
             button = self.move_and_click(xpath, 8, False, "exit the 'Congratulations' popup", self.step, "clickable")
             if button: button.click()
-            
+                
         self.increase_step()
-
-        self.get_balance(True)
-
-        wait_time = self.get_wait_time(self.step, "pre-claim") 
 
         if wait_time is None:
             self.output(f"{status_text} - Failed to get wait time. Next try in 60 minutes", 3)
@@ -156,7 +158,6 @@ class SimpleTapClaimer(Claimer):
         else:
             self.output(f"{status_text} - Next try in {self.show_time(wait_time)}.", 2)
             return wait_time
-
 
     def get_balance(self, claimed=False):
 
@@ -166,8 +167,8 @@ class SimpleTapClaimer(Claimer):
             clean = re.compile('<.*?>')
             text_without_html = clean.sub('', text)
             # Keep only numeric characters and decimal points
-            #numeric_text = re.sub(r'[^0-9.]', '', text_without_html)
-            return text_without_html
+            numeric_text = re.sub(r'[^0-9.]', '', text_without_html)
+            return numeric_text
 
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
@@ -182,15 +183,16 @@ class SimpleTapClaimer(Claimer):
 
         # Construct the specific balance XPath
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = "//div[contains(@class, 'home_balance')]" 
+        balance_xpath = "//div[contains(@class, 'home_balance')]"
 
         try:
             element = self.monitor_element(balance_xpath)
 
             # Check if element is not None and process the balance
             if element:
-                cleaned_balance = strip_html_and_non_numeric(element)
+                cleaned_balance = strip_html_and_non_numeric(element)  # Ensure we get the text of the element
                 self.output(f"Step {self.step} - {balance_text} {cleaned_balance}", priority)
+                return cleaned_balance
 
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
