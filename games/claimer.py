@@ -106,6 +106,7 @@ class Claimer:
         self.script = "default_script.py"
         self.prefix = "Default:"
         self.allow_early_claim = True
+        self.default_platform = "web"
 
     def run(self):
         if not self.settings["forceNewSession"]:
