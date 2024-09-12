@@ -26,7 +26,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 from claimer import Claimer
 
-class ColdClaimer(Claimer):
+class HamsterKombatClaimer(Claimer):
 
     def initialize_settings(self):
         super().initialize_settings()
@@ -119,6 +119,9 @@ class ColdClaimer(Claimer):
         else:
             self.output(f"Step {self.step} - Unable to retrieve valid remains after clicks.", 3)
     
+        # Return the current profit per hour
+        self.get_profit_hour(True)
+
         # Fetch the final balance after clicks
         final_balance = self.get_balance(True)
     
@@ -222,7 +225,7 @@ class ColdClaimer(Claimer):
             return None
     
         # Calculate max_clicks as 90% of the remaining clicks
-        max_clicks = max(1, int(remains * 0.9))  # 90% of remains
+        max_clicks = max(1, int(remains * 0.8))  # 80% of remains
         self.output(f"Step {self.step} - Setting max clicks to 90% of remains: {max_clicks}", 3)
     
         # Set batch size to 100 clicks per batch
@@ -288,8 +291,32 @@ class ColdClaimer(Claimer):
     
         self.output(f"Step {self.step} - Finished session with {total_clicks} clicks. {remains} targets remaining.", 2)
 
+    def get_profit_hour(self, claimed=False):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+
+        priority = max(self.settings['verboseLevel'], default_priority)
+
+        # Construct the specific profit XPath
+        profit_text = f'{prefix} PROFIT/HOUR:'
+        profit_xpath = "//div[@class='price-value']"
+
+        try:
+            element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "get profit per hour"))
+
+            # Check if element is not None and process the profit
+            if element:
+                self.output(f"Step {self.step} - {profit_text} {element}", priority)
+
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+        
+        self.increase_step()
+
 def main():
-    claimer = ColdClaimer()
+    claimer = HamsterKombatClaimer()
     claimer.run()
 
 if __name__ == "__main__":
