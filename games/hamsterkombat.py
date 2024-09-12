@@ -74,9 +74,17 @@ class HamsterKombatClaimer(Claimer):
 
         iframe = self.driver.find_element(By.TAG_NAME, "iframe")
         iframe_url = iframe.get_attribute("src")
-        iframe_url = iframe_url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=android")
+        
+        # Check if 'tgWebAppPlatform=' exists in the iframe URL before replacing
+        if "tgWebAppPlatform=" in iframe_url:
+            # Replace both 'web' and 'weba' with the dynamic platform
+            iframe_url = iframe_url.replace("tgWebAppPlatform=web", f"tgWebAppPlatform={self.default_platform}")
+            iframe_url = iframe_url.replace("tgWebAppPlatform=weba", f"tgWebAppPlatform={self.default_platform}")
+            self.output(f"Platform found and replaced with '{self.default_platform}'.", 2)
+        else:
+            self.output("No tgWebAppPlatform parameter found in the iframe URL.", 2)
 
-        self.driver.execute_script("location.href = '" + iframe_url + "'")
+        self.driver.execute_script(f"location.href = '{iframe_url}'")
 
     def full_claim(self):
         self.step = "100"

@@ -93,25 +93,21 @@ class HotClaimer(Claimer):
         self.launch_iframe()
 
         xpath = "(//div[div/img[contains(@src, '/ft/near.png')]])//div[last()]/p[last()]"
-        self.move_and_click(xpath, 10, False, "move to the 'Near' balance", self.step, "visible")
+        self.move_and_click(xpath, 15, False, "move to the 'Near' balance.", self.step, "visible")
         near = self.monitor_element(xpath, 10, "obtain your 'Near' Balance")
         if near:
             try:
-                # Split the string by spaces and take the last element
-                # last_value_str = near.split()[-1]
-
-                # Convert the last element to a float
                 last_value_float = float(near)
                 if last_value_float > 0.1:
                     low_near = False
-                    self.output(f"Step {self.step} - Cleared the low near balance flag as current balance is: {last_value_float}", 3)
+                    self.output(f"Step {self.step} - Cleared the low 'Near' balance flag as current balance is: {last_value_float}", 3)
                 else:
-                    self.output(f"Step {self.step} - The low near balance flag reamins in place, as current balance is: {last_value_float}", 3)
+                    self.output(f"Step {self.step} - The low 'Near' balance flag reamins in place, as current balance is: {last_value_float}", 3)
                 
             except ValueError:
                 self.output(f"Step {self.step} - Conversion of Near Balance to float failed.", 3)
         else:
-            self.output(f"Step {self.step} - The 'near' variable is empty or not defined.", 3)
+            self.output(f"Step {self.step} - Unable to pull your near balance.", 3)
         self.increase_step()
 
         xpath = "//h4[text()='Storage']"
