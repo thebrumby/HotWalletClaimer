@@ -56,9 +56,17 @@ class SimpleTapClaimer(Claimer):
 
         iframe = self.driver.find_element(By.TAG_NAME, "iframe")
         iframe_url = iframe.get_attribute("src")
-        iframe_url = iframe_url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=android")
+        
+        # Check if 'tgWebAppPlatform=' exists in the iframe URL before replacing
+        if "tgWebAppPlatform=" in iframe_url:
+            # Replace both 'web' and 'weba' with the dynamic platform
+            iframe_url = iframe_url.replace("tgWebAppPlatform=web", f"tgWebAppPlatform={self.default_platform}")
+            iframe_url = iframe_url.replace("tgWebAppPlatform=weba", f"tgWebAppPlatform={self.default_platform}")
+            self.output(f"Platform found and replaced with '{self.default_platform}'.", 2)
+        else:
+            self.output("No tgWebAppPlatform parameter found in the iframe URL.", 2)
 
-        self.driver.execute_script("location.href = '" + iframe_url + "'")
+        self.driver.execute_script(f"location.href = '{iframe_url}'")
 
     def next_steps(self):
         if self.step:
@@ -102,11 +110,11 @@ class SimpleTapClaimer(Claimer):
         opening_balance = self.get_balance(False)  # Capture starting balance
 
         # Collect the reward.
-        xpath = "//button[contains(text(), 'Collect')]"
+        xpath = "//div[contains(text(), 'Collect')]"
         self.move_and_click(xpath, 8, True, "click the 'Collect' button (may not be present)", self.step, "clickable")
 
         # Farming
-        xpath = "//button[contains(text(), 'Start farming')]"
+        xpath = "//div[contains(text(), 'Start farming')]"
         button = self.move_and_click(xpath, 8, False, "click the 'Start farming' button", self.step, "clickable")
         if button: 
             button.click()
@@ -157,7 +165,7 @@ class SimpleTapClaimer(Claimer):
             return 60
         else:
             self.output(f"{status_text} - Next try in {self.show_time(wait_time)}.", 2)
-            return wait_time
+            return max(wait_time, 60)
 
     def get_balance(self, claimed=False):
 
@@ -175,11 +183,6 @@ class SimpleTapClaimer(Claimer):
 
         # Dynamically adjust the log priority
         priority = max(self.settings['verboseLevel'], default_priority)
-
-        # Open home tab
-        xpath = "(//div[@class='appbar-tab'])[1]" 
-        button = self.move_and_click(xpath, 8, False, "open 'Home' tab", self.step, "clickable")
-        if button: button.click()
 
         # Construct the specific balance XPath
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
