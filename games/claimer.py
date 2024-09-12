@@ -439,11 +439,22 @@ class Claimer:
             user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
             self.output("Cookies file not found, using default user agent.", 2)
 
-        chrome_options.add_argument(f"user-agent={user_agent}")
+        # Adjust the platform based on the user agent
+        if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
+            self.default_platform = "ios"
+            self.output("Detected iOS platform from user agent. Set tgWebAppPlatform to 'ios'.", 2)
+        elif 'Android' in user_agent:
+            self.default_platform = "android"
+            self.output("Detected Android platform from user agent. Set tgWebAppPlatform to 'android'.", 2)
+        else:
+            self.default_platform = "web"
+            self.output("Default platform set to 'web'.", 3)
 
+        chrome_options.add_argument(f"user-agent={user_agent}")
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
+
         if not self.settings.get("enableCache", True) and int(self.step) >= 100:
             chrome_options.add_argument("--disable-application-cache")
 
