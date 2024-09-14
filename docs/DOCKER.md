@@ -101,14 +101,21 @@ Once inside the container, you can add games.
 
 All other instructions are in line with the main `README.md`.
 
-## Additional Docker Commands and Hints
+## Additional Docker Commands and Hints (used within the container)
+
+  - To manually update to the latest code or add new games (the update script automatically does this every 12 hours)
+
+  ```bash
+  ./pull-games.sh
+  ```
 
 - To exit the container and return to the command prompt:
 
-  ```bash
-  exit
-  ```
+```bash
+exit
+```
 
+## Additional Docker Commands and Hints (used at the command prompt outside the container)
 - To start the container after a reboot or stopping:
 
   ```bash
@@ -121,12 +128,6 @@ All other instructions are in line with the main `README.md`.
   ```bash
   docker stop telegram-claim-bot
   docker rm telegram-claim-bot
-  ```
-
-- To update for the latest code or new games (inside the container):
-
-  ```bash
-  ./pull-games.sh
   ```
 
 ---
