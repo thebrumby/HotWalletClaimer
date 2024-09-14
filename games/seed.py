@@ -71,6 +71,23 @@ class SeedClaimer(Claimer):
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}",1)
 
+    def get_daily_bonus(self):
+
+        xpath = "//img[@alt='Missions']"
+        self.move_and_click(xpath, 10, True, "click the 'Missions' tab", self.step, "clickable")
+
+        xpath = "//p[text()='Login Bonus']"
+        self.move_and_click(xpath, 10, True, "click the 'Login Bonus' tab (may not be present)", self.step, "clickable")
+        
+        xpath = "//button[not(contains(@class, 'pointer-events-none')) and .//img[contains(@src, '/images/daily')]]"
+        self.move_and_click(xpath, 10, True, "click the active reward image", self.step, "clickable")
+
+        xpath = "//button[contains(text(), 'Got it')]"
+        self.move_and_click(xpath, 10, True, "click the 'Got it' button (may not be present)", self.step, "clickable")
+
+        xpath = "//button[contains(text(), 'Claim 1 ticket')]"
+        self.move_and_click(xpath, 10, True, "get Ticket (may not be present)", self.step, "clickable")
+
     def full_claim(self):
         self.step = "100"
             
@@ -101,30 +118,6 @@ class SeedClaimer(Claimer):
         xpath = "//img[contains(@src, 'bird.png')]"
         self.move_and_click(xpath, 10, True, "check for EGG (may not be present)", self.step, "clickable")
         
-        def get_daily_bonus():
-
-            xpath = "//p[contains(text(), 'Missions')]"
-            self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
-
-            xpath = "//p[contains(text(), 'Login Bonus')]"
-            self.move_and_click(xpath, 20, True, "check for DAILY BONUS (may not be present)", self.step, "clickable")
-            
-            xpath = "//button[count(.//img) = 1 and .//img[contains(@src, 'daily/')]]"
-            self.move_and_click(xpath, 10, True, "get DAILY BONUS (may not be present)", self.step, "clickable")
-
-            xpath = "//button[contains(text(), 'Got it')]"
-            self.move_and_click(xpath, 10, True, "exit DAILY BONUS (may not be present)", self.step, "clickable")
-
-            xpath = "//button[contains(text(), 'Claim 1 ticket')]"
-            self.move_and_click(xpath, 10, True, "get Ticket (may not be present)", self.step, "clickable")
-
-            xpath = "//button[.//div[contains(@class, 'state-back')]]"
-
-            self.move_and_click(xpath, 20, True, "back to main page (may not be present)", self.step, "clickable")
-
-        self.get_balance(False)
-        self.get_profit_hour(False)
-
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
         if wait_time_text != "Filled":
@@ -154,6 +147,9 @@ class SeedClaimer(Claimer):
                     self.output(f"Step {self.step} - Waiting 10 seconds for the totals and timer to update...", 3)
                     time.sleep(10)
 
+                    xpath = "//button[.//p[contains(text(), 'Yep')]]"
+                    self.move_and_click(xpath, 10, True, "click Yep button WORM (may not be present)", self.step, "clickable")
+
                     wait_time_text = self.get_wait_time(self.step, "post-claim")
                     matches = re.findall(r'(\d+)([hm])', wait_time_text)
                     total_wait_time = self.apply_random_offset(sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
@@ -161,7 +157,7 @@ class SeedClaimer(Claimer):
 
                     self.get_balance(True)
                     self.get_profit_hour(True)
-                    get_daily_bonus()
+                    self.get_daily_bonus()
 
                     if wait_time_text == "Filled":
                         self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
