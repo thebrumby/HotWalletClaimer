@@ -44,18 +44,25 @@ exit
   </tr>
 </table>
 
-## The following commands are common to all operating systems.
-
-Create your container based on our master image (first run only):
+### The following commands are common to all operating systems.
+#### Step 2 - Create your container based on our master image (first run only):
 ```
 docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:latest
 ```
-
-To operate within the container to interact with the script, including adding accounts or monitoring:
+If you experience DNS issues using Docker's default network settings, i.e. GitHub fails to resolve and no games load, you can try to manually override the DNS using the commands below:
+```
+# Create your container with Cloudflare's DNS
+docker run -d -t --name telegram-claim-bot --dns="1.1.1.1" --restart unless-stopped thebrumby/telegram-claim-bot:latest
+```
+```
+# Create your container with Google's DNS
+docker run -d -t --name telegram-claim-bot --dns="8.8.8.8" --restart unless-stopped thebrumby/telegram-claim-bot:latest
+```
+#### Step 3 - Operate within the container to interact with the script, including adding accounts or monitoring:
 ```
 docker exec -it telegram-claim-bot /bin/bash
 ```
-
+### Additional commands and hints for Docker
 To exit the container and return to the command promt:
 ```
 exit
