@@ -1,100 +1,130 @@
-# Utilize our Docker image to make a pre-built container
-Using Docker simplifies the setup of the Telegram Claim Bot by containerizing the application and its dependencies. This ensures a consistent environment across different architectures (X86/ARM64) and operating systems (Linux-based/Windows), and eliminates issues related to dependency management and version conflicts. Docker also provides an easy way to deploy, scale, and manage the application, making it an ideal choice for running the Telegram Claim Bot efficiently.
+# Utilize Our Docker Image to Set Up the Telegram Claim Bot
 
-To get started with Docker, you need to have Docker installed on your device. 
+Using Docker simplifies the setup of the Telegram Claim Bot by containerizing the application and its dependencies. This ensures a consistent environment across different architectures (x86/ARM64) and operating systems (Linux-based/Windows), eliminating issues related to dependency management and version conflicts. Docker also provides an easy way to deploy, scale, and manage the application, making it an ideal choice for running the Telegram Claim Bot efficiently.
 
-## Docker setup for Windows or Mac (Desktop Versions)
+To get started with Docker, you need to have Docker installed on your device.
 
-Download and install Docker Desktop from Docker's official website [here](https://www.docker.com/products/docker-desktop).
+## Installing Docker
 
-- **Windows**: Start the Docker Engine by opening Docker Desktop and leaving it open. Then, open a command prompt (Win key + 'R', type 'cmd' and hit Enter), and copy/paste the commands from the common section below.
-- **Mac**: Start the Docker Engine by opening Docker Desktop and leaving it open. Then, open a terminal (Finder > Applications > Utilities > Terminal), and copy/paste the commands from the common section below.
+### For Windows or Mac (Docker Desktop)
 
-## Docker setup for Virtual Private Servers (CLI access)
-<table>
-  <tr>
-    <th>Docker Step 1 (Amazon Linux)</th>
-    <th>Docker Step 1 (Ubuntu)</th>
-  </tr>
-  <tr>
-    <td>
-      <pre>
+Download and install **Docker Desktop** from Docker's official website [here](https://www.docker.com/products/docker-desktop). 
+
+**NOTE:** Docker Desktop provides the Docker Engine and needs to be running when you wish to use the Claim Bot, however individual command windows may be closed once the sessions are running as PM2 processes. 
+
+- **Windows**:
+  - Start the Docker Engine by opening Docker Desktop and leaving it open.
+  - Open a Command Prompt (Press `Win + R`, type `cmd`, and press Enter).
+  - Proceed to the [Common Commands](#common-commands) section below.
+
+- **Mac**:
+  - Start the Docker Engine by opening Docker Desktop and leaving it open.
+  - Open a Terminal (Finder > Applications > Utilities > Terminal).
+  - Proceed to the [Common Commands](#common-commands) section below.
+
+### For Virtual Private Servers (CLI Access)
+
+#### Amazon Linux
+
+```bash
 sudo yum update -y
 sudo yum install docker -y
 sudo service docker start
 sudo usermod -aG docker $USER
 exit
-      </pre>
-    </td>
-    <td>
-      <pre>
+```
+
+#### Ubuntu
+
+```bash
 sudo apt-get update -y
 sudo apt-get install docker.io -y
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo usermod -aG docker $USER
 exit
-      </pre>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2">
-      Step 2 - Open the Terminal again and start the Claim Bot
-    </td>
-  </tr>
-</table>
-
-### The following commands are common to all operating systems.
-#### Step 2 - Create your container based on our master image (first run only):
 ```
+
+After running these commands, re-login to your VPS and proceed to the [Common Commands](#common-commands) section below.
+
+## Common Commands
+
+### Step 1: Create Your Container Based on Our Master Image (First Run Only)
+
+To create and start the Docker container:
+
+```bash
 docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:latest
 ```
-If you experience DNS issues using Docker's default network settings, i.e. GitHub fails to resolve and no games load, you can try to manually override the DNS using the commands below:
+
+If you experience DNS issues using Docker's default network settings (e.g., GitHub fails to resolve and no games load), you can manually override the DNS using the commands below:
+
+**Using Cloudflare's DNS**
+
+```bash
+docker run -d --name telegram-claim-bot --dns="1.1.1.1" --restart unless-stopped thebrumby/telegram-claim-bot:latest
 ```
-# Create your container with Cloudflare's DNS
-docker run -d -t --name telegram-claim-bot --dns="1.1.1.1" --restart unless-stopped thebrumby/telegram-claim-bot:latest
+
+**Using Google's DNS**
+
+```bash
+docker run -d --name telegram-claim-bot --dns="8.8.8.8" --restart unless-stopped thebrumby/telegram-claim-bot:latest
 ```
-```
-# Create your container with Google's DNS
-docker run -d -t --name telegram-claim-bot --dns="8.8.8.8" --restart unless-stopped thebrumby/telegram-claim-bot:latest
-```
-#### Step 3 - Operate within the container to interact with the script, including adding accounts or monitoring:
-```
+
+### Step 2: Operate Within the Container
+
+To interact with the script, including adding accounts or monitoring:
+
+```bash
 docker exec -it telegram-claim-bot /bin/bash
 ```
-### Additional commands and hints for Docker
-To exit the container and return to the command promt:
-```
-exit
-```
 
-To start the session after a reboot or stopping:
-```
-docker start telegram-claim-bot
-docker exec -it telegram-claim-bot /bin/bash
-```
+### Step 3: Adding Games
 
-To remove the container:
-```
-docker stop telegram-claim-bot
-docker rm telegram-claim-bot
-```
-
-To update for the latest code or new games:
-```
-./pull-games.sh
-```
-
-To add a game:
+Once inside the container, you can add games.
 
 - To pick from a list of available scripts:
-```
-./launch.sh
-```
+
+  ```bash
+  ./launch.sh
+  ```
 
 - Or to specify the script by name:
-```
-./launch.sh hot
-```
 
-All other instructions are in line with the main README.md.
+  ```bash
+  ./launch.sh hot
+  ```
+
+All other instructions are in line with the main `README.md`.
+
+## Additional Docker Commands and Hints
+
+- To exit the container and return to the command prompt:
+
+  ```bash
+  exit
+  ```
+
+- To start the container after a reboot or stopping:
+
+  ```bash
+  docker start telegram-claim-bot
+  docker exec -it telegram-claim-bot /bin/bash
+  ```
+
+- To stop and remove the container:
+
+  ```bash
+  docker stop telegram-claim-bot
+  docker rm telegram-claim-bot
+  ```
+
+- To update for the latest code or new games (inside the container):
+
+  ```bash
+  ./pull-games.sh
+  ```
+
+---
+
+All other instructions are in line with the main `README.md`.
