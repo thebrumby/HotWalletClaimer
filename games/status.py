@@ -81,7 +81,7 @@ def display_processes(processes, status, sort_by="time", start_index=1):
             process_list.append((name, balance, profit_hour, next_claim_at, log_status))
 
     if sort_by == "time":
-        process_list.sort(key=lambda x: datetime.strptime(x[2], "%d %B - %H:%M") if x[2] != "None" else datetime.max)
+        process_list.sort(key=lambda x: datetime.strptime(x[3], "%d %B - %H:%M") if x[3] != "None" else datetime.max)
     elif sort_by == "name":
         process_list.sort(key=lambda x: x[0])
 
