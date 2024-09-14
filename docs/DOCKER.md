@@ -57,17 +57,21 @@ To create and start the Docker container:
 docker run -d --name telegram-claim-bot --restart unless-stopped thebrumby/telegram-claim-bot:latest
 ```
 
-If you experience DNS issues using Docker's default network settings (e.g., GitHub fails to resolve and no games load), you can manually override the DNS using the commands below:
+The Docker container inherits it's networking properties from the host computer. If you experience DNS issues using Docker's default network settings (e.g., GitHub fails to resolve and no games load), you can manually override the DNS using the commands below:
 
 **Using Cloudflare's DNS**
 
 ```bash
+docker stop telegram-claim-bot
+docker rm telegram-claim-bot
 docker run -d --name telegram-claim-bot --dns="1.1.1.1" --restart unless-stopped thebrumby/telegram-claim-bot:latest
 ```
 
 **Using Google's DNS**
 
 ```bash
+docker stop telegram-claim-bot
+docker rm telegram-claim-bot
 docker run -d --name telegram-claim-bot --dns="8.8.8.8" --restart unless-stopped thebrumby/telegram-claim-bot:latest
 ```
 
