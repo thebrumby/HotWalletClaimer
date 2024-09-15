@@ -1396,13 +1396,34 @@ class Claimer:
     def apply_random_offset(self, unmodifiedTimer):
         if self.allow_early_claim:
             if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
+                self.random_offset = random.randint(
+                    self.settings['lowestClaimOffset'],
+                    self.settings['highestClaimOffset']
+                )
                 modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 3)
+                self.output(
+                    f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.",
+                    3
+                )
+                self.output(f"Step {self.step} - Returned modified timer: {modifiedTimer} minutes.", 3)
                 return modifiedTimer
         else:
             if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(max(self.settings['lowestClaimOffset'],0), max(self.settings['highestClaimOffset'],0))
+                # Cap the offsets to at least 0
+                capped_lowest = max(self.settings['lowestClaimOffset'], 0)
+                capped_highest = max(self.settings['highestClaimOffset'], 0)
+                if (capped_lowest != self.settings['lowestClaimOffset'] or
+                    capped_highest != self.settings['highestClaimOffset']):
+                    self.output(
+                        f"Step {self.step} - Offsets were capped to 0: "
+                        f"lowestClaimOffset={capped_lowest}, highestClaimOffset={capped_highest}",
+                        3
+                    )
+                self.random_offset = random.randint(capped_lowest, capped_highest)
                 modifiedTimer = unmodifiedTimer + self.random_offset
-                self.output(f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.", 3)
+                self.output(
+                    f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.",
+                    3
+                )
+                self.output(f"Step {self.step} - Returned modified timer: {modifiedTimer} minutes.", 3)
                 return modifiedTimer
