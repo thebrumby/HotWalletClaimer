@@ -1396,14 +1396,24 @@ class Claimer:
     def apply_random_offset(self, unmodifiedTimer):
         # Helper function to format minutes into hours and minutes
         def format_time(minutes):
-            hours = minutes // 60
-            mins = minutes % 60
+            hours = int(minutes) // 60
+            mins = int(minutes) % 60
             time_parts = []
             if hours > 0:
                 time_parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
             if mins > 0 or hours == 0:
                 time_parts.append(f"{mins} minute{'s' if mins != 1 else ''}")
             return ' '.join(time_parts)
+    
+        # Try to convert unmodifiedTimer to float, default to 60 on failure
+        try:
+            unmodifiedTimer = float(unmodifiedTimer)
+        except Exception as e:
+            self.output(
+                f"Error converting unmodifiedTimer to float: {str(e)}. Defaulting to 60 minutes.",
+                2
+            )
+            unmodifiedTimer = 60.0
     
         if self.allow_early_claim:
             if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
@@ -1458,3 +1468,5 @@ class Claimer:
                     3
                 )
                 return modifiedTimer
+        # If no conditions are met, return the original unmodifiedTimer
+        return unmodifiedTimer
