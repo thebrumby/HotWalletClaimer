@@ -1433,7 +1433,7 @@ class Claimer:
                     f"Step {self.step} - Returned modified timer: {modifiedTimer} minutes ({format_time(modifiedTimer)}).",
                     3
                 )
-                return modifiedTimer
+                return int(modifiedTimer)
         else:
             if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
                 # Original offsets
@@ -1467,6 +1467,6 @@ class Claimer:
                     f"Step {self.step} - Returned modified timer: {modifiedTimer} minutes ({format_time(modifiedTimer)}).",
                     3
                 )
-                return modifiedTimer
+                return int(modifiedTimer)
         # If no conditions are met, return the original unmodifiedTimer
         return unmodifiedTimer
