@@ -123,7 +123,6 @@ class HotClaimer(Claimer):
             if wait_time_text != "Filled":
                 matches = re.findall(r'(\d+)([hm])', wait_time_text)
                 remaining_wait_time = (sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches))
-                remaining_wait_time = self.apply_random_offset(remaining_wait_time)
                 # Determine the dynamic threshold
                 if self.settings['lowestClaimOffset'] < 0:
                     threshold = abs(self.settings['lowestClaimOffset'])
@@ -133,8 +132,9 @@ class HotClaimer(Claimer):
                     self.settings['forceClaim'] = True
                     self.output(f"Step {self.step} - the remaining time to claim is less than the minimum offset, so applying: settings['forceClaim'] = True", 3)
                 else:
-                    self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
-                    return remaining_wait_time
+                    remaining_time = self.apply_random_offset(remaining_wait_time)
+                    self.output(f"STATUS: Original wait time {wait_time_text} {remaining_wait_time}, and random offset, we'll sleep for {remaining_time} minutes.", 1)
+                    return remaining_time
         except Exception as e:
             self.output(f"Error encountered: {str(e)}", 2)
             return 120
