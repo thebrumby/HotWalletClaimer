@@ -133,7 +133,7 @@ class HotClaimer(Claimer):
                     self.output(f"Step {self.step} - the remaining time to claim is less than the minimum offset, so applying: settings['forceClaim'] = True", 3)
                 else:
                     remaining_time = self.apply_random_offset(remaining_wait_time)
-                    self.output(f"STATUS: Original wait time {wait_time_text} {remaining_wait_time}, and random offset, we'll sleep for {remaining_time} minutes.", 1)
+                    self.output(f"STATUS: Original wait time {wait_time_text} - {remaining_wait_time} minutes, We'll sleep for {remaining_time} minutes after random offset.", 1)
                     return remaining_time
         except Exception as e:
             self.output(f"Error encountered: {str(e)}", 2)
