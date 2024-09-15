@@ -1426,7 +1426,7 @@ class Claimer:
                 self.random_offset = random.randint(low, high)
                 modifiedTimer = unmodifiedTimer + self.random_offset
                 self.output(
-                    f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes ({format_time(self.random_offset)}).",
+                    f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes to original time of {unmodifiedTimer} ({format_time(unmodifiedTimer)}).",
                     3
                 )
                 self.output(
