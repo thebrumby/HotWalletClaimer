@@ -51,22 +51,22 @@ class GameeClaimer(Claimer):
     def launch_iframe(self):
         super().launch_iframe()
 
-        # self.driver.switch_to.default_content()
-
-        # iframe = self.driver.find_element(By.TAG_NAME, "iframe")
-        # iframe_url = iframe.get_attribute("src")
-        # iframe_url = iframe_url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=android")
-
-        # self.driver.execute_script("arguments[0].src = arguments[1];", iframe, iframe_url)
-        # self.driver.execute_script("arguments[0].contentWindow.location.reload();", iframe)
-        # WebDriverWait(self.driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, f"//iframe[@src='{iframe_url}']")))
-
-        #self.driver.switch_to.default_content()
-        #self.driver.switch_to.frame(iframe)
-
         # Open tab in main window
         self.driver.switch_to.default_content()
-        self.driver.execute_script("location.href = document.querySelector('iframe').src")
+
+        iframe = self.driver.find_element(By.TAG_NAME, "iframe")
+        iframe_url = iframe.get_attribute("src")
+        
+        # Check if 'tgWebAppPlatform=' exists in the iframe URL before replacing
+        if "tgWebAppPlatform=" in iframe_url:
+            # Replace both 'web' and 'weba' with the dynamic platform
+            iframe_url = iframe_url.replace("tgWebAppPlatform=web", f"tgWebAppPlatform={self.default_platform}")
+            iframe_url = iframe_url.replace("tgWebAppPlatform=weba", f"tgWebAppPlatform={self.default_platform}")
+            self.output(f"Platform found and replaced with '{self.default_platform}'.", 2)
+        else:
+            self.output("No tgWebAppPlatform parameter found in the iframe URL.", 2)
+
+        self.driver.execute_script(f"location.href = '{iframe_url}'")
 
     def next_steps(self):
         if self.step:
