@@ -1394,6 +1394,17 @@ class Claimer:
         return re.sub(r'[^0-9.]', '', text)
     
     def apply_random_offset(self, unmodifiedTimer):
+        # Helper function to format minutes into hours and minutes
+        def format_time(minutes):
+            hours = minutes // 60
+            mins = minutes % 60
+            time_parts = []
+            if hours > 0:
+                time_parts.append(f"{hours} hour{'s' if hours != 1 else ''}")
+            if mins > 0 or hours == 0:
+                time_parts.append(f"{mins} minute{'s' if mins != 1 else ''}")
+            return ' '.join(time_parts)
+    
         if self.allow_early_claim:
             if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
                 self.random_offset = random.randint(
@@ -1402,10 +1413,13 @@ class Claimer:
                 )
                 modifiedTimer = unmodifiedTimer + self.random_offset
                 self.output(
-                    f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.",
+                    f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes ({format_time(self.random_offset)}).",
                     3
                 )
-                self.output(f"Step {self.step} - Returned modified timer: {modifiedTimer} minutes.", 3)
+                self.output(
+                    f"Step {self.step} - Returned modified timer: {modifiedTimer} minutes ({format_time(modifiedTimer)}).",
+                    3
+                )
                 return modifiedTimer
         else:
             if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
@@ -1422,8 +1436,11 @@ class Claimer:
                 self.random_offset = random.randint(capped_lowest, capped_highest)
                 modifiedTimer = unmodifiedTimer + self.random_offset
                 self.output(
-                    f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes.",
+                    f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes ({format_time(self.random_offset)}).",
                     3
                 )
-                self.output(f"Step {self.step} - Returned modified timer: {modifiedTimer} minutes.", 3)
+                self.output(
+                    f"Step {self.step} - Returned modified timer: {modifiedTimer} minutes ({format_time(modifiedTimer)}).",
+                    3
+                )
                 return modifiedTimer
