@@ -1407,10 +1407,13 @@ class Claimer:
     
         if self.allow_early_claim:
             if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
-                self.random_offset = random.randint(
-                    self.settings['lowestClaimOffset'],
-                    self.settings['highestClaimOffset']
+                low = self.settings['lowestClaimOffset']
+                high = self.settings['highestClaimOffset']
+                self.output(
+                    f"Step {self.step} - Picking a random offset between {low} and {high} minutes.",
+                    3
                 )
+                self.random_offset = random.randint(low, high)
                 modifiedTimer = unmodifiedTimer + self.random_offset
                 self.output(
                     f"Step {self.step} - Random offset applied to the wait timer of: {self.random_offset} minutes ({format_time(self.random_offset)}).",
@@ -1423,14 +1426,25 @@ class Claimer:
                 return modifiedTimer
         else:
             if self.settings['lowestClaimOffset'] <= self.settings['highestClaimOffset']:
+                # Original offsets
+                original_low = self.settings['lowestClaimOffset']
+                original_high = self.settings['highestClaimOffset']
                 # Cap the offsets to at least 0
-                capped_lowest = max(self.settings['lowestClaimOffset'], 0)
-                capped_highest = max(self.settings['highestClaimOffset'], 0)
-                if (capped_lowest != self.settings['lowestClaimOffset'] or
-                    capped_highest != self.settings['highestClaimOffset']):
+                capped_lowest = max(original_low, 0)
+                capped_highest = max(original_high, 0)
+                # Determine if capping occurred
+                low_capped = capped_lowest != original_low
+                high_capped = capped_highest != original_high
+                # Prepare strings for outputs
+                low_str = f"{capped_lowest}" + (" (capped)" if low_capped else "")
+                high_str = f"{capped_highest}" + (" (capped)" if high_capped else "")
+                self.output(
+                    f"Step {self.step} - Picking a random offset between {low_str} and {high_str} minutes.",
+                    3
+                )
+                if low_capped or high_capped:
                     self.output(
-                        f"Step {self.step} - Offsets were capped to 0: "
-                        f"lowestClaimOffset={capped_lowest}, highestClaimOffset={capped_highest}",
+                        f"Step {self.step} - Offsets were capped to 0: lowestClaimOffset={low_str}, highestClaimOffset={high_str}",
                         3
                     )
                 self.random_offset = random.randint(capped_lowest, capped_highest)
