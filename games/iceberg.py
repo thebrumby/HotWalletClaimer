@@ -131,7 +131,7 @@ class IcebergClaimer(Claimer):
                 remaining_wait_time = self.convert_to_minutes(remaining_time)
                 remaining_wait_time = round(self.convert_to_minutes(remaining_time), 1)
                 remaining_wait_time = self.apply_random_offset(remaining_wait_time)
-                self.output(f"STATUS: {success_text} {self.daily_reward_text}. Let's sleep for {remaining_wait_time} minutes.", 2)
+                self.output(f"STATUS: {success_text}. Let's sleep for {remaining_wait_time} minutes.", 2)
                 return remaining_wait_time
             except Exception as e:
                 self.output(f"Step {self.step} - Error during time calculation: {str(e)}", 2)
