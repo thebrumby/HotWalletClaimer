@@ -92,6 +92,10 @@ class HotClaimer(Claimer):
 
         self.launch_iframe()
 
+        xpath = "//p[contains(text(), 'Click anywhere')]"
+        self.move_and_click(xpath, 10, True, "click the pop-up banner", self.step, "clickable")
+        self.increase_step()
+
         xpath = "(//div[div/img[contains(@src, '/ft/near.png')]])//div[last()]/p[last()]"
         self.move_and_click(xpath, 15, False, "move to the 'Near' balance.", self.step, "visible")
         near = self.monitor_element(xpath, 10, "obtain your 'Near' Balance")
