@@ -92,7 +92,7 @@ class HotClaimer(Claimer):
 
         self.launch_iframe()
 
-        xpath = "//p[contains(text(), 'Click anywhere')]"
+        xpath = "//p[contains(text(), 'Click anywhere')]/preceding::div[1]"
         self.move_and_click(xpath, 10, True, "click the pop-up banner", self.step, "clickable")
         self.increase_step()
 
