@@ -37,7 +37,7 @@ class IcebergClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
-        self.start_app_xpath = "//div[text()='Play']"
+        self.start_app_xpath = "//span[text()='Play']"
 
     def __init__(self):
         self.settings_file = "variables.txt"
