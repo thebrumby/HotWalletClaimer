@@ -96,80 +96,72 @@ class SeedClaimer(Claimer):
 
     def full_claim(self):
         self.step = "100"
-
+    
         self.launch_iframe()
         self.increase_step()
-
+    
         xpath = "//p[contains(text(), 'Claim')]"
         self.move_and_click(xpath, 10, True, "check for Mystery Box (may not be present)", self.step, "clickable")
         self.increase_step()
-
+    
         xpath = "//div[contains(text(), 'Tap 10')]"    
         self.move_and_click(xpath, 10, True, "check if tree tap blocking game (may not be present)", self.step, "clickable")
         self.increase_step()
-
+    
         self.get_balance(False)
-
+    
         xpath = "//button[contains(text(), 'CHECK NEWS')]"
         self.move_and_click(xpath, 10, True, "check for NEWS (may not be present)", self.step, "clickable")
         self.increase_step()
-
+    
         # GET WORM
         xpath = "//img[contains(@src,'inventory/worm')]"
         self.move_and_click(xpath, 10, True, "check for WORM (may not be present)", self.step, "clickable")
         self.increase_step()
-
+    
         xpath = "//button[.//p[contains(text(), 'Yep')]]"
         self.move_and_click(xpath, 10, True, "click Yep button WORM (may not be present)", self.step, "clickable")
         self.increase_step()
-
+    
         # Get egg
         xpath = "//img[contains(@src, 'bird.png')]"
         self.move_and_click(xpath, 10, True, "check for EGG (may not be present)", self.step, "clickable")
         self.increase_step()
-
-        remaining_wait_time = self.get_wait_time(self.step, "pre-claim") 
-        if not remaining_wait_time or self.settings["forceClaim"]:
-            self.output(f"Step {self.step} - looks like we're ready to claim.", 3)
-        else:
-            remaining_time = self.apply_random_offset(remaining_wait_time)
-            self.output(f"STATUS: Original wait time {remaining_wait_time} minutes, We'll sleep for {remaining_time} minutes after random offset.", 1)
-            return remaining_time
-
+    
+        # Proceed directly to the claim process without initial wait time check
         try:
             xpath = "//div[contains(@class, 'rounded') and descendant::p[contains(text(), 'Claim')]]"
             button = self.move_and_click(xpath, 10, True, "click the 'Claim' button", self.step, "clickable")
             self.increase_step()
-
+    
             # Wait for the totals and timer to update.
             self.output(f"Step {self.step} - Waiting 5 seconds for the totals and timer to update...", 3)
             time.sleep(5)
-
+    
             xpath = "//button[.//p[contains(text(), 'Yep')]]"
             self.move_and_click(xpath, 10, True, "click Yep button WORM (may not be present)", self.step, "clickable")
             self.increase_step()
-
+    
             remaining_wait_time = self.get_wait_time(self.step, "post-claim")
             self.get_balance(True)
             self.get_daily_bonus()
-
+    
             if not remaining_wait_time:
                 self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
                 self.output(f"Step {self.step} - This means either the claim failed, or there is lag in the game.", 1)
                 self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
                 return 60
-
+    
             remaining_time = self.apply_random_offset(remaining_wait_time)
-            self.output(f"STATUS: Original wait time {remaining_wait_time} minutes, We'll sleep for {remaining_time} minutes after random offset.", 1)
+            self.output(f"STATUS: Original wait time {remaining_wait_time} minutes, we'll sleep for {remaining_time} minutes after random offset.", 1)
             return remaining_time
-
+    
         except TimeoutException:
-            self.output(f"STATUS: The claim process timed out: Maybe the site has lag? Will retry after one hour.", 1)
+            self.output(f"STATUS: The claim process timed out. Maybe the site has lag? Will retry after one hour.", 1)
             return 60
         except Exception as e:
-            self.output(f"STATUS: An error occurred while trying to claim: {e}\nLet's wait an hour and try again", 1)
+            self.output(f"STATUS: An error occurred while trying to claim: {e}\nLet's wait an hour and try again.", 1)
             return 60
-
 
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
