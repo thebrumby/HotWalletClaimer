@@ -48,12 +48,8 @@ def write_modify_requests_responses_script():
 from mitmproxy import http
 
 def request(flow: http.HTTPFlow) -> None:
-    # Log the original User-Agent header
-    original_user_agent = flow.request.headers.get('User-Agent', 'No User-Agent header')
-    print(f"Original User-Agent: {original_user_agent}")
-
-    # Log the modified headers
-    print(f"Modified Request Headers: {flow.request.headers}")
+    # No modifications to the request are needed
+    pass
 
 def response(flow: http.HTTPFlow) -> None:
     # Remove headers
@@ -61,44 +57,6 @@ def response(flow: http.HTTPFlow) -> None:
         del flow.response.headers['Content-Security-Policy']
     if 'X-Frame-Options' in flow.response.headers:
         del flow.response.headers['X-Frame-Options']
-
-    # Check if the response is likely to be text-based (e.g., JavaScript, HTML)
-    content_type = flow.response.headers.get('Content-Type', '').lower()
-
-    if 'javascript' in content_type or 'text' in content_type:
-        try:
-            content = flow.response.content.decode('utf-8')  # Decode the response
-            user_agent = flow.request.headers.get('User-Agent', '')
-
-            # Modify tgWebAppPlatform if present
-            if 'tgWebAppPlatform=weba' in content or 'tgWebAppPlatform=web' in content:
-                if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
-                    content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=ios')
-                    content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=ios')
-                    print("Substituted tgWebAppPlatform with 'ios' for iOS platform.")
-                elif 'Android' in user_agent:
-                    content = content.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=android')
-                    content = content.replace('tgWebAppPlatform=web', 'tgWebAppPlatform=android')
-                    print("Substituted tgWebAppPlatform with 'android' for Android platform.")
-
-            # Now, check if the request is for the telegram-web-app.js file and redirect based on platform
-            if 'telegram-web-app.js' in flow.request.pretty_url:
-                if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
-                    # Redirect for iOS
-                    flow.request.path = flow.request.path.replace('telegram-web-app.js', 'games/utils/ios-60-telegram-web-app.js')
-                    print(f"Substituted telegram-web-app.js with ios-60-telegram-web-app.js for iOS platform.")
-                elif 'Android' in user_agent:
-                    # Redirect for Android
-                    flow.request.path = flow.request.path.replace('telegram-web-app.js', 'games/utils/android-60-telegram-web-app.js')
-                    print(f"Substituted telegram-web-app.js with android-60-telegram-web-app.js for Android platform.")
-
-            # Update the response content with modifications
-            flow.response.content = content.encode('utf-8')
-
-        except UnicodeDecodeError as e:
-            print(f"Decoding error: {e}")  # Log decoding errors
-        except Exception as e:
-            print(f"Unexpected error while processing content: {e}")  # Catch any other errors
 
     # Log the modified response headers
     print(f"Modified Response Headers: {flow.response.headers}")

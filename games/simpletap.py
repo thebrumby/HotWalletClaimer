@@ -48,26 +48,6 @@ class SimpleTapClaimer(Claimer):
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
 
-    def launch_iframe(self):
-        super().launch_iframe()
-
-        # Open tab in main window
-        self.driver.switch_to.default_content()
-
-        iframe = self.driver.find_element(By.TAG_NAME, "iframe")
-        iframe_url = iframe.get_attribute("src")
-        
-        # Check if 'tgWebAppPlatform=' exists in the iframe URL before replacing
-        if "tgWebAppPlatform=" in iframe_url:
-            # Replace both 'web' and 'weba' with the dynamic platform
-            iframe_url = iframe_url.replace("tgWebAppPlatform=web", f"tgWebAppPlatform={self.default_platform}")
-            iframe_url = iframe_url.replace("tgWebAppPlatform=weba", f"tgWebAppPlatform={self.default_platform}")
-            self.output(f"Platform found and replaced with '{self.default_platform}'.", 2)
-        else:
-            self.output("No tgWebAppPlatform parameter found in the iframe URL.", 2)
-
-        self.driver.execute_script(f"location.href = '{iframe_url}'")
-
     def next_steps(self):
         if self.step:
             pass

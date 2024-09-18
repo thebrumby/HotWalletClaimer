@@ -443,7 +443,7 @@ class Claimer:
         # Adjust the platform based on the user agent
         if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
             self.default_platform = "ios"
-            self.output("Detected iOS platform from user agent. Set tgWebAppPlatform to 'ios'.", 2)
+            self.output("Detected iOS platform from user agent. tgWebAppPlatform will be changed to 'ios' later.", 2)
         elif 'Android' in user_agent:
             self.default_platform = "android"
             self.output("Detected Android platform from user agent. Set tgWebAppPlatform to 'android'.", 2)
@@ -871,6 +871,34 @@ class Claimer:
         xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
         button = self.move_and_click(xpath, 8, True, "click the 'Launch' button (probably not present)", self.step, "clickable")
         self.increase_step()
+
+        # Insert the platform replacement code here
+        self.output(f"Step {self.step} - Attempting to replace platform in iframe URL if necessary...", 2)
+        try:
+            wait = WebDriverWait(self.driver, 20)
+            # Locate the container div with the specified class name
+            container = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'web-app-body')))
+            # Find the iframe within the located container
+            iframe = container.find_element(By.TAG_NAME, "iframe")
+            # Get the iframe src
+            iframe_url = iframe.get_attribute("src")
+
+            if "tgWebAppPlatform=web" in iframe_url:
+                # Replace 'tgWebAppPlatform=web' with the desired platform
+                iframe_url = iframe_url.replace("tgWebAppPlatform=web", f"tgWebAppPlatform={self.default_platform}")
+                self.output(f"Step {self.step} - Platform 'web' found in iframe URL and replaced with '{self.default_platform}'.", 2)
+                # Update the iframe src to reload it
+                self.driver.execute_script("arguments[0].src = arguments[1];", iframe, iframe_url)
+            else:
+                self.output("Step {self.step} - No 'tgWebAppPlatform=web' parameter found in the iframe URL.", 2)
+        except TimeoutException:
+            self.output(f"Step {self.step} - Failed to locate the iframe within 'web-app-body' container.", 3)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred while attempting to modify the iframe URL: {e}", 3)
+        self.increase_step()
+
+        # Give it a few seconds to reload
+        time.sleep(5)
 
         # HereWalletBot Pop-up Handling
         self.select_iframe(self.step)
