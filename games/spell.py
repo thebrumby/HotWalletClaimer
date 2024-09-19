@@ -128,7 +128,10 @@ class SpellClaimer(Claimer):
         remaining_time = self.apply_random_offset(remaining_wait_time)
         
         # Output final status
-        self.output(f"STATUS: {status_text}", 3)
+        if status_text == "":
+            self.output("STATUS: No claim or Daily Puzzle this time", 3)
+        else:
+            self.output(f"STATUS: {status_text}", 3)
 
         self.output(f"STATUS: Original wait time {remaining_wait_time} minutes, we'll sleep for {remaining_time} minutes after random offset.", 1)
         return max(remaining_time,60)
