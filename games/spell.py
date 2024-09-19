@@ -106,7 +106,7 @@ class SpellClaimer(Claimer):
             try:
                 if before_balance is not None and after_balance is not None:
                     bal_diff = after_balance - before_balance
-                    status_text += f"Claim submitted - balance increase {bal_diff} "
+                    status_text += f"Claim submitted - balance increase {bal_diff:.2f} "
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred while calculating balance difference: {e}", 1)
         else:
