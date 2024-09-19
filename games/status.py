@@ -177,15 +177,41 @@ def get_status_logs(process_id, process_list):
     process_name = process_list[process_id - 1][0]
     return get_status_logs_by_process_name(process_name)
 
-def get_status_logs_by_process_name(process_name):
-    sanitized_process_name = process_name.strip().replace('_', '-').replace(':', '-')
+def get_status_logs_by_process_name(process_name, lines=30):
+    """Fetch the last few status lines from the log file for the given process."""
+    # Sanitize the process name to match the log file naming convention
+    process_name = process_name.strip().replace('_', '-')
+    sanitized_process_name = process_name.replace(':', '-')
+    
+    # Construct the log file path
     log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
-    logs = run_command(f"grep -E 'BALANCE:|STATUS:' {log_file} | tail -n 20")
     
-    if not logs:
-        return "No relevant logs found."
-    
-    return logs
+    # Check if the log file exists
+    if not os.path.exists(log_file):
+        return f"No log file found for process: {process_name}"
+
+    status_lines = []
+    try:
+        with open(log_file, 'r') as file:
+            # Read all lines from the log file
+            logs = file.readlines()
+            # Filter for "STATUS:" and balance updates
+            for line in reversed(logs):
+                # Check for relevant keywords in each log line
+                if "STATUS:" in line or "Balance:" in line:
+                    status_lines.append(line)
+                    # Limit the number of lines to the specified amount
+                    if len(status_lines) >= lines:
+                        break
+    except Exception as e:
+        return f"Error reading log file for process {process_name}: {e}"
+
+    # If no relevant logs were found, return an appropriate message
+    if not status_lines:
+        return f"No status found in logs for process: {process_name}"
+
+    # Return the collected status lines in reverse order (most recent first)
+    return ''.join(reversed(status_lines))
 
 def parse_delete_ids(delete_ids_str):
     ids = set()

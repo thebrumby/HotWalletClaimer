@@ -160,7 +160,8 @@ def run() -> None:
             CommandHandler('start_game', start_game),
             CommandHandler('restart', restart_game),
             CommandHandler('stop', stop_game),
-            CommandHandler('update', update_game_files)  # New command for updating
+            CommandHandler('logs', fetch_logs),  # Added for fetching logs
+            CommandHandler('status', fetch_status)  # Added for fetching status
         ],
         states={
             COMMAND_DECISION: [CallbackQueryHandler(command_decision)],
@@ -174,18 +175,66 @@ def run() -> None:
            CommandHandler('start_game', start_game),
            CommandHandler('restart', restart_game),
            CommandHandler('stop', stop_game),
-           CommandHandler('update', update_game_files)]  # Add fallback for the update command
+           CommandHandler('logs', fetch_logs),  # Added for fallback
+           CommandHandler('status', fetch_status)  # Added for fallback
+        ]
     )
 
     application.add_handler(conv_handler)
 
     # Other global commands
-    application.add_handler(CommandHandler("status", status_all))
     application.add_handler(CommandHandler("help", help))
     application.add_handler(CommandHandler("exit", exit))
     application.add_handler(CommandHandler('list', list_games))
 
     application.run_polling()
+
+async def fetch_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Fetch logs for a specified process."""
+    if not context.args:
+        await send_message(update, context, "Usage: /logs <process_name> [lines]")
+        return
+
+    process_name = context.args[0]
+    
+    # Set the number of lines to the second argument if provided, otherwise default to 30
+    lines = 30
+    if len(context.args) > 1:
+        try:
+            lines = int(context.args[1])
+        except ValueError:
+            await send_message(update, context, "Please provide a valid number for the lines.")
+            return
+
+    logs = get_logs_by_process_name(process_name, lines)
+
+    if not logs:
+        await send_message(update, context, f"No logs found for process: {process_name}")
+    else:
+        # If logs are too long, split them into chunks and send them separately
+        await send_long_message(update, context, f"Logs for {process_name}:\n{logs}")
+
+async def fetch_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Fetch status for a specified process or all processes if no specific process is provided."""
+    # If no process name is provided, show the status of all processes
+    if not context.args:
+        await status_all(update, context)
+        return
+
+    # Otherwise, fetch the status of the specified process
+    process_name = context.args[0]
+    status = get_status_logs_by_process_name(process_name)
+
+    if not status:
+        await send_message(update, context, f"No status found for process: {process_name}")
+    else:
+        # If status is too long, split into chunks and send them separately
+        await send_long_message(update, context, f"Status logs for {process_name}:\n{status}")
+
+async def send_long_message(update: Update, context: ContextTypes.DEFAULT_TYPE, text: str, chunk_size: int = 4000):
+    """Send a long message by breaking it into smaller chunks."""
+    for chunk in [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]:
+        await send_message(update, context, chunk)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Starts the conversation and asks the user about their preferred command type."""
@@ -228,18 +277,37 @@ async def command_decision(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return await send_message(update, context, """
-    Available commands:
-    /start - Start the original bot
-    /status - Check the status of all processes
-    /list - List all games
-    /list_pattern <pattern> - List games matching a pattern
-    /start <pattern> - Start processes matching the pattern
-    /restart <pattern> - Restart processes matching the pattern
-    /stop <pattern> - Stop processes matching the pattern
-    /update - Update the game files (try pull-games.sh, then git pull)
-    /help - Show this help message
-    /exit - Exit the bot
-    """)
+Available commands:
+    
+/start - Start the original bot
+
+/logs <session name> <option lines> - List the logs of the process
+    Example: /logs HOT:Wallet1
+    Example: /logs HOT:Wallet2 100
+
+/status - Lists a status summary of every game session in PM2
+/status <session name> - Get the last 30 balances and status for a specific session
+    Example: /status HOT:Wallet1
+
+/list - List all active and inactive games from PM2.
+/list <pattern> - List only games matching the pattern
+    Example: /list hot
+
+/start <pattern> - Start all PM2 processes matching the pattern
+    Example: /start HOT:Wallet1
+
+/restart <pattern> - Restart all PM2 processes matching the pattern
+    Example: /restart :Wallet1
+
+/stop <pattern> - Stop processes matching the pattern
+    Example: /stop Vertus:
+
+/update - Update the game files (try pull-games.sh, then git pull).
+
+/help - Show this help message.
+
+/exit - Exit the bot.
+""")
 
 async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Exit the bot."""
