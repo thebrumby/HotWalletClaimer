@@ -4,9 +4,12 @@ Supporting 19 crypto-based games and growing monthly. Automate claims and stay i
 
 ---
 
-Hello, Fellow Crypto Game Enthusiasts! If you find the scripts useful and would like to support our ongoing development, consider subscribing to our [Patreon](https://www.patreon.com/TelegramClaimBot), or treat us to a [cup of coffee ☕](https://www.buymeacoffee.com/HotWallletBot) as a token of appreciation—both options are just $5. You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. Discover some humorous uses for the channel and more reasons to give a little back [here](docs/YOUTUBE.md).
+Hello, Fellow Crypto Game Enthusiasts! Maintaining the Telegram Claim Bot takes around 40 hours a week, and we currently receive $20 a month in donations. If you find the scripts useful and want to support our ongoing development, consider becoming a [Patreon](https://www.patreon.com/TelegramClaimBot) or treat us to a [cup of coffee](https://www.buymeacoffee.com/HotWallletBot) ☕ for as little as $5. Your contribution helps keep the project actively maintained and expanding! 
 
-Prefer crypto? You can send donations on BSC, Polygon, or Ethereum networks to **0x070411DD6D9Ef8331F57349dD1952D3921456AA6**. Maintaining the Telegram Claim Bot takes around 40 hours a week, and we currently receive $20 a month in donations. Chip in today to help keep the project actively maintained and expanding!
+You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. Prefer crypto? Donations are welcome on any of [26 supported chains](https://github.com/thebrumby/HotWalletClaimer/blob/main/extras/chains.md), including BSC, Polygon, or Ethereum, to:
+```
+0x070411DD6D9Ef8331F57349dD1952D3921456AA6
+```
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
