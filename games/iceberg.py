@@ -162,7 +162,7 @@ class IcebergClaimer(Claimer):
                 self.output(f"Step {self.step} - Get the wait time...", 3)
                 element = self.monitor_element(wait_time_xpath, 10, "get claim timer")
                 if element:
-                    return element
+                    return self.strip_non_numeric(element)
                 return False
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
