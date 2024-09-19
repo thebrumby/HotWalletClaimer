@@ -13,7 +13,7 @@ You can also support us at no cost by subscribing to and watching our [YouTube c
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
-- **Mining, Spinning, but not Racing... The Gamee Script Strikes Back!**: Script update for automated claims and wheel spins. [read more](https://www.patreon.com/posts/mining-racing-112396262?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **Mining, Spinning, but not Racing... The Gamee Script Strikes Back!**:  The Gamee Script Strikes Back! [read more](https://www.patreon.com/posts/mining-racing-112396262?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Dodging Icebergs and Casting Spells**: Challenges after the Telegram Mini-App upgrade. [read more](https://www.patreon.com/posts/dodging-icebergs-112340439?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Hamster Kombat - Finally Added!**: One of the most requested play-2-earn games is here. [read more](https://www.patreon.com/posts/hamster-kombat-111622147?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
