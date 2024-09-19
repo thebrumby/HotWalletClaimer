@@ -137,16 +137,22 @@ class SpellClaimer(Claimer):
         # Switch to the Quests tab and check if Puzzle already solved
         xpath = "//p[contains(., 'Quests')]"
         success = self.move_and_click(xpath, 10, True, "click on 'Quests' tab", self.step, "clickable")
+        self.increase_step()
+        
         if not success:
             self.quit_driver()
             self.launch_iframe()
             self.move_and_click(xpath, 10, True, "click on 'Quests' tab", self.step, "clickable")
+            self.increase_step()
 
-        xpath = "//p[contains(., 'Daily Puzzle')]"
+        xpath = "//div[contains(@class, 'css-ehjmbb')]//p[contains(text(), 'Done')]"
         success = self.move_and_click(xpath, 10, True, "click on 'Daily Puzzle' link", self.step, "clickable")
-        if not success:
+        self.increase_step()
+        if success:
             return False
 
+        xpath = "//p[contains(., 'Daily Puzzle')]"
+        self.move_and_click(xpath, 10, True, "click on 'Daily Puzzle' link", self.step, "clickable")
         self.increase_step()
 
         # Fetch the 4-digit code from the GitHub file using urllib
