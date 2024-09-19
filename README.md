@@ -131,27 +131,32 @@ Automate your Tree mining efforts using the BNB Wallet with this straightforward
 ## V3.0.3 Release Notes. 
 
 ## Usage Instructions
-After executing the script with ```./launch.sh```, you will be prompted to update settings and configure the session:
+
+After executing the script with `./launch.sh`, you'll be prompted to update settings and configure your session.
 
 ### Update Settings
-   - If you choose "yes" to update settings when prompted, you can review and possibly update the following settings:
-      - `forceClaim`: Choose to force a claim the first time the script runs, regardless of whether the wallet is full.
-      - `debugIsOn`: Activate debugging to save screenshots locally; default is off.
-      - `hideSensitiveInput`: Ensures sensitive information like phone numbers and seed phrases remain hidden; default is ON.
-      - `screenshotQRCode`: Prefer to log in via QR code; the alternative is manual login via phone number and OTP.
-      - `maxSessions`: Set the maximum number of concurrent claim sessions; additional wallets will wait for an available slot.
-      - `verboseLevel`: Adjust the verbosity of console messages; options range from 1 (minimal) to 3 (all messages).
-      - `telegramVerboseLevel`: Adjust the verbosity of messages sent to the Telegram bot; options range from 0 (none) to 3 (all messages).
-      - `forceNewSession`: Forces a new login, useful if the existing session encounters errors.
-      - `lowestClaimOffset` and `highestClaimOffset`: Define the range for randomized claim timing relative to when the pot is filled.
-         - **Examples of Random Claim Timing based on Claim Offset:**
-            - `-30, -15`: Early claims randomly between 30 and 15 minutes before the pot is full.
-            - `30, 60`: Late claims randomly 30 minutes to 1 hour after the pot is full.
-            - `-15, 15`: Random claims within a 15-minute window either side of the pot being filled.
-      - `useProxy`: Decide whether to use the built-in proxy or not.
-      - `requestUserAgent`: If enabled, the script will prompt the user to enter their user-agent each time.
-      - `telegramBotToken`: Allows users to relay information to a Botfather Telegram bot.
-      - `enableCache`: If disabled, reduces the amount of data cached to disk, with the trade-off of higher data transmission volume.
+
+If you choose **"yes"** when prompted to update settings, you can review and modify the following options:
+
+- **`forceClaim`**: Force a claim the first time the script runs, regardless of whether the wallet is full.
+- **`debugIsOn`**: Enable debugging to save screenshots locally (default is **off**).
+- **`hideSensitiveInput`**: Hide sensitive information like phone numbers and seed phrases (default is **on**).
+- **`screenshotQRCode`**: Choose to log in via QR code instead of manual login via phone number and OTP.
+- **`maxSessions`**: Set the maximum number of concurrent claim sessions; additional wallets will wait for an available slot.
+- **`verboseLevel`**: Adjust the verbosity of console messages (1 = minimal, 3 = all messages).
+- **`telegramVerboseLevel`**: Adjust the verbosity of messages sent to the Telegram bot (0 = none, 3 = all messages).
+- **`forceNewSession`**: Force a new login, useful if the existing session encounters errors.
+- **`lowestClaimOffset`** and **`highestClaimOffset`**: Define the range for randomized claim timing relative to when the pot is filled.
+
+   - **Examples of Random Claim Timing Based on Claim Offset**:
+     - `-30, -15`: Early claims randomly between 30 and 15 minutes before the pot is full.
+     - `30, 60`: Late claims randomly 30 minutes to 1 hour after the pot is full.
+     - `-15, 15`: Random claims within a 15-minute window before or after the pot is filled.
+
+- **`useProxy`**: Decide whether to use the built-in proxy (as of 19th September 2024, recommended **off**).
+- **`requestUserAgent`**: If enabled, the script will prompt you to enter your user-agent each time.
+- **`telegramBotToken`**: Allows you to relay information to a Telegram bot via BotFather.
+- **`enableCache`**: Disabling saves disk space but increases network load.
 
 ### Proxy Configuration
    - You can now configure the Telegram Claim Bot to use a third-party proxy connection to bypass geo-location blocks or enhance privacy. Detailed instructions on how to configure a third-party proxy can be found [here](docs/CONFIGUREPROXY.md).
