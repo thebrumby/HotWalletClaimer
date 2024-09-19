@@ -10,9 +10,11 @@ Prefer crypto? You can send donations on BSC, Polygon, or Ethereum networks to *
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
+- **Dodging Icebergs and Casting Spells**: Challenges after the Telegram Mini-App upgrade. [read more](https://www.patreon.com/posts/dodging-icebergs-112340439?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Hamster Kombat - Finally Added!**: One of the most requested play-2-earn games is here. [read more](https://www.patreon.com/posts/hamster-kombat-111622147?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Big Fixes, New Features, and a "Cool" New Game!**: Read about the latest updates and improvements. [read more](https://www.patreon.com/posts/big-fixes-new-111597164?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Crypto Rank Added, and Updates to Timefarm, Vertus, and LumCity**: Check out the latest blog. [read more](https://www.patreon.com/posts/new-features-and-110765516?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+
+
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
