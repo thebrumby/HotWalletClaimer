@@ -25,9 +25,7 @@ from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
 import requests
-
 import urllib.request
-import requests
 from claimer import Claimer
 
 class SpellClaimer(Claimer):
@@ -53,7 +51,6 @@ class SpellClaimer(Claimer):
         super().__init__()
 
     def next_steps(self):
-
         if self.step:
             pass
         else:
@@ -62,120 +59,92 @@ class SpellClaimer(Claimer):
         try:
             self.launch_iframe()
             self.increase_step()
-
-            # Attempt to interact with elements within the iframe.
-            xpath = "//*[contains(text(), 'Roadmap')]"
-            self.target_element = self.move_and_click(xpath, 30, False, "wait until 'Roadmap' disappears (may not be present)", self.step, "invisible")
-            self.increase_step()
-
-            # Then look for the seed phase textarea:
-            xpath = "//textarea[@placeholder='Seed Phrase']"
-            input_field = self.move_and_click(xpath, 30, True, "locate seedphrase textbox", self.step, "clickable")
-            if not self.imported_seedphrase:
-                self.imported_seedphrase = self.validate_seed_phrase()
-            input_field.send_keys(self.imported_seedphrase) 
-            self.output(f"Step {self.step} - Was successfully able to enter the seed phrase...",3)
-            self.increase_step()
-
-            # Click the continue button after seed phrase entry:
-            recover_wallet_xpath = "//button[contains(text(), 'Recover Wallet')]"
-            wallet_check_xpath = "//p[contains(text(), 'Wallet')]"
-            start_time = time.time()
-            timeout = 60  # seconds
-
-            while time.time() - start_time < timeout:
-                if self.move_and_click(recover_wallet_xpath, 10, False, "check for success", self.step, "visible"):
-                    self.increase_step()
-                    self.click_element(recover_wallet_xpath, 30, "Click 'Recover Wallet'")
-                    self.increase_step()
-                    if self.move_and_click(wallet_check_xpath, 10, False, "check if wallet tab visible (may not be present)", "08", "visible"):
-                        self.increase_step()
-                        self.output(f"Step {self.step} - The wallet tab is now visible...",3)
-                        break  # Exit loop if the Wallet check element is found
-
-            self.increase_step()
+            
+            # Get balance
+            self.get_balance(False)
 
             # Final Housekeeping
             self.set_cookies()
 
         except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.",1)
+            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.", 1)
 
         except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {e}",1)
+            self.output(f"Step {self.step} - An error occurred: {e}", 1)
 
     def full_claim(self):
+        # Initialize status_text
+        status_text = ""
+
         # Launch iframe
         self.step = "100"
         self.launch_iframe()
 
-        # Wait for 'Roadmap' to disappear
-        xpath = "//*[contains(text(), 'Roadmap')]"
-        self.target_element = self.move_and_click(xpath, 30, False, "wait until 'Roadmap' disappears (may not be present)", self.step, "invisible")
-        self.increase_step()
+        # Capture the balance before the claim
+        before_balance = self.get_balance(False)
 
-        # Get balance
-        self.get_balance(False)
-
-        # Click on the Storage link:
-        xpath = "//button[not(@disabled) or @disabled='false']//p[contains(text(), 'Claim')]"
-        if self.brute_click(xpath, 10, "click the 'Claim' button"):
+        # Brute force the claim to collect all '%' and then spin the wheel:
+        xpath = "//div[contains(text(), '%')]"
+        if self.brute_click(xpath, 12, "click the 'Claim' button"):
             self.output(f"Step {self.step} - Claim was available and clicked.", 3)
             self.increase_step()
-            success_text = "Claim attempted. "
+            
+            # Spin the wheel
+            xpath = "//p[contains(., 'Spin the Wheel')]"
+            self.move_and_click(xpath, 10, True, "spin the wheel", self.step, "clickable")
+            self.increase_step()
+            
+            xpath = "//*[contains(text(), 'GOT IT')]"
+            self.move_and_click(xpath, 10, True, "check for 'Got it' message (may not be present)", self.step, "clickable")
             self.increase_step()
 
-        # Check for 'Got it' message
-        xpath = "//*[contains(text(), 'Got it')]"
-        self.move_and_click(xpath, 10, True, "check for 'Got it' message (may not be present)", self.step, "clickable")
-        #self.daily_reward()
-        self.increase_step()
+            # Capture the balance after the claim
+            after_balance = self.get_balance(True)
 
-        # Calculate remaining time in hours
-        try:
-            hourly_profit = float(self.get_profit_hour(True))
-            xpath = "//p[contains(., '/')]"
-            elapsed = self.monitor_element(xpath, 10, "Get the timer bar")
-            current, max_value = map(float, elapsed.split('/'))
-            remaining_time_hours = (max_value - current) / hourly_profit
-            theoretical_timer = remaining_time_hours * 60
-        except Exception as e:
-            print(f"An error occurred: {e} - Assigning 1 hour timer")
-            theoretical_timer = 60
-
-        # Get balance again
-        self.get_balance(True)
-
-        # Execute the JavaScript to detect the green dot
-        js_code = """
-        let shadowHost = document.querySelector('.css-4g6ai3');
-        let shadowRoot = shadowHost.shadowRoot || shadowHost;
-        let greenDot = shadowRoot.querySelector('circle[fill="#01DC01"]');
-        return greenDot !== null;
-        """
-
-        # Get the daily reward if the dot is green
-        if self.driver.execute_script(js_code):
-            self.output(
-                f"Step {self.step} - Starting the Daily Reward claim. "
-                "Answer is uploaded manually, do not report this function "
-                "as faulty if the code doesn't match!", 2
-            )
-            self.daily_reward()
+            # Calculate balance difference
+            try:
+                if before_balance is not None and after_balance is not None:
+                    bal_diff = after_balance - before_balance
+                    status_text += f"Claim submitted - balance increase {bal_diff} "
+            except Exception as e:
+                self.output(f"Step {self.step} - An error occurred while calculating balance difference: {e}", 1)
         else:
-            self.output(f"Step {self.step} - Skipping the daily rewards, it appears to have been claimed.", 3)
+            self.output(f"Step {self.step} - Claim button not present.", 3)
 
-        # Calculate modified timer with random offset
-        modified_timer = self.apply_random_offset(theoretical_timer)
-        modified_timer_rounded = round(modified_timer, 1)
-        self.output(f"STATUS: {success_text}Claim again in {modified_timer_rounded} minutes (originally {theoretical_timer:.1f})", 1)
-        return int(modified_timer)
+        # Get the wait timer if present
+        remaining_wait_time = self.get_wait_time(self.step, "post-claim")
+            
+        # Do the Daily Puzzle from GitHub
+        if self.daily_reward():
+            status_text += "Daily Puzzle submitted"
+
+        if not remaining_wait_time:
+            self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
+            self.output(f"Step {self.step} - This means either the claim failed, or there is lag in the game.", 1)
+            self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
+            return 60
+
+        remaining_time = self.apply_random_offset(remaining_wait_time)
+        
+        # Output final status
+        self.output(f"STATUS: {status_text}", 3)
+
+        self.output(f"STATUS: Original wait time {remaining_wait_time} minutes, we'll sleep for {remaining_time} minutes after random offset.", 1)
+        return max(remaining_time,60)
 
     def daily_reward(self):
-        self.quit_driver()
-        self.launch_iframe()
-        xpath = "//div[contains(@class, 'css-4g6ai3')]"
-        self.move_and_click(xpath, 30, True, "click on Daily Quests tab", self.step, "clickable")
+        # Switch to the Quests tab and check if Puzzle already solved
+        xpath = "//p[contains(., 'Quests')]"
+        success = self.move_and_click(xpath, 10, True, "click on 'Quests' tab", self.step, "clickable")
+        if not success:
+            self.quit_driver()
+            self.launch_iframe()
+            self.move_and_click(xpath, 10, True, "click on 'Quests' tab", self.step, "clickable")
+
+        xpath = "//p[contains(., 'Daily Puzzle')]"
+        success = self.move_and_click(xpath, 10, True, "click on 'Daily Puzzle' link", self.step, "clickable")
+        if not success:
+            return False
 
         self.increase_step()
 
@@ -188,11 +157,11 @@ class SpellClaimer(Claimer):
         except Exception as e:
             # Handle failure to fetch code
             self.output(f"Step {self.step} - Failed to fetch code from GitHub: {str(e)}", 2)
-            return
+            return False
 
         self.increase_step()
 
-        # Define the indices you can be careful, but not used_indices = []
+        # Translate the numbers from GitHub to the symbols in the game
         for index, digit in enumerate(content):
             xpath = f"//div[@class='css-k0i5go'][{digit}]"
             
@@ -202,10 +171,9 @@ class SpellClaimer(Claimer):
                 # Handle failure to click on an element
                 self.output(f"Step {self.step} - Element corresponding to digit {digit} not found or not clickable.", 1)
 
-        # Increment the step counter
         self.increase_step()
 
-        # Check if alert is present
+        # Finish with some error checking
         invalid_puzzle_xpath = "//div[contains(text(), 'Invalid puzzle code')]/ancestor::div[contains(@class, 'chakra-alert')]"
         if self.move_and_click(invalid_puzzle_xpath, 30, True, "check if alert is present", self.step, "visible"):
             # Alert for invalid puzzle code is present
@@ -215,67 +183,84 @@ class SpellClaimer(Claimer):
             self.output(f"Step {self.step} - Alert for invalid puzzle code is not present.", 1)
 
         self.output(f"Step {self.step} - Completed daily reward sequence successfully.", 2)
-
-        # add verification element for  "Invalid puzzle code"
-        invalid_puzzle_xpath = "//div[contains(text(), 'Invalid puzzle code')]/ancestor::div[contains(@class, 'chakra-alert')]"
-        if self.move_and_click(invalid_puzzle_xpath, 30, True, "check if alert is present", self.step, "visible"):
-            self.output(f"Step {self.step} - Alert for invalid puzzle code is present.", 2)
-        else:
-            self.output(f"Step {self.step} - Alert for invalid puzzle code is not present.", 1)
-
-        self.output(f"Step {self.step} - Completed daily reward sequence successfully.", 2)
+        return True
 
     def get_balance(self, claimed=False):
-
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
 
         # Dynamically adjust the log priority
         priority = max(self.settings['verboseLevel'], default_priority)
 
-        # Construct the specific balance XPath
+        # Construct text based on before/after
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//h2[text()='Mana Balance']/following-sibling::h2[1]"
+        balance_xpath = "//div[@class='css-fm4un4']"
 
         try:
             element = self.strip_html_and_non_numeric(self.monitor_element(balance_xpath, 15, "get balance"))
 
             # Check if element is not None and process the balance
             if element:
-                self.output(f"Step {self.step} - {balance_text} {element}", priority)
+                balance_float = float(element)
+                self.output(f"Step {self.step} - {balance_text} {balance_float}", priority)
+                return balance_float
+            else:
+                self.output(f"Step {self.step} - {balance_text} not found or not numeric.", priority)
+                return None
 
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
+            return None
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+            return None
 
         # Increment step function, assumed to handle next step logic
         self.increase_step()
 
-    def get_profit_hour(self, claimed=False):
-        prefix = "After" if claimed else "Before"
-        default_priority = 2 if claimed else 3
-
-        priority = max(self.settings['verboseLevel'], default_priority)
-
-        # Construct the specific profit XPath
-        profit_text = f'{prefix} PROFIT/HOUR:'
-        profit_xpath = "//p[contains(text(), 'Mana per hour:')]/following-sibling::p[1]"
-
+    def get_wait_time(self, step_number="108", beforeAfter="pre-claim"):
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "profit per hour"))
-
-            # Check if element is not None and process the profit
-            if element:
-                self.output(f"Step {self.step} - {profit_text} {element}", priority)
-                return element
-            return None
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
+            self.output(f"Step {self.step} - Get the wait time...", 3)
+    
+            # XPath to find the div element with the specific class
+            xpath = "//div[@class='css-1dgzots']"
+            wait_time_text = self.monitor_element(xpath, 10, "claim timer")
+    
+            # Check if wait_time_text is not empty
+            if wait_time_text:
+                wait_time_text = wait_time_text.strip()
+                self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
+    
+                # Remove any spaces to standardize the format
+                wait_time_text_clean = wait_time_text.replace(" ", "")
+    
+                # Regular expression to match patterns like '5h30m', '5h', '30m'
+                pattern = r'(?:(\d+)h)?(?:(\d+)m)?'
+                match = re.match(pattern, wait_time_text_clean)
+    
+                if match:
+                    hours = match.group(1)
+                    minutes = match.group(2)
+                    total_minutes = 0
+    
+                    if hours:
+                        total_minutes += int(hours) * 60
+                    if minutes:
+                        total_minutes += int(minutes)
+    
+                    self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
+                    return total_minutes if total_minutes > 0 else False
+                else:
+                    # If the pattern doesn't match, return False
+                    self.output(f"Step {self.step} - Wait time pattern not matched in text: '{wait_time_text}'", 3)
+                    return False
+            else:
+                # No text found in the element
+                self.output(f"Step {self.step} - No wait time text found.", 3)
+                return False
         except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
-        return None
-        self.increase_step()
+            self.output(f"Step {self.step} - An error occurred: {e}", 3)
+            return False
 
 def main():
     claimer = SpellClaimer()
