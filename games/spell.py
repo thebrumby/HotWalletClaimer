@@ -149,7 +149,7 @@ class SpellClaimer(Claimer):
             self.increase_step()
 
         xpath = "//div[contains(@class, 'css-ehjmbb')]//p[contains(text(), 'Done')]"
-        success = self.move_and_click(xpath, 10, True, "click on 'Daily Puzzle' link", self.step, "clickable")
+        success = self.move_and_click(xpath, 10, True, "check if the puzzle has already been solved", self.step, "clickable")
         self.increase_step()
         if success:
             return False
