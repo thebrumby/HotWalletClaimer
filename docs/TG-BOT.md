@@ -37,10 +37,10 @@ By following these steps, you'll have a fully configured relay from your script 
 ### Available Commands:
 
 - `/start` - Start the original bot
-- `/logs` <session name> <lines> - List the logs of the process
+- `/logs <session name> <lines>` - List the logs of the process
   - `/logs HOT:Wallet1` - Show the last 30 log lines for game "HOT", session "Wallet1".
   - `/logs Vertus:Wallet2 100` - Show the last 100 log lines for game "Vertus", session "Wallet2".
-- `/status` <session name> - Get the last 30 balances and status
+- `/status <session name>` - Get the last 30 balances and status
   - `/status HOT:Wallet1` - Show the last 30 claim results and balance updates for game "HOT", session "Wallet1".
 - `/list` - List all active and inactive games from PM2.
 - `/list <pattern>` - List only games matching the pattern
