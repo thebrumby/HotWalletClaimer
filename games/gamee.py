@@ -90,105 +90,84 @@ class GameeClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
-        # self.get_balance(False)
-        # self.get_profit_hour(False)
-
         clicked_it = False
 
         status_text = ""
 
-        #  # START MINING - clear_overlays provokes move the element to the top of the page and overlap other items
-        try:
-
-            xpath = "//button[span[contains(text(), 'Claim & start')]]" # START MINING button
-            button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-            if button:
-                button.click()
-                self.output(f"Step {self.step} - Successfully clicked 'MINING' button.", 3)
-                status_text = "STATUS: Start MINING"
-
-        except TimeoutException:
-            try:
-
-                xpath = "//div[contains(@class, 'cYeqKR')]" # MINING button
-                button = WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
-                self.output(f"Step {self.step} - Currently mining: {'YES' if button else 'NO'}.", 3)
-                status_text = "STATUS: Currently mining" if button else "STATUS: Not mining"
-
-            except TimeoutException:
-                self.output(f"Step {self.step} - MINING button NOT found .\n",3)
-                status_text = "STATUS: MINING button NOT found"
+        # Attempt to click the 'Start mining' button
+        xpath = "//button[span[contains(text(), 'Start mining')]]"
+        clicked = self.move_and_click(xpath, 8, True, "click the 'Start mining' button", self.step, "clickable")
+        if clicked:
+            self.output(f"Step {self.step} - Successfully clicked 'Start mining' button.", 3)
+            status_text = "STATUS: Started MINING"
+        else:
+            # Attempt to click the 'Claim & start' button
+            xpath = "//button[span[contains(text(), 'Claim & start')]]"
+            clicked = self.move_and_click(xpath, 8, True, "click the 'Claim & start' button", self.step, "clickable")
+            if clicked:
+                self.output(f"Step {self.step} - Successfully clicked 'Claim & Start' button.", 3)
+                status_text = "STATUS: Started MINING"
+            else:
+                # Check if currently mining
+                xpath = "//p[contains(text(), 'to claim')]"
+                element_present = self.move_and_click(xpath, 8, False, "check if currently mining", self.step, "clickable")
+                if element_present:
+                    self.output(f"Step {self.step} - Currently mining: YES.", 3)
+                    status_text = "STATUS: Currently mining"
+                else:
+                    self.output(f"Step {self.step} - MINING button NOT found.", 3)
+                    status_text = "STATUS: MINING button NOT found"
 
         self.increase_step()
 
-        # START MINING
-        # xpath = "//div[contains(@class, 'eWLHYP')]"
-        # xpath = "//div[contains(@class, 'cYeqKR')]"
-        # button = self.move_and_click(xpath, 8, False, "click the 'Spin TAB'", self.step, "clickable")
-        # if button: button.click()
-        # self.increase_step()
-
-        xpath = "//div[contains(@class, 'fDAfvv') and .//text()[contains(., 'Spin')]]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Spin TAB'", self.step, "clickable")
-        if button: button.click()
-        self.increase_step()
-
-        # Wait for the 'FREE SPIN' button to appear
-        xpath = "//button[.//text()[contains(., 'available')]]"
-
-        while True:
-
-            try:
-                button = self.move_and_click(xpath, 30, False, "click the 'FREE Spin'", self.step, "clickable")
-                if not button: break
-                if button: button.click()
-            except TimeoutException:
-                break
-
+        wait_time = self.get_wait_time(self.step, "pre-claim")
         self.get_balance(True)
-        self.get_profit_hour(True)
-        
-        wait_time = self.get_wait_time(self.step, "pre-claim") 
+
+
+        xpath = "//div[contains(@href, 'wheel')]"
+        self.move_and_click(xpath, 10, True, "click the 'Spin TAB'", self.step, "clickable")
+        xpath = "//button[.//text()[contains(., 'available')]]"
+        success = self.move_and_click(xpath, 10, True, "spin the wheel", self.step, "clickable")
+        if success:
+            status_text += ". Wheel bonus collected"
 
         if wait_time is None:
-            self.output(f"{status_text} - Failed to get wait time. Next try in 60 minutes", 3)
+            self.output(f"STATUS: {status_text} - Failed to get wait time. Next try in 60 minutes", 2)
             return 60
         else:
-            self.output(f"{status_text} - Next try in {self.show_time(wait_time)}.", 2)
+            remaining_time = self.apply_random_offset(wait_time)
+            self.output(f"STATUS: {status_text} - Next try in {self.show_time(remaining_time)}.", 1)
             return wait_time
 
     def get_balance(self, claimed=False):
-
-        xpath = "//div[contains(@class, 'fDAfvv') and .//text()[contains(., 'Mine')]]"
-        button = self.move_and_click(xpath, 8, False, "click the 'Mine TAB'", self.step, "clickable")
-        if button: button.click()
-        self.increase_step()
-
-        self.driver.execute_script("location.href = 'https://prizes.gamee.com/telegram/watdrop'")
-
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
 
         # Dynamically adjust the log priority
         priority = max(self.settings['verboseLevel'], default_priority)
 
-        # Construct the specific balance XPath
+        # Construct text based on before/after
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = "//h2[contains(@class, 'kznmla')]"
+        balance_xpath = "//p[@id='wat-racer-mining--bht-text']"
 
         try:
-            element = self.monitor_element(balance_xpath)
+            element = self.strip_html_and_non_numeric(self.monitor_element(balance_xpath, 15, "get balance"))
 
             # Check if element is not None and process the balance
             if element:
-                cleaned_balance = self.strip_html_and_non_numeric(element)
-                self.output(f"Step {self.step} - {balance_text} {cleaned_balance}", priority)
+                balance_float = float(element)
+                self.output(f"Step {self.step} - {balance_text} {balance_float}", priority)
+                return balance_float
+            else:
+                self.output(f"Step {self.step} - {balance_text} not found or not numeric.", priority)
+                return None
 
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
+            return None
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
-
+            return None
 
         # Increment step function, assumed to handle next step logic
         self.increase_step()
@@ -223,30 +202,42 @@ class GameeClaimer(Claimer):
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim"):
         try:
+            self.output(f"Step {self.step} - Get the wait time...", 3)
 
-            self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
+            # XPath to find the element containing the wait time
+            xpath = "//p[contains(text(), 'to claim')]"
+            wait_time_text = self.monitor_element(xpath, 10, "claim timer")
 
-            xpath = "(//p[contains(@class, 'cusDiK')])[1]"
-            actual = float(self.monitor_element(xpath, 15))
+            # Check if wait_time_text is not empty
+            if wait_time_text:
+                wait_time_text = wait_time_text.strip()
+                self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
 
-            xpath = "(//p[contains(@class, 'cusDiK')])[2]"
-            max = float(self.monitor_element(xpath, 15))
+                # Regular expression to find all numbers followed by 'h' or 'm', possibly with spaces
+                pattern = r'(\d+)\s*([hH]|hours?|[mM]|minutes?)'
+                matches = re.findall(pattern, wait_time_text)
 
-            xpath = "(//p[contains(@class, 'bXJWuE')])[1]"
-            production = float(self.monitor_element(xpath, 15))
-
-            wait_time = int(((max-actual)/production)*60)
-
-            return wait_time          
-
+                total_minutes = 0
+                if matches:
+                    for value, unit in matches:
+                        unit = unit.lower()
+                        if unit.startswith('h'):
+                            total_minutes += int(value) * 60
+                        elif unit.startswith('m'):
+                            total_minutes += int(value)
+                    self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
+                    return total_minutes if total_minutes > 0 else False
+                else:
+                    # If the pattern doesn't match, return False
+                    self.output(f"Step {self.step} - Wait time pattern not matched in text: '{wait_time_text}'", 3)
+                    return False
+            else:
+                # No text found in the element
+                self.output(f"Step {self.step} - No wait time text found.", 3)
+                return False
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
-            if self.settings['debugIsOn']:
-                screenshot_path = f"{self.screenshots_path}/{self.step}_get_wait_time_error.png"
-                self.driver.save_screenshot(screenshot_path)
-                self.output(f"Screenshot saved to {screenshot_path}", 3)
-
-            return None
+            return False
 
 def main():
     claimer = GameeClaimer()
