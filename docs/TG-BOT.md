@@ -37,18 +37,23 @@ By following these steps, you'll have a fully configured relay from your script 
 ### Available Commands:
 
 - `/start` - Start the original bot
-- `/list` - List all active and inactive games from PM2
+- `/logs` <session name> <lines> - List the logs of the process
+  - `/logs HOT:Wallet1` - Show the last 30 log lines for game "HOT", session "Wallet1".
+  - `/logs Vertus:Wallet2 100` - Show the last 100 log lines for game "Vertus", session "Wallet2".
+- `/status` <session name> - Get the last 30 balances and status
+  - `/status HOT:Wallet1` - Show the last 30 claim results and balance updates for game "HOT", session "Wallet1".
+- `/list` - List all active and inactive games from PM2.
 - `/list <pattern>` - List only games matching the pattern
-   - `/list hot` - Lists all games with "hot" in the name.   
+  - `/list hot` - Lists all games with "hot" in the name.
 - `/start <pattern>` - Start all PM2 processes matching the pattern
-   - `/start HOT:Wallet1` - Starts the `HOT:Wallet1` session.
+  - `/start HOT:Wallet1` - Starts the `HOT:Wallet1` session.
 - `/restart <pattern>` - Restart all PM2 processes matching the pattern
-   - `/restart :Wallet1` - Restarts all PM2 processes matching account `Wallet1`.
+  - `/restart :Wallet1` - Restarts all PM2 processes matching account `Wallet1`.
 - `/stop <pattern>` - Stop processes matching the pattern
-   - `/stop Vertus:` - Stops all PM2 processes for the game "Vertus".
-- `/update` - Update the game files (try `pull-games.sh`, then `git pull`)
-- `/help` - Show this help message
-- `/exit` - Exit the bot
+  - `/stop Vertus:` - Stops all PM2 processes for the game "Vertus".
+- `/update` - Update the game files (try `pull-games.sh`, then `git pull`).
+- `/help` - Show this help message.
+- `/exit` - Exit the bot.
 
 ### Using Pattern Matching in Commands:
 
