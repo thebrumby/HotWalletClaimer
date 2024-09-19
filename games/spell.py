@@ -40,6 +40,7 @@ class SpellClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
+        self.allow_early_claim = False
         self.start_app_xpath = "//div[@class='reply-markup-row']//span[contains(text(),'Open Spell')]"
 
     def __init__(self):
