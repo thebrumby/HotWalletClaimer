@@ -77,7 +77,7 @@ To create a stand-alone (non-Docker) version, follow the instructions at [LINUX.
 | 4 cores, 4 GB RAM          | 6                         |
 | 4 cores, 6 GB RAM          | 8                         |
 
-2) Hard disk space: Each game session has a saved browser cache which includes images, CSS, and JavaScript assets used by the game. Depending on the game, this can range from 100 to 400 MB. Additionally, the recommended process manager (PM2) also stores logs. If disk space is a concern, you can set limits on the [PM2-LOGS.md](docs/PM2-LOGS.md).
+2) Hard disk space: Each game session has a saved browser cache which includes images, CSS, and JavaScript assets used by the game. Depending on the game, this can range from 100 to 400 MB. Additionally, the recommended process manager (PM2) also stores logs. If disk space is a concern, you can set limits on the [PM2-LOGS.md](docs/PM2-LOGS.md) or set **`enableCache`** to 'n' in the script settings.
 
 It is the script user's responsibility to assess the capacity of their hardware, review it regularly, and limit the number of game session instances that they initiate to stay within the limits of their hardware. Failure to do so may lead to slow processing, script/server crashes, and the possibility you will be locked out of your server.
 
