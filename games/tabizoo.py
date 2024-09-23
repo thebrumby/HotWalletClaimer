@@ -84,20 +84,39 @@ class TabizooClaimer(Claimer):
         self.click_daily_reward()
         self.increase_step()
 
-        self.get_balance(False)
+        original_balance = self.get_balance(False)
         self.increase_step()
 
-        xpath = "//div[contains(text(), 'Claim')]"
+        xpath = "//span[contains(text(), 'Claim')]"
         success = self.brute_click(xpath, 10, "click the 'Claim' button")
+        old_balance = self.get_balance(True)
         if success:
+            try:
+                balance_diff = float(old_balance) - float(original_balance)
+                if balance_diff > 0:
+                    self.output(f"Step {self.step} - Making a claim increased the balance by {balance_diff}", 2)
+            except Exception as e:
+                pass
             self.output(f"Step {self.step} - Main reward claimed.", 1)
-        balance = self.get_balance(True)
         self.increase_step()
 
         self.get_profit_hour(True)
 
         try:
             wait_time_text = self.get_wait_time(self.step, "post-claim")
+            # Try the slots game
+            self.play_spins()
+            balance = self.get_balance(True)
+            try:
+                balance_diff = float(balance) - float(old_balance)
+                if balance_diff > 0:
+                    self.output(f"Step {self.step} - Playing slots increased the balance by {balance_diff}", 2)
+            except Exception as e:
+                pass
+            # Go back to the home page
+            xpath= "(//div[normalize-space(.) = 'Shiro'])[1]"
+            self.move_and_click(xpath, 10, True, "click the 'Home' tab", self.step, "clickable")
+            # Try to upgrade the level if auto-upgrade enabled
             self.attempt_upgrade(balance)
 
             if wait_time_text:
@@ -113,6 +132,22 @@ class TabizooClaimer(Claimer):
 
         self.output(f"STATUS: We seemed to have reached the end without confirming the action!", 1)
         return 60
+
+    def play_spins(self):
+        xpath_spin_tab = "(//div[normalize-space(.) = 'Spin'])[1]"
+        xpath_spin_button = "//img[contains(@src, 'spin_btn')]"
+
+        # Attempt to click the 'Spin' tab
+        success = self.move_and_click(xpath_spin_tab, 10, True, "click the 'Spin' tab", self.step, "clickable")
+        if not success:
+            self.quit_driver()
+            self.launch_iframe()
+            success = self.brute_click(xpath_spin_tab, 10, "click the 'Spin' tab")
+            if not success:
+                self.output(f"Step {self.step} - It seems the sequence to play the slot machine failed.", 2)
+                return
+
+        self.brute_click(xpath_spin_button, 60, "spin the reels")
         
     def click_daily_reward(self):
         # Check the Daily rewards.
@@ -168,14 +203,29 @@ class TabizooClaimer(Claimer):
         priority = max(self.settings['verboseLevel'], default_priority)
 
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//img[contains(@src, 'coin2')]/following-sibling::span"
+        balance_xpath = f"//img[contains(@src, 'coin_icon')]/following-sibling::span"
 
         try:
             element = self.monitor_element(balance_xpath, 15, "get balance")
             if element:
-                balance_part = element
-                self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
-                return balance_part
+                balance_part = element.strip()
+                multiplier = 1  # Default multiplier
+
+                # Check for 'K' or 'M' and adjust the multiplier
+                if balance_part.endswith('K'):
+                    multiplier = 1_000
+                    balance_part = balance_part[:-1]  # Remove the 'K'
+                elif balance_part.endswith('M'):
+                    multiplier = 1_000_000
+                    balance_part = balance_part[:-1]  # Remove the 'M'
+
+                try:
+                    balance_value = float(balance_part) * multiplier
+                    self.output(f"Step {self.step} - {balance_text} {balance_value}", priority)
+                    return balance_value
+                except ValueError:
+                    self.output(f"Step {self.step} - Could not convert balance '{balance_part}' to a number.", priority)
+                    return None
 
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)

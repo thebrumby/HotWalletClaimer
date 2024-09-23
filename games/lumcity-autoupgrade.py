@@ -154,43 +154,72 @@ class LumCityAUClaimer(LumCityClaimer):
 
     def claim_drop(self, balance):
         try:
-            # Define button xpaths
-            buttons = {
-                'Participate white': "//button[text()='Participate']",
-                'Big participate blue': "//button[text()='Participate']",
-                'Burn': "//button[text()='Burn']",
-                'OK': "//button[text()='Ok']",
-                'Back': "//button[contains(@class, 'backBtn')]"
-            }
-
-            # Define the xpath for the pre button ('Claim')
-            pre_button_xpath = "//button[contains(@class, '_btn_16o80_16') and contains(@class, '_btnTheme-primary_16o80_74') and contains(@class, '_btn_oc7tm_48')]"
-
             # Click 'Participate white' button first
-            self.move_and_click(buttons['Participate white'], 30, True, "click the 'Participate white' button", self.step, "clickable")
+            self.move_and_click("//button[text()='Participate']", 10, True, "click the 'Participate white' button", self.step, "clickable")
             self.increase_step()
 
             # Attempt to click the 'Claim' button after 'Participate white'
             try:
-                self.move_and_click(pre_button_xpath, 30, True, "click the 'Claim' button", self.step, "clickable")
-                self.increase_step()
+                self.move_and_click(
+                    "//button[contains(@class, '_btn_16o80_16') and contains(@class, '_btnTheme-primary_16o80_74') and contains(@class, '_btn_oc7tm_48')]",
+                    10,
+                    True,
+                    "click the 'Claim' button",
+                    self.step,
+                    "clickable"
+                )
             except Exception as e:
-                self.output(f"Step {self.step} - 'Claim' button not found or not clickable: {e}", 2)
-                # Continue without clicking the 'Claim' button
+                self.output(f"Step {self.step} - 'Claim' button not found or not clickable", 2)
+            self.increase_step()
 
-            # Continue with other buttons, starting with 'Big participate blue'
-            for action, xpath in buttons.items():
-                if action == 'Participate white':  # Skip 'Participate white' as it's already handled
-                    continue
-                self.move_and_click(xpath, 30, True, f"click the '{action}' button", self.step, "clickable")
-                self.increase_step()
+            # Click 'Big participate blue' button
+            self.move_and_click("//button[text()='Participate']", 10, True, "click the 'Big participate blue' button", self.step, "clickable")
+            self.increase_step()
 
-            # Adding a fixed delay to ensure the 'Burn' action is processed
-            time.sleep(10)
+            # Obtain the GOLT balance
+            xpath = "//div[contains(@class, 'yourCount')]"
+            golt_text = self.monitor_element(xpath, 10, "get available GOLT")
+
+            # Remove "GOLT Balance: " prefix
+            golt_number_text = golt_text.replace("GOLT Balance: ", "").strip()
+
+            # Split at the decimal point and take the integer part
+            integer_part = golt_number_text.split('.')[0]
+
+            # Remove commas
+            golt_number = integer_part.replace(",", "")
+
+            # If necessary, convert to integer
+            golt_number = int(golt_number)
+            self.output(f"Step {self.step} - Attempting to stake {golt_number} GOLT.", 2)
+
+            # Locate the input field and enter the GOLT amount
+            input_xpath = "//div[contains(@class, '_inputWrapper')]/input[contains(@class, '_burnInput')]"
+            input_field = self.move_and_click(input_xpath, 10, True, "locate input field", self.step, "clickable")
+            # Clear the input field before entering the new value
+            input_field.clear()
+            # Then send the new value one digit at a time
+            for digit in str(golt_number):
+                input_field.send_keys(digit)
+                time.sleep(0.1)  # Optional: small delay between keystrokes
+                screenshot_path = f"{self.screenshots_path}/{self.step}_Enter_Value_{digit}.png"
+                self.driver.save_screenshot(screenshot_path)
+            self.increase_step()
+
+            # Click 'Burn' button
+            self.move_and_click("//button[text()='Burn']", 10, True, "click the 'Burn' button", self.step, "clickable")
+            self.increase_step()
+
+            # Click 'OK' button
+            self.move_and_click("//button[text()='Ok']", 10, True, "click the 'OK' button", self.step, "clickable")
+            self.increase_step()
+
+            # Click 'Back' button
+            self.move_and_click("//button[contains(@class, 'backBtn')]", 10, True, "click the 'Back' button", self.step, "clickable")
+            self.increase_step()
 
         except Exception as e:
-            self.output(f"Step {self.step} - Error during drop claiming: {e}", 2)
-
+            self.output(f"Step {self.step} - Error during drop claiming.", 2)
             
 def main():
     claimer = LumCityAUClaimer()
