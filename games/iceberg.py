@@ -86,7 +86,7 @@ class IcebergClaimer(Claimer):
                 remaining_wait_time = round(self.convert_to_minutes(remaining_time), 1)
                 remaining_wait_time = self.apply_random_offset(remaining_wait_time)
                 self.output(f"STATUS: Considering {remaining_time}, we'll sleep for {remaining_wait_time} minutes.", 2)
-                return remaining_wait_time
+                return max(60,remaining_wait_time)
             except Exception as e:
                 # Handle unexpected errors during time calculation
                 self.output(f"Step {self.step} - Error during time calculation: {str(e)}", 2)
@@ -144,7 +144,7 @@ class IcebergClaimer(Claimer):
         try:
             element = self.monitor_element(balance_xpath, 15, "get balance")
             if element:
-                balance_part = element
+                balance_part = self.strip_html_and_non_numeric(element)
                 self.output(f"Step {self.step} - {'After' if claimed else 'Before'} BALANCE: {balance_part}", 2 if claimed else 3)
                 return balance_part
 
@@ -162,7 +162,7 @@ class IcebergClaimer(Claimer):
                 self.output(f"Step {self.step} - Get the wait time...", 3)
                 element = self.monitor_element(wait_time_xpath, 10, "get claim timer")
                 if element:
-                    return self.strip_non_numeric(element)
+                    return element
                 return False
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
@@ -176,7 +176,7 @@ class IcebergClaimer(Claimer):
             return h * 60 + m + s / 60
         except ValueError:
             self.output(f"Step {self.step} - Failed to parse time string {time_string}", 2)
-            return 0
+            return False
 
 def main():
     claimer = IcebergClaimer()
