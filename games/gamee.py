@@ -106,17 +106,17 @@ class GameeClaimer(Claimer):
             clicked = self.move_and_click(xpath, 8, True, "click the 'Claim & start' button", self.step, "clickable")
             if clicked:
                 self.output(f"Step {self.step} - Successfully clicked 'Claim & Start' button.", 3)
-                status_text = "STATUS: Started MINING"
+                status_text = "Started MINING"
             else:
                 # Check if currently mining
                 xpath = "//p[contains(text(), 'to claim')]"
                 element_present = self.move_and_click(xpath, 8, False, "check if currently mining", self.step, "clickable")
                 if element_present:
                     self.output(f"Step {self.step} - Currently mining: YES.", 3)
-                    status_text = "STATUS: Currently mining"
+                    status_text = "Currently mining"
                 else:
                     self.output(f"Step {self.step} - MINING button NOT found.", 3)
-                    status_text = "STATUS: MINING button NOT found"
+                    status_text = "MINING button NOT found"
 
         self.increase_step()
 
