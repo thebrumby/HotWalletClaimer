@@ -99,7 +99,7 @@ class GameeClaimer(Claimer):
         clicked = self.move_and_click(xpath, 8, True, "click the 'Start mining' button", self.step, "clickable")
         if clicked:
             self.output(f"Step {self.step} - Successfully clicked 'Start mining' button.", 3)
-            status_text = "STATUS: Started MINING"
+            status_text = "Started MINING"
         else:
             # Attempt to click the 'Claim & start' button
             xpath = "//button[span[contains(text(), 'Claim & start')]]"
