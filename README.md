@@ -120,26 +120,30 @@ Automate your Tree mining efforts using the BNB Wallet with this straightforward
     ```bash
     pm2 save
     ```
+    
+### Proxy Configuration
+   - You can now configure the Telegram Claim Bot to use a third-party proxy connection to bypass geo-location blocks or enhance privacy. Detailed instructions on how to configure a third-party proxy can be found [here](docs/CONFIGUREPROXY.md).
 
 <a name="usage-notes"></a>
-## V3.0.3 Release Notes. 
 
-## Usage Instructions
+## V3.0.3 Release Notes
 
-After executing the script with `./launch.sh`, you'll be prompted to update settings and configure your session.
+## Usage Instructions: Configuring a Game Session (Example: HOT)
+
+After executing the script with `./launch.sh`, you'll be prompted to update settings and configure your session. Remember to adjust your settings upon startup to optimize the script's performance according to your server's capabilities.
 
 ### Update Settings
 
 If you choose **"yes"** when prompted to update settings, you can review and modify the following options:
 
-- **`forceClaim`**: Force a claim the first time the script runs, regardless of whether the wallet is full.
-- **`debugIsOn`**: Enable debugging to save screenshots locally (default is **off**).
-- **`hideSensitiveInput`**: Hide sensitive information like phone numbers and seed phrases (default is **on**).
-- **`screenshotQRCode`**: Choose to log in via QR code instead of manual login via phone number and OTP.
-- **`maxSessions`**: Set the maximum number of concurrent claim sessions; additional wallets will wait for an available slot.
-- **`verboseLevel`**: Adjust the verbosity of console messages (1 = minimal, 3 = all messages).
-- **`telegramVerboseLevel`**: Adjust the verbosity of messages sent to the Telegram bot (0 = none, 3 = all messages).
-- **`forceNewSession`**: Force a new login, useful if the existing session encounters errors.
+- **`forceClaim`**: Forces a claim the first time the script runs, regardless of whether the wallet is full.
+- **`debugIsOn`**: Enables debugging to save screenshots locally (default is **off**).
+- **`hideSensitiveInput`**: Hides sensitive information like phone numbers and seed phrases (default is **on**).
+- **`screenshotQRCode`**: When enabled, attempts to log in via QR code scan instead of phone number and OTP.
+- **`maxSessions`**: Sets the maximum number of concurrent claim sessions; additional wallets will wait for an available slot.
+- **`verboseLevel`**: Adjusts the verbosity of console messages (1 = minimal, 2 = major steps, 3 = all messages).
+- **`telegramVerboseLevel`**: Adjusts the verbosity of messages sent to the Telegram bot (0 = none, 3 = all messages).
+- **`forceNewSession`**: Forces a new login, useful if the existing session encounters errors.
 - **`lowestClaimOffset`** and **`highestClaimOffset`**: Define the range for randomized claim timing relative to when the pot is filled.
 
    - **Examples of Random Claim Timing Based on Claim Offset**:
@@ -147,44 +151,43 @@ If you choose **"yes"** when prompted to update settings, you can review and mod
      - `30, 60`: Late claims randomly 30 minutes to 1 hour after the pot is full.
      - `-15, 15`: Random claims within a 15-minute window before or after the pot is filled.
 
-- **`useProxy`**: Decide whether to use the built-in proxy (as of 19th September 2024, recommended **off**).
+- **`useProxy`**: Decides whether to use the built-in proxy (as of September 19, 2024, recommended **off**).
 - **`requestUserAgent`**: If enabled, the script will prompt you to enter your user-agent each time.
 - **`telegramBotToken`**: Allows you to relay information to a Telegram bot via BotFather.
 - **`enableCache`**: Disabling saves disk space but increases network load.
 
-### Proxy Configuration
-   - You can now configure the Telegram Claim Bot to use a third-party proxy connection to bypass geo-location blocks or enhance privacy. Detailed instructions on how to configure a third-party proxy can be found [here](docs/CONFIGUREPROXY.md).
-
 ### Session Name Configuration
-   - Sessions are auto-named numerically in the format "Wallet1", or can be customized to your own choice. Reusing a name attempts to resume that session.
 
+- Sessions are auto-named numerically in the format "Wallet1" but can be customized to your preference. Reusing a name attempts to resume that session.
 
 ### Telegram Login: Saved Account Options
-   - If the script detects you have a saved Telegram session, you can choose it from a numbered list. 
-   - If you prefer to log into a new account, selecting 'n' proceeds to a new Telegram login. The default method is to log in by scanning a QR Code screenshot.
-   - Should the QR Code method be unsuccessful, or if you disable it in settings, follow the OTP login procedure outlined below.
 
-### Telegram OTP login: Country Name and Phone Number for Telegram
-   - Enter your Country Name as displayed on Telegram's login page or accept the default, which is auto-detected based on your IP.
+- If the script detects a saved Telegram session and you want to reuse it, you can choose it from a numbered list.
+- To log into a new Telegram account, select 'n'. You will then be prompted to log in with a QR code or telephone number and OTP.
+- If the QR code method is unsuccessful or disabled in settings, follow the OTP login procedure outlined below.
 
-### Telegram OTO login: One-Time Password (OTP)
+### Telegram OTP Login Procedure
+
+1. **Country Name and Phone Number**
+   - Enter your country name using the same spelling as Telegram's login page or accept the default, which is auto-detected based on your IP.
+2. **One-Time Password (OTP)**
    - Enter the OTP sent to your registered Telegram account.
+3. **Two-Factor Authentication (2FA)**
+   - If 2FA is enabled on your Telegram account, enter your 2FA password after the QR code scan or OTP entry.
 
-### Telegram login: Two-factor authentication (2FA)
-   - If 2FA is enabled on your Telegram account, enter your 2FA password following the QR code scan or OTP entry.
+### Game Login: Seed Phrase Input for HereWalletBot
 
-### Game login: Seed Phrase Input for HereWalletBot Login
-   - If your selected game requires a seed phrase to log in, carefully input your 12-word seed phrase, ensuring correct spacing without any punctuation or numbers.
-   - Alternatively, if the game's login is based on the Telegram account, ensure you are logging into the correct account.
+- If your selected game requires a seed phrase to log in, carefully input your 12-word seed phrase, ensuring correct spacing without any punctuation or numbers.
+  - **Note**: Be cautious when entering seed phrases. Ensure the script is from a trusted source and your connection is secure to protect your sensitive information.
+- Alternatively, if the game's login is based on your Telegram account, ensure you are logging into the correct account.
 
-### Final options once the PM2 session is configured.
-   - Select "a" or press <enter> to automatically add the session to PM2.
-   - Select "e" to exit to the Command Line Interface without adding to PM2
-   - Select "y" to continue and attempt to make a claim. 
+### Final Options After Session Configuration
 
-Remember to check and adjust your settings upon startup to optimize the script's performance to your server's capabilities.
+- Select **"a"** or press **Enter** to automatically add the session to PM2.
+- Select **"e"** to exit to the Command Line Interface without adding to PM2.
+- Select **"y"** to continue and attempt to make a claim.
 
-After following these steps, if all inputs are correctly entered, and assuming no flooding block is in place, you'll be successfully logged into Telegram and your chosen game.
+After following these steps, if all inputs are correctly entered and no flooding block is in place, you'll be successfully logged into Telegram and your chosen game.
 
 # Security Considerations for HotWalletClaimer Usage
 
