@@ -102,7 +102,7 @@ class HotClaimer(Claimer):
         if near:
             try:
                 last_value_float = float(near)
-                if last_value_float > 0.1:
+                if last_value_float > 0.2:
                     low_near = False
                     self.output(f"Step {self.step} - Cleared the low 'Near' balance flag as current balance is: {last_value_float}", 3)
                 else:
@@ -194,7 +194,8 @@ class HotClaimer(Claimer):
                     if wait_time_text == "Filled":
                         if low_near:
                             self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
-                            self.output(f"STATUS: We could not confirm you have >0.1 Near, which may have caused the claim to fail.", 1)
+                            self.output(f"STATUS: We could not confirm you have >0.2 Near, which may have caused the claim to fail.", 1)
+                            self.output(f"STATUS: Kindly check in the GUI if you can claim manually, and consider topping up your NEAR balance.", 1)
                             self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not, try again.", 2)
                         else:
                             self.output(f"STATUS: The wait timer is still showing: Filled - claim failed.", 1)
