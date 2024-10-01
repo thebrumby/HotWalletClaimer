@@ -51,6 +51,21 @@ import re
 def load(l):
     ctx.log.info("modify_requests_responses.py script has started.")
 
+# Modify outgoing requests (client to server)
+def request(flow: http.HTTPFlow) -> None:
+    try:
+        # Check if the request URL contains 'tgWebAppPlatform=web'
+        if flow.request and "tgWebAppPlatform=web" in flow.request.url:
+            ctx.log.info(f"Modifying outgoing URL: {flow.request.url}")
+            
+            # Replace 'tgWebAppPlatform=web' with 'tgWebAppPlatform=ios'
+            flow.request.url = flow.request.url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=ios")
+            ctx.log.info(f"Modified outgoing URL to: {flow.request.url}")
+
+    except Exception as e:
+        ctx.log.error(f"Error modifying outgoing request for URL {flow.request.url}: {e}")
+
+# Modify incoming responses (server to client)
 def response(flow: http.HTTPFlow) -> None:
     try:
         # Step 1: Remove specific headers
@@ -65,8 +80,7 @@ def response(flow: http.HTTPFlow) -> None:
             ctx.log.info(f"Removed headers from URL: {flow.request.url}")
             ctx.log.debug(f"Removed Headers: {removed_headers}")
 
-        # Step 2: Modify the iframe's tgWebAppPlatform in HTML content
-        # Check if the content type is HTML and the response is not empty
+        # Step 2: Modify the iframe's tgWebAppPlatform in HTML content (incoming responses)
         if "text/html" in flow.response.headers.get("content-type", ""):
             ctx.log.info(f"Processing HTML for URL: {flow.request.url}")
 
