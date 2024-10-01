@@ -13,9 +13,9 @@ You can also support us at no cost by subscribing to and watching our [YouTube c
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
-- **Mining, Spinning, but not Racing... The Gamee Script Strikes Back!**:  Fan favorite working again. [read more](https://www.patreon.com/posts/mining-racing-112396262?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Dodging Icebergs and Casting Spells**: Challenges after the Telegram Mini-App upgrade. [read more](https://www.patreon.com/posts/dodging-icebergs-112340439?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Hamster Kombat - Finally Added!**: One of the most requested play-2-earn games is here. [read more](https://www.patreon.com/posts/hamster-kombat-111622147?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **Blum, Tabizoo, and Lumcity fixes, but still 'Not A Pixel'**: Pull the latest code to fix the issues.' [read more](https://www.patreon.com/posts/blum-tabizoo-and-113170159?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **Mining, Spinning, but not Racing... The Gamee Script Strikes Back!**: Fan favorite working again. [read more](https://www.patreon.com/posts/mining-racing-112396262?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **Dodging Icebergs and Casting Spells**: Challenges after the Telegram Mini-App upgrade. [read more](https://www.patreon.com/posts/dodging-icebergs-112340439?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link))
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
