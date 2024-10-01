@@ -5,7 +5,7 @@ import time
 
 PROXY_DIR = os.path.abspath("./proxy")
 
-log_to_file = True  # Set this to False to log to /dev/null
+log_to_file = False  # Set this to False to log to /dev/null
 
 def get_log_file_path():
     return os.path.join(PROXY_DIR, 'mitmproxy.log') if log_to_file else '/dev/null'
