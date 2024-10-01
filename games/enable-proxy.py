@@ -5,7 +5,7 @@ import time
 
 PROXY_DIR = os.path.abspath("./proxy")
 
-log_to_file = False  # Set this to False to log to /dev/null
+log_to_file = True  # Set this to False to log to /dev/null
 
 def get_log_file_path():
     return os.path.join(PROXY_DIR, 'mitmproxy.log') if log_to_file else '/dev/null'
@@ -45,21 +45,47 @@ def copy_certificates():
 
 def write_modify_requests_responses_script():
     script_content = """
-from mitmproxy import http
+from mitmproxy import http, ctx
+import re
 
-def request(flow: http.HTTPFlow) -> None:
-    # No modifications to the request are needed
-    pass
+def load(l):
+    ctx.log.info("modify_requests_responses.py script has started.")
 
 def response(flow: http.HTTPFlow) -> None:
-    # Remove headers
-    if 'Content-Security-Policy' in flow.response.headers:
-        del flow.response.headers['Content-Security-Policy']
-    if 'X-Frame-Options' in flow.response.headers:
-        del flow.response.headers['X-Frame-Options']
+    try:
+        # Step 1: Remove specific headers
+        headers_to_remove = ['Content-Security-Policy', 'X-Frame-Options']
+        removed_headers = []
+        for header in headers_to_remove:
+            if header in flow.response.headers:
+                del flow.response.headers[header]
+                removed_headers.append(header)
 
-    # Log the modified response headers
-    print(f"Modified Response Headers: {flow.response.headers}")
+        if removed_headers:
+            ctx.log.info(f"Removed headers from URL: {flow.request.url}")
+            ctx.log.debug(f"Removed Headers: {removed_headers}")
+
+        # Step 2: Modify the iframe's tgWebAppPlatform in HTML content
+        # Check if the content type is HTML and the response is not empty
+        if "text/html" in flow.response.headers.get("content-type", ""):
+            ctx.log.info(f"Processing HTML for URL: {flow.request.url}")
+
+            # Decode the response content
+            decoded_content = flow.response.text  # Get the HTML content as text
+
+            # Define a regex pattern to find the iframe with tgWebAppPlatform=web
+            iframe_pattern = r'(tgWebAppPlatform=web)'
+
+            # Replace 'tgWebAppPlatform=web' with 'tgWebAppPlatform=ios'
+            modified_content = re.sub(iframe_pattern, 'tgWebAppPlatform=ios', decoded_content)
+
+            # If a change was made, update the response content
+            if modified_content != decoded_content:
+                flow.response.text = modified_content
+                ctx.log.info(f"Modified iframe tgWebAppPlatform for URL: {flow.request.url}")
+
+    except Exception as e:
+        ctx.log.error(f"Error processing response for URL {flow.request.url}: {e}")
 """
 
     os.makedirs(PROXY_DIR, exist_ok=True)
