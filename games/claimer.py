@@ -619,20 +619,21 @@ class Claimer:
 
             xpath = "//canvas[@class='qr-canvas']"
             self.driver.get(self.url)
-            wait = WebDriverWait(self.driver, 30)
+            wait = WebDriverWait(self.driver, 5)
             self.output(f"Step {self.step} - Waiting for the first QR code - may take up to 30 seconds.", 1)
             self.increase_step()
-            QR_code = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-
-            if not QR_code:
-                return False
-
-            wait = WebDriverWait(self.driver, 2)
 
             while attempt_count < max_attempts:
                 try:
+                    # Attempt to find the QR code element
                     QR_code = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-                    QR_code.screenshot(f"{self.screenshots_path}/Step {self.step} - Initial QR code.png")
+                    try:
+                        # Attempt to take a screenshot of the QR code
+                        QR_code.screenshot(f"{self.screenshots_path}/Step {self.step} - Initial QR code.png")
+                    except StaleElementReferenceException:
+                        self.output(f"Step {self.step} - QR code element is stale, refinding...", 1)
+                        continue  # Retry by refinding the QR code element
+
                     image = Image.open(f"{self.screenshots_path}/Step {self.step} - Initial QR code.png")
                     decoded_objects = decode(image)
                     if decoded_objects:
@@ -640,7 +641,7 @@ class Claimer:
                         if this_url != last_url:
                             last_url = this_url  # Update the last seen URL
                             attempt_count += 1
-                            self.output("*** Important: Having @HereWalletBot open in your Telegram App might stop this script from logging in! ***\n", 2)
+                            self.output("*** Important: Having GUI open in your Telegram App might stop this script from logging in! ***\n", 2)
                             self.output(f"Step {self.step} - Our screenshot path is {self.screenshots_path}\n", 1)
                             self.output(f"Step {self.step} - Generating screenshot {attempt_count} of {max_attempts}\n", 2)
                             qrcode_terminal.draw(this_url)
@@ -650,10 +651,10 @@ class Claimer:
                         time.sleep(0.5)  # Wait before the next check
                     else:
                         time.sleep(0.5)  # No QR code decoded, wait before retrying
-                except TimeoutException:
+                except (TimeoutException, NoSuchElementException):
                     self.output(f"Step {self.step} - QR Code is no longer visible.", 2)
                     return True  # Indicates the QR code has been scanned or disappeared
-        
+
             self.output(f"Step {self.step} - Failed to generate a valid QR code after multiple attempts.", 1)
             return False  # If loop completes without a successful scan
 
