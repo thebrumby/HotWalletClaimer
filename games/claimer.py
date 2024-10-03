@@ -23,13 +23,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
-try:
-    import requests
-except ImportError:
-    import subprocess
-    import sys
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "requests"])
-    import requests
+import requests
 
 class Claimer:
 
@@ -459,7 +453,7 @@ class Claimer:
         if not self.settings.get("enableCache", True) and int(self.step) >= 100:
             chrome_options.add_argument("--disable-application-cache")
 
-        if self.settings["useProxy"]:
+        if self.settings["useProxy"] or self.forceLocalProxy:
             proxy_server = self.settings["proxyAddress"]
             chrome_options.add_argument(f"--proxy-server={proxy_server}")
 
@@ -619,7 +613,7 @@ class Claimer:
 
             xpath = "//canvas[@class='qr-canvas']"
             self.driver.get(self.url)
-            wait = WebDriverWait(self.driver, 8)
+            wait = WebDriverWait(self.driver, 5)
             self.output(f"Step {self.step} - Waiting for the first QR code - may take up to 30 seconds.", 1)
             self.increase_step()
 
