@@ -89,7 +89,7 @@ class CryptoRankClaimer(Claimer):
         self.check_opening_screens()
 
         # Are we farming? if not, start!
-        xpath = "//button[text()='Start Farming']"
+        xpath = "//button[div[text()='Start Farming']]"
         self.move_and_click(xpath, 8, True, "initial start farming (may not be present)", self.step, "clickable")
 
         pre_balance = self.get_balance(False)
@@ -106,12 +106,12 @@ class CryptoRankClaimer(Claimer):
         self.increase_step()
     
         # We got this far, so let's try to claim!
-        xpath = "//button[contains(text(), 'Claim')]"
+        xpath = "//button[div[contains(text(), 'Claim')]]"
         success = self.move_and_click(xpath, 20, True, "look for the claim button.", self.step, "visible")
         self.increase_step()
 
         # And start farming again.
-        xpath = "//button[text()='Start Farming']"
+        xpath = "//button[div[text()='Start Farming']]"
         self.move_and_click(xpath, 30, True, "initial start farming (may not be present)", self.step, "clickable")
         self.increase_step()
 
@@ -198,17 +198,21 @@ class CryptoRankClaimer(Claimer):
         xpath = "//a[normalize-space(text())='Tasks']"
         self.move_and_click(xpath, 8, True, "click the 'Tasks' tab", self.step, "clickable")
 
-        # Select the Tasks Tab
+        # Check if the daily reward if available 
         xpath = "//div[span[text()='Daily check']]/following-sibling::div//button[normalize-space(text())='Claim']"
-        self.move_and_click(xpath, 8, True, "click the daily reward 'Claim'", self.step, "clickable")
-        if self.move_and_click(xpath, 8, True, "confirm the daily reward 'Claim' (hopefully not present)", self.step, "clickable"):
+        success = self.move_and_click(xpath, 8, True, "click the daily reward 'Claim'", self.step, "clickable")
+        if not success:
+            self.output(f"Step {self.step} - Looks like the daily reward was already claimed.", 2)
+            self.daily_reward_text = "Daily reward already claimed."
+
+        xpath = "//button[div[text()='Check in']]"
+        success = self.move_and_click(xpath, 8, True, "click the 'Check in' button", self.step, "clickable")
+        if success:
             self.output(f"Step {self.step} - Looks like we successfully claimed the daily reward.", 2)
             self.daily_reward_text = "Claimed the daily reward."
         else:
             self.output(f"Step {self.step} - Looks like the daily reward was already claimed or unsuccessful.", 2)
-            self.daily_reward_text = "Daily reward alrady claimed."
-
-
+            self.daily_reward_text = "Daily reward already claimed."
 
 def main():
     claimer = CryptoRankClaimer()
