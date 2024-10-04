@@ -34,7 +34,7 @@ class IcebergClaimer(Claimer):
         self.script = "games/iceberg.py"
         self.prefix = "Iceberg:"
         self.url = "https://web.telegram.org/k/#@IcebergAppBot"
-        self.forceLocalProxy = False
+        self.forceLocalProxy = True
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//span[text()='Play']"
