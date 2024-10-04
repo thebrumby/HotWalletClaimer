@@ -49,61 +49,8 @@ class ColdClaimer(Claimer):
         super().__init__()
 
 
-    def launch_iframe(self):
-        self.driver = self.get_driver()
-        # Set viewport size for iPhone 12/13/14 in portrait mode
-        self.driver.set_window_size(1024, 768)
-
-        # let's start with clean screenshots directory
-        if int(self.step) < 101:
-            if os.path.exists(self.screenshots_path):
-                shutil.rmtree(self.screenshots_path)
-            os.makedirs(self.screenshots_path)
-
-        try:
-            self.driver.get(self.url)
-            WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            self.output(f"Step {self.step} - Attempting to verify if we are logged in (hopefully QR code is not present).", 2)
-            xpath = "//canvas[@class='qr-canvas']"
-            if self.settings['debugIsOn']:
-                self.debug_information("QR code check during session start","check")
-            wait = WebDriverWait(self.driver, 10)
-            wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-            self.output(f"Step {self.step} - Chrome driver reports the QR code is visible: It appears we are no longer logged in.", 2)
-            self.output(f"Step {self.step} - Most likely you will get a warning that the central input box is not found.", 2)
-            self.output(f"Step {self.step} - System will try to restore session, or restart the script from CLI to force a fresh log in.\n", 2)
-
-        except TimeoutException:
-            self.output(f"Step {self.step} - nothing found to action. The QR code test passed.\n", 3)
-        self.increase_step()
-
-        self.driver.get(self.url)
-        WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-
-        # There is a very unlikely scenario that the chat might have been cleared.
-        # In this case, the "START" button needs pressing to expose the chat window!
-        xpath = "//button[contains(., 'START')]"
-        button = self.move_and_click(xpath, 8, True, "check for the start button (should not be present)", self.step, "clickable")
-        self.increase_step()
-
-        # New link logic to avoid finding an expired link
-        if self.find_working_link(self.step):
-            self.increase_step()
-        else:
-            self.send_start(self.step)
-            self.increase_step()
-            self.find_working_link(self.step)
-            self.increase_step()
-
-        # Now let's move to and JS click the "Launch" Button
-        xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-        button = self.move_and_click(xpath, 8, True, "click the 'Launch' button (probably not present)", self.step, "clickable")
-        self.increase_step()
-
-        # HereWalletBot Pop-up Handling
-        self.select_iframe(self.step)
-        self.increase_step()
-
+    def replace_platform(self):
+        self.output(f"Step {self.step} - We don't replace 'tgWebAppPlatform' on this app.", 3)
 
     def next_steps(self):
         if self.step:
@@ -256,7 +203,7 @@ class ColdClaimer(Claimer):
 
         # Construct the specific profit XPath
         profit_text = f'{prefix} PROFIT/HOUR:'
-        profit_xpath = "//div[p[text()='Frost Box']]//p[last()]"
+        profit_xpath = "//p[contains(., 'COLD/hour')]"
 
         try:
             element = self.strip_non_numeric(self.monitor_element(profit_xpath))

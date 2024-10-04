@@ -867,6 +867,13 @@ class Claimer:
         button = self.move_and_click(xpath, 8, True, "click the 'Launch' button (probably not present)", self.step, "clickable")
         self.increase_step()
 
+        self.replace_platform()
+
+        # HereWalletBot Pop-up Handling
+        self.select_iframe(self.step)
+        self.increase_step()
+
+    def replace_platform(self):
         # Insert the platform replacement code here
         self.output(f"Step {self.step} - Attempting to replace platform in iframe URL if necessary...", 2)
         try:
@@ -895,9 +902,6 @@ class Claimer:
         # Give it a few seconds to reload
         time.sleep(5)
 
-        # HereWalletBot Pop-up Handling
-        self.select_iframe(self.step)
-        self.increase_step()
 
     def full_claim(self):
         # Must OVERRIDE this function in the child class
