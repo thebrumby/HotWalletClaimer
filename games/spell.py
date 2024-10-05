@@ -204,7 +204,7 @@ class SpellClaimer(Claimer):
 
         # Construct text based on before/after
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = "//div[@class='css-fm4un4']"
+        balance_xpath = "//div[@class='css-5su1rb']"
 
         try:
             element = self.strip_html_and_non_numeric(self.monitor_element(balance_xpath, 15, "get balance"))
@@ -233,7 +233,7 @@ class SpellClaimer(Claimer):
             self.output(f"Step {self.step} - Get the wait time...", 3)
     
             # XPath to find the div element with the specific class
-            xpath = "//div[@class='css-1dgzots']"
+            xpath = "//div[@class='css-t9vhi1']"
             wait_time_text = self.monitor_element(xpath, 10, "claim timer")
     
             # Check if wait_time_text is not empty
