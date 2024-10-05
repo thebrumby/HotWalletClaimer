@@ -47,6 +47,8 @@ def write_modify_requests_responses_script():
     script_content = """
 from mitmproxy import http, ctx
 import re
+import zlib
+import brotli
 
 def load(l):
     ctx.log.info("modify_requests_responses.py script has started.")
@@ -54,21 +56,31 @@ def load(l):
 # Modify outgoing requests (client to server)
 def request(flow: http.HTTPFlow) -> None:
     try:
-        # Check if the request URL contains 'tgWebAppPlatform=web'
-        if flow.request and "tgWebAppPlatform=web" in flow.request.url:
-            ctx.log.info(f"Modifying outgoing URL: {flow.request.url}")
-            
-            # Replace 'tgWebAppPlatform=web' with 'tgWebAppPlatform=ios'
-            flow.request.url = flow.request.url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=ios")
-            ctx.log.info(f"Modified outgoing URL to: {flow.request.url}")
-
+        if flow.request:
+            # Replace 'tgWebAppPlatform=web' with 'tgWebAppPlatform=ios' in all URLs
+            if "tgWebAppPlatform=web" in flow.request.url:
+                ctx.log.info(f"Modifying outgoing URL: {flow.request.url}")
+                flow.request.url = flow.request.url.replace("tgWebAppPlatform=web", "tgWebAppPlatform=ios")
+                ctx.log.info(f"Modified outgoing URL to: {flow.request.url}")
+                
+            # Detect platform via User-Agent and redirect 'telegram-web-app.js'
+            user_agent = flow.request.headers.get('User-Agent', '')
+            if 'telegram-web-app.js' in flow.request.pretty_url:
+                if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
+                    # Redirect for iOS
+                    flow.request.path = flow.request.path.replace('telegram-web-app.js', 'games/utils/ios-60-telegram-web-app.js')
+                    ctx.log.info("Redirected to iOS-specific JavaScript for iOS platform.")
+                elif 'Android' in user_agent:
+                    # Redirect for Android
+                    flow.request.path = flow.request.path.replace('telegram-web-app.js', 'games/utils/android-60-telegram-web-app.js')
+                    ctx.log.info("Redirected to Android-specific JavaScript for Android platform.")
     except Exception as e:
         ctx.log.error(f"Error modifying outgoing request for URL {flow.request.url}: {e}")
 
 # Modify incoming responses (server to client)
 def response(flow: http.HTTPFlow) -> None:
     try:
-        # Step 1: Remove specific headers
+        # Remove specific headers
         headers_to_remove = ['Content-Security-Policy', 'X-Frame-Options']
         removed_headers = []
         for header in headers_to_remove:
@@ -80,23 +92,43 @@ def response(flow: http.HTTPFlow) -> None:
             ctx.log.info(f"Removed headers from URL: {flow.request.url}")
             ctx.log.debug(f"Removed Headers: {removed_headers}")
 
-        # Step 2: Modify the iframe's tgWebAppPlatform in HTML content (incoming responses)
-        if "text/html" in flow.response.headers.get("content-type", ""):
-            ctx.log.info(f"Processing HTML for URL: {flow.request.url}")
+        # Modify content if necessary
+        content_type = flow.response.headers.get("content-type", "").lower()
+        content_encoding = flow.response.headers.get("content-encoding", "").lower()
 
-            # Decode the response content
-            decoded_content = flow.response.text  # Get the HTML content as text
+        # Check if content is of type HTML, JavaScript, or JSON
+        if any(ct in content_type for ct in ["text/html", "application/javascript", "application/json", "text/javascript"]):
+            # Decompress if content is compressed
+            if "gzip" in content_encoding:
+                decoded_content = zlib.decompress(flow.response.content, zlib.MAX_WBITS | 16).decode('utf-8', errors='replace')
+                compressed = 'gzip'
+            elif "br" in content_encoding:
+                decoded_content = brotli.decompress(flow.response.content).decode('utf-8', errors='replace')
+                compressed = 'br'
+            else:
+                decoded_content = flow.response.text
+                compressed = None
 
-            # Define a regex pattern to find the iframe with tgWebAppPlatform=web
-            iframe_pattern = r'(tgWebAppPlatform=web)'
+            # Replace 'tgWebAppPlatform=web' with 'tgWebAppPlatform=ios' in content
+            if "tgWebAppPlatform=web" in decoded_content:
+                ctx.log.info(f"'tgWebAppPlatform=web' found in response for URL: {flow.request.url}")
+                modified_content = decoded_content.replace("tgWebAppPlatform=web", "tgWebAppPlatform=ios")
 
-            # Replace 'tgWebAppPlatform=web' with 'tgWebAppPlatform=ios'
-            modified_content = re.sub(iframe_pattern, 'tgWebAppPlatform=ios', decoded_content)
+                # Re-encode and compress if necessary
+                if compressed == 'gzip':
+                    flow.response.content = zlib.compress(modified_content.encode('utf-8'))
+                    ctx.log.info("Content recompressed with gzip.")
+                elif compressed == 'br':
+                    flow.response.content = brotli.compress(modified_content.encode('utf-8'))
+                    ctx.log.info("Content recompressed with Brotli.")
+                else:
+                    flow.response.text = modified_content
 
-            # If a change was made, update the response content
-            if modified_content != decoded_content:
-                flow.response.text = modified_content
-                ctx.log.info(f"Modified iframe tgWebAppPlatform for URL: {flow.request.url}")
+                ctx.log.info(f"Modified content in response for URL: {flow.request.url}")
+
+            # Update content length if necessary
+            if 'content-length' in flow.response.headers:
+                flow.response.headers['content-length'] = str(len(flow.response.content))
 
     except Exception as e:
         ctx.log.error(f"Error processing response for URL {flow.request.url}: {e}")
