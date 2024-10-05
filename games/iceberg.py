@@ -34,7 +34,7 @@ class IcebergClaimer(Claimer):
         self.script = "games/iceberg.py"
         self.prefix = "Iceberg:"
         self.url = "https://web.telegram.org/k/#@IcebergAppBot"
-        self.forceLocalProxy = True
+        self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//span[text()='Play']"
@@ -73,7 +73,7 @@ class IcebergClaimer(Claimer):
 
         # Are we farming? if not, start!
         xpath = "//button[div[text()='Start farming']]"
-        self.move_and_click(xpath, 8, True, "initial start farming (may not be present)", self.step, "clickable")
+        self.brute_click(xpath, 30, "initial start farming (may not be present)")
 
         pre_balance = self.get_balance(False)
         self.increase_step()
@@ -95,12 +95,12 @@ class IcebergClaimer(Claimer):
     
         # We got this far, so let's try to claim!
         xpath = "//button[contains(text(), 'Collect')]"
-        success = self.move_and_click(xpath, 20, True, "look for the claim button.", self.step, "visible")
+        success = self.brute_click(xpath, 30, "collect points")
         self.increase_step()
 
         # And start farming again.
         xpath = "//button[div[text()='Start farming']]"
-        self.move_and_click(xpath, 30, True, "start farming after claim (may not be present)", self.step, "clickable")
+        self.brute_click(xpath, 30, "post-claim start farming (may not be present)")
         self.increase_step()
 
         # And check the post-claim balance
