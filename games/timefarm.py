@@ -88,7 +88,7 @@ class TimeFarmClaimer(Claimer):
         start_present = self.move_and_click(xpath, 10, True, "click the 'Start' button (may not be present)", self.step, "clickable")
         self.increase_step()
 
-        xpath = "//div[@class='farming-button-block'][.//span[text()='Claim']]"
+        xpath = "//div[@class='farming-button-block'][.//span[contains(text(), 'Claim')]]"
         success = self.move_and_click(xpath, 20, True, "look for the claim button (may not be present)", self.step, "clickable")
         self.increase_step()
         if success:
