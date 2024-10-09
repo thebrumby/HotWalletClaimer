@@ -161,55 +161,6 @@ class PitchTalkClaimer(Claimer):
         self.output(f"STATUS: We couldn't confirm the claim. Let's sleep for 60 minutes.", 1)
         return 60
         
-    def click_random_card(self):
-        # Define the base XPath for card fronts
-        card_front_xpath = "//div[@class='c-home__card-front']"
-
-        # Use WebDriverWait to wait until card elements are present
-        wait = WebDriverWait(self.driver, 15)
-
-        try:
-            # Wait until the elements matching the XPath are located
-            card_elements = wait.until(EC.presence_of_all_elements_located((By.XPATH, card_front_xpath)))
-
-            # Check if we have card elements
-            if card_elements:
-                # Count the number of card fronts (total number of elements)
-                total_cards = len(card_elements)
-
-                # Randomly choose a card (0-based index for Selenium)
-                chosen_card_index = random.randint(0, total_cards - 1)
-
-                # Log the selected card and attempt to click on it
-                self.output(f"Step {self.step} - Selected card {chosen_card_index + 1} of {total_cards}.", 2)
-                chosen_card_xpath = f"({card_front_xpath})[{chosen_card_index + 1}]"
-                # Wait until the chosen card element is clickable
-                chosen_card = self.move_and_click(chosen_card_xpath, 10, False, f"find card {chosen_card_index + 1}", self.step, "clickable")
-                try:
-                    self.move_and_click(chosen_card_xpath, 10, True, f"click card {chosen_card_index + 1}", self.step, "clickable")
-                except Exception as e:
-                    self.output(f"Step {self.step} - First click attempt failed: {str(e)}. Trying with JavaScript.", 2)
-
-                    # Fallback to JavaScript click if normal click fails
-                    self.driver.execute_script("arguments[0].click();", chosen_card)
-
-                return chosen_card_index + 1  # Returning 1-based index for consistency in logging
-
-            else:
-                self.output(f"Step {self.step} - No card fronts found.", 2)
-                return None
-
-        except TimeoutException:
-            # Handle timeout if no card fronts are found within the time limit
-            self.output(f"Step {self.step} - No card fronts found within the timeout period.", 2)
-            return None
-
-        except Exception as e:
-            # Catch any other exceptions and log the error
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", 2)
-            return None
-
-
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
