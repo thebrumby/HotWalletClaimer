@@ -1,4 +1,4 @@
-# Telegram Claim Assistant - Mine HOT & 18 More!
+# Your automated assistant for Telegram mini-app games!
 
 Supporting 20 crypto-based games and growing monthly. Automate claims and stay informed about their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
 
