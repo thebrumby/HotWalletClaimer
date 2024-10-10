@@ -25,6 +25,20 @@ from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 import requests
 
+    try:
+        from webdriver_manager.chrome import ChromeDriverManager
+    except ImportError:
+        print("webdriver-manager is not installed. Attempting to install...")
+        import subprocess
+        import sys
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "webdriver-manager"])
+            print("webdriver-manager installed successfully.")
+            from webdriver_manager.chrome import ChromeDriverManager
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to install webdriver-manager: {e}")
+            raise
+
 class Claimer:
 
     def __init__(self):
@@ -411,69 +425,74 @@ class Claimer:
                 json.dump(cookies, file)
 
     def setup_driver(self):
-        chrome_options = Options()
+        chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument(f"user-data-dir={self.session_path}")
-        chrome_options.add_argument("--headless")  # Ensure headless is enabled
-        chrome_options.add_argument("--disable-gpu")
+
+        # Headless mode
+        if self.settings.get("headless", True):
+            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--disable-gpu")
+
+        # Additional options
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
 
-        # Attempt to load user agent from cookies
-        try:
-            cookies_path = f"{self.session_path}/cookies.json"
-            with open(cookies_path, 'r') as file:
-                cookies = json.load(file)
-                user_agent_cookie = next((cookie for cookie in cookies if cookie["name"] == "user_agent"), None)
-                if user_agent_cookie and user_agent_cookie["value"]:
-                    user_agent = user_agent_cookie["value"]
-                    self.output(f"Using saved user agent: {user_agent}", 2)
-                else:
-                    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
-                    self.output("No user agent found, using default.", 2)
-        except FileNotFoundError:
-            user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
-            self.output("Cookies file not found, using default user agent.", 2)
-
-        # Adjust the platform based on the user agent
-        if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
-            self.default_platform = "ios"
-            self.output("Detected iOS platform from user agent. tgWebAppPlatform will be changed to 'ios' later.", 2)
-        elif 'Android' in user_agent:
-            self.default_platform = "android"
-            self.output("Detected Android platform from user agent. Set tgWebAppPlatform to 'android'.", 2)
-        else:
-            self.default_platform = "web"
-            self.output("Default platform set to 'web'.", 3)
-
+        # Handle user agent
+        user_agent = self.get_user_agent()
         chrome_options.add_argument(f"user-agent={user_agent}")
-        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
 
-        if not self.settings.get("enableCache", True) and int(self.step) >= 100:
-            chrome_options.add_argument("--disable-application-cache")
+        # Set default platform
+        self.set_default_platform(user_agent)
 
-        if self.settings["useProxy"] or self.forceLocalProxy:
-            proxy_server = self.settings["proxyAddress"]
-            chrome_options.add_argument(f"--proxy-server={proxy_server}")
+        # Proxy settings
+        if self.settings.get("useProxy") or getattr(self, 'forceLocalProxy', False):
+            proxy_server = self.settings.get("proxyAddress")
+            if proxy_server:
+                chrome_options.add_argument(f"--proxy-server={proxy_server}")
+            else:
+                self.output("Proxy is enabled but no proxy address is specified.", 1)
 
-        chrome_options.add_argument("--ignore-certificate-errors")
-        chrome_options.add_argument("--allow-running-insecure-content")
-        chrome_options.add_argument("--test-type")
-
-        chromedriver_path = shutil.which("chromedriver")
-        if chromedriver_path is None:
-            self.output("ChromeDriver not found in PATH. Please ensure it is installed.", 1)
-            exit(1)
-
+        # Initialize the driver using webdriver-manager
         try:
-            service = Service(chromedriver_path)
+            service = Service(ChromeDriverManager().install())
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
             return self.driver
         except Exception as e:
-            self.output(f"Initial ChromeDriver setup may have failed: {e}", 1)
-            self.output("Please ensure you have the correct ChromeDriver version for your system.", 1)
-            exit(1)
+            self.output(f"Failed to initialize ChromeDriver: {e}", 1)
+            raise
+
+    def get_user_agent(self):
+        default_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " \
+                             "AppleWebKit/537.36 (KHTML, like Gecko) " \
+                             "Chrome/89.0.4389.82 Safari/537.36"
+        cookies_path = f"{self.session_path}/cookies.json"
+        try:
+            with open(cookies_path, 'r') as file:
+                cookies = json.load(file)
+                user_agent_cookie = next(
+                    (cookie for cookie in cookies if cookie.get("name") == "user_agent"), None)
+                if user_agent_cookie and user_agent_cookie.get("value"):
+                    user_agent = user_agent_cookie["value"]
+                    self.output(f"Using saved user agent: {user_agent}", 2)
+                    return user_agent
+        except FileNotFoundError:
+            self.output("Cookies file not found, using default user agent.", 2)
+        except json.JSONDecodeError:
+            self.output("Cookies file is not valid JSON, using default user agent.", 1)
+
+        self.output("No user agent found, using default.", 2)
+        return default_user_agent
+
+    def set_default_platform(self, user_agent):
+        if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
+            self.default_platform = "ios"
+            self.output("Detected iOS platform from user agent.", 2)
+        elif 'Android' in user_agent:
+            self.default_platform = "android"
+            self.output("Detected Android platform from user agent.", 2)
+        else:
+            self.default_platform = "web"
+            self.output("Default platform set to 'web'.", 3)
 
     def run_http_proxy(self):
         proxy_lock_file = "./start_proxy.txt"
