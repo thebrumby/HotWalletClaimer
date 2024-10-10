@@ -41,7 +41,7 @@ COPY docker/* /usr/src/app/
 # Create and activate a virtual environment within the app directory, then install Python packages:
 RUN python3 -m venv /usr/src/app/venv && \
     /usr/src/app/venv/bin/pip install --upgrade pip && \
-    /usr/src/app/venv/bin/pip install wheel selenium Pillow pyzbar qrcode-terminal mitmproxy python-telegram-bot requests beautifulsoup4 brotli
+    /usr/src/app/venv/bin/pip install wheel selenium Pillow pyzbar qrcode-terminal mitmproxy python-telegram-bot requests beautifulsoup4 brotli webdriver-manager
 
 # Copy the launch script and make it executable
 RUN find /usr/src/app -type f -name "*.sh" -exec chmod +x {} \;
