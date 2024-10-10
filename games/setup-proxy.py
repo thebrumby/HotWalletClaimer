@@ -181,7 +181,7 @@ def main():
     if script_content is None:
         return
 
-    print("For testing purposes, you can obtain a free account with limited data at https://www.webshare.io/features/free-proxy")
+    print("You can obtain a free account with limited data at https://www.webshare.io/?referral_code=yat0oxfcqbpd")
 
     upstream_proxy = check_upstream_proxy(script_content)
     if upstream_proxy:
