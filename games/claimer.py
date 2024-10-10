@@ -613,7 +613,9 @@ class Claimer:
 
             xpath = "//canvas[@class='qr-canvas']"
             self.driver.get(self.url)
-            wait = WebDriverWait(self.driver, 8)
+            wait = WebDriverWait(self.driver, 20)
+            QR_code = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+            wait = WebDriverWait(self.driver, 3)
             self.output(f"Step {self.step} - Waiting for the first QR code - may take up to 30 seconds.", 1)
             self.increase_step()
 
