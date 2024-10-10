@@ -25,19 +25,19 @@ from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 import requests
 
+try:
+    from webdriver_manager.chrome import ChromeDriverManager
+except ImportError:
+    print("webdriver-manager is not installed. Attempting to install...")
+    import subprocess
+    import sys
     try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "webdriver-manager"])
+        print("webdriver-manager installed successfully.")
         from webdriver_manager.chrome import ChromeDriverManager
-    except ImportError:
-        print("webdriver-manager is not installed. Attempting to install...")
-        import subprocess
-        import sys
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "webdriver-manager"])
-            print("webdriver-manager installed successfully.")
-            from webdriver_manager.chrome import ChromeDriverManager
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to install webdriver-manager: {e}")
-            raise
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to install webdriver-manager: {e}")
+        raise
 
 class Claimer:
 
