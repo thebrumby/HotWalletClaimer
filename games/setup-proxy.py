@@ -42,11 +42,19 @@ def prompt_user_for_proxy_details():
 
     return host, port, username, password
 
-def test_proxy_connection(host, port, username, password):
-    proxy = f"http://{username}:{password}@{host}:{port}"
+def prompt_insecure_credential_validation():
+    allow_insecure = input("Allow insecure VPN credential validation (y/N): ").strip().lower()
+    if allow_insecure == 'y':
+        confirm = input("This will allow your credentials to be viewed by others and should only be done as a last resort - continue (y/N): ").strip().lower()
+        return confirm == 'y'
+    return False
+
+def test_proxy_connection(host, port, username, password, use_https):
+    scheme = "https" if use_https else "http"
+    proxy = f"{scheme}://{username}:{password}@{host}:{port}"
     test_url = 'https://web.telegram.org'
     expected_word_count = 3
-    print("Testing the proxy credentials...")
+    print(f"Testing the proxy credentials with {scheme.upper()}...")
 
     # Clear proxy-related environment variables
     env = os.environ.copy()
@@ -81,9 +89,10 @@ def test_proxy_connection(host, port, username, password):
         print(f"Proxy connection failed: {e}")
         return False
 
-def update_start_script(host, port, username, password):
+def update_start_script(host, port, username, password, use_https):
+    scheme = "https" if use_https else "http"
     start_script_content = f"""#!/bin/bash
-./venv/bin/mitmdump --mode upstream:https://{host}:{port} --upstream-auth {username}:{password} -s {os.path.join(PROXY_DIR, 'modify_requests_responses.py')} > /dev/null 2>&1
+./venv/bin/mitmdump --mode upstream:{scheme}://{host}:{port} --upstream-auth {username}:{password} -s {os.path.join(PROXY_DIR, 'modify_requests_responses.py')} > /dev/null 2>&1
 """
     with open(START_SCRIPT_PATH, 'w') as file:
         file.write(start_script_content)
@@ -133,7 +142,7 @@ def main():
         if choice == 'y':
             lock_file()
             stop_and_delete_pm2_process()
-            update_start_script("", "", "", "")  # Remove upstream configuration
+            update_start_script("", "", "", "", True)  # Remove upstream configuration
             subprocess.run(['pm2', 'save'], check=True)  # Save the PM2 state after removing the configuration
             unlock_file()
             print("Upstream proxy removed.")
@@ -143,10 +152,11 @@ def main():
         proxy_details = prompt_user_for_proxy_details()
         if proxy_details:
             host, port, username, password = proxy_details
-            if test_proxy_connection(host, port, username, password):
+            use_https = not prompt_insecure_credential_validation()
+            if test_proxy_connection(host, port, username, password, use_https):
                 lock_file()
                 stop_and_delete_pm2_process()
-                update_start_script(host, port, username, password)
+                update_start_script(host, port, username, password, use_https)
                 restart_proxy()
                 unlock_file()
                 break
