@@ -17,7 +17,7 @@ rm -rf venv
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip wheel
-pip install --upgrade selenium Pillow pyzbar qrcode-terminal mitmproxy python-telegram-bot requests beautifulsoup4 brotli webdriver-manager
+pip install --upgrade selenium Pillow pyzbar qrcode-terminal mitmproxy python-telegram-bot requests beautifulsoup4 brotli httpx
 deactivate
 
 # Installing Node.js and npm
