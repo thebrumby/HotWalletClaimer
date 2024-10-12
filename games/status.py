@@ -32,7 +32,7 @@ def extract_detail(line, keyword):
 
 def fetch_and_process_logs(process_name):
     sanitized_process_name = process_name.replace(':', '-').replace('_', '-')
-    log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
+    log_file = os.path.expanduser(f"~/.pm2/logs/{sanitized_process_name}-out.log")
 
     if not os.path.exists(log_file):
         return process_name, "None", "None", "None", "Log file missing"
@@ -160,7 +160,7 @@ def get_logs(process_id, process_list, lines=30):
 def get_logs_by_process_name(process_name, lines=30):
     process_name = process_name.strip().replace('_', '-')
     sanitized_process_name = process_name.replace(':', '-')
-    log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
+    log_file = os.path.expanduser(f"~/.pm2/logs/{sanitized_process_name}-out.log")
     logs = run_command(f"tail -n {lines} {log_file}")
     return logs
 
@@ -184,7 +184,7 @@ def get_status_logs_by_process_name(process_name, lines=30):
     sanitized_process_name = process_name.replace(':', '-')
     
     # Construct the log file path
-    log_file = f"/root/.pm2/logs/{sanitized_process_name}-out.log"
+    log_file = os.path.expanduser(f"~/.pm2/logs/{sanitized_process_name}-out.log")
     
     # Check if the log file exists
     if not os.path.exists(log_file):
