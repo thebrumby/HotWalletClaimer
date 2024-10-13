@@ -23,8 +23,9 @@ run_script() {
 # Function to list and choose a script
 list_and_choose_script() {
     echo "Listing available scripts in the current directory and ./games folder:"
-    # List all Python scripts in the current directory and ./games directory
-    IFS=$'\n' read -d '' -r -a scripts < <(find . ./games -maxdepth 1 -name "*.py" -print && printf '\0')
+    
+    # Find all Python scripts, sort them alphabetically, and read into an array
+    IFS=$'\n' read -d '' -r -a scripts < <(find . ./games -maxdepth 1 -name "*.py" | sort && printf '\0')
     
     if [ ${#scripts[@]} -eq 0 ]; then
         echo "No Python scripts found in the current directory or ./games directory."
@@ -33,12 +34,26 @@ list_and_choose_script() {
 
     # Enumerate all found scripts
     for i in "${!scripts[@]}"; do
-        echo "$((i+1))) ${scripts[$i]}"
+        # Remove leading './' for cleaner display
+        display_name="${scripts[$i]#./}"
+        echo "$((i+1))) $display_name"
     done
 
     # Prompt user to select a script
     echo "Please select a script by number:"
     read -r choice
+    
+    # Validate the choice
+    if ! [[ "$choice" =~ ^[0-9]+$ ]]; then
+        echo "Invalid input. Please enter a number."
+        exit 1
+    fi
+    
+    if (( choice < 1 || choice > ${#scripts[@]} )); then
+        echo "Choice out of range. Exiting..."
+        exit 1
+    fi
+    
     selected_script="${scripts[$((choice-1))]}"
     
     if [ -n "$selected_script" ]; then
@@ -66,7 +81,7 @@ else
         script_path="./games/$script_name"
     elif [ -f "$script_name" ]; then
         script_path="$script_name"
-    else:
+    else
         echo "Specified script not found in the ./games directory or current directory."
         list_and_choose_script
         exit 1
