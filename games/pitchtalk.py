@@ -106,10 +106,6 @@ class PitchTalkClaimer(Claimer):
         xpath = "//button[contains(text(), 'Claim')]"
         self.move_and_click(xpath, 8, True, "attempt to make the main claim", self.step, "clickable")
         
-        # Get the original balance before the claim
-        original_balance = self.get_balance(False)
-        self.increase_step()
-        
         # Are we farming? if not, start!
         xpath = "//button[text()='Start Farming']"
         self.move_and_click(xpath, 8, True, "start farming after claim", self.step, "clickable")
