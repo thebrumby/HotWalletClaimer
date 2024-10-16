@@ -75,7 +75,7 @@ class YupalkaClaimer(Claimer):
         self.increase_step()
 
         # Get the original balance before the claim
-        original_balance = self.get_balance(False)
+        original_balance = self.get_balance(True)
         self.increase_step()
 
         # Check if there is a wait time
