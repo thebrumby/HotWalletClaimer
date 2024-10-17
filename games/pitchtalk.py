@@ -82,7 +82,7 @@ class PitchTalkClaimer(Claimer):
         self.move_and_click(xpath, 8, True, "check for the daily reward (may not be present)", self.step, "clickable")
         
         # Get the original balance before the claim
-        original_balance = self.get_balance(False)
+        original_balance = self.get_balance(True)
         self.increase_step()
         
         # Are we farming? if not, start!
