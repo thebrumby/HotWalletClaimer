@@ -49,7 +49,7 @@ install_chromium_x86_64() {
 }
 
 install_google_chrome() {
-    wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_129.0.6668.89-1_amd64.deb
+    wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_130.0.6723.58-1_amd64.deb
     sudo dpkg -i /tmp/chrome.deb
     sudo apt-get install -f -y
     rm /tmp/chrome.deb
@@ -57,7 +57,7 @@ install_google_chrome() {
 
 install_chromedriver() {
     sudo apt install -y unzip || true
-    wget https://storage.googleapis.com/chrome-for-testing-public/129.0.6668.89/linux64/chromedriver-linux64.zip
+    wget https://storage.googleapis.com/chrome-for-testing-public/130.0.6723.58/linux64/chromedriver-linux64.zip
     unzip chromedriver-linux64.zip
     rm chromedriver-linux64.zip
     sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
