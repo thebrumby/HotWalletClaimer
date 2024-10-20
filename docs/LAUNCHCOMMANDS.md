@@ -20,6 +20,7 @@
 | `./launch.sh pixeltap`               | Launch PixelTap on Telegram: [@pixelversexyzbot](https://t.me/pixelversexyzbot?start=7254165458)    | <span title="Claiming well">✅</span>                                                    |
 | `./launch.sh pocketfi`               | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot)                             | <span title="Claiming well">✅</span>                                                    |
 | `./launch.sh seed`                   | Launch Seed App - Mine Seed: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot)           | <span title="Claiming well">✅</span>                                                    |
+| `./launch.sh sidefans`              | Launch SideFans on Telegram: [@sidekick_fans_bot](https://web.telegram.org/k/#@sidekick_fans_bot) | <span title="Claiming well">✅</span> 
 | `./launch.sh simpletap`              | Launch SimpleTap on Telegram: [@Simple_Tap_Bot](https://t.me/Simple_Tap_Bot/app?startapp=1719999344321) | <span title="Claiming well">✅</span>                                                   |
 | `./launch.sh spell`                  | Launch Spell Wallet on Telegram: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot) | <span title="Claiming well">✅</span>                                                    |
 | `./launch.sh tabizoo`                | Launch TabiZoo Wallet on Telegram: [@tabizoobot](https://web.telegram.org/k/#@tabizoobot)           | <span title="Claiming well">✅</span>                                                    |
@@ -28,4 +29,4 @@
 | `./launch.sh timefarm-autostake`     | **Auto-stake: Automatically locks your tokens for 3 days to gain 3% interest**                      | <span title="Claiming well">✅</span>                                                    |
 | `./launch.sh vertus`                 | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot)                                | <span title="Claiming well">✅</span>                                                    |
 | `./launch.sh wave`                   | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774)    | <span title="Claiming well">✅</span>                                                    |
-| `./launch.sh yapalka`             | Launch Yapalka: [@YupLand_bot](https://web.telegram.org/k/#@YupLand_bot)                            | <span title="Claiming well">✅</span>   |                         
+| `./launch.sh yupalka`             | Launch Yapalka: [@YupLand_bot](https://web.telegram.org/k/#@YupLand_bot)                            | <span title="Claiming well">✅</span>   |                         
