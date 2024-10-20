@@ -29,4 +29,4 @@
 | `./launch.sh timefarm-autostake`     | **Auto-stake: Automatically locks your tokens for 3 days to gain 3% interest**                      | <span title="Claiming well">✅</span>                                                    |
 | `./launch.sh vertus`                 | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot)                                | <span title="Claiming well">✅</span>                                                    |
 | `./launch.sh wave`                   | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774)    | <span title="Claiming well">✅</span>                                                    |
-| `./launch.sh yupalka`             | Launch Yapalka: [@YupLand_bot](https://web.telegram.org/k/#@YupLand_bot)                            | <span title="Claiming well">✅</span>   |                         
+| `./launch.sh yupalka`             | Launch Yupalka: [@YupLand_bot](https://web.telegram.org/k/#@YupLand_bot)                            | <span title="Claiming well">✅</span>   |                         
