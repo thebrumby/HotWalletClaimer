@@ -164,7 +164,7 @@ class CryptoRankClaimer(Claimer):
         try:
             element = self.monitor_element(balance_xpath, 15, "get balance")
             if element:
-                balance_part = element
+                balance_part = float(self.strip_html_and_non_numeric(element))
                 self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
                 return balance_part
 
