@@ -1,6 +1,6 @@
 # Your automated assistant for Telegram mini-app games!
 
-Supporting 20 crypto-based games and growing monthly. Automate claims and stay informed about their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
+Supporting 22 crypto-based games and growing monthly. Automate claims and track their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
 
 ---
 
@@ -13,9 +13,9 @@ You can also support us at no cost by subscribing to and watching our [YouTube c
 
 ## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
 
+- **Level Up with SideFans!**: New game addition—SideFans by Sidekick. [read more](https://www.patreon.com/posts/level-up-with-114438622?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **Stepan Token Giveaway and PitchTalk Added!**: New game addition and a token giveaway on Tron! [read more](https://www.patreon.com/posts/stepan-token-and-113672286?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 - **New Fixes, and a Fortune-Telling Game!**: Iceberg, Spell, Cryptorank updates and a new game! [read more](https://www.patreon.com/posts/telegram-claim-113442123?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Blum, Tabizoo, and Lumcity fixes, but still 'Not A Pixel'**: Pull the latest code to fix the issues. [read more](https://www.patreon.com/posts/blum-tabizoo-and-113170159?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
