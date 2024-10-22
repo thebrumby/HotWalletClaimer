@@ -118,6 +118,6 @@ After that, restart the built-in proxy:
 ```
 
 ### Final thought:
-If you're having trouble setting up the dependencies and requirements to run this script, consider using Docker Desktop (on Windows or macOS) or Docker CLI (on a VPS). The Docker setup includes everything pre-built and tested, making it much easier to get up and running.
+If you're having trouble setting up the dependencies and requirements to run this script, consider using Docker Desktop (on Windows or macOS) or Docker CLI (on a VPS). The [Docker setup](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/DOCKER.md) includes everything pre-built and tested, making it much easier to get up and running.
 
 If the troubleshooting steps here don’t resolve your issue and you can’t find the answer in previously closed issues, feel free to open a support ticket. However, please note that vague posts like "doesn't work" without any detailed information may be closed, locked, or deleted.
