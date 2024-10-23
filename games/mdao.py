@@ -106,12 +106,12 @@ class MDAOClaimer(Claimer):
             self.output(f"STATUS: Wait time is {remaining_wait_time} minutes and off-set of {self.random_offset}.", 1)
             return remaining_wait_time + self.random_offset
 
-        xpath = "//div[text()='CLAIM']/parent::div"
-        button = self.move_and_click(xpath, 30, False, "Click the claim button", self.step, "clickable")
-
-        # If the button is found, attempt to click it using JavaScript
-        if button:
-            self.driver.execute_script("arguments[0].click();", button)
+        xpath = "//div[text()='CLAIM']/ancestor::div[@bgcolor]"
+        button = self.move_and_click(xpath, 20, True, "move to the claim button", self.step, "clickable")
+        self.increase_step()
+        xpath = "(//div[normalize-space()='CLAIM WITHOUT BONUS'])[last()]"
+        button = self.move_and_click(xpath, 20, True, "confirm claim without watching video", self.step, "clickable")
+        self.increase_step()
 
         self.get_balance(True)
         self.get_profit_hour(True)
@@ -135,7 +135,7 @@ class MDAOClaimer(Claimer):
 
         try:
             self.move_and_click(balance_xpath, 30, False, "look for ZP balance", self.step, "visible")
-            balance_part = self.strip_html(self.monitor_element(balance_xpath,15,"ZP points"))
+            balance_part = self.strip_html_and_non_numeric(self.monitor_element(balance_xpath,15,"ZP points"))
             self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
