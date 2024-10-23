@@ -28,7 +28,7 @@
 5. **Set Up Additional Interaction with Your Telegram Bot**:
    - Run `./launch.sh tg-bot` to add an additional level of interaction between your game sessions and the Telegram bot.
    - This script will set up a PM2 process to monitor for requests from you in Telegram.
-   - Once set up, you can use commands like `/start`, `/help`, `/status`, `/logs`, and `/exit` to pull additional information for each game session by choosing the links from the list of options.
+   - Once set up, you can use commands like `/start`, `/stop`, `/restart`, `/help`, `/status`, `/logs`, and `/exit` to pull additional information for each game session by choosing the links from the list of options.
 
 By following these steps, you'll have a fully configured relay from your script to your Telegram bot, allowing you to receive updates and interact with your game sessions via Telegram.
 
