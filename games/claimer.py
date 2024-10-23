@@ -330,11 +330,14 @@ class Claimer:
     def get_telegram_bot_chat_id(self):
         url = f"https://api.telegram.org/bot{self.settings['telegramBotToken']}/getUpdates"
         response = requests.get(url).json()
-        # print(response)  # Add this line to print the entire response (Commented out for cleaner output)
         if 'result' in response and len(response['result']) > 0:
-            return response['result'][0]['message']['chat']['id']
+            # Optionally, process all messages to find the correct chat ID
+            for update in response['result']:
+                if 'message' in update:
+                    return update['message']['chat']['id']
+            raise ValueError("No messages with chat ID found in updates.")
         else:
-            raise ValueError("No messages found in response")
+            raise ValueError("No messages found in response. Ensure the bot has received at least one message.")
 
     def send_message(self, string):
         try:
