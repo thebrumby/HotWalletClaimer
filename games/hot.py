@@ -102,7 +102,7 @@ class HotClaimer(Claimer):
         if near:
             try:
                 last_value_float = float(near)
-                if last_value_float > 0.2:
+                if last_value_float > 0.25:
                     low_near = False
                     self.output(f"Step {self.step} - Cleared the low 'Near' balance flag as current balance is: {last_value_float}", 3)
                 else:
