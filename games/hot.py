@@ -39,7 +39,7 @@ class HotClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.step = "01"
         self.imported_seedphrase = None
-        self.start_app_xpath = "//a[@href='https://t.me/herewalletbot/app'] | //div[@class='new-message-bot-commands-view'][contains(text(),'Open Wallet')]"
+        self.start_app_xpath = "//div[@class='new-message-bot-commands-view'][contains(text(),'Open Wallet')]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
