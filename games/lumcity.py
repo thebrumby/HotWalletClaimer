@@ -141,7 +141,7 @@ class LumCityClaimer(Claimer):
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
 
-    def attempt_upgrade(self):
+    def attempt_upgrade(self, golt_balance):
         pass
 
     def handle_claim_process(self):
