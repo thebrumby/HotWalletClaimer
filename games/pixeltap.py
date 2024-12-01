@@ -38,7 +38,7 @@ class PixelTapClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-        self.start_app_xpath = "//div[contains(@class, 'new-message-wrapper')]//div[contains(text(), 'Fight for supply')]"
+        self.start_app_xpath = "//div[contains(@class, 'new-message-wrapper')]//div[contains(text(), 'Play')]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
