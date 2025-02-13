@@ -1300,7 +1300,7 @@ class Claimer:
         self.output(f"Step {self.step} - Attempting to open a link for the app: {start_app_xpath}...", 2)
     
         try:
-            # Wait for elements to be present
+            # Wait for elements to be present & visible
             start_app_buttons = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_all_elements_located((By.XPATH, start_app_xpath))
             )
@@ -1308,32 +1308,24 @@ class Claimer:
     
             if not start_app_buttons:
                 self.output(f"Step {self.step} - No buttons found with XPath: {start_app_xpath}\n", 1)
-                if self.settings['debugIsOn']:
-                    self.debug_information("find working link - no buttons found", "error")
                 return False
     
-            # Iterate through the buttons in reverse order
             for button in reversed(start_app_buttons):
                 try:
-                    self.move_and_click(button, 10, False, "check for visibility for the launch button", self.step, "clickable")
                     # Ensure the element is visible in the viewport
                     self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
-                    time.sleep(0.5)  # Allow time for rendering
-                    
-                    # Check if the button is interactable
-                    if not button.is_displayed():
-                        self.output(f"Step {self.step} - Button found but not visible. Skipping...", 2)
-                        continue
+                    time.sleep(0.5)
     
-                    # Ensure element is clickable
+                    # Check if the element is visible
+                    if not button.is_displayed():
+                        self.output(f"Step {self.step} - Button found but not visible. Trying to make it visible...", 2)
+                        self.driver.execute_script("arguments[0].style.display = 'block'; arguments[0].style.opacity = 1;", button)
+                        time.sleep(0.5)
+    
+                    # Ensure it's clickable
                     WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, start_app_xpath)))
     
-                    # Debugging: Print element size and location
-                    loc = button.location
-                    size = button.size
-                    self.output(f"Debug: Button Location - {loc}, Size - {size}", 2)
-    
-                    # Click using JavaScript (avoids Selenium's click issue)
+                    # Click using JavaScript
                     self.driver.execute_script("arguments[0].click();", button)
                     clicked = True
                     break
@@ -1342,29 +1334,19 @@ class Claimer:
                     self.output(f"Step {self.step} - Button click intercepted or stale, trying next button.", 2)
                     continue
     
-            # Check if a button was successfully clicked
             if not clicked:
                 self.output(f"Step {self.step} - None of the 'Open Wallet' buttons were clickable.\n", 1)
-                if self.settings['debugIsOn']:
-                    self.debug_information("no working game link", "error")
                 return False
             else:
-                self.output(f"Step {self.step} - Successfully opened a link for the app..\n", 3)
-                if self.settings['debugIsOn']:
-                    self.debug_information("successfully opened a game start link", "success")
+                self.output(f"Step {self.step} - Successfully opened a link for the app.\n", 3)
                 return True
     
         except TimeoutException:
             self.output(f"Step {self.step} - Failed to find the 'Open Wallet' button within the expected timeframe.\n", 1)
-            if self.settings['debugIsOn']:
-                self.debug_information("timeout while trying to open the game", "error")
             return False
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred while trying to open the app: {e}\n", 1)
-            if self.settings['debugIsOn']:
-                self.debug_information("unspecified error while trying to launch the game", "error")
             return False
-
 
     def validate_seed_phrase(self):
         # Let's take the user inputed seed phrase and carry out basic validation
