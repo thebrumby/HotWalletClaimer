@@ -11,11 +11,13 @@ You can also support us at no cost by subscribing to and watching our [YouTube c
 0x070411DD6D9Ef8331F57349dD1952D3921456AA6
 ```
 
-## Want to learn more about the Telegram Claim Bot? Our blog posts are FREE to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!
+## Want to learn more about the Telegram Claim Bot?  
+Our blog posts are **FREE** to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!  
 
-- **Level Up with SideFans!**: New game addition—SideFans by Sidekick. [read more](https://www.patreon.com/posts/level-up-with-114438622?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **Stepan Token Giveaway and PitchTalk Added!**: New game addition and a token giveaway on Tron! [read more](https://www.patreon.com/posts/stepan-token-and-113672286?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
-- **New Fixes, and a Fortune-Telling Game!**: Iceberg, Spell, Cryptorank updates and a new game! [read more](https://www.patreon.com/posts/telegram-claim-113442123?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)
+- **🔥 Telegram changed their UI, breaking all the games!**:  The fix for **HOT** is live, and more updates are coming. [read more](https://www.patreon.com/posts/hey-telegram-bot-122229409?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)  
+- **🎮 Level Up with SideFans!**: New game addition—SideFans by Sidekick. [read more](https://www.patreon.com/posts/level-up-with-114438622?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)  
+- **🎁 Stepan Token Giveaway and PitchTalk Added!**: New game addition and a token giveaway on Tron! [read more](https://www.patreon.com/posts/stepan-token-and-113672286?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)  
+
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
