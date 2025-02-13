@@ -39,7 +39,8 @@ class HotClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.step = "01"
         self.imported_seedphrase = None
-        self.start_app_xpath = "//span[@class='reply-markup-button-text' and starts-with(normalize-space(.), 'Create HOT Wallet')]"
+        self.start_app_xpath = "//a[@href='https://t.me/herewalletbot/app'] | //div[@class='new-message-bot-commands-view'][contains(text(),'Open Wallet')]"
+        self.start_app_menu_item = "//div[contains(@class, 'dialog-title')]//span[contains(text(), 'HOT Wallet')]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
@@ -96,13 +97,13 @@ class HotClaimer(Claimer):
         self.move_and_click(xpath, 10, True, "click the pop-up banner", self.step, "clickable")
         self.increase_step()
 
-        xpath = "(//div[div/img[contains(@src, '/ft/near.png')]])//div[last()]/p[last()]"
+        xpath = "//p[contains(text(), 'NEAR')]/following::p[@class='sc-la-DxNn szrYb'][2]"
         self.move_and_click(xpath, 15, False, "move to the 'Near' balance.", self.step, "visible")
         near = self.monitor_element(xpath, 10, "obtain your 'Near' Balance")
         if near:
             try:
                 last_value_float = float(near)
-                if last_value_float > 0.25:
+                if last_value_float > 0.2:
                     low_near = False
                     self.output(f"Step {self.step} - Cleared the low 'Near' balance flag as current balance is: {last_value_float}", 3)
                 else:
