@@ -40,6 +40,7 @@ class BlumClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//button[span[contains(text(), 'Launch Blum')]]"
+        self.start_app_menu_item = "//div[contains(@class, 'dialog-title')]//span[contains(text(), 'Blum')]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
