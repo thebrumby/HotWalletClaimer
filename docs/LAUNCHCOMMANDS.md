@@ -1,31 +1,26 @@
-## Games/Apps Currently Working with This Script:
-**Note: All these scripts assume you have already manually started your selected game, completed any one-time screens that require reading, and made at least 1 claim manually—ensuring you have coins for Gas Fee if necessary.**
+## Games/Apps Currently Working with This Script  
 
-| Game Command                         | Description                                                                                         | Status                                                                                  |
-|--------------------------------------|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
-| `./launch.sh blum`                   | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot) (mining only)           | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh cryptorank`             | Launch Crypto Rank Wallet on Telegram: [@CryptoRank_app_bot](https://web.telegram.org/k/#@CryptoRank_app_bot) |     <span title="Claiming well">✅</span>                                                |
-| `./launch.sh gamee`                  | Launch Gamee on Telegram: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458) (mining only)  | <span title="No real functionality">❌</span>                                               |
-| `./launch.sh hamsterkombat`          | Launch your Hamster Kombat account on Telegram: [@hamster_kombat_bot](https://web.telegram.org/k/#@hamster_kombat_bot) | <span title="Season 1 finished">❌</span>                                                    |                                            |
-| `./launch.sh hot`                    | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot)                           | <span title="Claiming well">✅</span>                                                    |
-| `./launch.sh iceberg`                | Launch your Iceberg account on Telegram: [@IcebergAppBot](https://web.telegram.org/k/#@IcebergAppBot) | <span title="Claiming well">✅</span>                                                    |
-| `./launch.sh lumcity`                | Launch Lum City on Telegram: [@LumCity_bot](https://web.telegram.org/k/#@LumCity_bot)               | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh lumcity-autoupgrade`    | **Auto-upgrade: Spends your tokens to increase mining speed**                                       | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh mdao`                   | Launch MDAO Wallet on Telegram: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)        | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh mdao-autoupgrade`       | **Auto-upgrade: Spends your tokens to increase mining speed**                                       | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh oxygen`                 | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot)                         | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh oxygen-autoupgrade`     | **Auto-upgrade: Spends your tokens to increase mining speed**                                       | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh pitchtalk`               | Launch PitchTalk on Telegram: [@pitchtalk_bot](https://web.telegram.org/k/#@pitchtalk_bot)    | <span title="Needs Maintenance">❌</span>     |
-| `./launch.sh pixeltap`               | Launch PixelTap on Telegram: [@pixelversexyzbot](https://t.me/pixelversexyzbot?start=7254165458)    | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh pocketfi`               | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot)                             | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh seed`                   | Launch Seed App - Mine Seed: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot)           | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh sidefans`              | Launch SideFans on Telegram: [@sidekick_fans_bot](https://web.telegram.org/k/#@sidekick_fans_bot) | <span title=Needs Maintenance">❌</span> |
-| `./launch.sh simpletap`              | Launch SimpleTap on Telegram: [@Simple_Tap_Bot](https://t.me/Simple_Tap_Bot/app?startapp=1719999344321) | <span title="Needs Maintenance">❌</span>                                                   |
-| `./launch.sh spell`                  | Launch Spell Wallet on Telegram: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot) | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh tabizoo`                | Launch TabiZoo Wallet on Telegram: [@tabizoobot](https://web.telegram.org/k/#@tabizoobot)           | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh tabizoo-autoupgrade`    | **Auto-upgrade: Spends your tokens to increase mining speed**                                       | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh timefarm`               | Launch Time Farm on Telegram: [@TimeFarmCryptoBot](https://web.telegram.org/k/#@TimeFarmCryptoBot)  | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh timefarm-autostake`     | **Auto-stake: Automatically locks your tokens for 3 days to gain 3% interest**                      | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh vertus`                 | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/vertus_app_bot)                                | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh wave`                   | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot/walletapp?startapp=1809774)    | <span title="Needs Maintenance">❌</span>                                                    |
-| `./launch.sh yupalka`             | Launch Yupalka: [@YupLand_bot](https://web.telegram.org/k/#@YupLand_bot)                            | <span title="Needs Maintenance">❌</span>   |                         
+**Note:** These scripts assume you have manually started your selected game, completed any one-time screens, and made at least one claim to ensure you have enough coins for gas fees if required.  
+
+| Game Command                        | Description                                                                                   | Status  |
+|--------------------------------------|-----------------------------------------------------------------------------------------------|----------|
+| `./launch.sh blum`                   | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot) *(mining only)*  | ❌ Needs Maintenance  |
+| `./launch.sh cryptorank`             | Launch Crypto Rank Wallet: [@CryptoRank_app_bot](https://web.telegram.org/k/#@CryptoRank_app_bot) | ✅ Claiming well  |
+| `./launch.sh gamee`                  | Launch Gamee: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458) *(mining only)*   | ❌ No real functionality  |
+| `./launch.sh hamsterkombat`          | Launch Hamster Kombat: [@hamster_kombat_bot](https://web.telegram.org/k/#@hamster_kombat_bot) | ❌ Season 1 finished  |
+| `./launch.sh hot`                    | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot)                     | ✅ Claiming well  |
+| `./launch.sh iceberg`                | Launch Iceberg: [@IcebergAppBot](https://web.telegram.org/k/#@IcebergAppBot)                   | ✅ Claiming well  |
+| `./launch.sh lumcity`                | Launch Lum City: [@LumCity_bot](https://web.telegram.org/k/#@LumCity_bot)                     | ❌ Needs Maintenance  |
+| `./launch.sh lumcity-autoupgrade`    | **Auto-upgrade:** Spends your tokens to increase mining speed                                 | ❌ Needs Maintenance  |
+| `./launch.sh mdao`                   | Launch MDAO Wallet: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)              | ❌ Needs Maintenance  |
+| `./launch.sh mdao-autoupgrade`       | **Auto-upgrade:** Spends your tokens to increase mining speed                                 | ❌ Needs Maintenance  |
+| `./launch.sh oxygen`                 | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot)                   | ❌ Needs Maintenance  |
+| `./launch.sh oxygen-autoupgrade`     | **Auto-upgrade:** Spends your tokens to increase mining speed                                 | ❌ Needs Maintenance  |
+| `./launch.sh pitchtalk`              | Launch PitchTalk: [@pitchtalk_bot](https://web.telegram.org/k/#@pitchtalk_bot)                | ❌ Needs Maintenance  |
+| `./launch.sh pixeltap`               | Launch PixelTap: [@pixelversexyzbot](https://t.me/pixelversexyzbot?start=7254165458)         | ❌ Needs Maintenance  |
+| `./launch.sh pocketfi`               | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot)                       | ❌ Needs Maintenance  |
+| `./launch.sh seed`                   | Launch Seed App: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot)                 | ❌ Needs Maintenance  |
+| `./launch.sh sidefans`               | Launch SideFans: [@sidekick_fans_bot](https://web.telegram.org/k/#@sidekick_fans_bot)        | ❌ Needs Maintenance  |
+| `./launch.sh simpletap`              | Launch SimpleTap: [@Simple_Tap_Bot](https://t.me/Simple_Tap_Bot/app?startapp=1719999344321)  | ❌ Needs Maintenance  |
+| `./launch.sh spell`                  | Launch Spell Wallet: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot)      | ❌ Needs Maintenance  |
+| `./launch.sh tabizoo`                | Launch TabiZoo: [@tabizoobot](https://web.telegram.org/k/#@t
