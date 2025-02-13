@@ -39,7 +39,7 @@ class HotClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.step = "01"
         self.imported_seedphrase = None
-        self.start_app_xpath = "//div[@class='new-message-bot-commands-view'][contains(normalize-space(.), 'Open Wallet')]"
+        self.start_app_xpath = "//span[@class='reply-markup-button-text' and starts-with(normalize-space(.), 'Create HOT Wallet')]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
