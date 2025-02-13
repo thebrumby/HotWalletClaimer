@@ -14,7 +14,7 @@ You can also support us at no cost by subscribing to and watching our [YouTube c
 ## Want to learn more about the Telegram Claim Bot?  
 Our blog posts are **FREE** to read on [Patreon](https://www.patreon.com/TelegramClaimBot)!  
 
-- **🔥 Telegram changed their UI, breaking all the games!**:  The fix for **HOT** is live, and more updates are coming. [read more](https://www.patreon.com/posts/hey-telegram-bot-122229409?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)  
+- **🔥 Telegram changed their UI!**:  The fix for **HOT** is live, and more updates are coming. [read more](https://www.patreon.com/posts/hey-telegram-bot-122229409?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)  
 - **🎮 Level Up with SideFans!**: New game addition—SideFans by Sidekick. [read more](https://www.patreon.com/posts/level-up-with-114438622?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)  
 - **🎁 Stepan Token Giveaway and PitchTalk Added!**: New game addition and a token giveaway on Tron! [read more](https://www.patreon.com/posts/stepan-token-and-113672286?utm_medium=clipboard_copy&utm_source=copyLink&utm_campaign=postshare_creator&utm_content=join_link)  
 
