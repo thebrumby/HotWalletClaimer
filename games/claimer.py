@@ -1315,6 +1315,7 @@ class Claimer:
             # Iterate through the buttons in reverse order
             for button in reversed(start_app_buttons):
                 try:
+                    self.move_and_click(button, 10, False, "check for visibility for the launch button", self.step, "clickable")
                     # Ensure the element is visible in the viewport
                     self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
                     time.sleep(0.5)  # Allow time for rendering
