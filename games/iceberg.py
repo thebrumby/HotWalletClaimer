@@ -38,6 +38,7 @@ class IcebergClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//span[text()='Play']"
+        self.start_app_menu_item = "//div[contains(@class, 'dialog-title')]//span[contains(text(), 'Iceberg')]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
@@ -139,7 +140,7 @@ class IcebergClaimer(Claimer):
         return 60
         
     def get_balance(self, claimed=False):
-        balance_xpath = "//p[text()='Your balance']/following-sibling::p"
+        balance_xpath = "//p[normalize-space(text())='Your balance']/following-sibling::p"
 
         try:
             element = self.monitor_element(balance_xpath, 15, "get balance")
