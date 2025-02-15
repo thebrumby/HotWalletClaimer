@@ -42,7 +42,7 @@ class SpellClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//div[@class='reply-markup-row']//span[contains(text(),'Open Spell')]"
-        self.start_app_menu_item = "//a[@data-peer-id='6784664471']"
+        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Spell Wallet']]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
