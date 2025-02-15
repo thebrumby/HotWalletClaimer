@@ -1194,8 +1194,9 @@ class Claimer:
                     try:
                         self.driver.execute_script("arguments[0].click();", element)
                         click_attempts += 1  # Count JS click as an additional attempt
-                    except Exception:
-                        pass
+                    except Exception as e_js:
+                        if self.settings['debugIsOn']:
+                            self.debug_information(f"BruteClick {action_description} JS click failed: {e_js}", "warning")
 
                 except ElementClickInterceptedException:
                     self.output(f"Step {self.step} - Element click intercepted, attempting JS click...", 3)
@@ -1226,12 +1227,14 @@ class Claimer:
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_timeout_end_{self.step}.png")
             return False
 
-        except Exception:
-            self.output(f"Step {self.step} - An error occurred during {action_description}.", 3)
+        except Exception as e:
+            error_message = f"Step {self.step} - An error occurred during {action_description}: {e}"
+            self.output(error_message, 3)
             if self.settings['debugIsOn']:
-                self.debug_information(f"BruteClick {action_description} fatal error", "error")
+                detailed_trace = traceback.format_exc()
+                self.debug_information(f"BruteClick {action_description} fatal error: {detailed_trace}", "error")
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
-            return False
+        return False
 
     def clear_overlays(self, target_element, step):
         try:
