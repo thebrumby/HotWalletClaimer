@@ -40,7 +40,7 @@ class MDAOClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.start_app_xpath = "//span[contains(text(), 'Play')]"
-        self.start_app_menu_item = "//a[@data-peer-id='7477534512']"
+        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='ZAVOD Wallet']]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
