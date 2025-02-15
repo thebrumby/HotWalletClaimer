@@ -42,6 +42,7 @@ class SideKickClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = True
         self.start_app_xpath = "//div[contains(@class, 'new-message-bot-commands') and div[contains(@class, 'new-message-bot-commands-view') and text()='Play']]"
+        self.start_app_menu_item = "//a[@data-peer-id='7243367778']"
 
     def __init__(self):
         self.settings_file = "variables.txt"

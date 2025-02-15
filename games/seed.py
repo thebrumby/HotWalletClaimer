@@ -41,6 +41,7 @@ class SeedClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//button[descendant::span[contains(text(), 'Play')]]"
+        self.start_app_menu_item = "//a[@data-peer-id='6508172553']"
 
     def __init__(self):
         self.settings_file = "variables.txt"

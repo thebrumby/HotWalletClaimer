@@ -39,6 +39,7 @@ class SimpleTapClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.start_app_xpath = "//div[contains(@class, 'new-message-wrapper')]//div[contains(text(), 'Start')]"
+        self.start_app_menu_item = "//a[@data-peer-id='6835026023']"
 
     def __init__(self):
         self.settings_file = "variables.txt"

@@ -40,6 +40,7 @@ class LumCityClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//span[contains(text(), 'Open the App')]"
+        self.start_app_menu_item = "//a[@data-peer-id='7085829527']"
 
     def __init__(self):
         self.settings_file = "variables.txt"

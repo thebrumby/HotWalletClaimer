@@ -41,6 +41,7 @@ class TabizooClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//div[contains(@class, 'new-message-bot-commands') and .//div[text()='Start']]"
+        self.start_app_menu_item = "//a[@data-peer-id='6790812749']"
 
     def __init__(self):
         self.settings_file = "variables.txt"

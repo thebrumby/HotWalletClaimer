@@ -38,7 +38,8 @@ class PocketFiClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-        self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//span[contains(., 'Mining') or contains(., 'Open PocketFi')]"
+        self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//span[contains(., 'Mining') or contains(., 'PocketFi')]"
+        self.start_app_menu_item = "//a[@data-peer-id='6546647202']"
 
     def __init__(self):
         self.settings_file = "variables.txt"

@@ -38,7 +38,7 @@ class IcebergClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//span[text()='Play']"
-        self.start_app_menu_item = "//div[contains(@class, 'dialog-title')]//span[contains(text(), 'Iceberg')]"
+        self.start_app_menu_item = "//a[@data-peer-id='6998726337']"
 
     def __init__(self):
         self.settings_file = "variables.txt"
