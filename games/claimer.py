@@ -1146,32 +1146,27 @@ class Claimer:
             return False
 
     def brute_click(self, xpath, timeout=30, action_description=""):
-        start_time = time.time()  # Record the start time
-
+        # Use move_and_click to ensure the element is present and scrolled into view
+        if not self.move_and_click(xpath, 10, False, "locate the element to Brute Click", self.step, "clickable"):
+            self.output(f"Step {self.step} - Element not found or not scrollable: {xpath}", 2)
+            return False
+    
         try:
-            # Wait until the element is found or timeout occurs
-            element = WebDriverWait(self.driver, timeout).until(
-                EC.visibility_of_element_located((By.XPATH, xpath))
-            )
-
-            previous_element_id = element.get_attribute("id")  # Initial element ID to start with
+            # Retrieve the element after ensuring it's scrolled into view
+            element = self.driver.find_element(By.XPATH, xpath)
+            previous_element_id = element.get_attribute("id")
             self.output(f"Step {self.step} - XPath found: {xpath}", 3)
             if self.settings['debugIsOn']:
                 self.debug_information(f"BruteClick {action_description} - Element found", "info")
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_before_click_{self.step}.png")
-        except TimeoutException:
-            self.output(f"Step {self.step} - Element not found within timeout: {xpath}. Skipping click.", 2)
+        except Exception as e:
+            error_message = f"Step {self.step} - An error occurred while locating element after scrolling during {action_description}: {e}"
+            self.output(error_message, 3)
             if self.settings['debugIsOn']:
-                self.debug_information(f"BruteClick {action_description} timed out waiting for element", "error")
-                self.driver.save_screenshot(f"debug_screenshots/BruteClick_timeout_{self.step}.png")
+                self.debug_information(f"BruteClick {action_description} fatal error: {e}", "error")
+                self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
             return False
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element not found: {xpath}. Skipping click.", 2)
-            if self.settings['debugIsOn']:
-                self.debug_information(f"BruteClick {action_description} was not found", "error")
-                self.driver.save_screenshot(f"debug_screenshots/BruteClick_not_found_{self.step}.png")
-            return False
-
+    
         try:
             actions = ActionChains(self.driver)
             actions.move_to_element(element).perform()
@@ -1180,61 +1175,57 @@ class Claimer:
                 self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s) before attempting click...", 3)
                 if self.settings['debugIsOn']:
                     self.debug_information(f"BruteClick {action_description} - Overlays cleared", "info")
-
+    
             unique_ids = {previous_element_id}
             click_attempts = 0
-
-            while time.time() - start_time < timeout:  # Constrain loop by timeout
+            start_time = time.time()
+    
+            while time.time() - start_time < timeout:
                 click_attempts += 1
-
-                # Attempt to click with ActionChains
+    
                 try:
+                    # Try clicking with ActionChains first
                     actions.click(element).perform()
-
-                    # Attempt JS click as backup within the same attempt
+                    # Fallback to JS click if necessary
                     try:
                         self.driver.execute_script("arguments[0].click();", element)
-                        click_attempts += 1  # Count JS click as an additional attempt
+                        click_attempts += 1
                     except Exception as e_js:
                         if self.settings['debugIsOn']:
                             self.debug_information(f"BruteClick {action_description} JS click failed: {e_js}", "warning")
-
                 except ElementClickInterceptedException:
                     self.output(f"Step {self.step} - Element click intercepted, attempting JS click...", 3)
                     if self.settings['debugIsOn']:
                         self.debug_information(f"BruteClick {action_description} click intercepted", "warning")
-
-                # Try to locate the element again by XPath
+    
+                # Re-locate the element to verify if it still exists or has been replaced
                 try:
                     element = self.driver.find_element(By.XPATH, xpath)
                     current_element_id = element.get_attribute("id")
-                    
                     if current_element_id != previous_element_id:
                         unique_ids.add(current_element_id)
                         self.output(f"Step {self.step} - New element detected. Total unique IDs encountered: {len(unique_ids)}", 3)
                     previous_element_id = current_element_id
-
                 except (NoSuchElementException, StaleElementReferenceException):
                     self.output(f"Step {self.step} - Click successful: Element no longer exists after {click_attempts} attempts.", 2)
                     if self.settings['debugIsOn']:
                         self.debug_information(f"BruteClick {action_description} successful after {click_attempts} attempts", "success")
                         self.driver.save_screenshot(f"debug_screenshots/BruteClick_success_{self.step}.png")
                     return True
-
-            # If the loop exits due to timeout
+    
             self.output(f"Step {self.step} - Brute click timed out after {click_attempts} attempts.", 2)
             if self.settings['debugIsOn']:
                 self.debug_information(f"BruteClick {action_description} timed out after {click_attempts} attempts", "error")
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_timeout_end_{self.step}.png")
             return False
-
+    
         except Exception as e:
             error_message = f"Step {self.step} - An error occurred during {action_description}: {e}"
             self.output(error_message, 3)
             if self.settings['debugIsOn']:
                 self.debug_information(f"BruteClick {action_description} fatal error: {e}", "error")
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
-                return False
+            return False
 
     def clear_overlays(self, target_element, step):
         try:
