@@ -1005,9 +1005,9 @@ class Claimer:
     def move_and_click(self, xpath, wait_time, click, action_description, old_step, expectedCondition):
         def timer():
             return random.randint(1, 3) / 10
-
+    
         self.output(f"Step {self.step} - Attempting to {action_description}...", 2)
-
+    
         wait = WebDriverWait(self.driver, wait_time)
         target_element = None
     
@@ -1024,13 +1024,13 @@ class Claimer:
                     return None
                 elif expectedCondition == "clickable":
                     target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
-
+    
                 if target_element is None:
                     self.output(f"Step {self.step} - The element was not found for {action_description}.", 2)
                     if self.settings['debugIsOn']:
                         self.debug_information(f"{action_description} not found", "error")
                     return None
-
+    
                 # Scroll element into view if it's not visible
                 is_in_viewport = self.driver.execute_script("""
                     var elem = arguments[0], box = elem.getBoundingClientRect();
@@ -1042,15 +1042,15 @@ class Claimer:
                     }
                     return true;
                 """, target_element)
-
+    
                 if not is_in_viewport:
                     self.output(f"Step {self.step} - Element was out of bounds but has been scrolled into view.", 3)
                     if self.settings['debugIsOn']:
                         self.debug_information(f"{action_description} was out of bounds and scrolled into view", "info")
-
+    
                 if click or expectedCondition in ["visible", "clickable"]:
                     self.clear_overlays(target_element, self.step)
-
+    
                 if click:
                     if self.click_element(xpath, action_description=action_description):
                         return target_element
@@ -1058,7 +1058,7 @@ class Claimer:
                     if self.settings['debugIsOn']:
                         self.debug_information(f"Moved to {action_description} without clicking", "no click")
                     return target_element
-
+    
             except StaleElementReferenceException:
                 self.output(f"Step {self.step} - Element reference is stale. Retrying ({attempt + 1}/5) for {action_description}.", 2)
             except TimeoutException:
@@ -1067,14 +1067,19 @@ class Claimer:
                     self.debug_information(f"Timeout during {action_description}", "error")
                 break
             except Exception as e:
-                error_message = f"Step {self.step} - Error during {action_description}: {str(e)}"
-                if 'size and location' in str(e):
+                if "has no size and location" in str(e):
                     error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
-                self.output(error_message, 1)
-                if self.settings['debugIsOn']:
-                    self.debug_information(f"Fatal error during {action_description}: {str(e)}", "error")
-                break
-
+                    self.output(error_message, 1)
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"Fatal error during {action_description}: {str(e)}", "error")
+                    return False
+                else:
+                    error_message = f"Step {self.step} - Error during {action_description}: {str(e)}"
+                    self.output(error_message, 1)
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"Fatal error during {action_description}: {str(e)}", "error")
+                    break
+    
         return target_element
 
     def click_element(self, xpath, timeout=30, action_description=""):
@@ -1096,53 +1101,69 @@ class Claimer:
             if self.settings['debugIsOn']:
                 self.debug_information(f"ClickElem {action_description} was not found", "error")
             return False
-
+    
         try:
             actions = ActionChains(self.driver)
             actions.move_to_element(element).perform()
-
+    
             # Clear any overlays before attempting to click
             overlays_cleared = self.clear_overlays(element, self.step)
             if overlays_cleared > 0:
                 self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s) before attempting click...", 3)
                 if self.settings['debugIsOn']:
                     self.debug_information(f"ClickElem {action_description} - Overlays cleared", "info")
-
+    
             # Attempt to click with ActionChains
             try:
                 actions.click(element).perform()
                 if self.settings['debugIsOn']:
                     self.debug_information(f"ClickElem {action_description} - Click action performed", "success")
-
+    
                 # Backup with JavaScript click
                 try:
                     self.driver.execute_script("arguments[0].click();", element)
                     self.output(f"Step {self.step} - Backed up with JS click.", 3)
-                except Exception:
+                except Exception as js_e:
+                    if "has no size and location" in str(js_e):
+                        self.output(f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized.", 1)
+                        if self.settings['debugIsOn']:
+                            self.debug_information(f"ClickElem {action_description} - Element not sized properly: {str(js_e)}", "error")
+                        return False
                     pass
             except ElementClickInterceptedException:
                 self.output(f"Step {self.step} - Element click intercepted, attempting to resolve...", 3)
                 if self.settings['debugIsOn']:
                     self.debug_information(f"ClickElem {action_description} click intercepted", "warning")
                 return False
-
+    
             # Pause to allow for any DOM changes
             time.sleep(0.5)
-
+    
             # Check if the element still exists
             if self.element_still_exists_by_id(element_id):
                 # Perform JS click if element is still present
-                self.driver.execute_script("arguments[0].click();", element)
-                self.output(f"Step {self.step} - Fallback to JS click successful.", 3)
-                if self.settings['debugIsOn']:
-                    self.debug_information(f"ClickElem {action_description} JS Fallback", "success")
-
+                try:
+                    self.driver.execute_script("arguments[0].click();", element)
+                    self.output(f"Step {self.step} - Fallback to JS click successful.", 3)
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"ClickElem {action_description} JS Fallback", "success")
+                except Exception as fallback_js_e:
+                    if "has no size and location" in str(fallback_js_e):
+                        self.output(f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized.", 1)
+                        if self.settings['debugIsOn']:
+                            self.debug_information(f"ClickElem {action_description} - Fallback JS error: {str(fallback_js_e)}", "error")
+                        return False
             return True
-
-        except (StaleElementReferenceException, Exception):
+    
+        except (StaleElementReferenceException, Exception) as e:
+            if "has no size and location" in str(e):
+                self.output(f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized.", 1)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClickElem {action_description} fatal error: {str(e)}", "error")
+                return False
             self.output(f"Step {self.step} - An error occurred during {action_description}.", 3)
             if self.settings['debugIsOn']:
-                self.debug_information(f"ClickElem {action_description} fatal error", "error")
+                self.debug_information(f"ClickElem {action_description} fatal error: {str(e)}", "error")
             return False
 
     def brute_click(self, xpath, timeout=30, action_description=""):
@@ -1160,10 +1181,13 @@ class Claimer:
                 self.debug_information(f"BruteClick {action_description} - Element found", "info")
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_before_click_{self.step}.png")
         except Exception as e:
-            error_message = f"Step {self.step} - An error occurred while locating element after scrolling during {action_description}: {e}"
+            if "has no size and location" in str(e):
+                error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
+            else:
+                error_message = f"Step {self.step} - An error occurred while locating element after scrolling during {action_description}: {e}"
             self.output(error_message, 3)
             if self.settings['debugIsOn']:
-                self.debug_information(f"BruteClick {action_description} fatal error: {e}", "error")
+                self.debug_information(f"BruteClick {action_description} fatal error: {str(e)}", "error")
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
             return False
     
@@ -1191,8 +1215,13 @@ class Claimer:
                         self.driver.execute_script("arguments[0].click();", element)
                         click_attempts += 1
                     except Exception as e_js:
+                        if "has no size and location" in str(e_js):
+                            self.output(f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized.", 1)
+                            if self.settings['debugIsOn']:
+                                self.debug_information(f"BruteClick {action_description} - Element not sized properly: {str(e_js)}", "error")
+                            return False
                         if self.settings['debugIsOn']:
-                            self.debug_information(f"BruteClick {action_description} JS click failed: {e_js}", "warning")
+                            self.debug_information(f"BruteClick {action_description} JS click failed: {str(e_js)}", "warning")
                 except ElementClickInterceptedException:
                     self.output(f"Step {self.step} - Element click intercepted, attempting JS click...", 3)
                     if self.settings['debugIsOn']:
@@ -1220,10 +1249,13 @@ class Claimer:
             return False
     
         except Exception as e:
-            error_message = f"Step {self.step} - An error occurred during {action_description}: {e}"
+            if "has no size and location" in str(e):
+                error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
+            else:
+                error_message = f"Step {self.step} - An error occurred during {action_description}: {e}"
             self.output(error_message, 3)
             if self.settings['debugIsOn']:
-                self.debug_information(f"BruteClick {action_description} fatal error: {e}", "error")
+                self.debug_information(f"BruteClick {action_description} fatal error: {str(e)}", "error")
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
             return False
 
@@ -1278,23 +1310,30 @@ class Claimer:
         return False
 
     def debug_information(self, action_description, error_type="error"):
+        # Use only the first line to avoid including a full stacktrace
+        short_description = action_description.splitlines()[0]
+    
         # Replace characters that might corrupt the intended filename structure
-        sanitized_description = re.sub(r'[\/\0\\\*\?\:\|\<\>\"\&\;\$~ ]', '-', action_description)
-
+        sanitized_description = re.sub(r'[\/\0\\\*\?\:\|\<\>\"\&\;\$~ ]', '-', short_description)
+    
+        # Truncate the sanitized description to prevent exceeding max filename limits
+        max_filename_length = 50  # adjust as needed
+        sanitized_description = sanitized_description[:max_filename_length]
+    
         # Take a screenshot if the element should have been present
         time.sleep(3)
         screenshot_path = f"{self.screenshots_path}/{self.step}_{sanitized_description}.png"
         self.driver.save_screenshot(screenshot_path)
-
-        # Check if "not" is present in the action_description enclosed in brackets
+    
+        # Check if "not" is present in the action_description enclosed in brackets; if so, skip further debugging
         if re.search(r'\(.*?not.*?\)', action_description, re.IGNORECASE):
-            # Skip debugging if the condition is met
             return
-
+    
         # Save the HTML page source on error
         if error_type == "error":
             page_source = self.driver.page_source
-            with open(f"{self.screenshots_path}/{self.step}_{sanitized_description}_page_source.html", "w", encoding="utf-8") as f:
+            page_source_path = f"{self.screenshots_path}/{self.step}_{sanitized_description}_page_source.html"
+            with open(page_source_path, "w", encoding="utf-8") as f:
                 f.write(page_source)
 
     def find_working_link(self, old_step):
