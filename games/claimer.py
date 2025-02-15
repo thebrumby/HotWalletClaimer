@@ -1151,8 +1151,9 @@ class Claimer:
         try:
             # Wait until the element is found or timeout occurs
             element = WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located((By.XPATH, xpath))
+                EC.visibility_of_element_located((By.XPATH, xpath))
             )
+
             previous_element_id = element.get_attribute("id")  # Initial element ID to start with
             self.output(f"Step {self.step} - XPath found: {xpath}", 3)
             if self.settings['debugIsOn']:
