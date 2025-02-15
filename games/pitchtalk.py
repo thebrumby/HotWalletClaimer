@@ -41,7 +41,7 @@ class PitchTalkClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//div[contains(@class, 'new-message-bot-commands') and .//div[text()='Launch']]"
-        self.start_app_menu_item = "//a[@data-peer-id='7436512084']"
+        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='PitchTalk']]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
