@@ -84,11 +84,7 @@ class PixelTapClaimer(Claimer):
         self.launch_iframe()
 
         # Let's try to claim the daily reward (if present)
-        xpath = (
-            "//div[contains(@class, 'dailyRewardModalContent') and "
-            ".//div[contains(translate(., 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'YOUR DAILY REWARDS')]]"
-            "//div[contains(@class, 'claimButton') and normalize-space()='Claim']"
-        )
+        xpath = "(//div[contains(@class, 'claimButton') and normalize-space()='Claim'])[2]"
         self.move_and_click(xpath, 10, True, "claim the daily reward (may not be present)", self.step, "clickable")
 
         # Disable modals
