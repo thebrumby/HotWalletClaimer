@@ -42,7 +42,7 @@ class CryptoRankClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//button[.//span[contains(text(),'Start Earning CR Points')]]"
-        self.start_app_menu_item = "//a[@data-peer-id='7069643953' and .//span[contains(@class, 'peer-title') and normalize-space(text())='CryptoRank Mini App']]"
+        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='CryptoRank Mini App']]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
