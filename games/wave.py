@@ -39,7 +39,7 @@ class WaveClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.start_app_xpath = "//a[@href='https://t.me/waveonsuibot/walletapp']"
-        self.start_app_menu_item = "//a[@data-peer-id='6430669852']"
+        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Wave']]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
