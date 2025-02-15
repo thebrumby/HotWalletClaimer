@@ -53,6 +53,13 @@ class OxygenAUClaimer(OxygenClaimer):
         self.launch_iframe()
         self.increase_step()
 
+        xpath = "//div[@class='farm_btn']"
+        button = self.brute_click(xpath, 10, "click the 'Claim' button")
+        self.increase_step()
+        if button:
+            self.quit_driver()
+            self.launch_iframe()
+
         xpath = "//div[contains(text(),'Get reward')]"
         self.move_and_click(xpath, 10, True, "click the 'Get Reward' button", self.step, "clickable")
         self.increase_step()
@@ -79,17 +86,12 @@ class OxygenAUClaimer(OxygenClaimer):
                 self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
                 return remaining_wait_time
 
-
         try:
             self.output(f"Step {self.step} - The pre-claim wait time is : {wait_time_text} and random offset is {self.random_offset} minutes.", 1)
             self.increase_step()
 
             if wait_time_text == self.pot_full or self.settings['forceClaim']:
                 try:
-                    xpath = "//div[@class='farm_btn']"
-                    button = self.brute_click(xpath, 10, "click the 'Claim' button")
-                    self.increase_step()
-
                     self.output(f"Step {self.step} - Waiting 10 seconds for the totals and timer to update...", 3)
                     time.sleep(10)
                     self.increase_step()
