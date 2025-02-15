@@ -14,7 +14,7 @@
 | `./launch.sh mdao-autoupgrade`       | **Auto-upgrade:** Spends your tokens to increase mining speed                                 | ✅ Claiming well  |
 | `./launch.sh oxygen`                 | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot)                   | ✅ Claiming well  |
 | `./launch.sh oxygen-autoupgrade`     | **Auto-upgrade:** Spends your tokens to increase mining speed                                 | ✅ Claiming well  |
-| `./launch.sh pitchtalk`              | Launch PitchTalk: [@pitchtalk_bot](https://web.telegram.org/k/#@pitchtalk_bot)                | ❌ Needs Maintenance  |
+| `./launch.sh pitchtalk`              | Launch PitchTalk: [@pitchtalk_bot](https://web.telegram.org/k/#@pitchtalk_bot)                | ✅ Claiming well  |
 | `./launch.sh pixeltap`               | Launch PixelTap: [@pixelversexyzbot](https://t.me/pixelversexyzbot?start=7254165458)         | ❌ Needs Maintenance  |
 | `./launch.sh pocketfi`               | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot)                       | ❌ Needs Maintenance  |
 | `./launch.sh seed`                   | Launch Seed App: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot)                 | ❌ Needs Maintenance  |
