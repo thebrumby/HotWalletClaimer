@@ -72,6 +72,10 @@ class IcebergClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
+        # Is there an intro screen? if so, clear it!
+        xpath = "//button[div[text()='Skip']]"
+        self.brute_click(xpath, 10, "pre-start info screen (may not be present)")
+
         # Are we farming? if not, start!
         xpath = "//button[div[text()='Start farming']]"
         self.brute_click(xpath, 30, "initial start farming (may not be present)")
