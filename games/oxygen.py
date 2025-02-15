@@ -106,7 +106,7 @@ class OxygenClaimer(Claimer):
 
             if wait_time_text == self.pot_full or self.settings['forceClaim']:
                 try:
-                    xpath = "//div[@class='farm_btn_wrap']"
+                    xpath = "//div[@class='farm_btn']"
                     button = self.brute_click(xpath, 10, "click the 'Claim' button")
                     self.increase_step()
 
@@ -228,7 +228,7 @@ class OxygenClaimer(Claimer):
             try:
                             
                 # Step 1: Check for the "Collect food" button
-                xpath_collect = "//div[@class='farm_btn_wrap']"
+                xpath_collect = "//div[@class='farm_btn']"
                 elements_collect = self.monitor_element(xpath_collect, 10, "check if the pot is full")
                 if isinstance(elements_collect, str) and re.search(r"[СC]ollect food", elements_collect, re.IGNORECASE):
                     return self.pot_full
