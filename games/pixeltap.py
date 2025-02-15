@@ -83,6 +83,14 @@ class PixelTapClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
+        # Let's try to claim the daily reward (if present)
+        xpath = (
+            "//div[contains(@class, 'dailyRewardModalContent') and "
+            ".//div[contains(translate(., 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'YOUR DAILY REWARDS')]]"
+            "//div[contains(@class, 'claimButton') and normalize-space()='Claim']"
+        )
+        self.move_and_click(xpath, 10, True, "claim the daily reward (may not be present)", self.step, "clickable")
+
         # Disable modals
         xpath = "(//div[contains(@class, 'MuiBackdrop-root')])[last()]"
         button = self.move_and_click(xpath, 10, False, "disable modals #1 (may not be present)", self.step, "clickable")
