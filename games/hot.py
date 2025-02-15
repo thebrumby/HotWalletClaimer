@@ -40,7 +40,7 @@ class HotClaimer(Claimer):
         self.step = "01"
         self.imported_seedphrase = None
         self.start_app_xpath = "//a[@href='https://t.me/herewalletbot/app'] | //div[@class='new-message-bot-commands-view'][contains(text(),'Open Wallet')]"
-        self.start_app_menu_item = "//a[@data-peer-id='6739011720']"
+        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='HOT Wallet']]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
