@@ -41,7 +41,7 @@ class OxygenClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
         self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//button[.//span[contains(text(), 'Start App')] or .//span[contains(text(), 'Play Now!')]]"
-        self.start_app_menu_item = "//a[@data-peer-id='7069643953']"
+        self.start_app_menu_item = "//a[@data-peer-id='7069643953' and .//span[contains(@class, 'peer-title') and normalize-space(text())='Oxygen Miner']]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
