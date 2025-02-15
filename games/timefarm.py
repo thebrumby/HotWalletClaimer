@@ -41,7 +41,7 @@ class TimeFarmClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.start_app_xpath = "//span[contains(text(), 'Open App')]"
-        self.start_app_menu_item = "//a[@data-peer-id='7297255616']"
+        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Time Farm']]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
