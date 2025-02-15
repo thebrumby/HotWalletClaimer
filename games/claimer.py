@@ -1231,10 +1231,9 @@ class Claimer:
             error_message = f"Step {self.step} - An error occurred during {action_description}: {e}"
             self.output(error_message, 3)
             if self.settings['debugIsOn']:
-                detailed_trace = traceback.format_exc()
-                self.debug_information(f"BruteClick {action_description} fatal error: {detailed_trace}", "error")
+                self.debug_information(f"BruteClick {action_description} fatal error: {e}", "error")
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
-        return False
+                return False
 
     def clear_overlays(self, target_element, step):
         try:
