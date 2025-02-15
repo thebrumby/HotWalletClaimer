@@ -39,6 +39,7 @@ class PixelTapClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.start_app_xpath = "//div[contains(@class, 'new-message-wrapper')]//div[contains(text(), 'Play')]"
+        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='PixelTap by Pixelverse']]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
