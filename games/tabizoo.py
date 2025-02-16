@@ -72,22 +72,22 @@ class TabizooClaimer(Claimer):
 
     def full_claim(self):
         self.step = "100"
-
+    
         # Open the driver and proceed to the game.
         self.launch_iframe()
         self.increase_step()
-
+    
         # Check the initial screens.
         self.check_initial_screens()
         self.increase_step()
-
+    
         # Check the Daily rewards.
         self.click_daily_reward()
         self.increase_step()
-
+    
         original_balance = self.get_balance(False)
         self.increase_step()
-
+    
         xpath = "//span[contains(text(), 'Claim')]"
         success = self.brute_click(xpath, 10, "click the 'Claim' button")
         old_balance = self.get_balance(True)
@@ -100,12 +100,15 @@ class TabizooClaimer(Claimer):
                 pass
             self.output(f"Step {self.step} - Main reward claimed.", 1)
         self.increase_step()
-
+    
+        # Retrieve profit per hour for logging (if needed)
         self.get_profit_hour(True)
-
+    
         try:
-            wait_time_text = self.get_wait_time(self.step, "post-claim")
-            # Try the slots game
+            # Get the wait time in minutes directly from the new function.
+            wait_time_minutes = self.get_wait_time(self.step, "post-claim")
+            
+            # Try the slots game.
             self.play_spins()
             balance = self.get_balance(True)
             try:
@@ -114,23 +117,23 @@ class TabizooClaimer(Claimer):
                     self.output(f"Step {self.step} - Playing slots increased the balance by {balance_diff}", 2)
             except Exception as e:
                 pass
-            # Go back to the home page
-            xpath= "(//div[normalize-space(.) = 'Shiro'])[1]"
+    
+            # Go back to the home page.
+            xpath = "(//div[normalize-space(.) = 'Shiro'])[1]"
             self.move_and_click(xpath, 10, True, "click the 'Home' tab", self.step, "clickable")
-            # Try to upgrade the level if auto-upgrade enabled
+    
+            # Try to upgrade the level if auto-upgrade is enabled.
             self.attempt_upgrade(balance)
-
-            if wait_time_text:
-                matches = re.findall(r'(\d+)([hm])', wait_time_text)
-                remaining_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
-                remaining_wait_time = self.apply_random_offset(remaining_wait_time)
-                self.output(f"STATUS: Considering {wait_time_text}, we'll go back to sleep for {remaining_wait_time} minutes.", 1)
-                return remaining_wait_time
-
+    
+            if wait_time_minutes:
+                wait_time_minutes = self.apply_random_offset(wait_time_minutes)
+                self.output(f"STATUS: We'll go back to sleep for {wait_time_minutes:.2f} minutes.", 1)
+                return wait_time_minutes
+    
         except Exception as e:
             self.output(f"Step {self.step} - An unexpected error occurred: {e}", 1)
             return 60
-
+    
         self.output(f"STATUS: We seemed to have reached the end without confirming the action!", 1)
         return 60
 
@@ -152,7 +155,7 @@ class TabizooClaimer(Claimer):
         
     def click_daily_reward(self):
         # Check the Daily rewards.
-        xpath = "//img[contains(@src, 'checkin_icon')]/following-sibling::div[contains(@class, 'bg-[#FF5C01]')]"
+        xpath = "//div[contains(@class, 'bg-[#FF5C01]') and contains(@class, 'rounded-full') and contains(@class, 'w-[8px]') and contains(@class, 'h-[8px]')]"
         success = self.move_and_click(xpath, 10, False, "check if the daily reward can be claimed (may not be present)", self.step, "clickable")
         if not success:
             self.output(f"Step {self.step} - The daily reward appears to have already been claimed.", 2)
@@ -196,22 +199,22 @@ class TabizooClaimer(Claimer):
         self.output(f"STATUS: Navigate to make your initial claim in GUI.", 1)
         sys.exit()
         
-
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
-
+    
         priority = max(self.settings['verboseLevel'], default_priority)
-
+    
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//img[contains(@src, 'coin_icon')]/following-sibling::span"
-
+        # Updated xpath: select the <div> that is a following-sibling of the <img> with 'coin_icon' in its src.
+        balance_xpath = "//img[contains(@src, 'coin_icon')]/following-sibling::div"
+    
         try:
             element = self.monitor_element(balance_xpath, 15, "get balance")
             if element:
                 balance_part = element.strip()
                 multiplier = 1  # Default multiplier
-
+    
                 # Check for 'K' or 'M' and adjust the multiplier
                 if balance_part.endswith('K'):
                     multiplier = 1_000
@@ -219,7 +222,7 @@ class TabizooClaimer(Claimer):
                 elif balance_part.endswith('M'):
                     multiplier = 1_000_000
                     balance_part = balance_part[:-1]  # Remove the 'M'
-
+    
                 try:
                     balance_value = float(balance_part) * multiplier
                     self.output(f"Step {self.step} - {balance_text} {balance_value}", priority)
@@ -227,52 +230,112 @@ class TabizooClaimer(Claimer):
                 except ValueError:
                     self.output(f"Step {self.step} - Could not convert balance '{balance_part}' to a number.", priority)
                     return None
-
+    
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
-
+    
         self.increase_step()
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
+        """
+        Calculates the remaining wait time (in minutes) until mining is complete.
+        
+        Steps:
+          1. Extract coins mined (e.g. 23.1002) from the coins mined element.
+          2. Retrieve the profit per hour (coins/hour) by calling get_profit_hour().
+          3. Extract the width percentage from the progress bar, which indicates the elapsed time ratio.
+          4. Calculate hours elapsed so far (coins_mined / profit_per_hour) and then compute:
+             
+             remaining_time_hours = hours_elapsed * ((100 / progress_percentage) - 1)
+             
+             Finally, convert the remaining time to minutes.
+        """
+        import re
         for attempt in range(1, max_attempts + 1):
             try:
                 self.output(f"Step {self.step} - Get the wait time...", 3)
-                xpath = "//div[contains(text(), 'h') and contains(text(), ':') and contains(text(), 'm')]"
-                elements = self.monitor_element(xpath, 10, "get claim timer")
-                if elements:
-                    return elements
-                return False
+                
+                # 1. Get coins mined (e.g., "23.1002")
+                coins_xpath = "//span[contains(@class, 'font-changa-one') and contains(text(),'.')][1]"
+                coins_text = self.monitor_element(coins_xpath, 10, "coins mined")
+                if coins_text:
+                    coins_mined = float(coins_text.strip())
+                else:
+                    self.output(f"Step {self.step} - Coins mined element not found.", 3)
+                    return False
+    
+                # 2. Get profit per hour (coins/hour)
+                profit_per_hour = self.get_profit_hour(claimed=False)
+                if profit_per_hour is None or profit_per_hour == 0:
+                    self.output(f"Step {self.step} - Profit per hour is zero or not found.", 3)
+                    return False
+    
+                # Calculate hours elapsed so far
+                hours_elapsed = coins_mined / profit_per_hour
+    
+                # 3. Get progress percentage from the mining progress bar
+                progress_xpath = ("//div[contains(@class, 'w-full') and contains(@class, 'relative') "
+                                  "and contains(@class, 'overflow-hidden')]//div[contains(@style, 'width:')]")
+                progress_elem = self.monitor_element(progress_xpath, 10, "progress bar")
+                if progress_elem:
+                    # Assume we have a helper to get the element's attribute; if not, use self.driver.get_attribute()
+                    style = self.get_element_attribute(progress_elem, "style")
+                    # Extract the width percentage from the style string (e.g., "width: 1.40683%;")
+                    m = re.search(r"width:\s*([\d.]+)%", style)
+                    if m:
+                        progress_percentage = float(m.group(1))
+                    else:
+                        self.output(f"Step {self.step} - Could not extract progress percentage.", 3)
+                        return False
+                else:
+                    self.output(f"Step {self.step} - Progress element not found.", 3)
+                    return False
+    
+                # 4. Calculate remaining time
+                # Total cycle time (in hours) is estimated as: hours_elapsed * (100 / progress_percentage)
+                # Thus, remaining time in hours = total cycle time - hours_elapsed = hours_elapsed * ((100 / progress_percentage) - 1)
+                remaining_time_hours = hours_elapsed * ((100 / progress_percentage) - 1)
+                remaining_time_minutes = remaining_time_hours * 60
+    
+                self.output(f"Step {self.step} - Coins mined: {coins_mined}, Profit/hour: {profit_per_hour}, "
+                            f"Hours elapsed: {hours_elapsed:.2f}, Progress: {progress_percentage}%, "
+                            f"Remaining time: {remaining_time_minutes:.2f} minutes", 3)
+                return remaining_time_minutes
+    
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
                 return False
-
+    
         return False
 
     def get_profit_hour(self, claimed=False):
+        """
+        Retrieves the profit per hour as a float by extracting the value from the profit element.
+        """
+        import re
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
-
         priority = max(self.settings['verboseLevel'], default_priority)
-
-        # Construct the specific profit XPath
-        profit_text = f'{prefix} PROFIT/HOUR:'
-        profit_xpath = "//label[text()='Mining Rate']/following-sibling::p//span[1]"
-
+    
+        # Updated XPath: locate the span with a leading '+' following the Mining Rate label.
+        profit_xpath = "//label[normalize-space(text())='Mining Rate']/following-sibling::div//span[starts-with(normalize-space(text()), '+')]"
         try:
-            element = self.strip_non_numeric(self.monitor_element(profit_xpath, 15, "profit per hour"))
-
-            # Check if element is not None and process the profit
-            if element:
-                self.output(f"Step {self.step} - {profit_text} {element}", priority)
-
+            profit_text = self.monitor_element(profit_xpath, 15, "profit per hour")
+            if profit_text:
+                # Remove any non-numeric characters (like the '+' sign)
+                profit_clean = re.sub(r"[^\d.]", "", profit_text)
+                profit_value = float(profit_clean)
+                self.output(f"Step {self.step} - {prefix} PROFIT/HOUR: {profit_value}", priority)
+                return profit_value
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Profit/Hour:' was not found.", priority)
         except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
         
         self.increase_step()
+        return None
 
     def attempt_upgrade(self):
         pass
