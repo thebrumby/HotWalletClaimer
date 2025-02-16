@@ -258,7 +258,7 @@ class TabizooClaimer(Claimer):
                 self.output(f"Step {self.step} - Get the wait time...", 3)
                 
                 # 1. Get coins mined (e.g., "23.1002")
-                coins_xpath = "//span[contains(@class, 'font-changa-one') and contains(text(),'.')][1]"
+                coins_xpath = "//div[contains(@class, 'bg-[#E5D6CC]')]//span[contains(@class, 'font-changa-one') and contains(text(),'.')]"
                 coins_text = self.monitor_element(coins_xpath, 10, "coins mined")
                 if coins_text:
                     coins_mined = float(coins_text.strip())
