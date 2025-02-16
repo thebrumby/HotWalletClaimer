@@ -162,7 +162,7 @@ class TabizooClaimer(Claimer):
             self.output(f"Step {self.step} - The daily reward appears to have already been claimed.", 2)
             self.increase_step()
             return
-        xpath = "//div[contains(text(), 'Task')]"
+        xpath = "//img[contains(@src, 'task_icon')]"
         success = self.brute_click(xpath, 10, "click the 'Check Login' tab")
         self.increase_step()
 
@@ -240,76 +240,7 @@ class TabizooClaimer(Claimer):
         self.increase_step()
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
-        """
-        Calculates the remaining wait time (in minutes) until mining is complete.
-        
-        Steps:
-          1. Extract coins mined (e.g. 23.1002) from the coins mined element.
-          2. Retrieve the profit per hour (coins/hour) by calling get_profit_hour().
-          3. Extract the width percentage from the progress bar, which indicates the elapsed time ratio.
-          4. Calculate hours elapsed so far (coins_mined / profit_per_hour) and then compute:
-             
-             remaining_time_hours = hours_elapsed * ((100 / progress_percentage) - 1)
-             
-             Finally, convert the remaining time to minutes.
-        """
-        import re
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.output(f"Step {self.step} - Get the wait time...", 3)
-                
-                # 1. Get coins mined (e.g., "23.1002")
-                coins_xpath = "//div[contains(@class, 'bg-[#E5D6CC]')]//span[contains(@class, 'font-changa-one') and contains(text(),'.')]"
-                coins_text = self.monitor_element(coins_xpath, 10, "coins mined")
-                if coins_text:
-                    coins_mined = float(coins_text.strip())
-                else:
-                    self.output(f"Step {self.step} - Coins mined element not found.", 3)
-                    return False
-    
-                # 2. Get profit per hour (coins/hour)
-                profit_per_hour = self.get_profit_hour(claimed=False)
-                if profit_per_hour is None or profit_per_hour == 0:
-                    self.output(f"Step {self.step} - Profit per hour is zero or not found.", 3)
-                    return False
-    
-                # Calculate hours elapsed so far
-                hours_elapsed = coins_mined / profit_per_hour
-    
-                # 3. Get progress percentage from the mining progress bar
-                progress_xpath = ("//div[contains(@class, 'w-full') and contains(@class, 'relative') "
-                                  "and contains(@class, 'overflow-hidden')]//div[contains(@style, 'width:')]")
-                progress_elem = self.monitor_element(progress_xpath, 10, "progress bar")
-                if progress_elem:
-                    # Assume we have a helper to get the element's attribute; if not, use self.driver.get_attribute()
-                    style = self.get_element_attribute(progress_elem, "style")
-                    # Extract the width percentage from the style string (e.g., "width: 1.40683%;")
-                    m = re.search(r"width:\s*([\d.]+)%", style)
-                    if m:
-                        progress_percentage = float(m.group(1))
-                    else:
-                        self.output(f"Step {self.step} - Could not extract progress percentage.", 3)
-                        return False
-                else:
-                    self.output(f"Step {self.step} - Progress element not found.", 3)
-                    return False
-    
-                # 4. Calculate remaining time
-                # Total cycle time (in hours) is estimated as: hours_elapsed * (100 / progress_percentage)
-                # Thus, remaining time in hours = total cycle time - hours_elapsed = hours_elapsed * ((100 / progress_percentage) - 1)
-                remaining_time_hours = hours_elapsed * ((100 / progress_percentage) - 1)
-                remaining_time_minutes = remaining_time_hours * 60
-    
-                self.output(f"Step {self.step} - Coins mined: {coins_mined}, Profit/hour: {profit_per_hour}, "
-                            f"Hours elapsed: {hours_elapsed:.2f}, Progress: {progress_percentage}%, "
-                            f"Remaining time: {remaining_time_minutes:.2f} minutes", 3)
-                return remaining_time_minutes
-    
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return False
-    
-        return False
+        return 180
 
     def get_profit_hour(self, claimed=False):
         """
