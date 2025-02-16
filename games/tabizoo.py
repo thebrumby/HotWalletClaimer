@@ -190,15 +190,9 @@ class TabizooClaimer(Claimer):
     def check_initial_screens(self):
         # First 'Next Step' button
         xpath = "//div[normalize-space(text())='Go']"
-        if not self.move_and_click(xpath, 10, True, "click the 'Go' button", self.step, "clickable"):
-            self.output(f"Step {self.step} - You have already cleared the initial screens.", 2)
-            self.increase_step()
-            return True
-
+        self.move_and_click(xpath, 10, True, "click the 'Go' button", self.step, "clickable"):
+        self.output(f"Step {self.step} - You have already cleared the initial screens.", 2)
         self.increase_step()
-        self.output(f"Step {self.step} - Tabizoo is still at the initial screens.", 1)
-        self.output(f"STATUS: Navigate to make your initial claim in GUI.", 1)
-        sys.exit()
         
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
