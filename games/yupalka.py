@@ -190,20 +190,34 @@ class YupalkaClaimer(Claimer):
         
         balance_text = f"{prefix} BALANCE:"
         balance_xpath = "//div[@class='c-home__header-item-text']"  # Updated XPath
-        
+    
         try:
             # Monitor element with the new XPath
             element = self.monitor_element(balance_xpath, 15, "get balance")
             if element:
-                balance_value = element.strip()
-                
+                balance_str = element.strip()
+                multiplier = 1
+    
+                # Replace comma with dot for proper float conversion
+                balance_str = balance_str.replace(',', '.')
+    
+                # Check for abbreviations and set multiplier accordingly
+                if balance_str.endswith('K'):
+                    multiplier = 1_000
+                    balance_str = balance_str[:-1].strip()
+                elif balance_str.endswith('M'):
+                    multiplier = 1_000_000
+                    balance_str = balance_str[:-1].strip()
+                elif balance_str.endswith('B'):
+                    multiplier = 1_000_000_000
+                    balance_str = balance_str[:-1].strip()
+    
                 try:
-                    # Convert to float directly as it's just a number
-                    balance_value = float(balance_value)
+                    balance_value = float(balance_str) * multiplier
                     self.output(f"Step {self.step} - {balance_text} {balance_value}", priority)
                     return balance_value
                 except ValueError:
-                    self.output(f"Step {self.step} - Could not convert balance '{balance_value}' to a number.", priority)
+                    self.output(f"Step {self.step} - Could not convert balance '{balance_str}' to a number.", priority)
                     return None
             else:
                 self.output(f"Step {self.step} - Balance element not found.", priority)
