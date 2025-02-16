@@ -205,7 +205,7 @@ class SpellClaimer(Claimer):
 
         # Construct text based on before/after
         balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = "//div[@class='css-5su1rb']"
+        balance_xpath = "//div[contains(@class, 'css-6e4jug')]"
 
         try:
             element = self.strip_html_and_non_numeric(self.monitor_element(balance_xpath, 15, "get balance"))
