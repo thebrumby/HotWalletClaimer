@@ -172,7 +172,7 @@ class SeedClaimer(Claimer):
         priority = max(self.settings['verboseLevel'], default_priority)
 
         # Construct the specific balance XPath
-        balance_xpath = "//img[@alt='token']/ancestor::div[1]/following-sibling::p[contains(@class, 'text-[32px]')]"
+        balance_xpath = "//div[contains(@class, 'css-6e4jug')]"
 
         try:
             element = self.monitor_element(balance_xpath, 15, "get balance")
