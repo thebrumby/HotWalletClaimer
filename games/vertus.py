@@ -52,6 +52,7 @@ class VertusClaimer(Claimer):
         super().__init__()
 
     def cipher_daily(self):
+        return
         cipher_xpath = "//div[contains(@class, 'btnLeft')]"
         self.move_and_click(cipher_xpath, 10, True, "move to the Cipher island link", self.step, "clickable")
         self.increase_step()
