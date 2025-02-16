@@ -138,6 +138,7 @@ class TabizooClaimer(Claimer):
         return 60
 
     def play_spins(self):
+        return
         xpath_spin_tab = "(//div[normalize-space(.) = 'Spin'])[1]"
         xpath_spin_button = "//img[contains(@src, 'spin_btn')]"
 
