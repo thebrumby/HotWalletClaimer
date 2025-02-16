@@ -123,7 +123,7 @@ class TabizooClaimer(Claimer):
             self.move_and_click(xpath, 10, True, "click the 'Home' tab", self.step, "clickable")
     
             # Try to upgrade the level if auto-upgrade is enabled.
-            self.attempt_upgrade(balance)
+            self.attempt_upgrade()
     
             if wait_time_minutes:
                 wait_time_minutes = self.apply_random_offset(wait_time_minutes)
