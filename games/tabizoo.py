@@ -77,7 +77,7 @@ class TabizooClaimer(Claimer):
         self.launch_iframe()
         self.increase_step()
 
-        # Check the Daily rewards.
+        # Check the initial screens.
         self.check_initial_screens()
         self.increase_step()
 
@@ -185,8 +185,8 @@ class TabizooClaimer(Claimer):
 
     def check_initial_screens(self):
         # First 'Next Step' button
-        xpath = "(//div[contains(text(), 'Next Step')])[1]"
-        if not self.move_and_click(xpath, 10, True, "click the 1st 'Next Step' button", self.step, "clickable"):
+        xpath = "//div[normalize-space(text())='Go']"
+        if not self.move_and_click(xpath, 10, True, "click the 'Go' button", self.step, "clickable"):
             self.output(f"Step {self.step} - You have already cleared the initial screens.", 2)
             self.increase_step()
             return True
