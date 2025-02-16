@@ -47,7 +47,7 @@ class TabizooAUClaimer(TabizooClaimer):
             if current_level:
                 self.output(f"Step {self.step} - Current level is: {current_level}", 2)
 
-            xpath = "//span[contains(text(), 'Lv.')]"
+            xpath = "//img[contains(@src, 'level_icon')]"
             if self.brute_click(xpath, 10, "click the 'Upgrade' tab"):
                 self.increase_step()
 
