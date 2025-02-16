@@ -138,6 +138,7 @@ class SpellClaimer(Claimer):
         return max(remaining_time,60)
 
     def daily_reward(self):
+        return
         # Switch to the Quests tab and check if Puzzle already solved
         xpath = "//p[contains(., 'Quests')]"
         success = self.move_and_click(xpath, 10, True, "click on 'Quests' tab", self.step, "clickable")
