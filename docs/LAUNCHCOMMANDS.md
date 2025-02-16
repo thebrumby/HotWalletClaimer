@@ -20,5 +20,5 @@
 | `./launch.sh seed`                   | Launch Seed App: [@seed_coin_bot](https://web.telegram.org/k/#@seed_coin_bot)                 | ❌ Needs Maintenance  |
 | `./launch.sh sidefans`               | Launch SideFans: [@sidekick_fans_bot](https://web.telegram.org/k/#@sidekick_fans_bot)        | ❌ Needs Maintenance  |
 | `./launch.sh simpletap`              | Launch SimpleTap: [@Simple_Tap_Bot](https://t.me/Simple_Tap_Bot/app?startapp=1719999344321)  | ❌ Needs Maintenance  |
-| `./launch.sh spell`                  | Launch Spell Wallet: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot)      | ❌ Needs Maintenance  |
+| `./launch.sh spell`                  | Launch Spell Wallet: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot)      | ✅ Claiming well  |
 | `./launch.sh tabizoo`                | Launch TabiZoo: [@tabizoobot](https://web.telegram.org/k/#@t                                  | ❌ Needs Maintenance  |
