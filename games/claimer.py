@@ -855,10 +855,14 @@ class Claimer:
 
         self.driver.get(self.url)
         WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+        self.increase_step()
 
         # Locate the game
         if self.start_app_menu_item:
             self.move_and_click(self.start_app_menu_item, 8, True, "open the game from the menu", self.step, "clickable")
+            self.increase_step()
+        else:
+            self.output(f"Step {self.step} - There was no menu link defined in 'self.start_app_menu_item'.", 3)
 
         # There is a very unlikely scenario that the chat might have been cleared.
         # In this case, the "START" button needs pressing to expose the chat window!
