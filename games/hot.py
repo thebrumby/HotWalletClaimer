@@ -55,9 +55,12 @@ class HotClaimer(Claimer):
             self.launch_iframe()
             self.increase_step()
 
-            xpath = "//button[p[contains(text(), 'Import account')]]"
-            target_element = self.move_and_click(xpath, 30, False, "find the HereWallet log-in button", "08", "visible")
-            self.driver.execute_script("arguments[0].click();", target_element)
+            xpath = "//button[p[normalize-space(text())='Import account']]"
+            self.move_and_click(xpath, 30, True, "find the HereWallet log-in button", "08", "clickable")
+            self.increase_step()
+
+            xpath = "//p[normalize-space(text())='Seed phrase or private key']"
+            self.move_and_click(xpath, 30, True, "find the seed phrase or private key element", "08", "clickable")
             self.increase_step()
 
             xpath = "//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea"
