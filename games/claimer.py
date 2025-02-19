@@ -855,14 +855,15 @@ class Claimer:
 
         self.driver.get(self.url)
         WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-        self.increase_step()
 
         # Locate the game
         if self.start_app_menu_item:
-            self.move_and_click(self.start_app_menu_item, 8, True, "open the game from the menu", self.step, "clickable")
-            self.increase_step()
+            if self.move_and_click(self.start_app_menu_item, 8, True, "open the game from the menu", self.step, "clickable"):
+                self.increase_step()
+            else:
+                self.output(f"Step {self.step} - Unable to locate the game in your message list. Open the game chat in your GUI and use '/start' to bump to the top of list.", 1)
         else:
-            self.output(f"Step {self.step} - There was no menu link defined in 'self.start_app_menu_item'.", 3)
+            self.output(f"Step {self.step} - There was no menu link defined in 'self.start_app_menu_item'.", 1)
 
         # There is a very unlikely scenario that the chat might have been cleared.
         # In this case, the "START" button needs pressing to expose the chat window!
