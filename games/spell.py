@@ -200,18 +200,27 @@ class SpellClaimer(Claimer):
     def get_balance(self, claimed=False):
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
-
+    
         # Dynamically adjust the log priority
         priority = max(self.settings['verboseLevel'], default_priority)
-
-        # Construct text based on before/after
-        balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
+    
+        balance_text = f'{prefix} BALANCE:'
         balance_xpath = "//div[contains(@class, 'css-6e4jug')]"
-
+    
         try:
-            element = self.strip_html_and_non_numeric(self.monitor_element(balance_xpath, 15, "get balance"))
-
-            # Check if element is not None and process the balance
+            # Attempt to retrieve the element using monitor_element
+            monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
+    
+            # If monitor_element returns False, reboot the iframe and try again
+            if monitor_result is False:
+                self.output(f"Step {self.step} - Monitor element returned false. Restarting driver...", priority)
+                self.quit_driver()
+                self.launch_iframe()
+                monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
+    
+            # Clean the result
+            element = self.strip_html_and_non_numeric(monitor_result)
+    
             if element:
                 balance_float = float(element)
                 self.output(f"Step {self.step} - {balance_text} {balance_float}", priority)
@@ -219,16 +228,16 @@ class SpellClaimer(Claimer):
             else:
                 self.output(f"Step {self.step} - {balance_text} not found or not numeric.", priority)
                 return None
-
+    
         except NoSuchElementException:
             self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
             return None
         except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)  # Provide error as string for logging
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
             return None
-
-        # Increment step function, assumed to handle next step logic
-        self.increase_step()
+        finally:
+            # Increment step, regardless of the outcome
+            self.increase_step()
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim"):
         try:
