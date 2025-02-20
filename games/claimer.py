@@ -1559,3 +1559,44 @@ class Claimer:
                 return int(modifiedTimer)
         # If no conditions are met, return the original unmodifiedTimer
         return unmodifiedTimer
+
+    def get_balance(self, claimed=False, balance_xpath):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+    
+        # Dynamically adjust the log priority
+        priority = max(self.settings['verboseLevel'], default_priority)
+    
+        balance_text = f'{prefix} BALANCE:'
+    
+        try:
+            # Attempt to retrieve the element using monitor_element
+            monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
+    
+            # If monitor_element returns False, reboot the iframe and try again
+            if monitor_result is False:
+                self.output(f"Step {self.step} - Monitor element returned false. Restarting driver...", priority)
+                self.quit_driver()
+                self.launch_iframe()
+                monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
+    
+            # Clean the result
+            element = self.strip_html_and_non_numeric(monitor_result)
+    
+            if element:
+                balance_float = float(element)
+                self.output(f"Step {self.step} - {balance_text} {balance_float}", priority)
+                return balance_float
+            else:
+                self.output(f"Step {self.step} - {balance_text} not found or not numeric.", priority)
+                return None
+    
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
+            return None
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
+            return None
+        finally:
+            # Increment step, regardless of the outcome
+            self.increase_step()
