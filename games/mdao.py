@@ -41,6 +41,7 @@ class MDAOClaimer(Claimer):
         self.forceRequestUserAgent = False
         self.start_app_xpath = "//div[contains(@class, 'new-message-bot-commands') and .//div[text()='Launch app']]"
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='ZAVOD']]"
+        self.balance_xpath = f"//div[@data-tooltip-id='balance']/div[1]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
@@ -84,7 +85,7 @@ class MDAOClaimer(Claimer):
 
         self.launch_iframe()
 
-        self.get_balance(False)
+        self.get_balance(self.balance_xpath, False)
 
         remaining_wait_time = self.get_wait_time(self.step, "pre-claim")
 
@@ -114,7 +115,7 @@ class MDAOClaimer(Claimer):
         button = self.move_and_click(xpath, 20, True, "confirm claim without watching video", self.step, "clickable")
         self.increase_step()
 
-        self.get_balance(True)
+        self.get_balance(self.balance_xpath, True)
         self.get_profit_hour(True)
 
         remaining_wait_time = return_minutes(self.get_wait_time(self.step, "post-claim"))
@@ -123,28 +124,6 @@ class MDAOClaimer(Claimer):
         self.random_offset = random.randint(max(self.settings['lowestClaimOffset'], 0), max(self.settings['highestClaimOffset'], 0))
         self.output(f"STATUS: Wait time is {remaining_wait_time} minutes and off-set of {self.random_offset}.", 1)
         return remaining_wait_time + self.random_offset
-
-    def get_balance(self, claimed=False):
-        prefix = "After" if claimed else "Before"
-        default_priority = 2 if claimed else 3
-
-        priority = max(self.settings['verboseLevel'], default_priority)
-
-        balance_text = f'{prefix} ZP BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//div[@data-tooltip-id='balance']/div[1]"
-        balance_part = None
-
-        try:
-            self.move_and_click(balance_xpath, 30, False, "look for ZP balance", self.step, "visible")
-            balance_part = self.strip_html_and_non_numeric(self.monitor_element(balance_xpath,15,"ZP points"))
-            self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
-
-        self.increase_step()
-        return balance_part  # Added return statement to ensure balance_part is returned
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
         for attempt in range(1, max_attempts + 1):
