@@ -39,7 +39,7 @@ class MDAOClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-        self.start_app_xpath = "//span[contains(text(), 'Play')]"
+        self.start_app_xpath = "//div[contains(@class, 'new-message-bot-commands') and .//div[text()='Launch app']]"
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='ZAVOD Wallet']]"
 
     def __init__(self):
