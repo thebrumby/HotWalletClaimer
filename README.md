@@ -1,6 +1,6 @@
 # Your automated assistant for Telegram mini-app games!
 
-Supporting 22 crypto-based games and growing monthly. Automate claims and track their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
+Supporting 12 crypto-based games Telegram mini-apps. Automate claims and track their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
 
 ---
 
