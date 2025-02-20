@@ -1464,8 +1464,13 @@ class Claimer:
         hours = int(time / 60)
         minutes = time % 60
         if hours > 0:
-            return f"{hours} hours and {minutes} minutes"
-        return f"{minutes} minutes"
+            hour_str = f"{hours} hour" if hours == 1 else f"{hours} hours"
+            if minutes > 0:
+                minute_str = f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
+                return f"{hour_str} and {minute_str}"
+            return hour_str
+        minute_str = f"{minutes} minute" if minutes == 1 else f"{minutes} minutes"
+        return minute_str
 
     def strip_html_and_non_numeric(self, text):
         """Remove HTML tags and keep only numeric characters and decimal points."""
