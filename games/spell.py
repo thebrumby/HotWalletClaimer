@@ -63,7 +63,8 @@ class SpellClaimer(Claimer):
             self.increase_step()
             
             # Get balance
-            self.get_balance(False)
+            balance_xpath = "//div[contains(@class, 'css-6e4jug')]"
+            self.get_balance(balance_xpath, False)
 
             # Final Housekeeping
             self.set_cookies()
@@ -84,7 +85,7 @@ class SpellClaimer(Claimer):
         self.launch_iframe()
 
         # Capture the balance before the claim
-        before_balance = self.get_balance(False, balance_xpath)
+        before_balance = self.get_balance(balance_xpath, False)
 
         # Brute force the claim to collect all '%' and then spin the wheel:
         xpath = "//div[contains(text(), '%')]"
@@ -102,7 +103,7 @@ class SpellClaimer(Claimer):
             self.increase_step()
 
             # Capture the balance after the claim
-            after_balance = self.get_balance(True, balance_xpath)
+            after_balance = self.get_balance(balance_xpath, True)
 
             # Calculate balance difference
             try:
