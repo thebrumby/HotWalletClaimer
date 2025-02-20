@@ -23,7 +23,8 @@ Our blog posts are **FREE** to read on [Patreon](https://www.patreon.com/Telegra
 
 Many popular Telegram apps require frequent logins to maximize rewards – this Python script uses Selenium to automate human-like interactions in a real browser session without injecting suspicious API calls. Designed to run on your local computer or VPS, the script monitors your account status within each app, claiming rewards at the optimal time. With an optional random timer offset, it further mimics natural behavior, minimizing risks and keeping your accounts active. It’s ideal for automating reward claims on Telegram mini-apps like **CryptoRank**, **HOT**, and **Iceberg**, offering convenience without constant manual involvement.
 
-For instance, when claiming **HOT** on Near Protocol or other Web3-enabled apps such as **Vertus** on TON and **TimeFarm** on Telegram, the script tracks when your reward storage is full and initiates claims automatically, reducing network load and transaction fees. Some projects, like **Oxygen** and **TimeFarm**, even feature auto-upgrade or auto-staking options to boost rewards beyond simple mining.  
+For instance, when claiming **HOT** on Near Protocol or other Web3-enabled apps such as **Vertus** on TON and **TimeFarm** on Telegram, the script tracks when your reward storage is full and initiates claims automatically, reducing network load and transaction fees. Some projects, like **Oxygen** and **TimeFarm**, even feature auto-upgrade or auto-staking options to boost rewards beyond simple mining.
+
 **WARNING:** Always do your own research, as some projects may ultimately deliver no real-world value and might try to upsell features for cold hard cash!
 
 <a name="videos"></a>
