@@ -77,13 +77,14 @@ class SpellClaimer(Claimer):
     def full_claim(self):
         # Initialize status_text
         status_text = ""
+        balance_xpath = "//div[contains(@class, 'css-6e4jug')]"
 
         # Launch iframe
         self.step = "100"
         self.launch_iframe()
 
         # Capture the balance before the claim
-        before_balance = self.get_balance(False)
+        before_balance = self.get_balance(False, balance_xpath)
 
         # Brute force the claim to collect all '%' and then spin the wheel:
         xpath = "//div[contains(text(), '%')]"
@@ -101,7 +102,7 @@ class SpellClaimer(Claimer):
             self.increase_step()
 
             # Capture the balance after the claim
-            after_balance = self.get_balance(True)
+            after_balance = self.get_balance(True, balance_xpath)
 
             # Calculate balance difference
             try:
@@ -196,48 +197,6 @@ class SpellClaimer(Claimer):
 
         self.output(f"Step {self.step} - Completed daily reward sequence successfully.", 2)
         return True
-
-    def get_balance(self, claimed=False):
-        prefix = "After" if claimed else "Before"
-        default_priority = 2 if claimed else 3
-    
-        # Dynamically adjust the log priority
-        priority = max(self.settings['verboseLevel'], default_priority)
-    
-        balance_text = f'{prefix} BALANCE:'
-        balance_xpath = "//div[contains(@class, 'css-6e4jug')]"
-    
-        try:
-            # Attempt to retrieve the element using monitor_element
-            monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
-    
-            # If monitor_element returns False, reboot the iframe and try again
-            if monitor_result is False:
-                self.output(f"Step {self.step} - Monitor element returned false. Restarting driver...", priority)
-                self.quit_driver()
-                self.launch_iframe()
-                monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
-    
-            # Clean the result
-            element = self.strip_html_and_non_numeric(monitor_result)
-    
-            if element:
-                balance_float = float(element)
-                self.output(f"Step {self.step} - {balance_text} {balance_float}", priority)
-                return balance_float
-            else:
-                self.output(f"Step {self.step} - {balance_text} not found or not numeric.", priority)
-                return None
-    
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
-            return None
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
-            return None
-        finally:
-            # Increment step, regardless of the outcome
-            self.increase_step()
 
     def get_wait_time(self, step_number="108", beforeAfter="pre-claim"):
         try:
