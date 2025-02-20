@@ -1560,7 +1560,7 @@ class Claimer:
         # If no conditions are met, return the original unmodifiedTimer
         return unmodifiedTimer
 
-    def get_balance(self, claimed=False, balance_xpath):
+    def get_balance(self, balance_xpath, claimed=False):
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
     
