@@ -1600,3 +1600,44 @@ class Claimer:
         finally:
             # Increment step, regardless of the outcome
             self.increase_step()
+
+    def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim"):
+        try:
+            self.output(f"Step {self.step} - Get the wait time...", 3)
+    
+            # Use the provided xpath to find the wait time element
+            wait_time_text = self.monitor_element(wait_time_xpath, 10, "claim timer")
+    
+            # Check if wait_time_text is not empty
+            if wait_time_text:
+                wait_time_text = wait_time_text.strip()
+                self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
+    
+                # Regex pattern to capture optional hours, minutes, and seconds
+                pattern = r"Next\s+claim\s+in\s*(?:(\d+)h)?\s*(?:(\d+)m)?\s*(?:(\d+)s)?"
+                match = re.search(pattern, wait_time_text)
+    
+                if match:
+                    hours = match.group(1)
+                    minutes = match.group(2)
+                    seconds = match.group(3)
+                    total_minutes = 0.0
+    
+                    if hours:
+                        total_minutes += int(hours) * 60
+                    if minutes:
+                        total_minutes += int(minutes)
+                    if seconds:
+                        total_minutes += int(seconds) / 60
+    
+                    self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
+                    return total_minutes if total_minutes > 0 else False
+                else:
+                    self.output(f"Step {self.step} - Wait time pattern not matched in text: '{wait_time_text}'", 3)
+                    return False
+            else:
+                self.output(f"Step {self.step} - No wait time text found.", 3)
+                return False
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {e}", 3)
+            return False
