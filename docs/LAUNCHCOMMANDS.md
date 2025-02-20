@@ -23,7 +23,7 @@
 | `./launch.sh tabizoo-autoupgrade` | **Auto-upgrade:** Spends your tokens to increase mining speed                                         | ❌ Needs Maintenance   |
 | `./launch.sh timefarm`            | Launch Time Farm on Telegram: [@TimeFarmCryptoBot](https://t.me/TimeFarmCryptoBot)                    | ✅ Claiming well       |
 | `./launch.sh timefarm-autostake`  | **Auto-stake:** Automatically locks your tokens for 3 days to gain 3% interest                        | ✅ Claiming well       |
-| `./launch.sh uxuy  `              | Launch UXUY: [@Vertus_App_bot](https://t.me/UXUYbot)                                                  | ✅ Claiming well       |
+| `./launch.sh uxuy  `              | Launch UXUY: [@UXUYbot](https://t.me/UXUYbot)                                                         | ✅ Claiming well       |
 | `./launch.sh vertus`              | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/Vertus_App_bot)                                  | ✅ Claiming well       |
 | `./launch.sh wave`                | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot)                                 | ❌ Needs Maintenance   |
 | `./launch.sh yupalka`             | Launch Yupalka: [@YupLand_bot](https://t.me/YupLand_bot)                                              | ✅ Claiming well       |
