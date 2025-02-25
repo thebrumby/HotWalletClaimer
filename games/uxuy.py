@@ -74,7 +74,7 @@ class UXUYlaimer(Claimer):
 
         self.launch_iframe()
         
-        xpath = "//div[.//span[normalize-space(text())='CLAIM']]"
+        xpath = "//div/span[contains(normalize-space(.), 'Claim')]"
         success = self.move_and_click(xpath, 15, True, "check if the claim is ready", self.step, "clickable")
         self.increase_step()
         
