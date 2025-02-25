@@ -42,7 +42,7 @@ class UXUYlaimer(Claimer):
         self.allow_early_claim = False
         self.start_app_xpath = "//div[contains(@class, 'new-message-bot-commands') and .//div[text()='Wallet']]"
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='UXUY Wallet']]"
-        self.balance_xpath = f"//div[contains(text(), 'UP') and contains(@class, 'text-[44px]')]"
+        self.balance_xpath = f"//div[div[normalize-space()='UXUY Point']]/div[contains(., ' UP')]"
         self.time_remaining_xpath = "//div[contains(text(), 'Next claim in')]"
 
     def __init__(self):
