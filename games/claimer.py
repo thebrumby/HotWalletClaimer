@@ -862,7 +862,6 @@ class Claimer:
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
             app_xapth = "//div[@class='user-title']//span[contains(@class, 'peer-title')]"
             try:
-                time.sleep(2)
                 wait = WebDriverWait(self.driver, 30)
                 wait.until(EC.visibility_of_element_located((By.XPATH, app_xapth)))
                 title = self.monitor_element(app_xapth, 10, "Get current page title")
