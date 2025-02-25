@@ -855,15 +855,24 @@ class Claimer:
 
         self.driver.get(self.url)
         WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-
-        # Locate the game
-        if self.start_app_menu_item:
-            if self.move_and_click(self.start_app_menu_item, 8, True, "open the game from the menu", self.step, "clickable"):
-                self.increase_step()
-            else:
-                self.output(f"Step {self.step} - Unable to locate the game in your message list. Open the game chat in your GUI and use '/start' to bump to the top of list.", 1)
-        else:
-            self.output(f"Step {self.step} - There was no menu link defined in 'self.start_app_menu_item'.", 1)
+        
+        for _ in range(3):
+            self.output(f"Step {self.step} - Loading: {str(self.url)}", 3)
+            self.driver.get(self.url)
+            WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            app_xapth = "//div[@class='user-title']//span[contains(@class, 'peer-title')]"
+            try:
+                time.sleep(2)
+                wait = WebDriverWait(self.driver, 30)
+                wait.until(EC.visibility_of_element_located((By.XPATH, app_xapth)))
+                title = self.monitor_element(app_xapth, 10, "Get current page title")
+                self.output(f"Step {self.step} - The current page title is: {title}", 3)
+                break
+            except TimeoutException:
+                self.output(f"Step {self.step} - not found title.", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information("App title check during telegram load", "check")
+                time.sleep(5)
 
         # There is a very unlikely scenario that the chat might have been cleared.
         # In this case, the "START" button needs pressing to expose the chat window!
