@@ -39,7 +39,8 @@ class PocketFiClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//span[contains(., 'Mining') or contains(., 'PocketFi')]"
-        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='PocketFi']]"
+        self.balance_xpath = f"//span[@class='text-2xl font-bold']"
+        self.time_remaining_xpath = "//p[contains(text(), 'burn in')]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
@@ -80,10 +81,10 @@ class PocketFiClaimer(Claimer):
         button = self.move_and_click(xpath, 20, True, "click 'Go to mining' (may not be present)", self.step, "clickable")
         self.increase_step()
 
-        self.get_balance(False)
+        self.get_balance(self.balance_xpath, False)
         self.increase_step()
 
-        wait_time_text_pre = self.get_wait_time("//p[contains(text(), 'burn in')]", "108", "pre-claim")
+        wait_time_text_pre = self.get_wait_time(self.time_remaining_xpath, "108", "pre-claim")
         if wait_time_text and isinstance(wait_time_text[0], int) and wait_time_text[0] > 330:
             self.output("STATUS: Looks like the pot isn't ready to claim yet. Let's come back in 30 minutes.", 1)
             return 30 
@@ -98,7 +99,7 @@ class PocketFiClaimer(Claimer):
             if button:
                 self.driver.execute_script("arguments[0].click();", button)
             time.sleep(5)
-            wait_time_text_mid = self.get_wait_time("//p[contains(text(), 'burn in')]", "108", "mid-claim")
+            wait_time_text_mid = self.get_wait_time(self.time_remaining_xpath, "108", "mid-claim")
             if wait_time_text and isinstance(wait_time_text[0], int) and wait_time_text[0] > 330:
                 self.output(f"Step {self.step} - Looks like we made the claim on attempt {attempts}.", 3)
                 clicked_it = True
@@ -108,7 +109,7 @@ class PocketFiClaimer(Claimer):
                 attempts += 1 
         self.increase_step()
         
-        self.get_balance(True)
+        self.get_balance(self.balance_xpath, True)
         self.increase_step()
 
         self.get_profit_hour(True)
@@ -119,29 +120,6 @@ class PocketFiClaimer(Claimer):
         else: 
             self.output(f"STATUS: Unable to click. CPU may not be fast enough. Let's come back in 1 hour.", 1)
         return 60
-
-    def get_balance(self, claimed=False):
-        prefix = "After" if claimed else "Before"
-        default_priority = 2 if claimed else 3
-
-        priority = max(self.settings['verboseLevel'], default_priority)
-
-        balance_text = f'{prefix} BALANCE:' if claimed else f'{prefix} BALANCE:'
-        balance_xpath = f"//span[@class='text-2xl font-bold']"
-
-        try:
-            first = self.move_and_click(balance_xpath, 30, False, "remove overlays", self.step, "visible")
-            element = self.monitor_element(balance_xpath, 15, "get balance")
-            if element:
-                balance_part = element
-                self.output(f"Step {self.step} - {balance_text} {balance_part}", priority)
-
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority) 
-
-        self.increase_step()
 
     def get_profit_hour(self, claimed=False):
         prefix = "After" if claimed else "Before"
