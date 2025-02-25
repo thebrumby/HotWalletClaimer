@@ -83,7 +83,7 @@ class PocketFiClaimer(Claimer):
         self.get_balance(False)
         self.increase_step()
 
-        wait_time_text = self.get_wait_time(self.step, "pre-claim") 
+        wait_time_text_pre = self.get_wait_time("//p[contains(text(), 'burn in')]", "108", "pre-claim")
         if wait_time_text and isinstance(wait_time_text[0], int) and wait_time_text[0] > 330:
             self.output("STATUS: Looks like the pot isn't ready to claim yet. Let's come back in 30 minutes.", 1)
             return 30 
@@ -98,7 +98,7 @@ class PocketFiClaimer(Claimer):
             if button:
                 self.driver.execute_script("arguments[0].click();", button)
             time.sleep(5)
-            wait_time_text = self.get_wait_time(self.step, "mid-claim") 
+            wait_time_text_mid = self.get_wait_time("//p[contains(text(), 'burn in')]", "108", "mid-claim")
             if wait_time_text and isinstance(wait_time_text[0], int) and wait_time_text[0] > 330:
                 self.output(f"Step {self.step} - Looks like we made the claim on attempt {attempts}.", 3)
                 clicked_it = True
@@ -142,32 +142,6 @@ class PocketFiClaimer(Claimer):
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority) 
 
         self.increase_step()
-
-    def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
-
-        def convert_to_minutes(time_str):
-            if re.match(r"^\d{2}:\d{2}:\d{2}$", time_str):
-                hours, minutes, seconds = map(int, time_str.split(':'))
-                total_minutes = hours * 60 + minutes + seconds / 60
-                return int(total_minutes)
-            return time_str
-
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.output(f"Step {self.step} - Get the wait time...", 3)
-                xpath = "//p[contains(text(), 'burn in')]"
-                elements = self.monitor_element(xpath, 10, "get claim timer")
-                if elements:
-                    match = re.search(r"burn in\s*(\d{2}:\d{2}:\d{2})", elements)
-                    if match:
-                        wait_time = match.group(1)
-                        results = [convert_to_minutes(wait_time)]
-                        return results
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return False
-
-        return False
 
     def get_profit_hour(self, claimed=False):
         prefix = "After" if claimed else "Before"
