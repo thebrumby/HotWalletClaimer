@@ -860,11 +860,11 @@ class Claimer:
             self.output(f"Step {self.step} - Loading: {str(self.url)}", 3)
             self.driver.get(self.url)
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            app_xapth = "//div[@class='user-title']//span[contains(@class, 'peer-title')]"
+            title_xapth = "//div[@class='user-title']//span[contains(@class, 'peer-title')][1]"
             try:
                 wait = WebDriverWait(self.driver, 30)
-                wait.until(EC.visibility_of_element_located((By.XPATH, app_xapth)))
-                title = self.monitor_element(app_xapth, 10, "Get current page title")
+                wait.until(EC.visibility_of_element_located((By.XPATH, title_xapth)))
+                title = self.monitor_element(title_xapth, 10, "Get current page title")
                 self.output(f"Step {self.step} - The current page title is: {title}", 3)
                 break
             except TimeoutException:
