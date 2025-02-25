@@ -1610,33 +1610,44 @@ class Claimer:
             # Increment step, regardless of the outcome
             self.increase_step()
 
-    def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim", custom_pattern=None):
+    def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim", custom_regex=None):
         try:
             self.output(f"Step {self.step} - Get the wait time...", 3)
             
-            # Use the provided xpath to find the wait time element
+            # Use the provided XPath to find the wait time element
             wait_time_text = self.monitor_element(wait_time_xpath, 10, "claim timer")
             
-            # Check if wait_time_text is not empty
             if wait_time_text:
                 wait_time_text = wait_time_text.strip()
                 self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
                 
-                # Use the custom regex if provided, else use the default pattern
-                if custom_pattern:
-                    pattern = custom_pattern
+                # Use the custom regex if provided
+                if custom_regex:
+                    pattern = custom_regex
                 else:
-                    # Default regex covers "burn in hh:mm(:ss)?" or "Next claim in hh:mm(:ss)?"
-                    pattern = r"(?:burn in|Next\s+claim\s+in)\s*(\d{1,2}):(\d{2})(?::(\d{2}))?"
+                    # Default pattern: try colon separated format first (hh:mm or hh:mm:ss)
+                    pattern = r"(\d{1,2}):(\d{2})(?::(\d{2}))?"
                 
                 match = re.search(pattern, wait_time_text)
                 
+                # If no match found and not using a custom regex, try an alternative format like "1h 30m 59s"
+                if not match and not custom_regex:
+                    pattern = r"(?:(\d+)\s*h(?:ours?)?)?\s*(?:(\d+)\s*m(?:inutes?)?)?\s*(?:(\d+)\s*s(?:econds?)?)?"
+                    match = re.search(pattern, wait_time_text)
+                
                 if match:
-                    hours = int(match.group(1))
-                    minutes = int(match.group(2))
-                    seconds = int(match.group(3)) if match.group(3) else 0
+                    hours = match.group(1)
+                    minutes = match.group(2)
+                    seconds = match.group(3)
+                    total_minutes = 0.0
                     
-                    total_minutes = hours * 60 + minutes + seconds / 60.0
+                    if hours:
+                        total_minutes += int(hours) * 60
+                    if minutes:
+                        total_minutes += int(minutes)
+                    if seconds:
+                        total_minutes += int(seconds) / 60
+                    
                     self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
                     return total_minutes if total_minutes > 0 else False
                 else:
