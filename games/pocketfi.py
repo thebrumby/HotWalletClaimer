@@ -76,9 +76,21 @@ class PocketFiClaimer(Claimer):
         self.launch_iframe()
         self.increase_step()
 
-        xpath = "//div[contains(@class, 'popup-footer') and contains(@class, 'is-visible')]//button[text()='Go to mining']"
-        button = self.move_and_click(xpath, 15, True, "click 'Go to mining' (may not be present)", self.step, "clickable")
-        self.increase_step()
+        button_texts = [
+            "What simple actions?",
+            "What else is here?",
+            "Start mining"
+        ]
+        
+        for text in button_texts:
+            xpath = f"//button[normalize-space(.)='{text}']"
+            button = self.move_and_click(xpath, 15, True, f"click '{text}'", self.step, "clickable")
+            if button:
+                self.increase_step()
+            else:
+                self.output(f"Step {self.step} - Button with text '{text}' not found. Aborting sequence.", 3)
+                break
+
 
         self.get_balance(self.balance_xpath, False)
         self.increase_step()
