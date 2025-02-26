@@ -195,7 +195,7 @@ class Claimer:
     def load_settings(self):
         default_settings = {
             "forceClaim": False,
-            "debugIsOn": False,
+            "debugIsOn": True,
             "hideSensitiveInput": True,
             "screenshotQRCode": True,
             "maxSessions": 1,
