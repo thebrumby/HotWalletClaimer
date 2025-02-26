@@ -39,6 +39,8 @@ class IcebergClaimer(Claimer):
         self.allow_early_claim = False
         self.start_app_xpath = "//span[text()='Play']"
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Iceberg']]"
+        self.balance_xpath = f"//p[normalize-space(text())='Your balance']/following-sibling::p"
+        self.time_remaining_xpath = "//p[contains(text(), 'Receive after')]/span"
 
     def __init__(self):
         self.settings_file = "variables.txt"
@@ -80,21 +82,13 @@ class IcebergClaimer(Claimer):
         xpath = "//button[div[text()='Start farming']]"
         self.brute_click(xpath, 20, "initial start farming (may not be present)")
 
-        pre_balance = self.get_balance(False)
+        pre_balance = self.get_balance(self.balance_xpath, False)
         self.increase_step()
 
-        remaining_time = self.get_wait_time()
+        remaining_time = self.get_wait_time(self.time_remaining_xpath, self.step, "pre-claim")
         if remaining_time:
-            try:
-                # Attempt to convert the remaining time to minutes
-                remaining_wait_time = self.convert_to_minutes(remaining_time)
-                remaining_wait_time = round(self.convert_to_minutes(remaining_time), 1)
-                remaining_wait_time = self.apply_random_offset(remaining_wait_time)
-                self.output(f"STATUS: Considering {remaining_time}, we'll sleep for {remaining_wait_time} minutes.", 2)
-                return max(60,remaining_wait_time)
-            except Exception as e:
-                # Handle unexpected errors during time calculation
-                self.output(f"Step {self.step} - Error during time calculation: {str(e)}", 2)
+            self.output(f"STATUS: Considering {remaining_time}, we'll sleep for {remaining_wait_time} minutes.", 2)
+            return min(30,remaining_wait_time)
 
         self.increase_step()
     
@@ -109,7 +103,7 @@ class IcebergClaimer(Claimer):
         self.increase_step()
 
         # And check the post-claim balance
-        post_balance = self.get_balance(True)
+        post_balance = self.get_balance(self.balance_xpath, True)
 
         try:
             if pre_balance is not None and post_balance is not None:
@@ -127,61 +121,14 @@ class IcebergClaimer(Claimer):
         self.increase_step()
 
         # Store the wait time for later
-        remaining_time = self.get_wait_time()
+        remaining_time = self.get_wait_time(self.time_remaining_xpath, self.step, "post-claim")
         
         # Finally, let's wrap up the time to come back
         if remaining_time:
-            try:
-                # Handle time calculations safely within try block
-                remaining_wait_time = self.convert_to_minutes(remaining_time)
-                remaining_wait_time = round(self.convert_to_minutes(remaining_time), 1)
-                remaining_wait_time = self.apply_random_offset(remaining_wait_time)
-                self.output(f"STATUS: {success_text}. Let's sleep for {remaining_wait_time} minutes.", 2)
-                return remaining_wait_time
-            except Exception as e:
-                self.output(f"Step {self.step} - Error during time calculation: {str(e)}", 2)
-
+            self.output(f"STATUS: {success_text}. Let's sleep for {remaining_wait_time} minutes.", 2)
+            return remaining_wait_time
+        # Finally, if we reached the end with no action, let's come back in an hour
         return 60
-        
-    def get_balance(self, claimed=False):
-        balance_xpath = "//p[normalize-space(text())='Your balance']/following-sibling::p"
-
-        try:
-            element = self.monitor_element(balance_xpath, 20, "get balance")
-            if element:
-                balance_part = self.strip_html_and_non_numeric(element)
-                self.output(f"Step {self.step} - {'After' if claimed else 'Before'} BALANCE: {balance_part}", 2 if claimed else 3)
-                return balance_part
-
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing balance was not found.", 2 if claimed else 3)
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", 2 if claimed else 3)
-
-        self.increase_step()
-
-    def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
-        wait_time_xpath = "//p[contains(text(), 'Receive after')]/span"
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.output(f"Step {self.step} - Get the wait time...", 3)
-                element = self.monitor_element(wait_time_xpath, 20, "get claim timer")
-                if element:
-                    return element
-                return False
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return False
-
-        return False
-
-    def convert_to_minutes(self, time_string):
-        try:
-            h, m, s = map(int, time_string.split(':'))
-            return h * 60 + m + s / 60
-        except ValueError:
-            self.output(f"Step {self.step} - Failed to parse time string {time_string}", 2)
-            return False
 
 def main():
     claimer = IcebergClaimer()
