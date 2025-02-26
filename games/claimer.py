@@ -1577,25 +1577,24 @@ class Claimer:
         priority = max(self.settings['verboseLevel'], default_priority)
     
         balance_text = f'{prefix} BALANCE:'
-    
+        
         try:
             # Attempt to retrieve the element using monitor_element
             monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
-            self.output(f"Step {self.step} - The element at {balance_xpath} returned {monitor_result}.", priority)
-
+            
             # If monitor_element returns False, reboot the iframe and try again
             if monitor_result is False:
                 self.output(f"Step {self.step} - Monitor element returned false. Restarting driver...", priority)
                 self.quit_driver()
                 self.launch_iframe()
                 monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
-    
+            
             # Clean the result
             element = self.strip_html_and_non_numeric(monitor_result)
-            self.output(f"Step {self.step} - Cleaned balance string: '{element}'", priority)
-    
+            
             if element:
-                balance_float = float(element)
+                # Convert to float and round to 3 decimal places
+                balance_float = round(float(element), 3)
                 self.output(f"Step {self.step} - {balance_text} {balance_float}", priority)
                 return balance_float
             else:
@@ -1611,31 +1610,23 @@ class Claimer:
         finally:
             # Increment step, regardless of the outcome
             self.increase_step()
-
-    def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim", custom_regex=None):
+    
+    
+    def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim"):
         try:
             self.output(f"Step {self.step} - Get the wait time...", 3)
             
-            # Use the provided XPath to find the wait time element
+            # Use the provided xpath to find the wait time element
             wait_time_text = self.monitor_element(wait_time_xpath, 10, "claim timer")
             
+            # Check if wait_time_text is not empty
             if wait_time_text:
                 wait_time_text = wait_time_text.strip()
                 self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
                 
-                # Use the custom regex if provided
-                if custom_regex:
-                    pattern = custom_regex
-                else:
-                    # Default pattern: try colon separated format first (hh:mm or hh:mm:ss)
-                    pattern = r"(\d{1,2}):(\d{2})(?::(\d{2}))?"
-                
+                # Regex pattern to capture optional hours, minutes, and seconds
+                pattern = r"Next\s+claim\s+in\s*(?:(\d+)h)?\s*(?:(\d+)m)?\s*(?:(\d+)s)?"
                 match = re.search(pattern, wait_time_text)
-                
-                # If no match found and not using a custom regex, try an alternative format like "1h 30m 59s"
-                if not match and not custom_regex:
-                    pattern = r"(?:(\d+)\s*h(?:ours?)?)?\s*(?:(\d+)\s*m(?:inutes?)?)?\s*(?:(\d+)\s*s(?:econds?)?)?"
-                    match = re.search(pattern, wait_time_text)
                 
                 if match:
                     hours = match.group(1)
@@ -1650,6 +1641,8 @@ class Claimer:
                     if seconds:
                         total_minutes += int(seconds) / 60
                     
+                    # Round to 1 decimal place
+                    total_minutes = round(total_minutes, 1)
                     self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
                     return total_minutes if total_minutes > 0 else False
                 else:
