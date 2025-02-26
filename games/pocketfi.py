@@ -101,8 +101,9 @@ class PocketFiClaimer(Claimer):
             return 60
         
         if wait_time_text_pre > 330:
-            self.output(f"STATUS: Looks like the pot isn't ready to claim yet. Let's come back in {wait_time_text_pre} minutes.", 1)
-            return wait_time_text_pre - 10
+            actual_wait_time = wait_time_text_pre - 10 
+            self.output(f"STATUS: Looks like the pot isn't ready to claim for {wait_time_text_pre} minutes. Let's come back in {actual_wait_time} minutes.", 1)
+            return actual_wait_time
         
         self.output(f"Step {self.step} - the pre-claim timer shows {wait_time_text_pre} minutes until burn.", 2)
         
