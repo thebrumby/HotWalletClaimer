@@ -1581,6 +1581,7 @@ class Claimer:
         
         try:
             # Attempt to retrieve the element using monitor_element
+            self.move_and_click(balance_xpath, 15, False, f"move to the balance", self.step, "visible")
             monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
             
             # If monitor_element returns False, reboot the iframe and try again
@@ -1617,6 +1618,7 @@ class Claimer:
             self.output(f"Step {self.step} - Get the wait time...", 3)
             
             # Use the provided xpath to find the wait time element
+            self.move_and_click(wait_time_xpath, 15, False, f"move to the wait timer", self.step, "visible")
             wait_time_text = self.monitor_element(wait_time_xpath, 30, "claim timer")
             
             if wait_time_text:
