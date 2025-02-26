@@ -860,7 +860,7 @@ class Claimer:
             self.output(f"Step {self.step} - Loading: {str(self.url)}", 3)
             self.driver.get(self.url)
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            title_xapth = "(//div[@class='user-title']//span[contains(@class, 'peer-title')])[1]"
+            title_xapth = "//div[@class='user-title']//span[contains(@class, 'peer-title')][1]"
             try:
                 wait = WebDriverWait(self.driver, 30)
                 wait.until(EC.visibility_of_element_located((By.XPATH, title_xapth)))
@@ -1176,78 +1176,97 @@ class Claimer:
             return False
 
     def brute_click(self, xpath, timeout=30, action_description=""):
-        # Ensure the element is present and scrolled into view
-        if not self.move_and_click(xpath, 10, False, "locate element for brute click", self.step, "clickable"):
+        # Use move_and_click to ensure the element is present and scrolled into view
+        if not self.move_and_click(xpath, 10, False, "locate the element to Brute Click", self.step, "clickable"):
             self.output(f"Step {self.step} - Element not found or not scrollable: {xpath}", 2)
             return False
-
+    
         try:
+            # Retrieve the element after ensuring it's scrolled into view
             element = self.driver.find_element(By.XPATH, xpath)
-            previous_element_id = element.get_attribute("id") or ""
-            self.output(f"Step {self.step} - Element located for brute click: {xpath}", 3)
-            if self.settings.get('debugIsOn'):
+            previous_element_id = element.get_attribute("id")
+            self.output(f"Step {self.step} - XPath found: {xpath}", 3)
+            if self.settings['debugIsOn']:
                 self.debug_information(f"BruteClick {action_description} - Element found", "info")
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_before_click_{self.step}.png")
         except Exception as e:
-            err_msg = f"Step {self.step} - Error locating element after scrolling during {action_description}: {e}"
-            self.output(err_msg, 3)
-            if self.settings.get('debugIsOn'):
+            if "has no size and location" in str(e):
+                error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
+            else:
+                error_message = f"Step {self.step} - An error occurred while locating element after scrolling during {action_description}: {e}"
+            self.output(error_message, 3)
+            if self.settings['debugIsOn']:
                 self.debug_information(f"BruteClick {action_description} fatal error: {str(e)}", "error")
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
             return False
-
-        # Scroll element into view and clear overlays once
+    
         try:
             actions = ActionChains(self.driver)
             actions.move_to_element(element).perform()
             overlays_cleared = self.clear_overlays(element, self.step)
             if overlays_cleared > 0:
-                self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s) before clicking", 3)
-                if self.settings.get('debugIsOn'):
+                self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s) before attempting click...", 3)
+                if self.settings['debugIsOn']:
                     self.debug_information(f"BruteClick {action_description} - Overlays cleared", "info")
-        except Exception as e:
-            self.output(f"Step {self.step} - Error during scrolling/clearing overlays: {e}", 3)
-
-        click_attempts = 0
-        start_time = time.time()
-        unique_ids = {previous_element_id}
-        
-        while time.time() - start_time < timeout:
-            click_attempts += 1
-            try:
-                # Try clicking via ActionChains first
-                actions.click(element).perform()
-            except ElementClickInterceptedException:
-                self.output(f"Step {self.step} - Click intercepted, attempting JS click...", 3)
-                if self.settings.get('debugIsOn'):
-                    self.debug_information(f"BruteClick {action_description} click intercepted", "warning")
+    
+            unique_ids = {previous_element_id}
+            click_attempts = 0
+            start_time = time.time()
+    
+            while time.time() - start_time < timeout:
+                click_attempts += 1
+    
                 try:
-                    self.driver.execute_script("arguments[0].click();", element)
-                except Exception as e_js:
-                    self.output(f"Step {self.step} - JS click failed: {e_js}", 3)
-            except Exception as click_e:
-                self.output(f"Step {self.step} - Error during click attempt: {click_e}", 3)
-
-            # Re-locate the element to check if it's been removed
-            try:
-                element = self.driver.find_element(By.XPATH, xpath)
-                current_element_id = element.get_attribute("id") or ""
-                if current_element_id != previous_element_id:
-                    unique_ids.add(current_element_id)
-                    self.output(f"Step {self.step} - New element detected. Unique count: {len(unique_ids)}", 3)
-                previous_element_id = current_element_id
-            except (NoSuchElementException, StaleElementReferenceException):
-                self.output(f"Step {self.step} - Click successful after {click_attempts} attempts; element no longer exists.", 2)
-                if self.settings.get('debugIsOn'):
-                    self.debug_information(f"BruteClick {action_description} successful after {click_attempts} attempts", "success")
-                    self.driver.save_screenshot(f"debug_screenshots/BruteClick_success_{self.step}.png")
-                return True
-
-        self.output(f"Step {self.step} - Brute click timed out after {click_attempts} attempts.", 2)
-        if self.settings.get('debugIsOn'):
-            self.debug_information(f"BruteClick {action_description} timed out after {click_attempts} attempts", "error")
-            self.driver.save_screenshot(f"debug_screenshots/BruteClick_timeout_end_{self.step}.png")
-        return False
+                    # Try clicking with ActionChains first
+                    actions.click(element).perform()
+                    # Fallback to JS click if necessary
+                    try:
+                        self.driver.execute_script("arguments[0].click();", element)
+                        click_attempts += 1
+                    except Exception as e_js:
+                        if "has no size and location" in str(e_js):
+                            self.output(f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized.", 1)
+                            if self.settings['debugIsOn']:
+                                self.debug_information(f"BruteClick {action_description} - Element not sized properly: {str(e_js)}", "error")
+                            return False
+                        if self.settings['debugIsOn']:
+                            self.debug_information(f"BruteClick {action_description} JS click failed: {str(e_js)}", "warning")
+                except ElementClickInterceptedException:
+                    self.output(f"Step {self.step} - Element click intercepted, attempting JS click...", 3)
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"BruteClick {action_description} click intercepted", "warning")
+    
+                # Re-locate the element to verify if it still exists or has been replaced
+                try:
+                    element = self.driver.find_element(By.XPATH, xpath)
+                    current_element_id = element.get_attribute("id")
+                    if current_element_id != previous_element_id:
+                        unique_ids.add(current_element_id)
+                        self.output(f"Step {self.step} - New element detected. Total unique IDs encountered: {len(unique_ids)}", 3)
+                    previous_element_id = current_element_id
+                except (NoSuchElementException, StaleElementReferenceException):
+                    self.output(f"Step {self.step} - Click successful: Element no longer exists after {click_attempts} attempts.", 2)
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"BruteClick {action_description} successful after {click_attempts} attempts", "success")
+                        self.driver.save_screenshot(f"debug_screenshots/BruteClick_success_{self.step}.png")
+                    return True
+    
+            self.output(f"Step {self.step} - Brute click timed out after {click_attempts} attempts.", 2)
+            if self.settings['debugIsOn']:
+                self.debug_information(f"BruteClick {action_description} timed out after {click_attempts} attempts", "error")
+                self.driver.save_screenshot(f"debug_screenshots/BruteClick_timeout_end_{self.step}.png")
+            return False
+    
+        except Exception as e:
+            if "has no size and location" in str(e):
+                error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
+            else:
+                error_message = f"Step {self.step} - An error occurred during {action_description}: {e}"
+            self.output(error_message, 3)
+            if self.settings['debugIsOn']:
+                self.debug_information(f"BruteClick {action_description} fatal error: {str(e)}", "error")
+                self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
+            return False
 
     def clear_overlays(self, target_element, step):
         try:
@@ -1276,45 +1295,28 @@ class Claimer:
             return False
 
     def monitor_element(self, xpath, timeout=8, action_description="no description"):
-        try:
-            if self.settings.get('debugIsOn'):
-                self.debug_information(f"MonElem {action_description}", "check")
-                
-            # Use WebDriverWait to poll for the element's presence
-            wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5, 
-                                  ignored_exceptions=[StaleElementReferenceException])
-            elements = wait.until(lambda d: d.find_elements(By.XPATH, xpath))
-            
-            # Log the found elements count
-            self.output(f"Step {self.step} - Found {len(elements)} elements with XPath: {xpath} for {action_description}", 3)
-            
-            # Extract text from elements
-            texts = [element.text.replace('\n', ' ').replace('\r', ' ').strip() 
-                     for element in elements if element.text.strip()]
-            if texts:
-                return ' '.join(texts)
-            else:
-                self.output(f"Step {self.step} - No text found for {action_description} in monitor_element. Attempting fallback...", 3)
-                # Fallback: Use JS to get textContent
-                try:
-                    elements = self.driver.find_elements(By.XPATH, xpath)
-                    fallback_texts = []
-                    for el in elements:
-                        text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
-                        if text:
-                            fallback_texts.append(text)
-                    if fallback_texts:
-                        return " ".join(fallback_texts)
-                    else:
-                        return False
-                except Exception as fallback_e:
-                    self.output(f"Step {self.step} - Fallback method in monitor_element failed: {fallback_e}", 3)
-                    return False
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred in monitor_element ({action_description}): {e}", 3)
-            if self.settings.get('debugIsOn'):
-                self.debug_information(f"MonElem failed on {action_description}", "error")
-            return False
+        end_time = time.time() + timeout
+        first_time = True
+        if self.settings['debugIsOn']:
+            self.debug_information(f"MonElem {action_description}","check")
+        while time.time() < end_time:
+            try:
+                elements = self.driver.find_elements(By.XPATH, xpath)
+                if first_time:
+                    self.output(f"Step {self.step} - Found {len(elements)} elements with XPath: {xpath} for {action_description}", 3)
+                    first_time = False
+
+                texts = [element.text.replace('\n', ' ').replace('\r', ' ').strip() for element in elements if element.text.strip()]
+                if texts:
+                    return ' '.join(texts)
+            except (StaleElementReferenceException, TimeoutException, NoSuchElementException):
+                pass
+            except Exception as e:
+                self.output(f"An error occurred: {e}", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"MonElem failed on {action_description}","error")
+                return False
+        return False
 
     def debug_information(self, action_description, error_type="error"):
         # Use only the first line to avoid including a full stacktrace
@@ -1567,131 +1569,131 @@ class Claimer:
         # If no conditions are met, return the original unmodifiedTimer
         return unmodifiedTimer
 
-def get_balance(self, balance_xpath, claimed=False):
-    prefix = "After" if claimed else "Before"
-    default_priority = 2 if claimed else 3
-    priority = max(self.settings['verboseLevel'], default_priority)
-    balance_text = f'{prefix} BALANCE:'
-    
-    try:
-        # Move to the balance element
-        self.move_and_click(balance_xpath, 15, False, "move to the balance", self.step, "visible")
-        monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
+    def get_balance(self, balance_xpath, claimed=False):
+        prefix = "After" if claimed else "Before"
+        default_priority = 2 if claimed else 3
+        priority = max(self.settings['verboseLevel'], default_priority)
+        balance_text = f'{prefix} BALANCE:'
         
-        # Fallback if nothing was captured
-        if not monitor_result:
-            self.output(f"Step {self.step} - monitor_element returned nothing. Attempting fallback method for balance...", priority)
-            try:
-                elements = self.driver.find_elements(By.XPATH, balance_xpath)
-                fallback_texts = []
-                for el in elements:
-                    text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
-                    if text:
-                        fallback_texts.append(text)
-                if fallback_texts:
-                    monitor_result = " ".join(fallback_texts)
-                else:
-                    monitor_result = False
-            except Exception as fallback_e:
-                self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", priority)
-                monitor_result = False
-
-        if monitor_result is False:
-            self.output(f"Step {self.step} - No balance text found. Restarting driver...", priority)
-            self.quit_driver()
-            self.launch_iframe()
+        try:
+            # Move to the balance element
+            self.move_and_click(balance_xpath, 15, False, "move to the balance", self.step, "visible")
             monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
-        
-        # Clean and convert the result
-        element = self.strip_html_and_non_numeric(monitor_result)
-        if element:
-            balance_float = round(float(element), 3)
-            self.output(f"Step {self.step} - {balance_text} {balance_float}", priority)
-            return balance_float
-        else:
-            self.output(f"Step {self.step} - {balance_text} not found or not numeric.", priority)
-            return None
-    except NoSuchElementException:
-        self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
-        return None
-    except Exception as e:
-        self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
-        return None
-    finally:
-        self.increase_step()
+            
+            # Fallback if nothing was captured
+            if not monitor_result:
+                self.output(f"Step {self.step} - monitor_element returned nothing. Attempting fallback method for balance...", priority)
+                try:
+                    elements = self.driver.find_elements(By.XPATH, balance_xpath)
+                    fallback_texts = []
+                    for el in elements:
+                        text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
+                        if text:
+                            fallback_texts.append(text)
+                    if fallback_texts:
+                        monitor_result = " ".join(fallback_texts)
+                    else:
+                        monitor_result = False
+                except Exception as fallback_e:
+                    self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", priority)
+                    monitor_result = False
 
-def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim"):
-    try:
-        self.output(f"Step {self.step} - Get the wait time...", 3)
-        
-        # Move to the wait timer element
-        self.move_and_click(wait_time_xpath, 15, False, "move to the wait timer", self.step, "visible")
-        wait_time_text = self.monitor_element(wait_time_xpath, 30, "claim timer")
-        
-        # Fallback if nothing was captured
-        if not wait_time_text:
-            self.output(f"Step {self.step} - monitor_element returned nothing. Attempting fallback method for wait time...", 3)
-            try:
-                elements = self.driver.find_elements(By.XPATH, wait_time_xpath)
-                fallback_texts = []
-                for el in elements:
-                    text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
-                    if text:
-                        fallback_texts.append(text)
-                if fallback_texts:
-                    wait_time_text = " ".join(fallback_texts)
-                else:
-                    wait_time_text = False
-            except Exception as fallback_e:
-                self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", 3)
-                wait_time_text = False
-
-        if wait_time_text:
-            wait_time_text = wait_time_text.strip()
-            self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
+            if monitor_result is False:
+                self.output(f"Step {self.step} - No balance text found. Restarting driver...", priority)
+                self.quit_driver()
+                self.launch_iframe()
+                monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
             
-            # Define patterns for matching time
-            patterns = [
-                r"(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
-                r"(\d{1,2}):(\d{2}):(\d{2})",
-                r"(\d{1,2}):(\d{2})"
-            ]
-            
-            total_minutes = None
-            for pattern in patterns:
-                match = re.search(pattern, wait_time_text)
-                if match:
-                    groups = match.groups()
-                    total_minutes = 0.0
-                    if len(groups) == 3:
-                        hours, minutes, seconds = groups
-                        if hours:
-                            total_minutes += int(hours) * 60
-                        if minutes:
-                            total_minutes += int(minutes)
-                        if seconds:
-                            total_minutes += int(seconds) / 60.0
-                        if not any([hours, minutes, seconds]):
-                            total_minutes = None
-                    elif len(groups) == 2:
-                        hours, minutes = groups
-                        if hours:
-                            total_minutes += int(hours) * 60
-                        if minutes:
-                            total_minutes += int(minutes)
-                    if total_minutes is not None:
-                        break
-            
-            if total_minutes is not None and total_minutes > 0:
-                total_minutes = round(total_minutes, 1)
-                self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
-                return total_minutes
+            # Clean and convert the result
+            element = self.strip_html_and_non_numeric(monitor_result)
+            if element:
+                balance_float = round(float(element), 3)
+                self.output(f"Step {self.step} - {balance_text} {balance_float}", priority)
+                return balance_float
             else:
-                self.output(f"Step {self.step} - Wait time pattern not matched in text: '{wait_time_text}'", 3)
+                self.output(f"Step {self.step} - {balance_text} not found or not numeric.", priority)
+                return None
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
+            return None
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
+            return None
+        finally:
+            self.increase_step()
+
+    def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim"):
+        try:
+            self.output(f"Step {self.step} - Get the wait time...", 3)
+            
+            # Move to the wait timer element
+            self.move_and_click(wait_time_xpath, 15, False, "move to the wait timer", self.step, "visible")
+            wait_time_text = self.monitor_element(wait_time_xpath, 30, "claim timer")
+            
+            # Fallback if nothing was captured
+            if not wait_time_text:
+                self.output(f"Step {self.step} - monitor_element returned nothing. Attempting fallback method for wait time...", 3)
+                try:
+                    elements = self.driver.find_elements(By.XPATH, wait_time_xpath)
+                    fallback_texts = []
+                    for el in elements:
+                        text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
+                        if text:
+                            fallback_texts.append(text)
+                    if fallback_texts:
+                        wait_time_text = " ".join(fallback_texts)
+                    else:
+                        wait_time_text = False
+                except Exception as fallback_e:
+                    self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", 3)
+                    wait_time_text = False
+
+            if wait_time_text:
+                wait_time_text = wait_time_text.strip()
+                self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
+                
+                # Define patterns for matching time
+                patterns = [
+                    r"(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
+                    r"(\d{1,2}):(\d{2}):(\d{2})",
+                    r"(\d{1,2}):(\d{2})"
+                ]
+                
+                total_minutes = None
+                for pattern in patterns:
+                    match = re.search(pattern, wait_time_text)
+                    if match:
+                        groups = match.groups()
+                        total_minutes = 0.0
+                        if len(groups) == 3:
+                            hours, minutes, seconds = groups
+                            if hours:
+                                total_minutes += int(hours) * 60
+                            if minutes:
+                                total_minutes += int(minutes)
+                            if seconds:
+                                total_minutes += int(seconds) / 60.0
+                            if not any([hours, minutes, seconds]):
+                                total_minutes = None
+                        elif len(groups) == 2:
+                            hours, minutes = groups
+                            if hours:
+                                total_minutes += int(hours) * 60
+                            if minutes:
+                                total_minutes += int(minutes)
+                        if total_minutes is not None:
+                            break
+                
+                if total_minutes is not None and total_minutes > 0:
+                    total_minutes = round(total_minutes, 1)
+                    self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
+                    return total_minutes
+                else:
+                    self.output(f"Step {self.step} - Wait time pattern not matched in text: '{wait_time_text}'", 3)
+                    return False
+            else:
+                self.output(f"Step {self.step} - No wait time text found.", 3)
                 return False
-        else:
-            self.output(f"Step {self.step} - No wait time text found.", 3)
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
-    except Exception as e:
-        self.output(f"Step {self.step} - An error occurred: {e}", 3)
-        return False
