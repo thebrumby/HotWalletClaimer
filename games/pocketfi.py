@@ -113,13 +113,30 @@ class PocketFiClaimer(Claimer):
         
         xpath = "//div[@class='absolute flex items-center justify-center flex-col text-white']/span[contains(text(), 'claim')]"
         clicked_it = False
-        button = self.move_and_click(xpath, 15, True, f"click claim", self.step, "clickable")
+        button = self.move_and_click(xpath, 15, True, "click claim", self.step, "clickable")
         possible_click = False
+        
+        # Fallback method if move_and_click did not return a button
+        if not button:
+            self.output(f"Step {self.step} - No button found to click. Attempting fallback for claim button...", 3)
+            try:
+                elements = self.driver.find_elements(By.XPATH, xpath)
+                if elements:
+                    for el in elements:
+                        try:
+                            self.driver.execute_script("arguments[0].click();", el)
+                            button = el  # Use this element as the successful click target
+                            break
+                        except Exception as e:
+                            self.output(f"Step {self.step} - Fallback click failed: {e}", 3)
+            except Exception as fallback_e:
+                self.output(f"Step {self.step} - Fallback method encountered an error: {fallback_e}", 3)
+        
         if button:
             self.output(f"Step {self.step} - We may have clicked, let's confirm with the timer.", 3)
             possible_click = True
         else:
-            self.output(f"Step {self.step} - No button found to click.", 3)
+            self.output(f"Step {self.step} - No button found even after fallback method.", 3)
         
         time.sleep(5)
         wait_time_text_mid = self.get_wait_time(self.time_remaining_xpath, "108", "mid-claim")
