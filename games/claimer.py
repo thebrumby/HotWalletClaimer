@@ -1295,28 +1295,29 @@ class Claimer:
             return False
 
     def monitor_element(self, xpath, timeout=8, action_description="no description"):
-        end_time = time.time() + timeout
-        first_time = True
-        if self.settings['debugIsOn']:
-            self.debug_information(f"MonElem {action_description}","check")
-        while time.time() < end_time:
-            try:
-                elements = self.driver.find_elements(By.XPATH, xpath)
-                if first_time:
-                    self.output(f"Step {self.step} - Found {len(elements)} elements with XPath: {xpath} for {action_description}", 3)
-                    first_time = False
-
-                texts = [element.text.replace('\n', ' ').replace('\r', ' ').strip() for element in elements if element.text.strip()]
-                if texts:
-                    return ' '.join(texts)
-            except (StaleElementReferenceException, TimeoutException, NoSuchElementException):
-                pass
-            except Exception as e:
-                self.output(f"An error occurred: {e}", 3)
-                if self.settings['debugIsOn']:
-                    self.debug_information(f"MonElem failed on {action_description}","error")
+        try:
+            if self.settings.get('debugIsOn'):
+                self.debug_information(f"MonElem {action_description}", "check")
+                
+            # Use WebDriverWait to poll for the element's presence
+            wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5, ignored_exceptions=[StaleElementReferenceException])
+            elements = wait.until(lambda d: d.find_elements(By.XPATH, xpath))
+            
+            # Log the found elements count once
+            self.output(f"Step {self.step} - Found {len(elements)} elements with XPath: {xpath} for {action_description}", 3)
+            
+            # Gather text from elements, clean it up, and join the texts
+            texts = [element.text.replace('\n', ' ').replace('\r', ' ').strip() for element in elements if element.text.strip()]
+            if texts:
+                return ' '.join(texts)
+            else:
+                self.output(f"Step {self.step} - No non-empty text found for {action_description}", 3)
                 return False
-        return False
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred in monitor_element ({action_description}): {e}", 3)
+            if self.settings.get('debugIsOn'):
+                self.debug_information(f"MonElem failed on {action_description}", "error")
+            return False
 
     def debug_information(self, action_description, error_type="error"):
         # Use only the first line to avoid including a full stacktrace
