@@ -110,6 +110,7 @@ class PocketFiClaimer(Claimer):
         xpath = "//div[@class='absolute flex items-center justify-center flex-col text-white']/span[contains(text(), 'claim')]"
         clicked_it = False
         button = self.brute_click(xpath, 30, "click claim")
+        possible_click = False
         if button:
             self.output(f"Step {self.step} - We may have clicked, let's confirm with the timer.", 3)
             possible_click = True
