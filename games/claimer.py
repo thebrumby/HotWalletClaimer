@@ -1577,7 +1577,7 @@ class Claimer:
         
         try:
             # Move to the balance element
-            # self.move_and_click(balance_xpath, 15, False, "move to the balance", self.step, "visible")
+            # self.move_and_click(balance_xpath, 20, False, "move to the balance", self.step, "visible")
             monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
             
             # Fallback if nothing was captured
@@ -1602,7 +1602,7 @@ class Claimer:
                 self.output(f"Step {self.step} - No balance text found. Restarting driver...", priority)
                 self.quit_driver()
                 self.launch_iframe()
-                monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
+                monitor_result = self.monitor_element(balance_xpath, 20, "get balance")
             
             # Clean and convert the result
             element = self.strip_html_and_non_numeric(monitor_result)
@@ -1627,7 +1627,7 @@ class Claimer:
             self.output(f"Step {self.step} - Get the wait time...", 3)
             
             # Move to the wait timer element and capture its text
-            wait_time_text = self.monitor_element(wait_time_xpath, 15, "claim timer")
+            wait_time_text = self.monitor_element(wait_time_xpath, 20, "claim timer")
             
             # Fallback if nothing was captured
             if not wait_time_text:
