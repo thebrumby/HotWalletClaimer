@@ -39,7 +39,7 @@ class PocketFiClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.start_app_xpath = "//div[contains(@class, 'reply-markup-row')]//span[contains(., 'Mining') or contains(., 'PocketFi')]"
-        self.balance_xpath = f"//span[@class='text-2xl font-bold']"
+        self.balance_xpath = f"//p[contains(., 'Total $SWITCH mined')]/following-sibling::div[1][.//img[contains(@src, '/switch.svg')]]/span"
         self.time_remaining_xpath = "//p[contains(text(), 'burn in')]"
 
     def __init__(self):
