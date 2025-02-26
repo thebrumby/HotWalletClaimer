@@ -76,6 +76,10 @@ class UXUYlaimer(Claimer):
         xpath = "//div/span[contains(normalize-space(.), 'Claim')]"
         success = self.move_and_click(xpath, 15, True, "check if the claim is ready", self.step, "clickable")
         self.increase_step()
+        if success:
+            xpath = "//div/span[contains(normalize-space(.), 'Claim')]"
+            self.move_and_click(xpath, 15, True, "check if the claim is ready", self.step, "clickable")
+            self.increase_step()
         
         xpath = "//div[normalize-space(text())='UXUY Point']/following-sibling::div[1]"
         self.move_and_click(xpath, 15, True, "move to the farming page", self.step, "clickable")
