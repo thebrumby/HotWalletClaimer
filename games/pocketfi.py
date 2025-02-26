@@ -105,7 +105,7 @@ class PocketFiClaimer(Claimer):
             return 60
         
         if wait_time_text_pre > 330:
-            actual_wait_time = wait_time_text_pre - 10 
+            actual_wait_time = wait_time_text_pre - 30 
             self.output(f"STATUS: Looks like the pot isn't ready to claim for {wait_time_text_pre} minutes. Let's come back in {actual_wait_time} minutes.", 1)
             return actual_wait_time
         
@@ -157,7 +157,7 @@ class PocketFiClaimer(Claimer):
         self.get_profit_hour(True)
         
         if wait_time_text_mid:
-            next_claim = max(5, wait_time_text_mid-10) 
+            next_claim = max(5, wait_time_text_mid-30) 
 
         if clicked_it and next_claim:
             self.output(f"STATUS: Successfully claimed. Mine again in {next_claim} minutes.", 1)
