@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import sys
@@ -42,7 +41,7 @@ class UXUYlaimer(Claimer):
         self.allow_early_claim = False
         self.start_app_xpath = "//div[contains(@class, 'new-message-bot-commands') and .//div[text()='Wallet']]"
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='UXUY Wallet']]"
-        self.balance_xpath = f"//div[div[normalize-space()='UXUY Point']]/div[contains(., ' UP')]"
+        self.balance_xpath = f"//div[contains(text(), 'UP') and contains(@class, 'text-[44px]')]"
         self.time_remaining_xpath = "//div[contains(text(), 'Next claim in')]"
 
     def __init__(self):
@@ -74,7 +73,7 @@ class UXUYlaimer(Claimer):
 
         self.launch_iframe()
         
-        xpath = "//div/span[contains(normalize-space(.), 'Claim')]"
+        xpath = "//div[.//span[normalize-space(text())='CLAIM']]"
         success = self.move_and_click(xpath, 15, True, "check if the claim is ready", self.step, "clickable")
         self.increase_step()
         
