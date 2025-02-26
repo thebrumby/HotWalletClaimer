@@ -1654,7 +1654,7 @@ class Claimer:
                 
                 # Define patterns for matching time
                 patterns = [
-                    r"(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
+                    r"(?=.*\d)(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
                     r"(\d{1,2}):(\d{2}):(\d{2})",
                     r"(\d{1,2}):(\d{2})"
                 ]
