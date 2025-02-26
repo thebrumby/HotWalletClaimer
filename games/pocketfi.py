@@ -84,7 +84,7 @@ class PocketFiClaimer(Claimer):
         
         for text in button_texts:
             xpath = f"//button[normalize-space(.)='{text}']"
-            button = self.move_and_click(xpath, 15, True, f"click '{text}'", self.step, "clickable")
+            button = self.move_and_click(xpath, 15, True, f"click '{text}' button", self.step, "clickable")
             if button:
                 self.increase_step()
             else:
@@ -94,6 +94,11 @@ class PocketFiClaimer(Claimer):
 
         self.get_balance(self.balance_xpath, False)
         self.increase_step()
+        
+        xpath = f"//button[descendant::*[local-name()='svg' and @width='12' and @height='12']]"
+        self.move_and_click(xpath, 15, True, f"close the pop-up (may not be present)", self.step, "clickable")
+        self.increase_step()
+
 
         wait_time_text_pre = self.get_wait_time(self.time_remaining_xpath, "108", "pre-claim")
         if wait_time_text_pre is False:
