@@ -1580,14 +1580,14 @@ class Claimer:
         
         try:
             # Attempt to retrieve the element using monitor_element
-            monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
+            monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
             
             # If monitor_element returns False, reboot the iframe and try again
             if monitor_result is False:
                 self.output(f"Step {self.step} - Monitor element returned false. Restarting driver...", priority)
                 self.quit_driver()
                 self.launch_iframe()
-                monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
+                monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
             
             # Clean the result
             element = self.strip_html_and_non_numeric(monitor_result)
@@ -1616,7 +1616,7 @@ class Claimer:
             self.output(f"Step {self.step} - Get the wait time...", 3)
             
             # Use the provided xpath to find the wait time element
-            wait_time_text = self.monitor_element(wait_time_xpath, 10, "claim timer")
+            wait_time_text = self.monitor_element(wait_time_xpath, 30, "claim timer")
             
             if wait_time_text:
                 wait_time_text = wait_time_text.strip()
