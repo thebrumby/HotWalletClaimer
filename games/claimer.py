@@ -1626,8 +1626,7 @@ class Claimer:
         try:
             self.output(f"Step {self.step} - Get the wait time...", 3)
             
-            # Move to the wait timer element
-            # self.move_and_click(wait_time_xpath, 15, False, "move to the wait timer", self.step, "visible")
+            # Move to the wait timer element and capture its text
             wait_time_text = self.monitor_element(wait_time_xpath, 15, "claim timer")
             
             # Fallback if nothing was captured
@@ -1647,16 +1646,19 @@ class Claimer:
                 except Exception as fallback_e:
                     self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", 3)
                     wait_time_text = False
-
+    
             if wait_time_text:
                 wait_time_text = wait_time_text.strip()
                 self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
                 
-                # Define patterns for matching time
+                # Updated patterns with non-greedy preceding match to ignore extra text
                 patterns = [
-                    r"(?=.*\d)(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
-                    r"(\d{1,2}):(\d{2}):(\d{2})",
-                    r"(\d{1,2}):(\d{2})"
+                    # Pattern for "1h 15m 30s" (or "30d"), updated with .*? to skip any prefix text
+                    r".*?(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
+                    # Pattern for "hh:mm:ss"
+                    r".*?(\d{1,2}):(\d{2}):(\d{2})",
+                    # Pattern for "hh:mm"
+                    r".*?(\d{1,2}):(\d{2})"
                 ]
                 
                 total_minutes = None
