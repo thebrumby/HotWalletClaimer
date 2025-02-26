@@ -50,25 +50,6 @@ class PocketFiClaimer(Claimer):
         self.random_offset = -60
         super().__init__()
 
-    def next_steps(self):
-        if self.step:
-            pass
-        else:
-            self.step = "01"
-
-        try:
-            
-            self.launch_iframe()
-            self.increase_step()
-
-            self.set_cookies()
-
-        except TimeoutException:
-            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.", 1)
-
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {e}", 1)
-
     def full_claim(self):
 
         self.step = "100"
@@ -76,16 +57,15 @@ class PocketFiClaimer(Claimer):
         self.launch_iframe()
         self.increase_step()
 
-        time.sleep(15)
         xpath = "//div[contains(@class, 'popup-footer') and contains(@class, 'is-visible')]//button[text()='Go to mining']"
-        button = self.move_and_click(xpath, 20, True, "click 'Go to mining' (may not be present)", self.step, "clickable")
+        button = self.move_and_click(xpath, 15, True, "click 'Go to mining' (may not be present)", self.step, "clickable")
         self.increase_step()
 
         self.get_balance(self.balance_xpath, False)
         self.increase_step()
 
         wait_time_text_pre = self.get_wait_time(self.time_remaining_xpath, "108", "pre-claim")
-        if wait_time_text_pre and isinstance(wait_time_text_pre[0], int) and wait_time_text_pre[0] > 330:
+        if wait_time_text_pre > 330:
             self.output("STATUS: Looks like the pot isn't ready to claim yet. Let's come back in 30 minutes.", 1)
             return 30 
         
@@ -100,7 +80,7 @@ class PocketFiClaimer(Claimer):
                 self.driver.execute_script("arguments[0].click();", button)
             time.sleep(5)
             wait_time_text_mid = self.get_wait_time(self.time_remaining_xpath, "108", "mid-claim")
-            if wait_time_text_mid and isinstance(wait_time_text_mid[0], int) and wait_time_text_mid[0] > 330:
+            if wait_time_text_mid > 330:
                 self.output(f"Step {self.step} - Looks like we made the claim on attempt {attempts}.", 3)
                 clicked_it = True
                 break
