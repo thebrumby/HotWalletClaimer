@@ -1581,7 +1581,8 @@ class Claimer:
         try:
             # Attempt to retrieve the element using monitor_element
             monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
-    
+            self.output(f"Step {self.step} - The element at {balance_xpath} returned {monitor_result}.", priority)
+
             # If monitor_element returns False, reboot the iframe and try again
             if monitor_result is False:
                 self.output(f"Step {self.step} - Monitor element returned false. Restarting driver...", priority)
@@ -1591,6 +1592,7 @@ class Claimer:
     
             # Clean the result
             element = self.strip_html_and_non_numeric(monitor_result)
+            self.output(f"Step {self.step} - Cleaned balance string: '{element}'", priority)
     
             if element:
                 balance_float = float(element)
