@@ -1611,7 +1611,6 @@ class Claimer:
             # Increment step, regardless of the outcome
             self.increase_step()
     
-    
     def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim"):
         try:
             self.output(f"Step {self.step} - Get the wait time...", 3)
@@ -1619,32 +1618,53 @@ class Claimer:
             # Use the provided xpath to find the wait time element
             wait_time_text = self.monitor_element(wait_time_xpath, 10, "claim timer")
             
-            # Check if wait_time_text is not empty
             if wait_time_text:
                 wait_time_text = wait_time_text.strip()
                 self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
                 
-                # Regex pattern to capture optional hours, minutes, and seconds
-                pattern = r"Next\s+claim\s+in\s*(?:(\d+)h)?\s*(?:(\d+)m)?\s*(?:(\d+)s)?"
-                match = re.search(pattern, wait_time_text)
+                # Define the three patterns for matching time:
+                patterns = [
+                    # Pattern for "1h 15m 30s" (or "30d" for seconds/days, adjust unit as needed)
+                    r"(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
+                    # Pattern for "hh:mm:ss"
+                    r"(\d{1,2}):(\d{2}):(\d{2})",
+                    # Pattern for "hh:mm"
+                    r"(\d{1,2}):(\d{2})"
+                ]
                 
-                if match:
-                    hours = match.group(1)
-                    minutes = match.group(2)
-                    seconds = match.group(3)
-                    total_minutes = 0.0
-                    
-                    if hours:
-                        total_minutes += int(hours) * 60
-                    if minutes:
-                        total_minutes += int(minutes)
-                    if seconds:
-                        total_minutes += int(seconds) / 60
-                    
-                    # Round to 1 decimal place
+                total_minutes = None
+                for pattern in patterns:
+                    match = re.search(pattern, wait_time_text)
+                    if match:
+                        groups = match.groups()
+                        total_minutes = 0.0
+                        if len(groups) == 3:
+                            # This covers both the first pattern and hh:mm:ss.
+                            hours, minutes, seconds = groups
+                            if hours:
+                                total_minutes += int(hours) * 60
+                            if minutes:
+                                total_minutes += int(minutes)
+                            if seconds:
+                                total_minutes += int(seconds) / 60.0
+                            # If all groups are None, we haven't captured anything useful.
+                            if not any([hours, minutes, seconds]):
+                                total_minutes = None
+                        elif len(groups) == 2:
+                            # For hh:mm format.
+                            hours, minutes = groups
+                            if hours:
+                                total_minutes += int(hours) * 60
+                            if minutes:
+                                total_minutes += int(minutes)
+                        # Stop at the first successful match that gives us a value.
+                        if total_minutes is not None:
+                            break
+                
+                if total_minutes is not None and total_minutes > 0:
                     total_minutes = round(total_minutes, 1)
                     self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
-                    return total_minutes if total_minutes > 0 else False
+                    return total_minutes
                 else:
                     self.output(f"Step {self.step} - Wait time pattern not matched in text: '{wait_time_text}'", 3)
                     return False

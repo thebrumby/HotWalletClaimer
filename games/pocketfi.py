@@ -91,21 +91,21 @@ class PocketFiClaimer(Claimer):
         self.output(f"Step {self.step} - the pre-claim timer shows {wait_time_text_pre} minutes until burn.", 2)
         
         xpath = "//div[@class='absolute flex items-center justify-center flex-col text-white']/span[contains(text(), 'claim')]"
-        attempts = 1
         clicked_it = False
-        while attempts < 5:
-            button = self.move_and_click(xpath, 30, False, "click claim", self.step, "visible")
-            if button:
-                self.driver.execute_script("arguments[0].click();", button)
-            time.sleep(5)
-            wait_time_text_mid = self.get_wait_time(self.time_remaining_xpath, "108", "mid-claim")
-            if wait_time_text_mid > 330:
-                self.output(f"Step {self.step} - Looks like we made the claim on attempt {attempts}.", 3)
-                clicked_it = True
-                break
-            else:
-                self.output(f"Step {self.step} - Looks like we failed the claim on attempt {attempts}. Trying again.", 3)
-                attempts += 1 
+        button = self.brute_click(xpath, 30, "click claim")
+        if button:
+            self.output(f"Step {self.step} - We may have clicked, let's confirm with the timer.", 3)
+        else:
+            self.output(f"Step {self.step} - No button found to click.", 3)
+        
+        time.sleep(5)
+        wait_time_text_mid = self.get_wait_time(self.time_remaining_xpath, "108", "mid-claim")
+        if wait_time_text_mid > 330:
+            self.output(f"Step {self.step} - Looks like we made the claim.", 3)
+            clicked_it = True
+        else:
+            self.output(f"Step {self.step} - Looks like we failed the claim.", 3)
+
         self.increase_step()
         
         self.get_balance(self.balance_xpath, True)
