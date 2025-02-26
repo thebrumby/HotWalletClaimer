@@ -88,7 +88,7 @@ class PocketFiClaimer(Claimer):
             if button:
                 self.increase_step()
             else:
-                self.output(f"Step {self.step} - Button with text '{text}' not found. Aborting sequence.", 3)
+                self.output(f"Step {self.step} - Button with text '{text}' not found. Let's attempt to claim.", 3)
                 break
 
 
@@ -96,9 +96,13 @@ class PocketFiClaimer(Claimer):
         self.increase_step()
 
         wait_time_text_pre = self.get_wait_time(self.time_remaining_xpath, "108", "pre-claim")
+        if wait_time_text_pre is False:
+            self.output("STATUS: Failed to retrieve pre-claim wait time. Let's retry in 1 hour.", 1)
+            return 60
+        
         if wait_time_text_pre > 330:
-            self.output("STATUS: Looks like the pot isn't ready to claim yet. Let's come back in 30 minutes.", 1)
-            return max(5, wait_time_text_pre-10) 
+            self.output(f"STATUS: Looks like the pot isn't ready to claim yet. Let's come back in {wait_time_text_pre} minutes.", 1)
+            return wait_time_text_pre - 10
         
         self.output(f"Step {self.step} - the pre-claim timer shows {wait_time_text_pre} minutes until burn.", 2)
         
@@ -113,6 +117,9 @@ class PocketFiClaimer(Claimer):
         
         time.sleep(5)
         wait_time_text_mid = self.get_wait_time(self.time_remaining_xpath, "108", "mid-claim")
+        if wait_time_text_mid is False:
+            self.output("STATUS: Failed to retrieve post-claim wait time. Let's retry in 1 hour.", 1)
+            return 60
         if possible_click and wait_time_text_mid > 330:
             self.output(f"Step {self.step} - Looks like we made the claim.", 3)
             clicked_it = True
