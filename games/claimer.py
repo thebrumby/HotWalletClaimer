@@ -1577,8 +1577,8 @@ class Claimer:
         
         try:
             # Move to the balance element
-            self.move_and_click(balance_xpath, 15, False, "move to the balance", self.step, "visible")
-            monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
+            # self.move_and_click(balance_xpath, 15, False, "move to the balance", self.step, "visible")
+            monitor_result = self.monitor_element(balance_xpath, 15, "get balance")
             
             # Fallback if nothing was captured
             if not monitor_result:
@@ -1627,8 +1627,8 @@ class Claimer:
             self.output(f"Step {self.step} - Get the wait time...", 3)
             
             # Move to the wait timer element
-            self.move_and_click(wait_time_xpath, 15, False, "move to the wait timer", self.step, "visible")
-            wait_time_text = self.monitor_element(wait_time_xpath, 30, "claim timer")
+            # self.move_and_click(wait_time_xpath, 15, False, "move to the wait timer", self.step, "visible")
+            wait_time_text = self.monitor_element(wait_time_xpath, 15, "claim timer")
             
             # Fallback if nothing was captured
             if not wait_time_text:
