@@ -74,11 +74,11 @@ class IcebergClaimer(Claimer):
 
         # Is there an intro screen? if so, clear it!
         xpath = "//button[div[text()='Skip']]"
-        self.brute_click(xpath, 10, "pre-start info screen (may not be present)")
+        self.brute_click(xpath, 20, "pre-start info screen (may not be present)")
 
         # Are we farming? if not, start!
         xpath = "//button[div[text()='Start farming']]"
-        self.brute_click(xpath, 30, "initial start farming (may not be present)")
+        self.brute_click(xpath, 20, "initial start farming (may not be present)")
 
         pre_balance = self.get_balance(False)
         self.increase_step()
@@ -100,12 +100,12 @@ class IcebergClaimer(Claimer):
     
         # We got this far, so let's try to claim!
         xpath = "//button[contains(text(), 'Collect')]"
-        success = self.brute_click(xpath, 30, "collect points")
+        success = self.brute_click(xpath, 20, "collect points")
         self.increase_step()
 
         # And start farming again.
         xpath = "//button[div[text()='Start farming']]"
-        self.brute_click(xpath, 30, "post-claim start farming (may not be present)")
+        self.brute_click(xpath, 20, "post-claim start farming (may not be present)")
         self.increase_step()
 
         # And check the post-claim balance
@@ -147,7 +147,7 @@ class IcebergClaimer(Claimer):
         balance_xpath = "//p[normalize-space(text())='Your balance']/following-sibling::p"
 
         try:
-            element = self.monitor_element(balance_xpath, 15, "get balance")
+            element = self.monitor_element(balance_xpath, 20, "get balance")
             if element:
                 balance_part = self.strip_html_and_non_numeric(element)
                 self.output(f"Step {self.step} - {'After' if claimed else 'Before'} BALANCE: {balance_part}", 2 if claimed else 3)
@@ -165,7 +165,7 @@ class IcebergClaimer(Claimer):
         for attempt in range(1, max_attempts + 1):
             try:
                 self.output(f"Step {self.step} - Get the wait time...", 3)
-                element = self.monitor_element(wait_time_xpath, 10, "get claim timer")
+                element = self.monitor_element(wait_time_xpath, 20, "get claim timer")
                 if element:
                     return element
                 return False
