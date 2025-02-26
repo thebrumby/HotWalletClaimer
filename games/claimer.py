@@ -1576,21 +1576,39 @@ class Claimer:
     
         # Dynamically adjust the log priority
         priority = max(self.settings['verboseLevel'], default_priority)
-    
         balance_text = f'{prefix} BALANCE:'
         
         try:
             # Attempt to retrieve the element using monitor_element
-            self.move_and_click(balance_xpath, 15, False, f"move to the balance", self.step, "visible")
+            self.move_and_click(balance_xpath, 15, False, "move to the balance", self.step, "visible")
             monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
             
-            # If monitor_element returns False, reboot the iframe and try again
+            # If monitor_element returns nothing, use fallback via direct driver call.
+            if not monitor_result:
+                self.output(f"Step {self.step} - monitor_element returned nothing. Attempting fallback method for balance...", priority)
+                try:
+                    elements = self.driver.find_elements(By.XPATH, balance_xpath)
+                    fallback_texts = []
+                    for el in elements:
+                        # Use JavaScript to fetch textContent to catch hidden characters or dynamically loaded text.
+                        text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
+                        if text:
+                            fallback_texts.append(text)
+                    if fallback_texts:
+                        monitor_result = " ".join(fallback_texts)
+                    else:
+                        monitor_result = False
+                except Exception as fallback_e:
+                    self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", priority)
+                    monitor_result = False
+    
+            # If monitor_element (or fallback) still returns False, try restarting the driver.
             if monitor_result is False:
-                self.output(f"Step {self.step} - Monitor element returned false. Restarting driver...", priority)
+                self.output(f"Step {self.step} - No balance text found. Restarting driver...", priority)
                 self.quit_driver()
                 self.launch_iframe()
                 monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
-            
+    
             # Clean the result
             element = self.strip_html_and_non_numeric(monitor_result)
             
@@ -1610,24 +1628,42 @@ class Claimer:
             self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
             return None
         finally:
-            # Increment step, regardless of the outcome
             self.increase_step()
+    
     
     def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim"):
         try:
             self.output(f"Step {self.step} - Get the wait time...", 3)
             
-            # Use the provided xpath to find the wait time element
-            self.move_and_click(wait_time_xpath, 15, False, f"move to the wait timer", self.step, "visible")
+            # Attempt to locate the wait time element
+            self.move_and_click(wait_time_xpath, 15, False, "move to the wait timer", self.step, "visible")
             wait_time_text = self.monitor_element(wait_time_xpath, 30, "claim timer")
             
+            # Fallback method if nothing was captured
+            if not wait_time_text:
+                self.output(f"Step {self.step} - monitor_element returned nothing. Attempting fallback method for wait time...", 3)
+                try:
+                    elements = self.driver.find_elements(By.XPATH, wait_time_xpath)
+                    fallback_texts = []
+                    for el in elements:
+                        text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
+                        if text:
+                            fallback_texts.append(text)
+                    if fallback_texts:
+                        wait_time_text = " ".join(fallback_texts)
+                    else:
+                        wait_time_text = False
+                except Exception as fallback_e:
+                    self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", 3)
+                    wait_time_text = False
+    
             if wait_time_text:
                 wait_time_text = wait_time_text.strip()
                 self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
                 
                 # Define the three patterns for matching time:
                 patterns = [
-                    # Pattern for "1h 15m 30s" (or "30d" for seconds/days, adjust unit as needed)
+                    # Pattern for "1h 15m 30s" (or "30d")
                     r"(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
                     # Pattern for "hh:mm:ss"
                     r"(\d{1,2}):(\d{2}):(\d{2})",
@@ -1642,7 +1678,6 @@ class Claimer:
                         groups = match.groups()
                         total_minutes = 0.0
                         if len(groups) == 3:
-                            # This covers both the first pattern and hh:mm:ss.
                             hours, minutes, seconds = groups
                             if hours:
                                 total_minutes += int(hours) * 60
@@ -1650,17 +1685,14 @@ class Claimer:
                                 total_minutes += int(minutes)
                             if seconds:
                                 total_minutes += int(seconds) / 60.0
-                            # If all groups are None, we haven't captured anything useful.
                             if not any([hours, minutes, seconds]):
                                 total_minutes = None
                         elif len(groups) == 2:
-                            # For hh:mm format.
                             hours, minutes = groups
                             if hours:
                                 total_minutes += int(hours) * 60
                             if minutes:
                                 total_minutes += int(minutes)
-                        # Stop at the first successful match that gives us a value.
                         if total_minutes is not None:
                             break
                 
