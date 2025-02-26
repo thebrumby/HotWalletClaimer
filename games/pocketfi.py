@@ -107,12 +107,13 @@ class PocketFiClaimer(Claimer):
         button = self.brute_click(xpath, 30, "click claim")
         if button:
             self.output(f"Step {self.step} - We may have clicked, let's confirm with the timer.", 3)
+            possible_click = True
         else:
             self.output(f"Step {self.step} - No button found to click.", 3)
         
         time.sleep(5)
         wait_time_text_mid = self.get_wait_time(self.time_remaining_xpath, "108", "mid-claim")
-        if wait_time_text_mid > 330:
+        if possible_click and wait_time_text_mid > 330:
             self.output(f"Step {self.step} - Looks like we made the claim.", 3)
             clicked_it = True
         else:
@@ -125,13 +126,18 @@ class PocketFiClaimer(Claimer):
 
         self.get_profit_hour(True)
         
-        next_claim = max(5, wait_time_text_pre-10) 
+        if wait_time_text_mid:
+            next_claim = max(5, wait_time_text_mid-10) 
 
-        if clicked_it:
-            self.output(f"STATUS: Successfully claimed after {attempts} attempts. Mine again in {next_claim} minutes.", 1)
+        if clicked_it and next_claim:
+            self.output(f"STATUS: Successfully claimed. Mine again in {next_claim} minutes.", 1)
             return next_claim
-        else: 
-            self.output(f"STATUS: Issues with making the claim, let's come back in an hour.", 1)
+
+        if next_claim:
+            self.output(f"STATUS: No claim this time. Let's try to mine again in {next_claim} minutes.", 1)
+            return next_claim
+        
+        self.output(f"STATUS: Issues with making the claim, let's come back in an hour.", 1)
         return 60
 
     def get_profit_hour(self, claimed=False):
