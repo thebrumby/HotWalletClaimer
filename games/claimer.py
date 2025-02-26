@@ -1296,26 +1296,42 @@ class Claimer:
 
     def monitor_element(self, xpath, timeout=8, action_description="no description"):
         try:
-            if self.settings['debugIsOn']:
+            if self.settings.get('debugIsOn'):
                 self.debug_information(f"MonElem {action_description}", "check")
                 
             # Use WebDriverWait to poll for the element's presence
-            wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5, ignored_exceptions=[StaleElementReferenceException])
+            wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5, 
+                                  ignored_exceptions=[StaleElementReferenceException])
             elements = wait.until(lambda d: d.find_elements(By.XPATH, xpath))
             
-            # Log the found elements count once
+            # Log the found elements count
             self.output(f"Step {self.step} - Found {len(elements)} elements with XPath: {xpath} for {action_description}", 3)
             
-            # Gather text from elements, clean it up, and join the texts
-            texts = [element.text.replace('\n', ' ').replace('\r', ' ').strip() for element in elements if element.text.strip()]
+            # Extract text from elements
+            texts = [element.text.replace('\n', ' ').replace('\r', ' ').strip() 
+                     for element in elements if element.text.strip()]
             if texts:
                 return ' '.join(texts)
             else:
-                self.output(f"Step {self.step} - No non-empty text found for {action_description}", 3)
-                return False
+                self.output(f"Step {self.step} - No text found for {action_description} in monitor_element. Attempting fallback...", 3)
+                # Fallback: Use JS to get textContent
+                try:
+                    elements = self.driver.find_elements(By.XPATH, xpath)
+                    fallback_texts = []
+                    for el in elements:
+                        text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
+                        if text:
+                            fallback_texts.append(text)
+                    if fallback_texts:
+                        return " ".join(fallback_texts)
+                    else:
+                        return False
+                except Exception as fallback_e:
+                    self.output(f"Step {self.step} - Fallback method in monitor_element failed: {fallback_e}", 3)
+                    return False
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred in monitor_element ({action_description}): {e}", 3)
-            if self.settings['debugIsOn']:
+            if self.settings.get('debugIsOn'):
                 self.debug_information(f"MonElem failed on {action_description}", "error")
             return False
 
@@ -1570,142 +1586,131 @@ class Claimer:
         # If no conditions are met, return the original unmodifiedTimer
         return unmodifiedTimer
 
-    def get_balance(self, balance_xpath, claimed=False):
-        prefix = "After" if claimed else "Before"
-        default_priority = 2 if claimed else 3
+def get_balance(self, balance_xpath, claimed=False):
+    prefix = "After" if claimed else "Before"
+    default_priority = 2 if claimed else 3
+    priority = max(self.settings['verboseLevel'], default_priority)
+    balance_text = f'{prefix} BALANCE:'
     
-        # Dynamically adjust the log priority
-        priority = max(self.settings['verboseLevel'], default_priority)
-        balance_text = f'{prefix} BALANCE:'
+    try:
+        # Move to the balance element
+        self.move_and_click(balance_xpath, 15, False, "move to the balance", self.step, "visible")
+        monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
         
-        try:
-            # Attempt to retrieve the element using monitor_element
-            self.move_and_click(balance_xpath, 15, False, "move to the balance", self.step, "visible")
-            monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
-            
-            # If monitor_element returns nothing, use fallback via direct driver call.
-            if not monitor_result:
-                self.output(f"Step {self.step} - monitor_element returned nothing. Attempting fallback method for balance...", priority)
-                try:
-                    elements = self.driver.find_elements(By.XPATH, balance_xpath)
-                    fallback_texts = []
-                    for el in elements:
-                        # Use JavaScript to fetch textContent to catch hidden characters or dynamically loaded text.
-                        text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
-                        if text:
-                            fallback_texts.append(text)
-                    if fallback_texts:
-                        monitor_result = " ".join(fallback_texts)
-                    else:
-                        monitor_result = False
-                except Exception as fallback_e:
-                    self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", priority)
-                    monitor_result = False
-    
-            # If monitor_element (or fallback) still returns False, try restarting the driver.
-            if monitor_result is False:
-                self.output(f"Step {self.step} - No balance text found. Restarting driver...", priority)
-                self.quit_driver()
-                self.launch_iframe()
-                monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
-    
-            # Clean the result
-            element = self.strip_html_and_non_numeric(monitor_result)
-            
-            if element:
-                # Convert to float and round to 3 decimal places
-                balance_float = round(float(element), 3)
-                self.output(f"Step {self.step} - {balance_text} {balance_float}", priority)
-                return balance_float
-            else:
-                self.output(f"Step {self.step} - {balance_text} not found or not numeric.", priority)
-                return None
-    
-        except NoSuchElementException:
-            self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
-            return None
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
-            return None
-        finally:
-            self.increase_step()
-    
-    
-    def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim"):
-        try:
-            self.output(f"Step {self.step} - Get the wait time...", 3)
-            
-            # Attempt to locate the wait time element
-            self.move_and_click(wait_time_xpath, 15, False, "move to the wait timer", self.step, "visible")
-            wait_time_text = self.monitor_element(wait_time_xpath, 30, "claim timer")
-            
-            # Fallback method if nothing was captured
-            if not wait_time_text:
-                self.output(f"Step {self.step} - monitor_element returned nothing. Attempting fallback method for wait time...", 3)
-                try:
-                    elements = self.driver.find_elements(By.XPATH, wait_time_xpath)
-                    fallback_texts = []
-                    for el in elements:
-                        text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
-                        if text:
-                            fallback_texts.append(text)
-                    if fallback_texts:
-                        wait_time_text = " ".join(fallback_texts)
-                    else:
-                        wait_time_text = False
-                except Exception as fallback_e:
-                    self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", 3)
-                    wait_time_text = False
-    
-            if wait_time_text:
-                wait_time_text = wait_time_text.strip()
-                self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
-                
-                # Define the three patterns for matching time:
-                patterns = [
-                    # Pattern for "1h 15m 30s" (or "30d")
-                    r"(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
-                    # Pattern for "hh:mm:ss"
-                    r"(\d{1,2}):(\d{2}):(\d{2})",
-                    # Pattern for "hh:mm"
-                    r"(\d{1,2}):(\d{2})"
-                ]
-                
-                total_minutes = None
-                for pattern in patterns:
-                    match = re.search(pattern, wait_time_text)
-                    if match:
-                        groups = match.groups()
-                        total_minutes = 0.0
-                        if len(groups) == 3:
-                            hours, minutes, seconds = groups
-                            if hours:
-                                total_minutes += int(hours) * 60
-                            if minutes:
-                                total_minutes += int(minutes)
-                            if seconds:
-                                total_minutes += int(seconds) / 60.0
-                            if not any([hours, minutes, seconds]):
-                                total_minutes = None
-                        elif len(groups) == 2:
-                            hours, minutes = groups
-                            if hours:
-                                total_minutes += int(hours) * 60
-                            if minutes:
-                                total_minutes += int(minutes)
-                        if total_minutes is not None:
-                            break
-                
-                if total_minutes is not None and total_minutes > 0:
-                    total_minutes = round(total_minutes, 1)
-                    self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
-                    return total_minutes
+        # Fallback if nothing was captured
+        if not monitor_result:
+            self.output(f"Step {self.step} - monitor_element returned nothing. Attempting fallback method for balance...", priority)
+            try:
+                elements = self.driver.find_elements(By.XPATH, balance_xpath)
+                fallback_texts = []
+                for el in elements:
+                    text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
+                    if text:
+                        fallback_texts.append(text)
+                if fallback_texts:
+                    monitor_result = " ".join(fallback_texts)
                 else:
-                    self.output(f"Step {self.step} - Wait time pattern not matched in text: '{wait_time_text}'", 3)
-                    return False
+                    monitor_result = False
+            except Exception as fallback_e:
+                self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", priority)
+                monitor_result = False
+
+        if monitor_result is False:
+            self.output(f"Step {self.step} - No balance text found. Restarting driver...", priority)
+            self.quit_driver()
+            self.launch_iframe()
+            monitor_result = self.monitor_element(balance_xpath, 30, "get balance")
+        
+        # Clean and convert the result
+        element = self.strip_html_and_non_numeric(monitor_result)
+        if element:
+            balance_float = round(float(element), 3)
+            self.output(f"Step {self.step} - {balance_text} {balance_float}", priority)
+            return balance_float
+        else:
+            self.output(f"Step {self.step} - {balance_text} not found or not numeric.", priority)
+            return None
+    except NoSuchElementException:
+        self.output(f"Step {self.step} - Element containing '{prefix} Balance:' was not found.", priority)
+        return None
+    except Exception as e:
+        self.output(f"Step {self.step} - An error occurred: {str(e)}", priority)
+        return None
+    finally:
+        self.increase_step()
+
+def get_wait_time(self, wait_time_xpath, step_number="108", beforeAfter="pre-claim"):
+    try:
+        self.output(f"Step {self.step} - Get the wait time...", 3)
+        
+        # Move to the wait timer element
+        self.move_and_click(wait_time_xpath, 15, False, "move to the wait timer", self.step, "visible")
+        wait_time_text = self.monitor_element(wait_time_xpath, 30, "claim timer")
+        
+        # Fallback if nothing was captured
+        if not wait_time_text:
+            self.output(f"Step {self.step} - monitor_element returned nothing. Attempting fallback method for wait time...", 3)
+            try:
+                elements = self.driver.find_elements(By.XPATH, wait_time_xpath)
+                fallback_texts = []
+                for el in elements:
+                    text = self.driver.execute_script("return arguments[0].textContent;", el).strip()
+                    if text:
+                        fallback_texts.append(text)
+                if fallback_texts:
+                    wait_time_text = " ".join(fallback_texts)
+                else:
+                    wait_time_text = False
+            except Exception as fallback_e:
+                self.output(f"Step {self.step} - Fallback method failed: {fallback_e}", 3)
+                wait_time_text = False
+
+        if wait_time_text:
+            wait_time_text = wait_time_text.strip()
+            self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
+            
+            # Define patterns for matching time
+            patterns = [
+                r"(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
+                r"(\d{1,2}):(\d{2}):(\d{2})",
+                r"(\d{1,2}):(\d{2})"
+            ]
+            
+            total_minutes = None
+            for pattern in patterns:
+                match = re.search(pattern, wait_time_text)
+                if match:
+                    groups = match.groups()
+                    total_minutes = 0.0
+                    if len(groups) == 3:
+                        hours, minutes, seconds = groups
+                        if hours:
+                            total_minutes += int(hours) * 60
+                        if minutes:
+                            total_minutes += int(minutes)
+                        if seconds:
+                            total_minutes += int(seconds) / 60.0
+                        if not any([hours, minutes, seconds]):
+                            total_minutes = None
+                    elif len(groups) == 2:
+                        hours, minutes = groups
+                        if hours:
+                            total_minutes += int(hours) * 60
+                        if minutes:
+                            total_minutes += int(minutes)
+                    if total_minutes is not None:
+                        break
+            
+            if total_minutes is not None and total_minutes > 0:
+                total_minutes = round(total_minutes, 1)
+                self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
+                return total_minutes
             else:
-                self.output(f"Step {self.step} - No wait time text found.", 3)
+                self.output(f"Step {self.step} - Wait time pattern not matched in text: '{wait_time_text}'", 3)
                 return False
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {e}", 3)
+        else:
+            self.output(f"Step {self.step} - No wait time text found.", 3)
             return False
+    except Exception as e:
+        self.output(f"Step {self.step} - An error occurred: {e}", 3)
+        return False
