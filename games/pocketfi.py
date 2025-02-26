@@ -86,7 +86,7 @@ class PocketFiClaimer(Claimer):
         wait_time_text_pre = self.get_wait_time(self.time_remaining_xpath, "108", "pre-claim")
         if wait_time_text_pre > 330:
             self.output("STATUS: Looks like the pot isn't ready to claim yet. Let's come back in 30 minutes.", 1)
-            return 30 
+            return max(5, wait_time_text_pre-10) 
         
         self.output(f"Step {self.step} - the pre-claim timer shows {wait_time_text_pre} minutes until burn.", 2)
         
@@ -112,12 +112,14 @@ class PocketFiClaimer(Claimer):
         self.increase_step()
 
         self.get_profit_hour(True)
+        
+        next_claim = max(5, wait_time_text_pre-10) 
 
         if clicked_it:
-            self.output(f"STATUS: Successfully claimed after {attempts} attempts. Mine again in 4 hours.", 1)
-            return 240
+            self.output(f"STATUS: Successfully claimed after {attempts} attempts. Mine again in {next_claim} minutes.", 1)
+            return next_claim
         else: 
-            self.output(f"STATUS: Unable to click. CPU may not be fast enough. Let's come back in 1 hour.", 1)
+            self.output(f"STATUS: Issues with making the claim, let's come back in an hour.", 1)
         return 60
 
     def get_profit_hour(self, claimed=False):
