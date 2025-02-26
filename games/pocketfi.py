@@ -84,7 +84,7 @@ class PocketFiClaimer(Claimer):
         
         for text in button_texts:
             xpath = f"//button[normalize-space(.)='{text}']"
-            button = self.move_and_click(xpath, 30, True, f"click '{text}' button", self.step, "clickable")
+            button = self.move_and_click(xpath, 15, True, f"click '{text}' button", self.step, "clickable")
             if button:
                 self.increase_step()
             else:
