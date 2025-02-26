@@ -1651,14 +1651,10 @@ class Claimer:
                 wait_time_text = wait_time_text.strip()
                 self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
                 
-                # Updated patterns with non-greedy preceding match to ignore extra text
+                # Updated patterns to ignore preceding text and to match explicit hour-minute format
                 patterns = [
-                    # Pattern for "1h 15m 30s" (or "30d"), updated with .*? to skip any prefix text
-                    r".*?(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)(?:s|d))?",
-                    # Pattern for "hh:mm:ss"
-                    r".*?(\d{1,2}):(\d{2}):(\d{2})",
-                    # Pattern for "hh:mm"
-                    r".*?(\d{1,2}):(\d{2})"
+                    r".*?(\d+)h\s*(\d+)m(?:\s*(\d+)(?:s|d))?",
+                    r".*?(\d{1,2}):(\d{2})(?::(\d{2}))?"
                 ]
                 
                 total_minutes = None
@@ -1677,6 +1673,7 @@ class Claimer:
                                 total_minutes += int(seconds) / 60.0
                             if not any([hours, minutes, seconds]):
                                 total_minutes = None
+                        # If matching colon separated pattern (hours and minutes, optional seconds)
                         elif len(groups) == 2:
                             hours, minutes = groups
                             if hours:
