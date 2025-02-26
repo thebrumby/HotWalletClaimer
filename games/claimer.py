@@ -1296,7 +1296,7 @@ class Claimer:
 
     def monitor_element(self, xpath, timeout=8, action_description="no description"):
         try:
-            if self.settings.get('debugIsOn'):
+            if self.settings['debugIsOn']:
                 self.debug_information(f"MonElem {action_description}", "check")
                 
             # Use WebDriverWait to poll for the element's presence
@@ -1315,7 +1315,7 @@ class Claimer:
                 return False
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred in monitor_element ({action_description}): {e}", 3)
-            if self.settings.get('debugIsOn'):
+            if self.settings['debugIsOn']:
                 self.debug_information(f"MonElem failed on {action_description}", "error")
             return False
 
