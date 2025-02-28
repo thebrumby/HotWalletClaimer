@@ -87,8 +87,8 @@ class IcebergClaimer(Claimer):
 
         remaining_time = self.get_wait_time(self.time_remaining_xpath, self.step, "pre-claim")
         if remaining_time:
-            self.output(f"STATUS: Considering {remaining_time}, we'll sleep for {remaining_wait_time} minutes.", 2)
-            return min(30,remaining_wait_time)
+            self.output(f"STATUS: Claim not yet ready, we'll sleep for {remaining_time} minutes.", 2)
+            return min(30,remaining_time)
 
         self.increase_step()
     
@@ -125,8 +125,8 @@ class IcebergClaimer(Claimer):
         
         # Finally, let's wrap up the time to come back
         if remaining_time:
-            self.output(f"STATUS: {success_text}. Let's sleep for {remaining_wait_time} minutes.", 2)
-            return remaining_wait_time
+            self.output(f"STATUS: {success_text}. Let's sleep for {remaining_time} minutes.", 2)
+            return remaining_time
         # Finally, if we reached the end with no action, let's come back in an hour
         return 60
 
