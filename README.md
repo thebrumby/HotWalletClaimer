@@ -141,7 +141,7 @@ After executing the script with `./launch.sh`, you'll be prompted to update sett
 If you choose **"yes"** when prompted to update settings, you can review and modify the following options:
 
 - **`forceClaim`**: Forces a claim the first time the script runs, regardless of whether the wallet is full.
-- **`debugIsOn`**: Enables debugging to save screenshots locally (default is **off**).
+- **`debugIsOn`**: Enables debugging to save screenshots locally (default is **on**).
 - **`hideSensitiveInput`**: Hides sensitive information like phone numbers and seed phrases (default is **on**).
 - **`screenshotQRCode`**: When enabled, attempts to log in via QR code scan instead of phone number and OTP.
 - **`maxSessions`**: Sets the maximum number of concurrent claim sessions; additional wallets will wait for an available slot.
