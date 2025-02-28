@@ -898,6 +898,8 @@ class Claimer:
         # HereWalletBot Pop-up Handling
         self.select_iframe(self.step)
         self.increase_step()
+        self.output(f"Step {self.step} - Preparatory steps complete, handing over to the main setup/claim function...", 2)
+        time.sleep(10)
 
     def replace_platform(self):
         # Insert the platform replacement code here
