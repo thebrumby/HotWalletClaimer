@@ -38,8 +38,7 @@ class WaveClaimer(Claimer):
         self.seed_phrase = None
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
-        self.start_app_xpath = "//a[@href='https://t.me/waveonsuibot/walletapp']"
-        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Wave']]"
+        self.start_app_xpath = "//span[contains(text(), 'Log in to Wave') or contains(text(), 'Open Wave App')]"
 
     def __init__(self):
         self.settings_file = "variables.txt"
@@ -48,58 +47,182 @@ class WaveClaimer(Claimer):
         self.load_settings()
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset']) + 1
         super().__init__()
+        
+    def switch_tab(self):
+        """ List all open tabs, log them, and switch to the newest one. """
+        tabs = self.driver.window_handles
+        self.output(f"Step {self.step} - Found {len(tabs)} open tab(s):", 3)
+        
+        # Log each tab's URL
+        for index, tab in enumerate(tabs):
+            self.driver.switch_to.window(tab)
+            self.output(f"→ Tab {index + 1}: {self.driver.current_url}", 3)
+        
+        # ✅ Switch to the newest tab
+        if len(tabs) > 1:
+            self.driver.switch_to.window(tabs[-1])
+            self.output(f"Step {self.step} - Switched to the new tab: {self.driver.current_url}", 3)
+        else:
+            self.output(f"Step {self.step} - No new tab detected, staying on the current page.", 3)
 
     def next_steps(self):
-        if self.step:
-            pass
-        else:
+        if not self.step:
             self.step = "01"
-
-        try:
-            self.launch_iframe()
-            self.increase_step()
-
-            try:
-                xpath = "//button[contains(text(), 'Login')]"
-                login_button = WebDriverWait(self.driver, 30).until(
-                    EC.visibility_of_element_located((By.XPATH, xpath))
-                )
+    
+        def switch_tab():
+            """ List all open tabs, log them, and switch to the newest one. """
+            tabs = self.driver.window_handles
+            self.output(f"Step {self.step} - Found {len(tabs)} open tab(s):", 3)
         
-                self.driver.execute_script("arguments[0].click();", login_button)
-                self.output(f"Step {self.step} - Was successfully able to click on the login button...", 2)
-                self.increase_step()
+            # Log each tab's URL
+            for index, tab in enumerate(tabs):
+                self.driver.switch_to.window(tab)
+                self.output(f"→ Tab {index + 1}: {self.driver.current_url}", 3)
+        
+            # ✅ Switch to the newest tab
+            if len(tabs) > 1:
+                self.driver.switch_to.window(tabs[-1])
+                self.output(f"Step {self.step} - Switched to the new tab: {self.driver.current_url}", 3)
+            else:
+                self.output(f"Step {self.step} - No new tab detected, staying on the current page.", 3)
 
-            except Exception as e:
-                self.output(f"Step {self.step} - Failed to enter the seed phrase: {str(e)}", 2)
-
+        def validate_telegram():
+            """ Validate Telegram login sequence. """
+            self.switch_tab()
+    
+            xpath = "//span[contains(text(), 'Open in Web')]"
+            self.move_and_click(xpath, 30, True, "check for the Open pop-up", self.step, "clickable")
+            self.increase_step() 
+    
+            xpath = "(//span[contains(text(), 'Log in to Wave')])[last()]"
+            self.move_and_click(xpath, 10, True, "find the last game link for the access token", self.step, "clickable")
+            self.increase_step()
+            
+            xpath = "//button[contains(@class, 'popup-button') and contains(., 'Open')]"
+            self.move_and_click(xpath, 10, True, "check for the 'Open' pop-up (may not be present)", self.step, "clickable")
+            self.increase_step()
+    
+            self.switch_tab()
+            
+            # Step 3: Import Wallet (only if needed)
+            xpath = "//button[normalize-space(text())='Import Wallet']"
+            if self.move_and_click(xpath, 10, True, "import seed phrase (may not be present)", self.step, "clickable"):
+                populate_seedphrase()
+            self.increase_step()
+    
+        def populate_seedphrase():
+            """ Populate the seed phrase if required. """
             try:
+                # Step 1: Enter Seed Phrase
                 xpath = "//p[contains(text(), 'Seed phrase or Private key')]/following-sibling::textarea[1]"
                 input_field = WebDriverWait(self.driver, 30).until(
                     EC.visibility_of_element_located((By.XPATH, xpath))
                 )
-        
+    
                 self.driver.execute_script("arguments[0].click();", input_field)
                 input_field.send_keys(self.validate_seed_phrase())
-                self.output(f"Step {self.step} - Was successfully able to enter the seed phrase...", 3)
-                self.increase_step()
-
+                self.output(f"Step {self.step} - Successfully entered the seed phrase...", 3)
+    
             except Exception as e:
                 self.output(f"Step {self.step} - Failed to enter the seed phrase: {str(e)}", 2)
-
-            xpath = "//button[contains(text(), 'Continue')]"
-            self.move_and_click(xpath, 30, True, "click continue after seedphrase entry", self.step, "clickable")
+    
+            self.increase_step()  # Always increase step, even if input fails
+    
+            # Step 2: Click Continue after entering the seed phrase
+            xpath = "//button[normalize-space(text())='Continue']"
+            self.move_and_click(xpath, 10, True, "click continue after seed phrase entry", self.step, "clickable")
             self.increase_step()
-
-            xpath = "//button[.//span[contains(text(), 'Claim Now')]]"
-            self.move_and_click(xpath, 30, True, "click the 'Claim Now' link", self.step, "clickable")
-
-            self.set_cookies()
-
+    
+        try:
+            # Step 1: Log in to Wave
+            xpath = "//span[contains(text(), 'Log in to Wave') or contains(text(), 'Open Wave App')]"
+            self.find_working_link(self.step, xpath)
+            self.increase_step()
+            
+            xpath = "//button[contains(@class, 'popup-button') and contains(., 'Open')]"
+            self.move_and_click(xpath, 10, True, "check for the 'Open' pop-up (may not be present)", self.step, "clickable")
+            self.increase_step()
+            
+            self.switch_tab()
+    
+            # Step 2: Validate Telegram session if it's not already done
+            xpath = "//span[normalize-space(text())='Login Telegram']"
+            if self.move_and_click(xpath, 10, True, "initiate the 'Log In' link (may not be present)", self.step, "clickable"):
+                validate_telegram()
+            self.increase_step()
+    
+            # Step 3: Check we're logged in
+            xpath = "//span[contains(text(), 'Ocean Game')]"
+            if self.move_and_click(xpath, 10, True, "click the 'Claim Now' link", self.step, "visible"):
+                self.output(f"Step {self.step} - We appear to have successfully logged in", 2)
+                self.set_cookies()  # ✅ Only set cookies if login was successful
+            else:
+                self.output(f"STATUS We appear to have failed to log in!", 1)
+            self.increase_step()
+    
         except TimeoutException:
             self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.", 1)
-
+    
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 1)
+            
+    def launch_iframe(self):
+        self.driver = self.get_driver()
+        # Set viewport size for a desktop browser, e.g. 1920x1080 for a full HD experience
+        self.driver.set_window_size(1920, 1080)
+
+        # let's start with clean screenshots directory
+        if int(self.step) < 101:
+            if os.path.exists(self.screenshots_path):
+                shutil.rmtree(self.screenshots_path)
+            os.makedirs(self.screenshots_path)
+
+        try:
+            self.driver.get(self.url)
+            WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            self.output(f"Step {self.step} - Attempting to verify if we are logged in (hopefully QR code is not present).", 2)
+            xpath = "//canvas[@class='qr-canvas']"
+            if self.settings['debugIsOn']:
+                self.debug_information("QR code check during session start","check")
+            wait = WebDriverWait(self.driver, 10)
+            wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+            self.output(f"Step {self.step} - Chrome driver reports the QR code is visible: It appears we are no longer logged in.", 2)
+            self.output(f"Step {self.step} - Most likely you will get a warning that the central input box is not found.", 2)
+            self.output(f"Step {self.step} - System will try to restore session, or restart the script from CLI to force a fresh log in.\n", 2)
+
+        except TimeoutException:
+            self.output(f"Step {self.step} - nothing found to action. The QR code test passed.\n", 3)
+        self.increase_step()
+
+        self.driver.get(self.url)
+        WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+        
+        for _ in range(3):
+            self.output(f"Step {self.step} - Loading: {str(self.url)}", 3)
+            self.driver.get(self.url)
+            WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+            title_xapth = "(//div[@class='user-title']//span[contains(@class, 'peer-title')])[1]"
+            try:
+                wait = WebDriverWait(self.driver, 30)
+                wait.until(EC.visibility_of_element_located((By.XPATH, title_xapth)))
+                title = self.monitor_element(title_xapth, 10, "Get current page title")
+                self.output(f"Step {self.step} - The current page title is: {title}", 3)
+                break
+            except TimeoutException:
+                self.output(f"Step {self.step} - not found title.", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information("App title check during telegram load", "check")
+                time.sleep(5)
+
+        # There is a very unlikely scenario that the chat might have been cleared.
+        # In this case, the "START" button needs pressing to expose the chat window!
+        xpath = "//button[contains(., 'START')]"
+        button = self.move_and_click(xpath, 8, True, "check for the start button (should not be present)", self.step, "clickable")
+        self.increase_step()
+
+        # HereWalletBot Pop-up Handling
+        self.output(f"Step {self.step} - Preparatory steps complete, handing over to the main setup/claim function...", 2)
+
 
     def full_claim(self):
         self.step = "100"
@@ -114,6 +237,16 @@ class WaveClaimer(Claimer):
                 return modifiedTimer
 
         self.launch_iframe()
+        
+        xpath = "(//span[contains(text(), 'Log in to Wave')])[last()]"
+        self.move_and_click(xpath, 10, True, "find the last game link for the access token", self.step, "clickable")
+        self.increase_step()
+            
+        xpath = "//button[contains(@class, 'popup-button') and contains(., 'Open')]"
+        self.move_and_click(xpath, 10, True, "check for the 'Open' pop-up (may not be present)", self.step, "clickable")
+        self.increase_step()
+        
+        self.switch_tab()
 
         xpath = "//button//span[contains(text(), 'Claim Now')]"
         button = self.move_and_click(xpath, 10, False, "click the 'Ocean Game' link", self.step, "visible")

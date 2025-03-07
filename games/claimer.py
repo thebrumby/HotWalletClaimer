@@ -1347,30 +1347,31 @@ class Claimer:
             with open(page_source_path, "w", encoding="utf-8") as f:
                 f.write(page_source)
 
-    def find_working_link(self, old_step):
-        start_app_xpath = self.start_app_xpath
+    def find_working_link(self, old_step, custom_xpath=None):
+        # Use custom_xpath if provided, otherwise fall back to self.start_app_xpath
+        start_app_xpath = custom_xpath if custom_xpath is not None else self.start_app_xpath
         self.output(f"Step {self.step} - Attempting to open a link for the app: {start_app_xpath}...", 2)
-
+    
         try:
             # Wait for elements to be present in the DOM
             start_app_buttons = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_all_elements_located((By.XPATH, start_app_xpath))
             )
-            
+    
             num_buttons = len(start_app_buttons)
             self.output(f"Step {self.step} - Found {num_buttons} matching link(s) by presence.", 2)
-
+    
             if num_buttons == 0:
                 self.output(f"Step {self.step} - No buttons found with XPath: {start_app_xpath}\n", 1)
                 if self.settings['debugIsOn']:
                     self.debug_information("find working link - no buttons found", "error")
                 return False
-
+    
             # Iterate through buttons in reverse order
             for idx in range(num_buttons - 1, -1, -1):  # Reverse order
                 link_xpath = f"({start_app_xpath})[{idx + 1}]"  # XPath indexes start from 1
                 self.output(f"Step {self.step} - Attempting to click link {idx + 1}...", 2)
-
+    
                 # Use move_and_click to handle visibility, scrolling, and clicking
                 if self.move_and_click(link_xpath, 10, True, "find game launch link", self.step, "clickable"):
                     self.output(f"Step {self.step} - Successfully opened a link for the app.\n", 3)
@@ -1379,13 +1380,13 @@ class Claimer:
                     return True
                 else:
                     self.output(f"Step {self.step} - Link {idx + 1} was not clickable, moving on to next link...", 2)
-
+    
             # If none of the links worked
             self.output(f"Step {self.step} - None of the matching links were clickable.\n", 1)
             if self.settings['debugIsOn']:
                 self.debug_information("no working game link", "error")
             return False
-
+    
         except TimeoutException:
             self.output(f"Step {self.step} - Failed to find the 'Open Wallet' button within the expected timeframe.\n", 1)
             if self.settings['debugIsOn']:
