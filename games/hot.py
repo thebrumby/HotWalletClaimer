@@ -100,7 +100,7 @@ class HotClaimer(Claimer):
         self.move_and_click(xpath, 10, True, "click the pop-up banner", self.step, "clickable")
         self.increase_step()
 
-        xpath = "//p[contains(text(), 'NEAR')]/following::p[@class='sc-la-DxNn szrYb'][2]"
+        xpath = "//img[contains(@src, '1010:native.png')]/following-sibling::div[last()]//p[last()]"
         self.move_and_click(xpath, 15, False, "move to the 'Near' balance.", self.step, "visible")
         near = self.monitor_element(xpath, 10, "obtain your 'Near' Balance")
         if near:
