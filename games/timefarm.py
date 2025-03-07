@@ -103,9 +103,9 @@ class TimeFarmClaimer(Claimer):
         remaining_time = self.get_wait_time()
         self.increase_step()
         self.get_balance(True)
-        self.stake_coins()
-        self.claim_frens()
-        self.claim_oracle()
+        # self.stake_coins()
+        # self.claim_frens()
+        # self.claim_oracle()
         if isinstance(remaining_time, (int, float)):
             return self.apply_random_offset(remaining_time)
         else:
