@@ -92,7 +92,7 @@ class PocketFiClaimer(Claimer):
                 break
 
 
-        xpath = f"//button[descendant::*[local-name()='svg' and @width='12' and @height='12']]"
+        xpath = f"//button[descendant::*[local-name()='svg' and @width='14' and @height='14']]"
         self.move_and_click(xpath, 15, True, f"close the pop-up (may not be present)", self.step, "clickable")
         self.increase_step()
 
