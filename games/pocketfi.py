@@ -115,6 +115,10 @@ class PocketFiClaimer(Claimer):
         clicked_it = False
         button = self.move_and_click(xpath, 15, True, "click claim", self.step, "clickable")
         possible_click = False
+
+        xpath = f"//button[descendant::*[local-name()='svg' and @width='14' and @height='14']]"
+        self.move_and_click(xpath, 15, True, f"close the pop-up (may not be present)", self.step, "clickable")
+        self.increase_step()
         
         # Fallback method if move_and_click did not return a button
         if not button:
