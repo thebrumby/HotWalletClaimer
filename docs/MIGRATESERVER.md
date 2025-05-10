@@ -22,7 +22,9 @@
 
 4. Follow the general installation instructions at [LINUX.md](docs/LINUX.md).
 
-5. Copy `compressed_files.tar.gz` into the `HotWalletBot` directory and decompress it:
+5. Using SSH, ShellNGN, or some other tool that you connect to the server with, copy `compressed_files.tar.gz` from your old server to the new one.
+
+6. Copy `compressed_files.tar.gz` into the `HotWalletBot` directory and decompress it:
    ```bash
    cp /path/to/compressed_files.tar.gz /path/to/HotWalletBot
    ```
@@ -31,7 +33,7 @@
    tar -xzvf compressed_files.tar.gz
    ```
 
-6. Create the recovery script:
+7. Create the recovery script:
    ```bash
    nano recover_pm2.sh
    ```
@@ -76,12 +78,12 @@
    echo "All processes have been processed."
    ```
 
-7. Make the script executable:
+8. Make the script executable:
    ```bash
    chmod +x recover_pm2.sh
    ```
 
-8. Execute the script:
+9. Execute the script:
    ```bash
    ./recover_pm2.sh
    ```
