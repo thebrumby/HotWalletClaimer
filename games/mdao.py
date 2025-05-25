@@ -129,7 +129,7 @@ class MDAOClaimer(Claimer):
         for attempt in range(1, max_attempts + 1):
             try:
                 self.output(f"Step {self.step} - check if the timer is elapsing...", 3)
-                xpath = "//div[contains(text(), 'until claim')]"
+                xpath = "//div[contains(text(),'h ') and contains(text(),'m ') and contains(text(),'s')]"
                 pot_full_value = self.monitor_element(xpath, 15, "claim timer")
                 if pot_full_value:
                     return pot_full_value
