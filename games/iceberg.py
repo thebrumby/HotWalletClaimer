@@ -39,7 +39,7 @@ class IcebergClaimer(Claimer):
         self.allow_early_claim = False
         self.start_app_xpath = "//span[text()='Play']"
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Iceberg']]"
-        self.balance_xpath = f"//p[normalize-space(text())='Your balance']/following-sibling::p"
+        self.balance_xpath = f"//p[normalize-space(.)='Your balance']/ancestor::div[2]/p"
         self.time_remaining_xpath = "//p[contains(text(), 'Receive after')]/span"
 
     def __init__(self):
