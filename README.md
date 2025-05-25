@@ -1,6 +1,6 @@
 # Your automated assistant for Telegram mini-app games!
 
-Supporting 12 crypto-based games Telegram mini-apps. Automate claims and track their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
+Supporting 7 crypto-based games, from popular Telegram mini-apps. Automate claims and track their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
 
 ---
 
@@ -23,7 +23,7 @@ Our blog posts are **FREE** to read on [Patreon](https://www.patreon.com/Telegra
 
 Many popular Telegram apps require frequent logins to maximize rewards – this Python script uses Selenium to automate human-like interactions in a real browser session without injecting suspicious API calls. Designed to run on your local computer or VPS, the script monitors your account status within each app, claiming rewards at the optimal time. With an optional random timer offset, it further mimics natural behavior, minimizing risks and keeping your accounts active. It’s ideal for automating reward claims on Telegram mini-apps like **CryptoRank**, **HOT**, and **Iceberg**, offering convenience without constant manual involvement.
 
-For instance, when claiming **HOT** on Near Protocol or other Web3-enabled apps such as **Vertus** on TON and **TimeFarm** on Telegram, the script tracks when your reward storage is full and initiates claims automatically, reducing network load and transaction fees. Some projects, like **Oxygen** and **TimeFarm**, even feature auto-upgrade or auto-staking options to boost rewards beyond simple mining.
+For instance, when claiming **CryptoRank** on Telegram or other bot games such as **Iceberg**, **PitchTalk**, and **Yupalka**, the script tracks when your reward storage is full and initiates claims automatically, reducing network load and transaction fees. Some projects—like **Oxygen** and **MDAO** with auto-upgrade features, and **TimeFarm** with auto-stake—even let you boost your rewards beyond simple mining.
 
 **WARNING:** Always do your own research, as some projects may ultimately deliver no real-world value and might try to upsell features for cold hard cash!
 
@@ -88,7 +88,7 @@ It is the script user's responsibility to assess the capacity of their hardware,
 <a name="videos"></a>
 | Step-by-Step Video Walkthrough                                                                                                   | YouTube Link                                                                                                                                                                                                                                     | Video Length |
 |----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
-| **Introduction: Play2Earn - Automating Claims in Telegram Games with Python - Hot, Cold, Vertus, and Tree**  
+| **Introduction: Play2Earn - Automating Claims in Telegram Games with Python - CryptoRank, Iceberg, PitchTalk, Yupalka, Oxygen, MDAO, and TimeFarm** 
 Dive into the exciting world of Play2Earn games as we explore automation techniques using Python. This video provides a comprehensive walkthrough on how to set up automated claims for games such as Hot, Cold, Vertus, and Tree. Learn how to efficiently manage game rewards and maximize your earnings with our step-by-step guide.       | [![Play2Earn: Automating Claims in Telegram Games with Python - Hot, Cold, Vertus, and Tree](https://img.youtube.com/vi/cub6cIg6d1o/0.jpg)](https://www.youtube.com/watch?v=cub6cIg6d1o)<br>[Watch Video](https://www.youtube.com/watch?v=cub6cIg6d1o)    | 03:38        |
 | **Windows Guide: Experience the Simplicity of Docker**  
 Explore how to use Docker, a powerful tool for rolling out software such as our automation script. This guide is tailored for Windows users, providing a straightforward approach to setting up and using Docker for efficient software deployment. | [![Windows Guide: Experience the Simplicity of Docker](https://img.youtube.com/vi/5lwO3KogPnQ/0.jpg)](https://www.youtube.com/watch?v=5lwO3KogPnQ)<br>[Watch Video](https://www.youtube.com/watch?v=5lwO3KogPnQ) | 10:09        |
@@ -112,13 +112,13 @@ Automate your Tree mining efforts using the BNB Wallet with this straightforward
     ```bash
     pm2 list
     ```
-- View logs for a specific session (Replace `HOT:Wallet1` with the actual name):
+- View logs for a specific session (Replace `Iceberg:Wallet1` with the actual name):
     ```bash
-    pm2 log HOT:Wallet1
+    pm2 log Iceberg:Wallet1
     ```
 - To remove a managed wallet:
     ```bash
-    pm2 delete HOT:Wallet1
+    pm2 delete Iceberg:Wallet1
     ```
 - Save configuration if you add or delete processes:
     ```bash
