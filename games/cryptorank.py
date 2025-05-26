@@ -176,19 +176,27 @@ class CryptoRankClaimer(Claimer):
 
         self.increase_step()
 
-    def get_wait_time(self, step_number="108", beforeAfter="pre-claim", max_attempts=1):
-        for attempt in range(1, max_attempts + 1):
-            try:
-                self.output(f"Step {self.step} - Get the wait time...", 3)
-                xpath = "//p/span[contains(normalize-space(.),':')]"
-                elements = self.monitor_element(xpath, 10, "get claim timer")
-                if elements:
-                    return elements
-                return False
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred on attempt {attempt}: {e}", 3)
-                return False
-
+    def get_wait_time(self, step_number="108", before_after="pre-claim"):
+        """
+        Fetches the “Receive after” timer span (e.g. "01:15:12") without retries.
+        Returns the list of matching WebElements, or False if none found / on error.
+        """
+        self.output(f"Step {self.step} - [{before_after}] fetching wait time…", 3)
+    
+        xpath = (
+            "//p"
+            "[contains(normalize-space(.), 'Receive after')]"  # find the <p> with “Receive after”
+            "/span"                                             # then its <span> child
+        )
+    
+        try:
+            elements = self.monitor_element(xpath, timeout=10, description="get claim timer")
+            if elements:
+                return elements
+            self.output(f"Step {self.step} - No timer element found.", 2)
+        except Exception as e:
+            self.output(f"Step {self.step} - Error fetching wait time: {e}", 1)
+    
         return False
 
     def stake_coins(self):
