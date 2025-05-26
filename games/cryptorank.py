@@ -96,29 +96,13 @@ class CryptoRankClaimer(Claimer):
         pre_balance = self.get_balance(False)
         self.increase_step()
 
-        remaining_elements = self.get_wait_time()
-        if remaining_elements:
-            # 1) extract the raw "HH:MM:SS" text
-            time_str = (
-                remaining_elements[0].text
-                if isinstance(remaining_elements, (list, tuple))
-                else remaining_elements.text
-            )
-        
-            # 2) parse into ints
-            try:
-                hours, minutes, seconds = map(int, time_str.split(':'))
-            except ValueError:
-                self.output(f"ERROR: Unexpected time format “{time_str}”", 1)
-                return False
-        
-            # 3) compute total seconds
-            total_seconds = hours * 3600 + minutes * 60 + seconds
-        
-            # 4) apply your offset and log
-            wait_seconds = self.apply_random_offset(total_seconds)
-            self.output(f"STATUS: "{time_str}" → sleeping for {wait_seconds} seconds.", 2)
-            return wait_seconds
+        remaining_time = self.get_wait_time()
+        if remaining_time:
+            matches = re.findall(r'(\d+)([hm])', remaining_time)
+            remaining_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
+            remaining_wait_time = self.apply_random_offset(remaining_wait_time)
+            self.output(f"STATUS: Considering {remaining_time} we'll sleep for {remaining_wait_time}.",2)
+            return remaining_wait_time
 
         self.increase_step()
     
@@ -154,29 +138,18 @@ class CryptoRankClaimer(Claimer):
         self.increase_step()
 
         # Store the wait time for later
-        remaining_elements = self.get_wait_time()
-        if remaining_elements:
-            # 1) extract the raw "HH:MM:SS" text
-            time_str = (
-                remaining_elements[0].text
-                if isinstance(remaining_elements, (list, tuple))
-                else remaining_elements.text
-            )
+        remaining_time = self.get_wait_time()
         
-            # 2) parse into ints
-            try:
-                hours, minutes, seconds = map(int, time_str.split(':'))
-            except ValueError:
-                self.output(f"ERROR: Unexpected time format “{time_str}”", 1)
-                return False
-        
-            # 3) compute total seconds
-            total_seconds = hours * 3600 + minutes * 60 + seconds
-        
-            # 4) apply your offset and log
-            wait_seconds = self.apply_random_offset(total_seconds)
-            self.output(f"STATUS: "{time_str}" → sleeping for {wait_seconds} seconds.", 2)
-            return wait_seconds
+        # And check for the daily reward.
+        self.complete_daily_reward()
+       
+        # Finally, let's wrap up the time to come back
+        if remaining_time:
+            matches = re.findall(r'(\d+)([hm])', remaining_time)
+            remaining_wait_time = sum(int(value) * (60 if unit == 'h' else 1) for value, unit in matches)
+            remaining_wait_time = self.apply_random_offset(remaining_wait_time)
+            self.output(f"STATUS: {success_text} {self.daily_reward_text} Let's sleep for {remaining_time}.",2)
+            return remaining_wait_time
 
         return 60
         
@@ -217,7 +190,7 @@ class CryptoRankClaimer(Claimer):
         )
     
         try:
-            elements = self.monitor_element(xpath, 10, "get claim timer")
+            elements = self.monitor_element(xpath, timeout=10, description="get claim timer")
             if elements:
                 return elements
             self.output(f"Step {self.step} - No timer element found.", 2)
