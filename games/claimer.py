@@ -326,18 +326,31 @@ class Claimer:
         if self.settings['telegramBotChatId'] and self.wallet_id and self.settings['telegramVerboseLevel'] >= level:
             self.send_message(string)
 
-    def get_telegram_bot_chat_id(self):
-        url = f"https://api.telegram.org/bot{self.settings['telegramBotToken']}/getUpdates"
-        response = requests.get(url).json()
-        
-        if 'result' in response and len(response['result']) > 0:
-            for update in response['result']:
-                if 'message' in update and 'chat' in update['message']:
-                    return update['message']['chat']['id']
-            raise ValueError("No valid message updates found.")
-        else:
-            raise ValueError("No messages found in response. Ensure the bot has received at least one message.")
+    import requests
 
+    def get_latest_telegram_ids(self):
+        """
+        Fetches the most recent update and returns its chat_id and message_id.
+        Raises if no updates or no message object is found.
+        """
+        url = f"https://api.telegram.org/bot{self.settings['telegramBotToken']}/getUpdates"
+        params = {
+            "limit": 1,    # only the latest update
+            "timeout": 0,  # no long-polling
+        }
+        data = requests.get(url, params=params).json()
+        updates = data.get("result", [])
+        if not updates:
+            raise ValueError("No updates found. Ensure the bot has received at least one message.")
+        
+        latest = updates[-1]
+        msg = latest.get("message") or latest.get("edited_message")
+        if not msg:
+            raise ValueError("Latest update contains no message object.")
+        
+        chat_id = msg["chat"]["id"]
+        message_id = msg["message_id"]
+        return chat_id, message_id
 
     def send_message(self, string):
         try:
