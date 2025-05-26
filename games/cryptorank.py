@@ -180,11 +180,7 @@ class CryptoRankClaimer(Claimer):
         for attempt in range(1, max_attempts + 1):
             try:
                 self.output(f"Step {self.step} - Get the wait time...", 3)
-                xpath = (
-                    "//p"
-                    "[contains(normalize-space(.), 'Receive after')]"  # find the <p> that says “Receive after …”
-                    "/span"                                             # then grab its child <span>
-                )
+                xpath = "//p[contains(normalize-space(.), 'Receive after')]/span"
                 elements = self.monitor_element(xpath, 10, "get claim timer")
                 if elements:
                     return elements
