@@ -350,7 +350,7 @@ class Claimer:
         
         chat_id = msg["chat"]["id"]
         message_id = msg["message_id"]
-        return chat_id, message_id
+        return chat_id
 
     def send_message(self, string):
         try:
