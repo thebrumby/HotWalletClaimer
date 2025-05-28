@@ -8,7 +8,7 @@
 | `./launch.sh cryptorank`          | Launch Crypto Rank Wallet: [@CryptoRank_app_bot](https://web.telegram.org/k/#@CryptoRank_app_bot) | ✅ Claiming well |
 | `./launch.sh gamee`               | Launch Gamee: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458) *(mining only)*          | ❌ Not Working   |
 | `./launch.sh hamsterkombat`       | Launch Hamster Kombat: [@hamster_kombat_bot](https://web.telegram.org/k/#@hamster_kombat_bot)     | ❌ Not Working   |
-| `./launch.sh hot`                 | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot)                         | ❌ Not Working   |
+| `./launch.sh hot`                 | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot)                         | ✅ Claiming well |
 | `./launch.sh iceberg`             | Launch Iceberg: [@IcebergAppBot](https://web.telegram.org/k/#@IcebergAppBot)                      | ✅ Claiming well |
 | `./launch.sh mdao`                | Launch MDAO Wallet: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)                  | ✅ Claiming well |
 | `./launch.sh mdao-autoupgrade`    | **Auto-upgrade:** Spends your tokens to increase mining speed                                     | ✅ Claiming well |
@@ -17,7 +17,7 @@
 | `./launch.sh pitchtalk`           | Launch PitchTalk: [@pitchtalk_bot](https://web.telegram.org/k/#@pitchtalk_bot)                    | ✅ Claiming well |
 | `./launch.sh pocketfi`            | Mine Switch: [@pocketfi_bot](https://web.telegram.org/k/#@pocketfi_bot)                           | ❌ Not Working   |
 | `./launch.sh sidefans`            | Launch SideFans: [@sidekick_fans_bot](https://web.telegram.org/k/#@sidekick_fans_bot)             | ❌ Not Working   |
-| `./launch.sh simpletap`           | Launch SimpleTap: [@Simple_Tap_Bot](https://t.me/Simple_Tap_Bot/app?startapp=1719999344321)        | ❌ Not Working   |
+| `./launch.sh simpletap`           | Launch SimpleTap: [@Simple_Tap_Bot](https://t.me/Simple_Tap_Bot/app?startapp=1719999344321)       | ❌ Not Working   |
 | `./launch.sh spell`               | Launch Spell Wallet: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot)           | ❌ Not Working   |
 | `./launch.sh tabizoo`             | Launch TabiZoo: [@tabizoobot](https://web.telegram.org/k/#@tabizoobot)                            | ❌ Not Working   |
 | `./launch.sh tabizoo-autoupgrade` | **Auto-upgrade:** Spends your tokens to increase mining speed                                     | ❌ Not Working   |
