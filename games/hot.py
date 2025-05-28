@@ -93,14 +93,10 @@ class HotClaimer(Claimer):
     def full_claim(self):
         self.step = "100"
         low_near = True
-
+        
         self.launch_iframe()
 
-        xpath = "//p[contains(text(), 'Click anywhere')]/preceding::div[1]"
-        self.move_and_click(xpath, 10, True, "click the pop-up banner", self.step, "clickable")
-        self.increase_step()
-
-        xpath = "//img[contains(@src, '1010:native.png')]/following-sibling::div[last()]//p[last()]"
+        xpath = "(//p[normalize-space(.)='NEAR']/parent::div/following-sibling::div//p[last()])[1]"
         self.move_and_click(xpath, 15, False, "move to the 'Near' balance.", self.step, "visible")
         near = self.monitor_element(xpath, 10, "obtain your 'Near' Balance")
         if near:
@@ -158,7 +154,7 @@ class HotClaimer(Claimer):
                 try:
                     original_window = self.driver.current_window_handle
                     xpath = "//button[contains(text(), 'Check NEWS')]"
-                    self.move_and_click(xpath, 3, True, "check for NEWS.", self.step, "clickable")
+                    self.move_and_click(xpath, 5, True, "check for NEWS.", self.step, "clickable")
                     self.driver.switch_to.window(original_window)
                 except TimeoutException:
                     if self.settings['debugIsOn']:
@@ -171,10 +167,6 @@ class HotClaimer(Claimer):
                     
                     xpath = "//button[contains(text(), 'Claim HOT')]"
                     self.move_and_click(xpath, 10, True, "click the claim button (1st button)", self.step, "clickable")
-                    self.increase_step()
-
-                    xpath = "//button[contains(text(), 'Claim HOT')]"
-                    self.move_and_click(xpath, 10, True, "click the claim button (2nd button - may not be present)", self.step, "clickable")
                     self.increase_step()
 
                     self.output(f"Step {self.step} - Let's wait for the pending Claim spinner to stop spinning...", 2)
@@ -193,7 +185,6 @@ class HotClaimer(Claimer):
                     self.increase_step()
 
                     self.get_balance(True)
-                    self.get_profit_hour(True)
 
                     if wait_time_text == "Filled":
                         if low_near:
