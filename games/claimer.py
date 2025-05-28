@@ -328,7 +328,7 @@ class Claimer:
 
     import requests
 
-    def get_latest_telegram_ids(self):
+    def get_telegram_bot_chat_id(self):
         """
         Fetches the most recent update and returns its chat_id and message_id.
         Raises if no updates or no message object is found.
