@@ -119,6 +119,7 @@ class HotClaimer(Claimer):
         self.increase_step()
 
         self.get_balance(False)
+        self.get_profit_hour(True)
 
         wait_time_text = self.get_wait_time(self.step, "pre-claim") 
 
@@ -184,7 +185,6 @@ class HotClaimer(Claimer):
                     self.increase_step()
 
                     self.get_balance(True)
-                    self.get_profit_hour(True)
 
                     if wait_time_text == "Filled":
                         if low_near:
