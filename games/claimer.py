@@ -876,8 +876,8 @@ class Claimer:
             title_xpath = "(//div[@class='user-title']//span[contains(@class, 'peer-title-inner')])[1]"
             try:
                 wait = WebDriverWait(self.driver, 30)
-                wait.until(EC.visibility_of_element_located((By.XPATH, title_xapth)))
-                title = self.monitor_element(title_xapth, 10, "Get current page title")
+                wait.until(EC.visibility_of_element_located((By.XPATH, title_xpath)))
+                title = self.monitor_element(title_xpath, 10, "Get current page title")
                 self.output(f"Step {self.step} - The current page title is: {title}", 3)
                 break
             except TimeoutException:
@@ -1712,5 +1712,6 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
