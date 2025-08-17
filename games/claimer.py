@@ -873,7 +873,7 @@ class Claimer:
             self.output(f"Step {self.step} - Loading: {str(self.url)}", 3)
             self.driver.get(self.url)
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            title_xapth = "(//div[@class='user-title']//span[contains(@class, 'peer-title')])[1]"
+            title_xapth = "title_xpath = "(//div[@class='user-title']//span[contains(@class, 'peer-title-inner')])[1]""
             try:
                 wait = WebDriverWait(self.driver, 30)
                 wait.until(EC.visibility_of_element_located((By.XPATH, title_xapth)))
@@ -1712,3 +1712,4 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
