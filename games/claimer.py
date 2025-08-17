@@ -840,6 +840,7 @@ class Claimer:
 
     def launch_iframe(self):
         self.driver = self.get_driver()
+        time.sleep(5)
         # Set viewport size for a desktop browser, e.g. 1920x1080 for a full HD experience
         self.driver.set_window_size(1920, 1080)
 
@@ -868,10 +869,15 @@ class Claimer:
 
         self.driver.get(self.url)
         WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+
+        # Check we are on the app 
+        xpath = self.start_app_menu_item
+        button = self.move_and_click(xpath, 8, True, "click the app in the left menu", self.step, "clickable")
+        self.increase_step()
         
         for _ in range(3):
             self.output(f"Step {self.step} - Loading: {str(self.url)}", 3)
-            self.driver.get(self.url)
+            # self.driver.get(self.url)
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
             title_xpath = "(//div[@class='user-title']//span[contains(@class, 'peer-title')])[1]//*[contains(@class,'peer-title-inner')]"
             try:
@@ -888,6 +894,7 @@ class Claimer:
 
         # There is a very unlikely scenario that the chat might have been cleared.
         # In this case, the "START" button needs pressing to expose the chat window!
+        self.increase_step()
         xpath = "//button[contains(., 'START')]"
         button = self.move_and_click(xpath, 8, True, "check for the start button (should not be present)", self.step, "clickable")
         self.increase_step()
