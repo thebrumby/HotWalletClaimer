@@ -876,7 +876,7 @@ class Claimer:
         self.increase_step()
         
         for _ in range(1):
-            self.output(f"Step {self.step} - Loading: {str(self.url)}", 3)
+            # self.output(f"Step {self.step} - Loading: {str(self.url)}", 3)
             # self.driver.get(self.url)
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
             title_xpath = "(//div[@class='user-title']//span[contains(@class, 'peer-title')])[1]//*[contains(@class,'peer-title-inner')]"
@@ -1885,6 +1885,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
