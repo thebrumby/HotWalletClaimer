@@ -1297,7 +1297,7 @@ class Claimer:
                 self.output(f"Step {step} - Disabled pointer events on {cleared} overlay(s).", 3)
             return cleared
         except Exception:
-        return 0
+            return 0
 
     def element_still_exists_by_id(self, element_id):
         """Check if an element still exists by its ID."""
@@ -1710,6 +1710,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
