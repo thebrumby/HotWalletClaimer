@@ -55,7 +55,7 @@ class HotClaimer(Claimer):
             self.launch_iframe()
             self.increase_step()
 
-            xpath = "//button[p[normalize-space(text())='Import account']]"
+            xpath = "//button[.//p[normalize-space()='Import account']]"
             self.move_and_click(xpath, 30, True, "find the HereWallet log-in button", "08", "clickable")
             self.increase_step()
 
@@ -298,3 +298,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
