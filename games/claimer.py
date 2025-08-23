@@ -875,7 +875,7 @@ class Claimer:
         button = self.move_and_click(xpath, 8, True, "click the app in the left menu", self.step, "clickable")
         self.increase_step()
         
-        for _ in range(3):
+        for _ in range(1):
             self.output(f"Step {self.step} - Loading: {str(self.url)}", 3)
             # self.driver.get(self.url)
             WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
@@ -1885,6 +1885,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
