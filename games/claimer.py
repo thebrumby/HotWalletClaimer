@@ -1305,6 +1305,27 @@ class Claimer:
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
             return False
 
+    def clear_overlays(self, target_element, step):
+        try:
+            element_location = target_element.location_once_scrolled_into_view
+            overlays = self.driver.find_elements(
+                By.XPATH,
+                "//*[contains(@style,'position: absolute') or contains(@style,'position: fixed')]"
+            )
+            overlays_cleared = 0
+            for overlay in overlays:
+                overlay_rect = overlay.rect
+                if (overlay_rect['x'] <= element_location['x'] <= overlay_rect['x'] + overlay_rect['width'] and
+                    overlay_rect['y'] <= element_location['y'] <= overlay_rect['y'] + overlay_rect['height']):
+                    self.driver.execute_script("arguments[0].style.display = 'none';", overlay)
+                    overlays_cleared += 1
+            if overlays_cleared > 0:
+                self.output(f"Step {step} - Removed {overlays_cleared} overlay(s) covering the target.", 3)
+            return overlays_cleared
+        except Exception as e:
+            self.output(f"Step {step} - An error occurred while trying to clear overlays: {e}", 1)
+            return 0
+
     def _center_in_scroll_parent(self, elem):
         # Scrolls either the nearest scrollable parent or the window to center the element
         self.driver.execute_script("""
@@ -1864,6 +1885,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
