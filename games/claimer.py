@@ -1276,28 +1276,27 @@ class Claimer:
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
             return False
 
-    def clear_overlays(self, target_element, step):
+    def _safe_click_webelement(self, elem, action_description=""):
         try:
-            tx, ty = target_element.location_once_scrolled_into_view.values()
-            # broader net: class-based positioned elements that are displayed and have size
-            overlays = self.driver.find_elements(
-                By.XPATH,
-                "//*[self::div or self::span or self::section]["
-                "(contains(@style,'position:') or contains(@class,'overlay') or contains(@class,'modal') or contains(@class,'backdrop'))]"
-            )
-            cleared = 0
-            for ov in overlays:
-                if not ov.is_displayed():
-                    continue
-                rect = ov.rect
-                if rect['width'] and rect['height'] and rect['x'] <= tx <= rect['x']+rect['width'] and rect['y'] <= ty <= rect['y']+rect['height']:
-                    self.driver.execute_script("arguments[0].style.pointerEvents='none';", ov)
-                    cleared += 1
-            if cleared:
-                self.output(f"Step {step} - Disabled pointer events on {cleared} overlay(s).", 3)
-            return cleared
-        except Exception:
-            return 0
+            # Wait for THIS element to be visible & enabled
+            WebDriverWait(self.driver, 5).until(EC.visibility_of(elem))
+            WebDriverWait(self.driver, 5).until(lambda d: elem.is_enabled())
+    
+            ActionChains(self.driver).move_to_element(elem).pause(0.05).click(elem).perform()
+            return elem
+    
+        except ElementClickInterceptedException:
+            # JS click fallback
+            try:
+                self.driver.execute_script("arguments[0].click();", elem)
+                self.output(f"Step {self.step} - JS click fallback for {action_description}.", 3)
+                return elem
+            except Exception as e:
+                self.output(f"Step {self.step} - JS click failed: {type(e).__name__}: {e}", 2)
+                return None
+        except Exception as e:
+            self.output(f"Step {self.step} - Click failed: {type(e).__name__}: {e}", 2)
+            return None
 
     def element_still_exists_by_id(self, element_id):
         """Check if an element still exists by its ID."""
@@ -1710,6 +1709,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
