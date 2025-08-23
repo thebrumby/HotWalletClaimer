@@ -20,7 +20,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException, MoveTargetOutOfBoundsException
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 import requests
@@ -1082,19 +1082,37 @@ class Claimer:
     
     def _safe_click_webelement(self, elem, action_description=""):
         try:
-            # ensure clickable at the moment of click
-            WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, ".")))
+            # Re-center in view (some headers overlap if you scroll to top edge)
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView({block:'center', inline:'center'});", elem
+            )
+    
+            # Wait until visible & enabled and has size
+            WebDriverWait(self.driver, 5).until(EC.visibility_of(elem))
+            WebDriverWait(self.driver, 5).until(lambda d: elem.is_enabled())
+            WebDriverWait(self.driver, 5).until(
+                lambda d: self.driver.execute_script(
+                    "var r = arguments[0].getBoundingClientRect(); return (r.width>0 && r.height>0);", elem
+                )
+            )
+    
+            # Try a normal click first
             ActionChains(self.driver).move_to_element(elem).pause(0.05).click(elem).perform()
             return elem
-        except ElementClickInterceptedException:
-            # last-resort JS click
+    
+        except (MoveTargetOutOfBoundsException, ElementClickInterceptedException) as _:
+            # Last resort: JS click
             try:
                 self.driver.execute_script("arguments[0].click();", elem)
                 self.output(f"Step {self.step} - JS click fallback for {action_description}.", 3)
                 return elem
-            except Exception as e:
-                self.output(f"Step {self.step} - JS click failed: {type(e).__name__}: {e}", 2)
+            except Exception as e2:
+                self.output(f"Step {self.step} - JS click failed: {type(e2).__name__}: {e2}", 2)
                 return None
+    
+        except StaleElementReferenceException:
+            self.output(f"Step {self.step} - Element went stale during click for {action_description}.", 2)
+            return None
         except Exception as e:
             self.output(f"Step {self.step} - Click failed: {type(e).__name__}: {e}", 2)
             return None
@@ -1709,6 +1727,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
