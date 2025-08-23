@@ -1294,24 +1294,150 @@ class Claimer:
                 self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
             return False
 
+    def _center_in_scroll_parent(self, elem):
+        # Scrolls either the nearest scrollable parent or the window to center the element
+        self.driver.execute_script("""
+          function getScrollableParent(el){
+            while (el && el !== document.body){
+              const s = getComputedStyle(el);
+              const oy = s.overflowY;
+              if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight) return el;
+              el = el.parentElement;
+            }
+            return null;
+          }
+          const el = arguments[0];
+          const p = getScrollableParent(el);
+          if (p){
+            const r = el.getBoundingClientRect();
+            const pr = p.getBoundingClientRect();
+            p.scrollTop += (r.top - pr.top) - (pr.height/2 - r.height/2);
+            p.scrollLeft += (r.left - pr.left) - (pr.width/2 - r.width/2);
+          } else {
+            el.scrollIntoView({block:'center', inline:'center'});
+          }
+        """, elem)
+    
+    def _js_click_variants(self, elem):
+        # 1) Native element.click()
+        try:
+            self.driver.execute_script("arguments[0].click();", elem)
+            return True
+        except Exception:
+            pass
+    
+        # 2) MouseEvent (bubbling) – closer to a real user click
+        try:
+            self.driver.execute_script("""
+              const e = new MouseEvent('click', {bubbles:true, cancelable:true, view:window});
+              arguments[0].dispatchEvent(e);
+            """, elem)
+            return True
+        except Exception:
+            pass
+    
+        # 3) Click center point (some libs listen for coords)
+        try:
+            self.driver.execute_script("""
+              const r = arguments[0].getBoundingClientRect();
+              const x = r.left + r.width/2;
+              const y = r.top + r.height/2;
+              const el = document.elementFromPoint(x, y);
+              if (el) el.click();
+            """, elem)
+            return True
+        except Exception:
+            pass
+    
+        return False
+    
+    def _temporarily_disable_blockers(self, elem):
+        # Disable pointer events on any element covering the target's center.
+        return self.driver.execute_script("""
+          const el = arguments[0];
+          const r = el.getBoundingClientRect();
+          const cx = r.left + r.width/2;
+          const cy = r.top + r.height/2;
+    
+          // Gather elements stacked at the click point
+          const hidden = [];
+          const seen = new Set();
+          for (let i=0; i<20; i++){
+            const top = document.elementFromPoint(cx, cy);
+            if (!top || seen.has(top)) break;
+            seen.add(top);
+    
+            if (top !== el && !el.contains(top)) {
+              const cs = getComputedStyle(top);
+              // Only disable if it's visually blocking
+              if (cs.pointerEvents !== 'none' && cs.visibility !== 'hidden' && cs.display !== 'none'){
+                hidden.push([top, top.style.pointerEvents]);
+                top.style.pointerEvents = 'none';
+              }
+            }
+            // If we've exposed the target, stop early
+            if (document.elementFromPoint(cx, cy) === el) break;
+          }
+          return hidden;
+        """, elem)
+    
+    def _restore_blockers(self, state):
+        # Restore pointer-events on previously disabled elements
+        if not state:
+            return
+        try:
+            self.driver.execute_script("""
+              const items = arguments[0];
+              for (const [node, oldPE] of items){
+                if (node && node.style) node.style.pointerEvents = oldPE || '';
+              }
+            """, state)
+        except Exception:
+            pass
+    
     def _safe_click_webelement(self, elem, action_description=""):
         try:
-            # Wait for THIS element to be visible & enabled
+            # 1) Ensure in view (container aware)
+            self._center_in_scroll_parent(elem)
+    
+            # 2) Wait for visible, enabled and with size
             WebDriverWait(self.driver, 5).until(EC.visibility_of(elem))
             WebDriverWait(self.driver, 5).until(lambda d: elem.is_enabled())
+            WebDriverWait(self.driver, 5).until(
+                lambda d: self.driver.execute_script(
+                    "var r = arguments[0].getBoundingClientRect(); return (r.width>0 && r.height>0);", elem
+                )
+            )
     
-            ActionChains(self.driver).move_to_element(elem).pause(0.05).click(elem).perform()
-            return elem
-    
-        except ElementClickInterceptedException:
-            # JS click fallback
+            # 3) Try ActionChains click first
             try:
-                self.driver.execute_script("arguments[0].click();", elem)
-                self.output(f"Step {self.step} - JS click fallback for {action_description}.", 3)
+                ActionChains(self.driver).move_to_element(elem).pause(0.05).click(elem).perform()
                 return elem
-            except Exception as e:
-                self.output(f"Step {self.step} - JS click failed: {type(e).__name__}: {e}", 2)
-                return None
+            except (MoveTargetOutOfBoundsException, ElementClickInterceptedException):
+                # Will try JS paths below
+                pass
+    
+            # 4) If something’s still blocking, temporarily disable blockers over center
+            blockers = self._temporarily_disable_blockers(elem)
+            try:
+                if self._js_click_variants(elem):
+                    self.output(f"Step {self.step} - JS click fallback used for {action_description}.", 3)
+                    return elem
+            finally:
+                self._restore_blockers(blockers)
+    
+            # 5) As a final attempt, re-center & retry JS once more
+            self._center_in_scroll_parent(elem)
+            if self._js_click_variants(elem):
+                self.output(f"Step {self.step} - JS click fallback (second attempt) used for {action_description}.", 3)
+                return elem
+    
+            self.output(f"Step {self.step} - All click strategies failed for {action_description}.", 2)
+            return None
+    
+        except StaleElementReferenceException:
+            self.output(f"Step {self.step} - Element went stale during click for {action_description}.", 2)
+            return None
         except Exception as e:
             self.output(f"Step {self.step} - Click failed: {type(e).__name__}: {e}", 2)
             return None
@@ -1727,6 +1853,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
