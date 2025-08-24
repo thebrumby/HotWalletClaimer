@@ -37,7 +37,7 @@ class IcebergClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.allow_early_claim = False
-        self.start_app_xpath = "//span[text()='Play']"
+        self.start_app_xpath = "//div[contains(@class,'new-message-bot-commands-view')][contains(normalize-space(.),'Play')]"
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Iceberg']]"
         self.balance_xpath = f"//p[normalize-space(.)='Your balance']/ancestor::div[2]/p"
         self.time_remaining_xpath = "//p[contains(text(), 'Receive after')]/span"
@@ -136,3 +136,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
