@@ -1212,98 +1212,128 @@ class Claimer:
                 self.debug_information(f"ClickElem {action_description} fatal error: {str(e)}", "error")
             return False
 
-    def brute_click(self, xpath, timeout=30, action_description=""):
-        # Use move_and_click to ensure the element is present and scrolled into view
-        if not self.move_and_click(xpath, 10, False, "locate the element to Brute Click", self.step, "clickable"):
+    def brute_click(self, xpath, timeout=30, action_description="", state_check=None, post_click_wait=0.4):
+        """
+        Brute-force click:
+          - ensures element present & in view
+          - tries ActionChains click, then JS .click(), then JS synthesized center click
+          - after each attempt waits shortly for disappearance or state_check -> success
+        Returns True on likely success, False otherwise.
+        """
+        # 1) Make sure it's there & scroll it into view (don't click yet)
+        if not self.move_and_click(xpath, 10, False, f"locate the element to Brute Click ({action_description})", self.step, "clickable"):
             self.output(f"Step {self.step} - Element not found or not scrollable: {xpath}", 2)
             return False
     
-        try:
-            # Retrieve the element after ensuring it's scrolled into view
-            element = self.driver.find_element(By.XPATH, xpath)
-            previous_element_id = element.get_attribute("id")
-            self.output(f"Step {self.step} - XPath found: {xpath}", 3)
-            if self.settings['debugIsOn']:
-                self.debug_information(f"BruteClick {action_description} - Element found", "info")
-                self.driver.save_screenshot(f"debug_screenshots/BruteClick_before_click_{self.step}.png")
-        except Exception as e:
-            if "has no size and location" in str(e):
-                error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
-            else:
-                error_message = f"Step {self.step} - An error occurred while locating element after scrolling during {action_description}: {e}"
-            self.output(error_message, 3)
-            if self.settings['debugIsOn']:
-                self.debug_information(f"BruteClick {action_description} fatal error: {str(e)}", "error")
-                self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
-            return False
+        end = time.time() + timeout
+        last_html_sig = None  # rough signature to detect replacements when no id
     
-        try:
-            actions = ActionChains(self.driver)
-            actions.move_to_element(element).perform()
-            overlays_cleared = self.clear_overlays(element, self.step)
-            if overlays_cleared > 0:
-                self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s) before attempting click...", 3)
-                if self.settings['debugIsOn']:
-                    self.debug_information(f"BruteClick {action_description} - Overlays cleared", "info")
+        def center_js_click(el):
+            # synthesize real pointer/mouse events at center
+            self.driver.execute_script("""
+                const el = arguments[0];
+                const rect = el.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                function fire(type) {
+                  const evt = new MouseEvent(type, {bubbles:true, cancelable:true, view:window,
+                     clientX:x, clientY:y});
+                  el.dispatchEvent(evt);
+                }
+                fire('pointerdown'); fire('mousedown'); fire('pointerup'); fire('mouseup'); fire('click');
+            """, el)
     
-            unique_ids = {previous_element_id}
-            click_attempts = 0
-            start_time = time.time()
+        def html_sig(el):
+            # short signature when @id is empty; keeps cost low
+            try:
+                outer = self.driver.execute_script("return arguments[0].outerHTML.slice(0, 200);", el) or ""
+                return outer
+            except Exception:
+                return None
     
-            while time.time() - start_time < timeout:
-                click_attempts += 1
+        while time.time() < end:
+            try:
+                el = self.driver.find_element(By.XPATH, xpath)
+            except Exception:
+                # If we can't find it anymore, assume success
+                self.output(f"Step {self.step} - Click successful: element not found after attempts.", 2)
+                return True
     
+            # Scroll into view and clear overlays each loop (in case layout changed)
+            try:
+                self.driver.execute_script("arguments[0].scrollIntoView({block:'center', inline:'center'});", el)
+            except Exception:
+                pass
+    
+            try:
+                self.clear_overlays(el, self.step)
+            except Exception:
+                pass
+    
+            # Keep a lightweight signature for change detection
+            try:
+                el_id = el.get_attribute("id") or ""
+            except Exception:
+                el_id = ""
+            cur_sig = (el_id, html_sig(el))
+    
+            # Attempt 1: native click
+            try:
+                ActionChains(self.driver).move_to_element(el).pause(0.05).click(el).perform()
+            except Exception:
+                # Attempt 2: JS .click()
                 try:
-                    # Try clicking with ActionChains first
-                    actions.click(element).perform()
-                    # Fallback to JS click if necessary
+                    self.driver.execute_script("arguments[0].click();", el)
+                except Exception:
+                    # Attempt 3: JS center click (synth events)
                     try:
-                        self.driver.execute_script("arguments[0].click();", element)
-                        click_attempts += 1
-                    except Exception as e_js:
-                        if "has no size and location" in str(e_js):
-                            self.output(f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized.", 1)
-                            if self.settings['debugIsOn']:
-                                self.debug_information(f"BruteClick {action_description} - Element not sized properly: {str(e_js)}", "error")
-                            return False
-                        if self.settings['debugIsOn']:
-                            self.debug_information(f"BruteClick {action_description} JS click failed: {str(e_js)}", "warning")
-                except ElementClickInterceptedException:
-                    self.output(f"Step {self.step} - Element click intercepted, attempting JS click...", 3)
-                    if self.settings['debugIsOn']:
-                        self.debug_information(f"BruteClick {action_description} click intercepted", "warning")
+                        center_js_click(el)
+                    except Exception:
+                        # couldn't click this loop; try again
+                        time.sleep(0.15)
+                        continue
     
-                # Re-locate the element to verify if it still exists or has been replaced
+            # Give the UI a moment to react
+            time.sleep(post_click_wait)
+    
+            # Success conditions
+            # A) Disappeared
+            try:
+                self.driver.find_element(By.XPATH, xpath)
+                still_there = True
+            except NoSuchElementException:
+                still_there = False
+    
+            if not still_there:
+                self.output(f"Step {self.step} - BruteClick success: element disappeared.", 3)
+                return True
+    
+            # B) Custom success check
+            if callable(state_check):
                 try:
-                    element = self.driver.find_element(By.XPATH, xpath)
-                    current_element_id = element.get_attribute("id")
-                    if current_element_id != previous_element_id:
-                        unique_ids.add(current_element_id)
-                        self.output(f"Step {self.step} - New element detected. Total unique IDs encountered: {len(unique_ids)}", 3)
-                    previous_element_id = current_element_id
-                except (NoSuchElementException, StaleElementReferenceException):
-                    self.output(f"Step {self.step} - Click successful: Element no longer exists after {click_attempts} attempts.", 2)
-                    if self.settings['debugIsOn']:
-                        self.debug_information(f"BruteClick {action_description} successful after {click_attempts} attempts", "success")
-                        self.driver.save_screenshot(f"debug_screenshots/BruteClick_success_{self.step}.png")
-                    return True
+                    if state_check():
+                        self.output(f"Step {self.step} - BruteClick success: state_check passed.", 3)
+                        return True
+                except Exception:
+                    pass
     
-            self.output(f"Step {self.step} - Brute click timed out after {click_attempts} attempts.", 2)
-            if self.settings['debugIsOn']:
-                self.debug_information(f"BruteClick {action_description} timed out after {click_attempts} attempts", "error")
-                self.driver.save_screenshot(f"debug_screenshots/BruteClick_timeout_end_{self.step}.png")
-            return False
+            # C) Signature changed = likely DOM replacement (often means click worked)
+            try:
+                el2 = self.driver.find_element(By.XPATH, xpath)
+                new_sig = (el2.get_attribute("id") or "", html_sig(el2))
+            except Exception:
+                self.output(f"Step {self.step} - BruteClick success: element replaced then missing.", 3)
+                return True
     
-        except Exception as e:
-            if "has no size and location" in str(e):
-                error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
-            else:
-                error_message = f"Step {self.step} - An error occurred during {action_description}: {e}"
-            self.output(error_message, 3)
-            if self.settings['debugIsOn']:
-                self.debug_information(f"BruteClick {action_description} fatal error: {str(e)}", "error")
-                self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
-            return False
+            if last_html_sig and new_sig != last_html_sig:
+                # DOM mutated for this locator; count as success
+                self.output(f"Step {self.step} - BruteClick probable success: DOM signature changed.", 3)
+                return True
+    
+            last_html_sig = new_sig
+    
+        self.output(f"Step {self.step} - Brute click timed out without clear success.", 2)
+        return False
 
     def clear_overlays(self, target_element, step):
         try:
@@ -1885,6 +1915,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
