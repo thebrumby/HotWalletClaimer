@@ -21,9 +21,9 @@
 | `./launch.sh spell`               | Launch Spell Wallet: [@spell_wallet_bot](https://web.telegram.org/k/#@spell_wallet_bot)           | ❌ Not Working   |
 | `./launch.sh tabizoo`             | Launch TabiZoo: [@tabizoobot](https://web.telegram.org/k/#@tabizoobot)                            | ❌ Not Working   |
 | `./launch.sh tabizoo-autoupgrade` | **Auto-upgrade:** Spends your tokens to increase mining speed                                     | ❌ Not Working   |
-| `./launch.sh timefarm`            | Launch Time Farm on Telegram: [@TimeFarmCryptoBot](https://t.me/TimeFarmCryptoBot)                | ✅ Claiming well |
-| `./launch.sh timefarm-autostake`  | **Auto-stake:** Automatically locks your tokens for 3 days to gain 3% interest                    | ✅ Claiming well |
+| `./launch.sh timefarm`            | Launch Time Farm on Telegram: [@TimeFarmCryptoBot](https://t.me/TimeFarmCryptoBot)                | ❌ Not Working |
+| `./launch.sh timefarm-autostake`  | **Auto-stake:** Automatically locks your tokens for 3 days to gain 3% interest                    | ❌ Not Working |
 | `./launch.sh uxuy`                | Launch UXUY: [@UXUYbot](https://t.me/UXUYbot)                                                     | ❌ Not Working   |
 | `./launch.sh vertus`              | Launch Vertus on TON: [@Vertus_App_bot](https://t.me/Vertus_App_bot)                              | ❌ Not Working   |
 | `./launch.sh wave`                | Launch Wave Wallet on Sui: [@waveonsuibot](https://t.me/waveonsuibot)                             | ❌ Not Working   |
-| `./launch.sh yupalka`             | Launch Yupalka: [@YupLand_bot](https://t.me/YupLand_bot)                                          | ✅ Claiming well |
+| `./launch.sh yupalka`             | Launch Yupalka: [@YupLand_bot](https://t.me/YupLand_bot)                                          | ❌ Not Working |
