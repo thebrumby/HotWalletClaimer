@@ -40,7 +40,7 @@ class MDAOClaimer(Claimer):
         self.forceLocalProxy = False
         self.forceRequestUserAgent = False
         self.start_app_xpath = "//div[contains(@class, 'new-message-bot-commands') and .//div[text()='Launch app']]"
-        self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='ZAVOD']]"
+        self.start_app_menu_item = "//a[.//span[contains(@class,'peer-title')][normalize-space(.)='ZAVOD' or .//span[normalize-space(.)='ZAVOD']]]"
         self.balance_xpath = f"//div[@data-tooltip-id='balance']/div[1]"
 
     def __init__(self):
@@ -84,6 +84,10 @@ class MDAOClaimer(Claimer):
         self.step = "100"
 
         self.launch_iframe()
+        
+        xpath = "(//div[contains(normalize-space(.), 'CLAIM') and contains(@class,'sc-gtLWhw sc-egkSDF sc-iqyJx kvyHci jpUGsD jzBzGm')] )[1]"
+        button = self.move_and_click(xpath, 20, True, "claim the spot prize (may not be present)", self.step, "clickable")
+        self.increase_step()
 
         self.get_balance(self.balance_xpath, False)
 
