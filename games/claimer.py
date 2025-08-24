@@ -840,66 +840,95 @@ class Claimer:
 
     def launch_iframe(self):
         self.driver = self.get_driver()
-        time.sleep(5)
-        # Set viewport size for a desktop browser, e.g. 1920x1080 for a full HD experience
         self.driver.set_window_size(1920, 1080)
-
-        # let's start with clean screenshots directory
+    
+        # start with clean screenshots (only once per session)
         if int(self.step) < 101:
             if os.path.exists(self.screenshots_path):
                 shutil.rmtree(self.screenshots_path)
             os.makedirs(self.screenshots_path)
-
+    
+        # --- First load + quick QR sanity check (non-fatal) ---
         try:
             self.driver.get(self.url)
-            WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            self.output(f"Step {self.step} - Attempting to verify if we are logged in (hopefully QR code is not present).", 2)
-            xpath = "//canvas[@class='qr-canvas']"
-            if self.settings['debugIsOn']:
-                self.debug_information("QR code check during session start","check")
-            wait = WebDriverWait(self.driver, 10)
-            wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-            self.output(f"Step {self.step} - Chrome driver reports the QR code is visible: It appears we are no longer logged in.", 2)
-            self.output(f"Step {self.step} - Most likely you will get a warning that the central input box is not found.", 2)
-            self.output(f"Step {self.step} - System will try to restore session, or restart the script from CLI to force a fresh log in.\n", 2)
-
-        except TimeoutException:
-            self.output(f"Step {self.step} - nothing found to action. The QR code test passed.\n", 3)
-        self.increase_step()
-
-        self.driver.get(self.url)
-        WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-
-        # Check we are on the app 
-        xpath = self.start_app_menu_item
-        button = self.move_and_click(xpath, 8, True, "click the app in the left menu", self.step, "clickable")
-        self.increase_step()
-        
-        for _ in range(1):
-            # self.output(f"Step {self.step} - Loading: {str(self.url)}", 3)
-            # self.driver.get(self.url)
-            WebDriverWait(self.driver, 30).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            title_xpath = "(//div[@class='user-title']//span[contains(@class,'peer-title')])[1]"
+            WebDriverWait(self.driver, 30).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
+            # small extra settle to let TG lazy bits hook up
+            time.sleep(5.0)
+    
+            self.output(f"Step {self.step} - Attempting QR presence check (expecting none).", 2)
+            if self.settings.get('debugIsOn'):
+                self.debug_information("QR code check during session start", "check")
+    
             try:
-                wait = WebDriverWait(self.driver, 30)
-                wait.until(EC.visibility_of_element_located((By.XPATH, title_xpath)))
-                title = self.monitor_element(title_xpath, 10, "Get current page title")
-                self.output(f"Step {self.step} - The current page title is: {title}", 3)
-                break
+                WebDriverWait(self.driver, 5).until(
+                    EC.visibility_of_element_located((By.XPATH, "//canvas[@class='qr-canvas']"))
+                )
+                self.output(f"Step {self.step} - QR code visible (likely logged out). You may see follow-up input errors.", 2)
             except TimeoutException:
-                self.output(f"Step {self.step} - not found title.", 3)
-                if self.settings['debugIsOn']:
+                self.output(f"Step {self.step} - No QR detected; proceeding.", 3)
+    
+        except Exception as e:
+            self.output(f"Step {self.step} - Initial load error: {e}", 1)
+    
+        self.increase_step()
+    
+        # --- Attempt to open the game & verify title (up to 3 tries) ---
+        title_xpath = "(//div[@class='user-title']//span[contains(@class,'peer-title')])[1]"
+        app_xpath = self.start_app_menu_item  # left-menu app item
+    
+        verified = False
+        for attempt in range(1, 4):
+            # ensure page is fully ready each pass
+            try:
+                # (re)load to keep state fresh if needed
+                self.driver.get(self.url)
+                WebDriverWait(self.driver, 30).until(
+                    lambda d: d.execute_script("return document.readyState") == "complete"
+                )
+                time.sleep(0.8)  # tiny settle
+            except Exception as e:
+                self.output(f"Step {self.step} - Attempt {attempt}: reload error: {e}", 2)
+    
+            # click the app in the left menu
+            self.move_and_click(app_xpath, 8, True, "click the app in the left menu", self.step, "clickable")
+            self.increase_step()
+    
+            # wait for lazy bits, then look for chat title
+            try:
+                WebDriverWait(self.driver, 30).until(
+                    EC.visibility_of_element_located((By.XPATH, title_xpath))
+                )
+                title = (self.monitor_element(title_xpath, 8, "Get current page title") or "").strip()
+                if title:
+                    self.output(f"Step {self.step} - The current page title is: {title}", 3)
+                    verified = True
+                    break
+                else:
+                    self.output(f"Step {self.step} - Attempt {attempt}: title element found but empty.", 3)
+            except TimeoutException:
+                self.output(f"Step {self.step} - Attempt {attempt}: title not visible yet.", 3)
+                if self.settings.get('debugIsOn'):
                     self.debug_information("App title check during telegram load", "check")
-                time.sleep(5)
-
-        # There is a very unlikely scenario that the chat might have been cleared.
-        # In this case, the "START" button needs pressing to expose the chat window!
+            time.sleep(2)  # short backoff between attempts
+    
+        if not verified:
+            # hard warning for external orchestration
+            self.output(
+                "STATUS: Could not reach the game after 3 attempts. "
+                "You may need to manually bump the game up in your Telegram chat list.",
+                1
+            )
+    
+        # --- Continue with your existing flow ---
         self.increase_step()
-        xpath = "//button[contains(., 'START')]"
-        button = self.move_and_click(xpath, 8, True, "check for the start button (should not be present)", self.step, "clickable")
+        # Sometimes the chat is “fresh” → press START to expose messages
+        self.move_and_click("//button[contains(., 'START')]", 8, True,
+                            "check for the start button (may not be present)", self.step, "clickable")
         self.increase_step()
-
-        # New link logic to avoid finding an expired link
+    
+        # Find or send a working deep-link
         if self.find_working_link(self.step):
             self.increase_step()
         else:
@@ -907,19 +936,19 @@ class Claimer:
             self.increase_step()
             self.find_working_link(self.step)
             self.increase_step()
-
-        # Now let's move to and JS click the "Launch" Button
-        xpath = "//button[contains(@class, 'popup-button') and contains(., 'Launch')]"
-        button = self.move_and_click(xpath, 8, True, "click the 'Launch' button (probably not present)", self.step, "clickable")
+    
+        # Click 'Launch' in the popup, if present
+        self.move_and_click("//button[contains(@class,'popup-button') and contains(.,'Launch')]",
+                            8, True, "click the 'Launch' button (probably not present)", self.step, "clickable")
         self.increase_step()
-
+    
+        # Patch platform and switch into game iframe
         self.replace_platform()
-
-        # HereWalletBot Pop-up Handling
         self.select_iframe(self.step)
         self.increase_step()
-        self.output(f"Step {self.step} - Preparatory steps complete, handing over to the main setup/claim function...", 2)
-        time.sleep(10)
+    
+        self.output(f"Step {self.step} - Preparatory steps complete, handing over to main flow…", 2)
+        time.sleep(2)
 
     def replace_platform(self):
         # Insert the platform replacement code here
