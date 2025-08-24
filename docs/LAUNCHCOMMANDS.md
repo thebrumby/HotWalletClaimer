@@ -10,8 +10,8 @@
 | `./launch.sh hamsterkombat`       | Launch Hamster Kombat: [@hamster_kombat_bot](https://web.telegram.org/k/#@hamster_kombat_bot)     | ❌ Not Working   |
 | `./launch.sh hot`                 | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot)                         | ✅ Claiming well |
 | `./launch.sh iceberg`             | Launch Iceberg: [@IcebergAppBot](https://web.telegram.org/k/#@IcebergAppBot)                      | ✅ Claiming well |
-| `./launch.sh mdao`                | Launch MDAO Wallet: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)                  | ✅ Claiming well |
-| `./launch.sh mdao-autoupgrade`    | **Auto-upgrade:** Spends your tokens to increase mining speed                                     | ✅ Claiming well |
+| `./launch.sh mdao`                | Launch MDAO Wallet: [@Mdaowalletbot](https://web.telegram.org/k/#@Mdaowalletbot)                  | ❌ Not Working |
+| `./launch.sh mdao-autoupgrade`    | **Auto-upgrade:** Spends your tokens to increase mining speed                                     | ❌ Not Working |
 | `./launch.sh oxygen`              | Mine Oxygen: [@oxygenminerbot](https://web.telegram.org/k/#@oxygenminerbot)                       | ❌ Not Working |
 | `./launch.sh oxygen-autoupgrade`  | **Auto-upgrade:** Spends your tokens to increase mining speed                                     | ❌ Not Working |
 | `./launch.sh pitchtalk`           | Launch PitchTalk: [@pitchtalk_bot](https://web.telegram.org/k/#@pitchtalk_bot)                    | ✅ Claiming well |
