@@ -199,7 +199,7 @@ class Claimer:
             "hideSensitiveInput": True,
             "screenshotQRCode": True,
             "maxSessions": 1,
-            "verboseLevel": 3,
+            "verboseLevel": 2,
             "telegramVerboseLevel": 0,
             "lowestClaimOffset": 0,
             "highestClaimOffset": 15,
@@ -1885,6 +1885,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
