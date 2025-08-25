@@ -839,23 +839,27 @@ class Claimer:
         self.output("Function 'next-steps' - Not defined (Need override in child class) \n", 1)
 
     def launch_iframe(self):
+        def wait_ready(driver, timeout=30):
+            WebDriverWait(driver, timeout).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
+    
         self.driver = self.get_driver()
         self.driver.set_window_size(1920, 1080)
     
-        # start with clean screenshots (only once per session)
+        # start with clean screenshots dir (once per session)
         if int(self.step) < 101:
             if os.path.exists(self.screenshots_path):
                 shutil.rmtree(self.screenshots_path)
             os.makedirs(self.screenshots_path)
     
-        # --- First load + quick QR sanity check (non-fatal) ---
+        # --- Initial bounce and QR sanity check (non-fatal) ---
         try:
-            self.driver.get(self.url)
-            WebDriverWait(self.driver, 30).until(
-                lambda d: d.execute_script("return document.readyState") == "complete"
-            )
-            # small extra settle to let TG lazy bits hook up
-            time.sleep(5.0)
+            self.driver.get("https://www.google.com/")
+            wait_ready(self.driver)
+            self.driver.get(self.url)  # your deep link like https://web.telegram.org/k/#@IcebergAppBot
+            wait_ready(self.driver)
+            time.sleep(5)  # let TG lazy pieces attach
     
             self.output(f"Step {self.step} - Attempting QR presence check (expecting none).", 2)
             if self.settings.get('debugIsOn'):
@@ -865,7 +869,10 @@ class Claimer:
                 WebDriverWait(self.driver, 5).until(
                     EC.visibility_of_element_located((By.XPATH, "//canvas[@class='qr-canvas']"))
                 )
-                self.output(f"Step {self.step} - QR code visible (likely logged out). You may see follow-up input errors.", 2)
+                self.output(
+                    f"Step {self.step} - QR visible (likely logged out). You may see follow-up input errors.",
+                    2
+                )
             except TimeoutException:
                 self.output(f"Step {self.step} - No QR detected; proceeding.", 3)
     
@@ -874,28 +881,10 @@ class Claimer:
     
         self.increase_step()
     
-        # --- Attempt to open the game & verify title (up to 3 tries) ---
+        # --- Verify chat title (up to 3 tries), rebouncing via Google between tries ---
         title_xpath = "(//div[@class='user-title']//span[contains(@class,'peer-title')])[1]"
-        app_xpath = self.start_app_menu_item  # left-menu app item
-    
         verified = False
         for attempt in range(1, 4):
-            # ensure page is fully ready each pass
-            try:
-                # (re)load to keep state fresh if needed
-                self.driver.get(self.url)
-                WebDriverWait(self.driver, 30).until(
-                    lambda d: d.execute_script("return document.readyState") == "complete"
-                )
-                time.sleep(0.8)  # tiny settle
-            except Exception as e:
-                self.output(f"Step {self.step} - Attempt {attempt}: reload error: {e}", 2)
-    
-            # click the app in the left menu
-            self.move_and_click(app_xpath, 8, True, "click the app in the left menu", self.step, "clickable")
-            self.increase_step()
-    
-            # wait for lazy bits, then look for chat title
             try:
                 WebDriverWait(self.driver, 30).until(
                     EC.visibility_of_element_located((By.XPATH, title_xpath))
@@ -906,24 +895,33 @@ class Claimer:
                     verified = True
                     break
                 else:
-                    self.output(f"Step {self.step} - Attempt {attempt}: title element found but empty.", 3)
+                    self.output(f"Step {self.step} - Attempt {attempt}: title element present but empty.", 3)
             except TimeoutException:
                 self.output(f"Step {self.step} - Attempt {attempt}: title not visible yet.", 3)
                 if self.settings.get('debugIsOn'):
                     self.debug_information("App title check during telegram load", "check")
-            time.sleep(2)  # short backoff between attempts
+    
+            # Re-bounce to force TG to respect the deep link next try
+            try:
+                self.driver.get("https://www.google.com/")
+                wait_ready(self.driver)
+                self.driver.get(self.url)
+                wait_ready(self.driver)
+                time.sleep(3)
+            except Exception as e:
+                self.output(f"Step {self.step} - Re-bounce error before attempt {attempt+1}: {e}", 2)
     
         if not verified:
-            # hard warning for external orchestration
             self.output(
                 "STATUS: Could not reach the game after 3 attempts. "
                 "You may need to manually bump the game up in your Telegram chat list.",
                 1
             )
     
-        # --- Continue with your existing flow ---
+        # --- Continue with the existing flow ---
         self.increase_step()
-        # Sometimes the chat is “fresh” → press START to expose messages
+    
+        # Press START if present (some chats need this to reveal the thread)
         self.move_and_click("//button[contains(., 'START')]", 8, True,
                             "check for the start button (may not be present)", self.step, "clickable")
         self.increase_step()
@@ -938,8 +936,10 @@ class Claimer:
             self.increase_step()
     
         # Click 'Launch' in the popup, if present
-        self.move_and_click("//button[contains(@class,'popup-button') and contains(.,'Launch')]",
-                            8, True, "click the 'Launch' button (probably not present)", self.step, "clickable")
+        self.move_and_click(
+            "//button[contains(@class,'popup-button') and contains(.,'Launch')]",
+            8, True, "click the 'Launch' button (probably not present)", self.step, "clickable"
+        )
         self.increase_step()
     
         # Patch platform and switch into game iframe
