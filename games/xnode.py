@@ -96,7 +96,7 @@ class XNodeClaimer(Claimer):
     
         # Grab the wait time 
         wait_xpath = "//div[@class='TimeTracker']//span[contains(@class,'TimeTracker_text')]"
-        action, minutes = self.decide_wait_or_claim(wait_xpath, label="pre-claim")
+        action, minutes = self.decide_wait_or_claim(wait_xpath, label="pre-claim", respect_force=True)
         
         # Then run the upgrader
         self.get_profit_hour(False)
@@ -146,7 +146,7 @@ class XNodeClaimer(Claimer):
             self.output(f"Step {self.step} - AutoFarm already ON; no click needed.", 3)
     
         # Second decision after the click
-        action2, minutes2 = self.decide_wait_or_claim(wait_xpath, label="post-restart")
+        action2, minutes2 = self.decide_wait_or_claim(wait_xpath, label="post-restart", respect_force=False)
         if action2 == "sleep":
             return minutes2
     
@@ -166,37 +166,29 @@ class XNodeClaimer(Claimer):
         except Exception:
             return False
     
-    def decide_wait_or_claim(self, wait_xpath, label="pre-claim"):
-        """Reads wait time (minutes as float) and decides whether to sleep or to claim now.
-           Returns a tuple: ('sleep', minutes) or ('claim', 0). Falls back to ('sleep', 60) if unreadable."""
+    def decide_wait_or_claim(self, wait_xpath, label="pre-claim", respect_force=True):
         mins = self.get_wait_time(wait_xpath, timeout=12, label=label)
         self.increase_step()
-    
+
         if mins is False:
             self.output(f"Step {self.step} - Wait time unavailable; defaulting to 60 minutes.", 2)
             return ("sleep", 60)
-    
+
         remaining = float(mins)
-    
-        # dynamic threshold (<= threshold → claim now)
         threshold = abs(self.settings['lowestClaimOffset']) if self.settings['lowestClaimOffset'] < 0 else 5
-    
-        if remaining > threshold and not self.settings.get("forceClaim"):
+
+        # sleep only if we're allowed to ignore forceClaim or it's not set
+        if remaining > threshold and not (respect_force and self.settings.get("forceClaim")):
             sleep_minutes = self.apply_random_offset(remaining)
-            self.output(
-                f"STATUS: {label} wait {remaining} min (> {threshold}); "
-                f"sleeping {sleep_minutes} min after random offset.",
-                1
-            )
+            self.output(f"STATUS: {label} wait {remaining} min (> {threshold}); "
+                        f"sleeping {sleep_minutes} min after random offset.", 1)
             return ("sleep", sleep_minutes)
-    
-        # else: claim now
-        self.settings['forceClaim'] = True
-        self.output(
-            f"Step {self.step} - {label}: remaining {remaining}m ≤ threshold {threshold}m "
-            f"or forceClaim set; proceeding to claim.",
-            3
-        )
+
+        # claim now
+        if respect_force:
+            self.settings['forceClaim'] = True
+        self.output(f"Step {self.step} - {label}: remaining {remaining}m ≤ threshold {threshold}m "
+                    f"or forceClaim set; proceeding to claim.", 3)
         return ("claim", 0)
             
     def get_wait_time(self, wait_time_xpath, timeout=12, label="wait timer"):
