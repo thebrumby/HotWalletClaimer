@@ -25,17 +25,6 @@ from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 import requests
 
-IPHONE13_METRICS = {
-    "width": 390,        # CSS pixels
-    "height": 844,
-    "pixelRatio": 3.0,   # DPR
-}
-DEFAULT_IOS_UA = (
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
-    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
-    "Mobile/15E148 Safari/604.1"
-)
-
 class Claimer:
 
     def __init__(self):
@@ -438,113 +427,81 @@ class Claimer:
                 json.dump(cookies, file)
 
     def setup_driver(self):
-        emulate_mobile = self.settings.get("emulateMobile", True)   # toggle if you like
-        mobile_device = self.settings.get("mobileDevice", "iphone13")  # for future variants
-
         chrome_options = Options()
         chrome_options.add_argument(f"user-data-dir={self.session_path}")
         chrome_options.add_argument("--profile-directory=Default")
-        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--headless=new")  # Ensure headless is enabled
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--enable-features=NetworkService,NetworkServiceInProcess")
         chrome_options.add_argument("--disable-background-networking")
         chrome_options.add_argument("--enable-automation")
-        chrome_options.add_argument("--ignore-certificate-errors")
-        chrome_options.add_argument("--allow-running-insecure-content")
-        chrome_options.add_argument("--test-type")
-        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option("useAutomationExtension", False)
-
-        # Optional cache toggle
-        if not self.settings.get("enableCache", True) and int(self.step) >= 100:
-            chrome_options.add_argument("--disable-application-cache")
-
-        # Proxy
-        if self.settings.get("useProxy") or getattr(self, "forceLocalProxy", False):
-            proxy_server = self.settings["proxyAddress"]
-            chrome_options.add_argument(f"--proxy-server={proxy_server}")
-
-        # Load UA from cookies (if present)
+    
+        # Attempt to load user agent from cookies
         try:
             cookies_path = f"{self.session_path}/cookies.json"
-            with open(cookies_path, 'r') as f:
-                cookies = json.load(f)
-            user_agent_cookie = next((c for c in cookies if c.get("name") == "user_agent"), None)
-            if user_agent_cookie and user_agent_cookie.get("value"):
-                user_agent = user_agent_cookie["value"]
-                self.output(f"Using saved user agent: {user_agent}", 2)
-            else:
-                user_agent = DEFAULT_IOS_UA
-                self.output("No user agent found, using default iOS UA.", 2)
+            with open(cookies_path, 'r') as file:
+                cookies = json.load(file)
+                user_agent_cookie = next((cookie for cookie in cookies if cookie["name"] == "user_agent"), None)
+                if user_agent_cookie and user_agent_cookie["value"]:
+                    user_agent = user_agent_cookie["value"]
+                    self.output(f"Using saved user agent: {user_agent}", 2)
+                else:
+                    user_agent = (
+                        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
+                        "AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 "
+                        "Version/17.0 Mobile/15E148 Safari/604.1"
+                    )
+                    self.output("No user agent found, using default.", 2)
         except FileNotFoundError:
-            user_agent = DEFAULT_IOS_UA
-            self.output("Cookies file not found, using default iOS UA.", 2)
-
-        # Detect platform from UA (used by your tgWebAppPlatform logic)
-        if any(k in user_agent for k in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
+            user_agent = (
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
+                "AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 "
+                "Version/17.0 Mobile/15E148 Safari/604.1"
+            )
+            self.output("Cookies file not found, using default user agent.", 2)
+    
+        # Adjust the platform based on the user agent
+        if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
             self.default_platform = "ios"
-            self.output("Detected iOS platform from UA. tgWebAppPlatform -> 'ios'.", 2)
+            self.output("Detected iOS platform from user agent. tgWebAppPlatform will be changed to 'ios' later.", 2)
         elif 'Android' in user_agent:
             self.default_platform = "android"
-            self.output("Detected Android platform from UA. tgWebAppPlatform -> 'android'.", 2)
+            self.output("Detected Android platform from user agent. Set tgWebAppPlatform to 'android'.", 2)
         else:
             self.default_platform = "web"
             self.output("Default platform set to 'web'.", 3)
-
-        # ---- Mobile emulation (preferred) ----
-        # Use Chrome DevTools emulation so you get viewport + DPR + UA in one go.
-        if emulate_mobile and self.default_platform in ("ios", "android"):
-            # If your cookie UA is non-mobile but you still want mobile, swap to DEFAULT_IOS_UA
-            if self.default_platform == "ios" and "iPhone" not in user_agent:
-                user_agent = DEFAULT_IOS_UA
-
-            mobile_emulation = {
-                "deviceMetrics": {
-                    "width": IPHONE13_METRICS["width"],
-                    "height": IPHONE13_METRICS["height"],
-                    "pixelRatio": IPHONE13_METRICS["pixelRatio"],
-                },
-                "userAgent": user_agent
-            }
-            chrome_options.add_experimental_option("mobileEmulation", mobile_emulation)
-            # Headless Chrome respects deviceMetrics; no need for --window-size
-            self.output("Using Chrome mobile emulation for iPhone 13.", 2)
-
-        else:
-            # ---- Desktop mode ----
-            # Use a large headless window for desktop testing
-            chrome_options.add_argument("--window-size=1920,1080")
-            # Only add UA arg in desktop mode (to avoid conflicting with mobileEmulation UA)
-            chrome_options.add_argument(f"--user-agent={user_agent}")
-            self.output("Using desktop mode 1920x1080.", 2)
-
-        # Prefer system chromedriver if present, otherwise let Selenium Manager fetch it
+    
+        chrome_options.add_argument(f"user-agent={user_agent}")
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_experimental_option('useAutomationExtension', False)
+    
+        if not self.settings.get("enableCache", True) and int(self.step) >= 100:
+            chrome_options.add_argument("--disable-application-cache")
+    
+        if self.settings["useProxy"] or self.forceLocalProxy:
+            proxy_server = self.settings["proxyAddress"]
+            chrome_options.add_argument(f"--proxy-server={proxy_server}")
+    
+        chrome_options.add_argument("--ignore-certificate-errors")
+        chrome_options.add_argument("--allow-running-insecure-content")
+        chrome_options.add_argument("--test-type")
+    
         chromedriver_path = shutil.which("chromedriver")
+        if chromedriver_path is None:
+            self.output("ChromeDriver not found in PATH. Please ensure it is installed.", 1)
+            exit(1)
+    
         try:
-            if chromedriver_path:
-                service = Service(chromedriver_path)
-                self.driver = webdriver.Chrome(service=service, options=chrome_options)
-            else:
-                # Selenium Manager fallback (Selenium >= 4.6)
-                self.output("ChromeDriver not in PATH, using Selenium Manager to resolve.", 2)
-                self.driver = webdriver.Chrome(options=chrome_options)
-
-            # If you want to enforce size in desktop after launch (sometimes helpful)
-            if not (emulate_mobile and self.default_platform in ("ios", "android")):
-                try:
-                    self.driver.set_window_rect(width=1920, height=1080)
-                except Exception:
-                    pass
-
+            service = Service(chromedriver_path)
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
             return self.driver
-
         except Exception as e:
-            self.output(f"ChromeDriver setup failed: {e}", 1)
-            self.output("Ensure Chrome/Chromedriver versions are compatible.", 1)
-            raise
+            self.output(f"Initial ChromeDriver setup may have failed: {e}", 1)
+            self.output("Please ensure you have the correct ChromeDriver version for your system.", 1)
+            exit(1)
 
     def run_http_proxy(self):
         proxy_lock_file = "./start_proxy.txt"
@@ -1995,6 +1952,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
