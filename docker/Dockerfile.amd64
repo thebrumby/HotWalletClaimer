@@ -1,5 +1,5 @@
 # Use an Ubuntu 24.04 base image
-FROM debian:bullseye-slim
+FROM ubuntu:24.04
 
 # Set environment variables to avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -53,3 +53,4 @@ COPY ecosystem.config.js /usr/src/app/
 
 # Ensure PM2 resurrects saved process list on startup and then run enable-proxy
 CMD ["sh", "-c", "pm2 resurrect && pm2-runtime start ecosystem.config.js"]
+
