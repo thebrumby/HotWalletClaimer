@@ -845,7 +845,7 @@ class Claimer:
             )
     
         self.driver = self.get_driver()
-        self.driver.set_window_size(1920, 1080)
+        self.driver.set_window_size(390, 844)
     
         # start with clean screenshots dir (once per session)
         if int(self.step) < 101:
@@ -1944,6 +1944,7 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
