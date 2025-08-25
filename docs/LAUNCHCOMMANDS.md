@@ -5,7 +5,7 @@
 | Game Command                      | Description                                                                                       | Status           |
 |-----------------------------------|---------------------------------------------------------------------------------------------------|------------------|
 | `./launch.sh blum`                | Launch Blum on Telegram: [@blum_bot](https://web.telegram.org/k/#@blum_bot) *(mining only)*       | ❌ Not Working   |
-| `./launch.sh cryptorank`          | Launch Crypto Rank Wallet: [@CryptoRank_app_bot](https://web.telegram.org/k/#@CryptoRank_app_bot) | ✅ Claiming well |
+| `./launch.sh cryptorank`          | Launch Crypto Rank Wallet: [@CryptoRank_app_bot](https://web.telegram.org/k/#@CryptoRank_app_bot) | ❌ Not Working |
 | `./launch.sh gamee`               | Launch Gamee: [@gamee](https://t.me/gamee/start?startapp=ref_7254165458) *(mining only)*          | ❌ Not Working   |
 | `./launch.sh hamsterkombat`       | Launch Hamster Kombat: [@hamster_kombat_bot](https://web.telegram.org/k/#@hamster_kombat_bot)     | ❌ Not Working   |
 | `./launch.sh hot`                 | Launch HOT on Near Protocol: [@herewalletbot](https://t.me/herewalletbot)                         | ✅ Claiming well |
