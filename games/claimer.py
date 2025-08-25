@@ -20,7 +20,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException, MoveTargetOutOfBoundsException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 import requests
@@ -437,7 +437,7 @@ class Claimer:
         chrome_options.add_argument("--enable-features=NetworkService,NetworkServiceInProcess")
         chrome_options.add_argument("--disable-background-networking")
         chrome_options.add_argument("--enable-automation")
-    
+
         # Attempt to load user agent from cookies
         try:
             cookies_path = f"{self.session_path}/cookies.json"
@@ -448,20 +448,12 @@ class Claimer:
                     user_agent = user_agent_cookie["value"]
                     self.output(f"Using saved user agent: {user_agent}", 2)
                 else:
-                    user_agent = (
-                        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
-                        "AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 "
-                        "Version/17.0 Mobile/15E148 Safari/604.1"
-                    )
+                    user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
                     self.output("No user agent found, using default.", 2)
         except FileNotFoundError:
-            user_agent = (
-                "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
-                "AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 "
-                "Version/17.0 Mobile/15E148 Safari/604.1"
-            )
+            user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/124.0.2478.50 Version/17.0 Mobile/15E148 Safari/604.1"
             self.output("Cookies file not found, using default user agent.", 2)
-    
+
         # Adjust the platform based on the user agent
         if any(keyword in user_agent for keyword in ['iPhone', 'iPad', 'iOS', 'iPhone OS']):
             self.default_platform = "ios"
@@ -472,28 +464,28 @@ class Claimer:
         else:
             self.default_platform = "web"
             self.output("Default platform set to 'web'.", 3)
-    
+
         chrome_options.add_argument(f"user-agent={user_agent}")
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
-    
+
         if not self.settings.get("enableCache", True) and int(self.step) >= 100:
             chrome_options.add_argument("--disable-application-cache")
-    
+
         if self.settings["useProxy"] or self.forceLocalProxy:
             proxy_server = self.settings["proxyAddress"]
             chrome_options.add_argument(f"--proxy-server={proxy_server}")
-    
+
         chrome_options.add_argument("--ignore-certificate-errors")
         chrome_options.add_argument("--allow-running-insecure-content")
         chrome_options.add_argument("--test-type")
-    
+
         chromedriver_path = shutil.which("chromedriver")
         if chromedriver_path is None:
             self.output("ChromeDriver not found in PATH. Please ensure it is installed.", 1)
             exit(1)
-    
+
         try:
             service = Service(chromedriver_path)
             self.driver = webdriver.Chrome(service=service, options=chrome_options)
@@ -1079,7 +1071,7 @@ class Claimer:
         wait = WebDriverWait(self.driver, wait_time)
         target_element = None
     
-        for attempt in range(5):
+        for attempt in range(5):  # Retry loop for handling issues like StaleElementReferenceException
             try:
                 if expectedCondition == "visible":
                     target_element = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -1092,8 +1084,6 @@ class Claimer:
                     return None
                 elif expectedCondition == "clickable":
                     target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
-                else:
-                    target_element = wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
     
                 if target_element is None:
                     self.output(f"Step {self.step} - The element was not found for {action_description}.", 2)
@@ -1101,7 +1091,7 @@ class Claimer:
                         self.debug_information(f"{action_description} not found", "error")
                     return None
     
-                # Scroll into view (and log when it wasn't in view)
+                # Scroll element into view if it's not visible
                 is_in_viewport = self.driver.execute_script("""
                     var elem = arguments[0], box = elem.getBoundingClientRect();
                     if (!(box.top >= 0 && box.left >= 0 &&
@@ -1122,14 +1112,8 @@ class Claimer:
                     self.clear_overlays(target_element, self.step)
     
                 if click:
-                    # ⬇️  Use the element we already waited for (keeps your debug trail)
-                    result = self._safe_click_webelement(target_element, action_description=action_description)
-                    if result is not None:
-                        if self.settings['debugIsOn']:
-                            self.debug_information(f"Moved & clicked {action_description}", "success")
+                    if self.click_element(xpath, action_description=action_description):
                         return target_element
-                    # If click failed, loop to retry (with small backoff)
-                    time.sleep(0.2 + timer())
                 else:
                     if self.settings['debugIsOn']:
                         self.debug_information(f"Moved to {action_description} without clicking", "no click")
@@ -1157,86 +1141,79 @@ class Claimer:
                     break
     
         return target_element
-    
-    def _safe_click_webelement(self, elem, action_description=""):
-        try:
-            # Center within viewport/scroll parent
-            self._center_in_scroll_parent(elem)
-    
-            # Wait for visible, enabled and non-zero size (no invalid "." XPath)
-            WebDriverWait(self.driver, 5).until(EC.visibility_of(elem))
-            WebDriverWait(self.driver, 5).until(lambda d: elem.is_enabled())
-            WebDriverWait(self.driver, 5).until(
-                lambda d: self.driver.execute_script(
-                    "var r = arguments[0].getBoundingClientRect(); return (r.width>0 && r.height>0);", elem
-                )
-            )
-    
-            # Try normal click first
-            try:
-                ActionChains(self.driver).move_to_element(elem).pause(0.05).click(elem).perform()
-                if self.settings['debugIsOn']:
-                    self.debug_information(f"ClickElem {action_description} - ActionChains click performed", "success")
-                return elem
-            except (MoveTargetOutOfBoundsException, ElementClickInterceptedException) as e1:
-                self.output(f"Step {self.step} - ActionChains click failed ({type(e1).__name__}). Trying JS…", 3)
-                if self.settings['debugIsOn']:
-                    self.debug_information(f"ClickElem {action_description} - AC failed: {type(e1).__name__}", "warning")
-    
-            # Temporarily disable blockers over the center point and try JS clicks
-            blockers = self._temporarily_disable_blockers(elem)
-            try:
-                if self._js_click_variants(elem):
-                    self.output(f"Step {self.step} - JS click fallback used for {action_description}.", 3)
-                    if self.settings['debugIsOn']:
-                        self.debug_information(f"ClickElem {action_description} - JS fallback success", "success")
-                    return elem
-            finally:
-                self._restore_blockers(blockers)
-    
-            # One last try: re-center & try JS again
-            self._center_in_scroll_parent(elem)
-            if self._js_click_variants(elem):
-                self.output(f"Step {self.step} - JS click fallback (second attempt) used for {action_description}.", 3)
-                if self.settings['debugIsOn']:
-                    self.debug_information(f"ClickElem {action_description} - JS fallback #2 success", "success")
-                return elem
-    
-            self.output(f"Step {self.step} - All click strategies failed for {action_description}.", 2)
-            if self.settings['debugIsOn']:
-                self.debug_information(f"ClickElem {action_description} - all strategies failed", "error")
-            return None
-    
-        except StaleElementReferenceException:
-            self.output(f"Step {self.step} - Element went stale during click for {action_description}.", 2)
-            if self.settings['debugIsOn']:
-                self.debug_information(f"ClickElem {action_description} - stale element", "error")
-            return None
-        except Exception as e:
-            self.output(f"Step {self.step} - Click failed: {type(e).__name__}: {e}", 2)
-            if self.settings['debugIsOn']:
-                self.debug_information(f"ClickElem {action_description} fatal: {type(e).__name__}: {e}", "error")
-            return None
 
     def click_element(self, xpath, timeout=30, action_description=""):
         try:
+            # Wait until the element is found or timeout occurs
             element = WebDriverWait(self.driver, timeout).until(
-                EC.element_to_be_clickable((By.XPATH, xpath))
+                EC.presence_of_element_located((By.XPATH, xpath))
             )
+            element_id = element.get_attribute("id")  # Get element ID to check later if it's stale
             if self.settings['debugIsOn']:
-                self.debug_information(f"ClickElem {action_description} - Element located", "info")
-            res = self._safe_click_webelement(element, action_description=action_description)
-            return res is not None
+                self.debug_information(f"ClickElem {action_description} - Element found", "info")
         except TimeoutException:
             self.output(f"Step {self.step} - Element not found within timeout: {xpath}. Skipping click.", 2)
             if self.settings['debugIsOn']:
                 self.debug_information(f"ClickElem {action_description} timed out waiting for element", "error")
             return False
-        except Exception as e:
-            self.output(f"Step {self.step} - An error occurred during {action_description}: {type(e).__name__}: {e}", 3)
+        except NoSuchElementException:
+            self.output(f"Step {self.step} - Element not found: {xpath}. Skipping click.", 2)
             if self.settings['debugIsOn']:
-                self.debug_information(f"ClickElem {action_description} fatal error: {str(e)}", "error")
+                self.debug_information(f"ClickElem {action_description} was not found", "error")
             return False
+    
+        try:
+            actions = ActionChains(self.driver)
+            actions.move_to_element(element).perform()
+    
+            # Clear any overlays before attempting to click
+            overlays_cleared = self.clear_overlays(element, self.step)
+            if overlays_cleared > 0:
+                self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s) before attempting click...", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClickElem {action_description} - Overlays cleared", "info")
+    
+            # Attempt to click with ActionChains
+            try:
+                actions.click(element).perform()
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClickElem {action_description} - Click action performed", "success")
+    
+                # Backup with JavaScript click
+                try:
+                    self.driver.execute_script("arguments[0].click();", element)
+                    self.output(f"Step {self.step} - Backed up with JS click.", 3)
+                except Exception as js_e:
+                    if "has no size and location" in str(js_e):
+                        self.output(f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized.", 1)
+                        if self.settings['debugIsOn']:
+                            self.debug_information(f"ClickElem {action_description} - Element not sized properly: {str(js_e)}", "error")
+                        return False
+                    pass
+            except ElementClickInterceptedException:
+                self.output(f"Step {self.step} - Element click intercepted, attempting to resolve...", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"ClickElem {action_description} click intercepted", "warning")
+                return False
+    
+            # Pause to allow for any DOM changes
+            time.sleep(0.5)
+    
+            # Check if the element still exists
+            if self.element_still_exists_by_id(element_id):
+                # Perform JS click if element is still present
+                try:
+                    self.driver.execute_script("arguments[0].click();", element)
+                    self.output(f"Step {self.step} - Fallback to JS click successful.", 3)
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"ClickElem {action_description} JS Fallback", "success")
+                except Exception as fallback_js_e:
+                    if "has no size and location" in str(fallback_js_e):
+                        self.output(f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized.", 1)
+                        if self.settings['debugIsOn']:
+                            self.debug_information(f"ClickElem {action_description} - Fallback JS error: {str(fallback_js_e)}", "error")
+                        return False
+            return True
     
         except (StaleElementReferenceException, Exception) as e:
             if "has no size and location" in str(e):
@@ -1249,136 +1226,103 @@ class Claimer:
                 self.debug_information(f"ClickElem {action_description} fatal error: {str(e)}", "error")
             return False
 
-    def brute_click(self, xpath, timeout=30, action_description="", state_check=None, post_click_wait=0.4):
-        """
-        Brute-force click:
-          - ensures element present & in view
-          - tries ActionChains click, then JS .click(), then JS synthesized center click
-          - after each attempt waits shortly for disappearance or state_check -> success
-        Returns True on likely success, False otherwise.
-        """
-        # 1) Make sure it's there & scroll it into view (don't click yet)
-        if not self.move_and_click(xpath, 10, False, f"locate the element to Brute Click ({action_description})", self.step, "clickable"):
+    def brute_click(self, xpath, timeout=30, action_description=""):
+        # Use move_and_click to ensure the element is present and scrolled into view
+        if not self.move_and_click(xpath, 10, False, "locate the element to Brute Click", self.step, "clickable"):
             self.output(f"Step {self.step} - Element not found or not scrollable: {xpath}", 2)
             return False
     
-        end = time.time() + timeout
-        last_html_sig = None  # rough signature to detect replacements when no id
+        try:
+            # Retrieve the element after ensuring it's scrolled into view
+            element = self.driver.find_element(By.XPATH, xpath)
+            previous_element_id = element.get_attribute("id")
+            self.output(f"Step {self.step} - XPath found: {xpath}", 3)
+            if self.settings['debugIsOn']:
+                self.debug_information(f"BruteClick {action_description} - Element found", "info")
+                self.driver.save_screenshot(f"debug_screenshots/BruteClick_before_click_{self.step}.png")
+        except Exception as e:
+            if "has no size and location" in str(e):
+                error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
+            else:
+                error_message = f"Step {self.step} - An error occurred while locating element after scrolling during {action_description}: {e}"
+            self.output(error_message, 3)
+            if self.settings['debugIsOn']:
+                self.debug_information(f"BruteClick {action_description} fatal error: {str(e)}", "error")
+                self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
+            return False
     
-        def center_js_click(el):
-            # synthesize real pointer/mouse events at center
-            self.driver.execute_script("""
-                const el = arguments[0];
-                const rect = el.getBoundingClientRect();
-                const x = rect.left + rect.width / 2;
-                const y = rect.top + rect.height / 2;
-                function fire(type) {
-                  const evt = new MouseEvent(type, {bubbles:true, cancelable:true, view:window,
-                     clientX:x, clientY:y});
-                  el.dispatchEvent(evt);
-                }
-                fire('pointerdown'); fire('mousedown'); fire('pointerup'); fire('mouseup'); fire('click');
-            """, el)
+        try:
+            actions = ActionChains(self.driver)
+            actions.move_to_element(element).perform()
+            overlays_cleared = self.clear_overlays(element, self.step)
+            if overlays_cleared > 0:
+                self.output(f"Step {self.step} - Cleared {overlays_cleared} overlay(s) before attempting click...", 3)
+                if self.settings['debugIsOn']:
+                    self.debug_information(f"BruteClick {action_description} - Overlays cleared", "info")
     
-        def html_sig(el):
-            # short signature when @id is empty; keeps cost low
-            try:
-                outer = self.driver.execute_script("return arguments[0].outerHTML.slice(0, 200);", el) or ""
-                return outer
-            except Exception:
-                return None
+            unique_ids = {previous_element_id}
+            click_attempts = 0
+            start_time = time.time()
     
-        while time.time() < end:
-            try:
-                el = self.driver.find_element(By.XPATH, xpath)
-            except Exception:
-                # If we can't find it anymore, assume success
-                self.output(f"Step {self.step} - Click successful: element not found after attempts.", 2)
-                return True
+            while time.time() - start_time < timeout:
+                click_attempts += 1
     
-            # Scroll into view and clear overlays each loop (in case layout changed)
-            try:
-                self.driver.execute_script("arguments[0].scrollIntoView({block:'center', inline:'center'});", el)
-            except Exception:
-                pass
-    
-            try:
-                self.clear_overlays(el, self.step)
-            except Exception:
-                pass
-    
-            # Keep a lightweight signature for change detection
-            try:
-                el_id = el.get_attribute("id") or ""
-            except Exception:
-                el_id = ""
-            cur_sig = (el_id, html_sig(el))
-    
-            # Attempt 1: native click
-            try:
-                ActionChains(self.driver).move_to_element(el).pause(0.05).click(el).perform()
-            except Exception:
-                # Attempt 2: JS .click()
                 try:
-                    self.driver.execute_script("arguments[0].click();", el)
-                except Exception:
-                    # Attempt 3: JS center click (synth events)
+                    # Try clicking with ActionChains first
+                    actions.click(element).perform()
+                    # Fallback to JS click if necessary
                     try:
-                        center_js_click(el)
-                    except Exception:
-                        # couldn't click this loop; try again
-                        time.sleep(0.15)
-                        continue
+                        self.driver.execute_script("arguments[0].click();", element)
+                        click_attempts += 1
+                    except Exception as e_js:
+                        if "has no size and location" in str(e_js):
+                            self.output(f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized.", 1)
+                            if self.settings['debugIsOn']:
+                                self.debug_information(f"BruteClick {action_description} - Element not sized properly: {str(e_js)}", "error")
+                            return False
+                        if self.settings['debugIsOn']:
+                            self.debug_information(f"BruteClick {action_description} JS click failed: {str(e_js)}", "warning")
+                except ElementClickInterceptedException:
+                    self.output(f"Step {self.step} - Element click intercepted, attempting JS click...", 3)
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"BruteClick {action_description} click intercepted", "warning")
     
-            # Give the UI a moment to react
-            time.sleep(post_click_wait)
-    
-            # Success conditions
-            # A) Disappeared
-            try:
-                self.driver.find_element(By.XPATH, xpath)
-                still_there = True
-            except NoSuchElementException:
-                still_there = False
-    
-            if not still_there:
-                self.output(f"Step {self.step} - BruteClick success: element disappeared.", 3)
-                return True
-    
-            # B) Custom success check
-            if callable(state_check):
+                # Re-locate the element to verify if it still exists or has been replaced
                 try:
-                    if state_check():
-                        self.output(f"Step {self.step} - BruteClick success: state_check passed.", 3)
-                        return True
-                except Exception:
-                    pass
+                    element = self.driver.find_element(By.XPATH, xpath)
+                    current_element_id = element.get_attribute("id")
+                    if current_element_id != previous_element_id:
+                        unique_ids.add(current_element_id)
+                        self.output(f"Step {self.step} - New element detected. Total unique IDs encountered: {len(unique_ids)}", 3)
+                    previous_element_id = current_element_id
+                except (NoSuchElementException, StaleElementReferenceException):
+                    self.output(f"Step {self.step} - Click successful: Element no longer exists after {click_attempts} attempts.", 2)
+                    if self.settings['debugIsOn']:
+                        self.debug_information(f"BruteClick {action_description} successful after {click_attempts} attempts", "success")
+                        self.driver.save_screenshot(f"debug_screenshots/BruteClick_success_{self.step}.png")
+                    return True
     
-            # C) Signature changed = likely DOM replacement (often means click worked)
-            try:
-                el2 = self.driver.find_element(By.XPATH, xpath)
-                new_sig = (el2.get_attribute("id") or "", html_sig(el2))
-            except Exception:
-                self.output(f"Step {self.step} - BruteClick success: element replaced then missing.", 3)
-                return True
+            self.output(f"Step {self.step} - Brute click timed out after {click_attempts} attempts.", 2)
+            if self.settings['debugIsOn']:
+                self.debug_information(f"BruteClick {action_description} timed out after {click_attempts} attempts", "error")
+                self.driver.save_screenshot(f"debug_screenshots/BruteClick_timeout_end_{self.step}.png")
+            return False
     
-            if last_html_sig and new_sig != last_html_sig:
-                # DOM mutated for this locator; count as success
-                self.output(f"Step {self.step} - BruteClick probable success: DOM signature changed.", 3)
-                return True
-    
-            last_html_sig = new_sig
-    
-        self.output(f"Step {self.step} - Brute click timed out without clear success.", 2)
-        return False
+        except Exception as e:
+            if "has no size and location" in str(e):
+                error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
+            else:
+                error_message = f"Step {self.step} - An error occurred during {action_description}: {e}"
+            self.output(error_message, 3)
+            if self.settings['debugIsOn']:
+                self.debug_information(f"BruteClick {action_description} fatal error: {str(e)}", "error")
+                self.driver.save_screenshot(f"debug_screenshots/BruteClick_error_{self.step}.png")
+            return False
 
     def clear_overlays(self, target_element, step):
         try:
             element_location = target_element.location_once_scrolled_into_view
-            overlays = self.driver.find_elements(
-                By.XPATH,
-                "//*[contains(@style,'position: absolute') or contains(@style,'position: fixed')]"
-            )
+            overlays = self.driver.find_elements(By.XPATH, "//*[contains(@style,'position: absolute') or contains(@style,'position: fixed')]")
             overlays_cleared = 0
             for overlay in overlays:
                 overlay_rect = overlay.rect
@@ -1390,156 +1334,8 @@ class Claimer:
                 self.output(f"Step {step} - Removed {overlays_cleared} overlay(s) covering the target.", 3)
             return overlays_cleared
         except Exception as e:
-            self.output(f"Step {step} - An error occurred while trying to clear overlays: {e}", 1)
+            self.output(f"Step {step} - An error occurred while trying to clear overlays.", 1)
             return 0
-
-    def _center_in_scroll_parent(self, elem):
-        # Scrolls either the nearest scrollable parent or the window to center the element
-        self.driver.execute_script("""
-          function getScrollableParent(el){
-            while (el && el !== document.body){
-              const s = getComputedStyle(el);
-              const oy = s.overflowY;
-              if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight) return el;
-              el = el.parentElement;
-            }
-            return null;
-          }
-          const el = arguments[0];
-          const p = getScrollableParent(el);
-          if (p){
-            const r = el.getBoundingClientRect();
-            const pr = p.getBoundingClientRect();
-            p.scrollTop += (r.top - pr.top) - (pr.height/2 - r.height/2);
-            p.scrollLeft += (r.left - pr.left) - (pr.width/2 - r.width/2);
-          } else {
-            el.scrollIntoView({block:'center', inline:'center'});
-          }
-        """, elem)
-    
-    def _js_click_variants(self, elem):
-        # 1) Native element.click()
-        try:
-            self.driver.execute_script("arguments[0].click();", elem)
-            return True
-        except Exception:
-            pass
-    
-        # 2) MouseEvent (bubbling) – closer to a real user click
-        try:
-            self.driver.execute_script("""
-              const e = new MouseEvent('click', {bubbles:true, cancelable:true, view:window});
-              arguments[0].dispatchEvent(e);
-            """, elem)
-            return True
-        except Exception:
-            pass
-    
-        # 3) Click center point (some libs listen for coords)
-        try:
-            self.driver.execute_script("""
-              const r = arguments[0].getBoundingClientRect();
-              const x = r.left + r.width/2;
-              const y = r.top + r.height/2;
-              const el = document.elementFromPoint(x, y);
-              if (el) el.click();
-            """, elem)
-            return True
-        except Exception:
-            pass
-    
-        return False
-    
-    def _temporarily_disable_blockers(self, elem):
-        # Disable pointer events on any element covering the target's center.
-        return self.driver.execute_script("""
-          const el = arguments[0];
-          const r = el.getBoundingClientRect();
-          const cx = r.left + r.width/2;
-          const cy = r.top + r.height/2;
-    
-          // Gather elements stacked at the click point
-          const hidden = [];
-          const seen = new Set();
-          for (let i=0; i<20; i++){
-            const top = document.elementFromPoint(cx, cy);
-            if (!top || seen.has(top)) break;
-            seen.add(top);
-    
-            if (top !== el && !el.contains(top)) {
-              const cs = getComputedStyle(top);
-              // Only disable if it's visually blocking
-              if (cs.pointerEvents !== 'none' && cs.visibility !== 'hidden' && cs.display !== 'none'){
-                hidden.push([top, top.style.pointerEvents]);
-                top.style.pointerEvents = 'none';
-              }
-            }
-            // If we've exposed the target, stop early
-            if (document.elementFromPoint(cx, cy) === el) break;
-          }
-          return hidden;
-        """, elem)
-    
-    def _restore_blockers(self, state):
-        # Restore pointer-events on previously disabled elements
-        if not state:
-            return
-        try:
-            self.driver.execute_script("""
-              const items = arguments[0];
-              for (const [node, oldPE] of items){
-                if (node && node.style) node.style.pointerEvents = oldPE || '';
-              }
-            """, state)
-        except Exception:
-            pass
-    
-    def _safe_click_webelement(self, elem, action_description=""):
-        try:
-            # 1) Ensure in view (container aware)
-            self._center_in_scroll_parent(elem)
-    
-            # 2) Wait for visible, enabled and with size
-            WebDriverWait(self.driver, 5).until(EC.visibility_of(elem))
-            WebDriverWait(self.driver, 5).until(lambda d: elem.is_enabled())
-            WebDriverWait(self.driver, 5).until(
-                lambda d: self.driver.execute_script(
-                    "var r = arguments[0].getBoundingClientRect(); return (r.width>0 && r.height>0);", elem
-                )
-            )
-    
-            # 3) Try ActionChains click first
-            try:
-                ActionChains(self.driver).move_to_element(elem).pause(0.05).click(elem).perform()
-                return elem
-            except (MoveTargetOutOfBoundsException, ElementClickInterceptedException):
-                # Will try JS paths below
-                pass
-    
-            # 4) If something’s still blocking, temporarily disable blockers over center
-            blockers = self._temporarily_disable_blockers(elem)
-            try:
-                if self._js_click_variants(elem):
-                    self.output(f"Step {self.step} - JS click fallback used for {action_description}.", 3)
-                    return elem
-            finally:
-                self._restore_blockers(blockers)
-    
-            # 5) As a final attempt, re-center & retry JS once more
-            self._center_in_scroll_parent(elem)
-            if self._js_click_variants(elem):
-                self.output(f"Step {self.step} - JS click fallback (second attempt) used for {action_description}.", 3)
-                return elem
-    
-            self.output(f"Step {self.step} - All click strategies failed for {action_description}.", 2)
-            return None
-    
-        except StaleElementReferenceException:
-            self.output(f"Step {self.step} - Element went stale during click for {action_description}.", 2)
-            return None
-        except Exception as e:
-            self.output(f"Step {self.step} - Click failed: {type(e).__name__}: {e}", 2)
-            return None
 
     def element_still_exists_by_id(self, element_id):
         """Check if an element still exists by its ID."""
@@ -1952,26 +1748,3 @@ class Claimer:
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
