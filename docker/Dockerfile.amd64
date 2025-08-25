@@ -1,5 +1,5 @@
 # Use an Ubuntu 24.04 base image
-FROM ubuntu:24.04
+FROM debian:bullseye-slim
 
 # Set environment variables to avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -18,11 +18,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_current.x -o nodesource_setup.sh
     rm nodesource_setup.sh
 
 # Install Google Chrome and Chromedriver
-RUN wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_129.0.6668.89-1_amd64.deb && \
+RUN wget -O /tmp/chrome.deb https://mirror.cs.uchicago.edu/google-chrome/pool/main/g/google-chrome-stable/google-chrome-stable_139.0.7258.66-1_amd64.deb && \
     dpkg -i /tmp/chrome.deb || apt-get install -f -y && \
     rm /tmp/chrome.deb
 
-RUN wget -O /tmp/chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/129.0.6668.89/linux64/chromedriver-linux64.zip && \
+RUN wget -O /tmp/chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/139.0.7258.138/linux64/chromedriver-linux64.zip && \
     unzip /tmp/chromedriver.zip -d /tmp/ && \
     mv /tmp/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
     chmod +x /usr/local/bin/chromedriver && \
@@ -40,7 +40,7 @@ COPY docker/* /usr/src/app/
 # Create and activate a virtual environment within the app directory, then install Python packages:
     RUN python3 -m venv /usr/src/app/venv && \
     /usr/src/app/venv/bin/pip install --upgrade pip && \
-    /usr/src/app/venv/bin/pip install wheel selenium Pillow pyzbar qrcode-terminal mitmproxy python-telegram-bot requests beautifulsoup4 brotli httpx
+    /usr/src/app/venv/bin/pip install wheel selenium Pillow pyzbar qrcode-terminal mitmproxy python-telegram-bot requests beautifulsoup4 brotli webdriver-manager 
 
 # Copy the launch script and make it executable
 RUN find /usr/src/app -type f -name "*.sh" -exec chmod +x {} \;
