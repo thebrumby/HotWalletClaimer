@@ -25,6 +25,17 @@ from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 import requests
 
+IPHONE13_METRICS = {
+    "width": 390,        # CSS pixels
+    "height": 844,
+    "pixelRatio": 3.0,   # DPR
+}
+DEFAULT_IOS_UA = (
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
+    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
+    "Mobile/15E148 Safari/604.1"
+)
+
 class Claimer:
 
     def __init__(self):
@@ -425,17 +436,6 @@ class Claimer:
             cookies.append({"name": "user_agent", "value": user_agent})  # Save user agent to cookies
             with open(cookies_path, 'w') as file:
                 json.dump(cookies, file)
-
-IPHONE13_METRICS = {
-    "width": 390,        # CSS pixels
-    "height": 844,
-    "pixelRatio": 3.0,   # DPR
-}
-DEFAULT_IOS_UA = (
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) "
-    "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 "
-    "Mobile/15E148 Safari/604.1"
-)
 
     def setup_driver(self):
         emulate_mobile = self.settings.get("emulateMobile", True)   # toggle if you like
@@ -1995,6 +1995,7 @@ DEFAULT_IOS_UA = (
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
             return False
+
 
 
 
