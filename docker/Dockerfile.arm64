@@ -1,56 +1,40 @@
-# Use an Ubuntu 24.04 base image
-FROM ubuntu:24.04
+# Dockerfile.arm64 (Debian base for ARM64 only)
+FROM debian:bookworm-slim
 
-# Set environment variables to avoid interactive prompts during package installation
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive PIP_NO_CACHE_DIR=1
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl wget gnupg2 xdg-utils unzip git \
+    python3-pip python3-venv libasound2-dev zbar-tools \
+    fonts-liberation libu2f-udev libgbm1 \
+    chromium chromium-driver \
+  && rm -rf /var/lib/apt/lists/*
 
-# Install basic dependencies
-RUN apt-get update && \
-    apt-get install -y wget curl gnupg2 ca-certificates xdg-utils libasound2-dev git python3-pip python3-venv zbar-tools gdebi-core --no-install-recommends && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Node.js LTS (pin a major)
+ARG NODE_MAJOR=20
+ARG PM2_VERSION=5.3.1
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl \
+ && curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
+ && apt-get install -y --no-install-recommends nodejs \
+ && npm install -g pm2@${PM2_VERSION} \
+ && apt-mark hold nodejs \
+ && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js (latest) and PM2
-RUN curl -fsSL https://deb.nodesource.com/setup_current.x -o nodesource_setup.sh && \
-    bash nodesource_setup.sh && \
-    apt-get install -y nodejs && \
-    npm install -g pm2 && \
-    rm nodesource_setup.sh
-
-# Install Chromium and Chromedriver
-RUN apt-get clean && apt-get autoclean && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt update && \
-    apt-get install -y xdg-utils libasound2-dev && \
-    wget http://launchpadlibrarian.net/660838579/chromium-codecs-ffmpeg-extra_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb && \
-    gdebi -n chromium-codecs-ffmpeg-extra_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb && \
-    wget http://launchpadlibrarian.net/660838574/chromium-browser_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb && \
-    gdebi -n chromium-browser_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb && \
-    wget http://launchpadlibrarian.net/660838578/chromium-chromedriver_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb && \
-    gdebi -n chromium-chromedriver_112.0.5615.49-0ubuntu0.18.04.1_arm64.deb
-
-RUN chromium-browser --version && \
-    chromedriver --version
-
-# Create app directory
+# App
 WORKDIR /usr/src/app
-
-# Copy the shell scripts and make them executable
 COPY docker/* /usr/src/app/
-
-# Create and activate a virtual environment within the app directory, then install Python packages:
-RUN python3 -m venv /usr/src/app/venv && \
-    /usr/src/app/venv/bin/pip install --upgrade pip && \
-    /usr/src/app/venv/bin/pip install wheel selenium Pillow pyzbar qrcode-terminal mitmproxy python-telegram-bot requests beautifulsoup4 brotli webdriver-manager
-
-# Copy the launch script and make it executable
 RUN find /usr/src/app -type f -name "*.sh" -exec chmod +x {} \;
 
-# Ensure the virtual environment's Python interpreter is in the PATH
-ENV PATH="/usr/src/app/venv/bin:$PATH"
+RUN python3 -m venv /usr/src/app/venv && \
+    /usr/src/app/venv/bin/pip install --upgrade pip && \
+    /usr/src/app/venv/bin/pip install \
+      wheel selenium Pillow pyzbar qrcode-terminal mitmproxy \
+      python-telegram-bot requests beautifulsoup4 brotli webdriver-manager
 
-# Copy the PM2 ecosystem configuration file
+ENV PATH="/usr/src/app/venv/bin:${PATH}"
+
+# (Optional) sanity
+RUN chromium --version && chromedriver --version
+
 COPY ecosystem.config.js /usr/src/app/
-
-# Ensure PM2 resurrects saved process list on startup and then run enable-proxy
-CMD ["sh", "-c", "pm2 resurrect && pm2-runtime start ecosystem.config.js"]
+CMD ["sh", "-c", "pm2 resurrect || true; pm2-runtime start ecosystem.config.js"]
