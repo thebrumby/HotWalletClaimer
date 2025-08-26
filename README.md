@@ -1,6 +1,6 @@
 # Your automated assistant for Telegram mini-app games!
 
-Supporting 8 crypto-based games, from popular Telegram mini-apps. Automate claims and track their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
+Automate claims in popular Telegram nini-games, and track their status. For a full list of supported games and launch commands, visit: [Launch Commands](https://github.com/thebrumby/HotWalletClaimer/blob/main/docs/LAUNCHCOMMANDS.md).
 
 ---
 
@@ -20,9 +20,7 @@ Our blog posts are **FREE** to read on [Patreon](https://www.patreon.com/Telegra
 
 ## Clever Claiming - How to Use a Virtual Browser and Python Script to Maximize Rewards 24/7
 
-Many popular Telegram apps require frequent logins to maximize rewards – this Python script uses Selenium to automate human-like interactions in a real browser session without injecting suspicious API calls. Designed to run on your local computer or VPS, the script monitors your account status within each app, claiming rewards at the optimal time. With an optional random timer offset, it further mimics natural behavior, minimizing risks and keeping your accounts active. It’s ideal for automating reward claims on Telegram mini-apps like **CryptoRank**, **HOT**, and **Iceberg**, offering convenience without constant manual involvement.
-
-For instance, when claiming **CryptoRank** on Telegram or other bot games such as **Iceberg**, **PitchTalk**, and **Yupalka**, the script tracks when your reward storage is full and initiates claims automatically, reducing network load and transaction fees. Some projects—like **Oxygen** and **MDAO** with auto-upgrade features, and **TimeFarm** with auto-stake—even let you boost your rewards beyond simple mining.
+Many popular Telegram apps require frequent logins to maximize rewards – this Python script uses Selenium to automate human-like interactions in a real browser session without injecting suspicious API calls. Designed to run on your local computer or VPS, the script monitors your account status within each app, claiming rewards at the optimal time. With an optional random timer offset, it further mimics natural behavior, minimizing risks and keeping your accounts active. It’s ideal for automating reward claims on Telegram mini-apps like **HOT**, and **xNode**, offering convenience without constant manual involvement.
 
 **WARNING:** Always do your own research, as some projects may ultimately deliver no real-world value and might try to upsell features for cold hard cash!
 
