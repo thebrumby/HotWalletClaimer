@@ -49,6 +49,34 @@ class HotClaimer(Claimer):
         self.load_settings()
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
+        
+    def add_widget_and_open_storage(self):
+        try:
+            # Probe presence/scrollability of "Add widget" without forcing a click
+            probe_xpath = "//p[normalize-space()='Add widget']"
+            present = self.move_and_click(
+                probe_xpath, 20, False,
+                "test if 'Add widget' present (may not be present)",
+                self.step, "clickable"
+            )
+            self.increase_step()
+
+            if not present:
+                self.output(f"Step {self.step} - 'Add widget' not present/visible. Skipping.", 3)
+                return False
+
+            # Single brute-click pass on Add widget
+            self.brute_click(probe_xpath, timeout=8, action_description="click the 'Add widget' icon")
+            self.increase_step()
+
+            # Single brute-click pass on Storage
+            storage_xpath = "//h4[normalize-space()='Storage']"
+            self.brute_click(storage_xpath, timeout=10, action_description="click the 'Storage' link (single pass)")
+            self.increase_step()
+
+        except Exception as e:
+            self.output(f"Step {self.step} - Error in Add widget + Storage sequence: {e}", 1)
+            return False
 
     def next_steps(self):
         try:
@@ -79,11 +107,10 @@ class HotClaimer(Claimer):
             self.move_and_click(xpath, 180, True, "click continue at account selection screen", self.step, "clickable")
             self.increase_step()
 
-            xpath = "//p[text()='Add widget']"
-            self.move_and_click(xpath, 45, True, "click the 'Add widget' (may not be present)", self.step, "clickable")
+            self.add_widget_and_open_storage()
             self.increase_step()
             
-            xpath = "//h4[text()='Storage']"
+            xpath = "//h4[normalize-space(.)='Storage']"
             self.move_and_click(xpath, 15, True, "click the 'storage' link", self.step, "clickable")
             self.increase_step()
             
@@ -119,11 +146,10 @@ class HotClaimer(Claimer):
             self.output(f"Step {self.step} - Unable to pull your near balance.", 3)
         self.increase_step()
 
-        xpath = "//p[text()='Add widget']"
-        self.move_and_click(xpath, 15, True, "click the 'Add widget' (may not be present)", self.step, "clickable")
+        self.add_widget_and_open_storage()
         self.increase_step()
 
-        xpath = "//h4[text()='Storage']"
+        xpath = "//h4[normalize-space(.)='Storage']"
         self.move_and_click(xpath, 30, True, "click the 'storage' link", self.step, "clickable")
         self.increase_step()
 
