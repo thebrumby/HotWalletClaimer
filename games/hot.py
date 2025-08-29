@@ -113,10 +113,6 @@ class HotClaimer(Claimer):
             self.add_widget_and_open_storage()
             self.increase_step()
             
-            xpath = "//h4[normalize-space(.)='Storage']"
-            self.move_and_click(xpath, 15, True, "click the 'storage' link", self.step, "clickable")
-            self.increase_step()
-            
             self.set_cookies()
 
         except TimeoutException:
