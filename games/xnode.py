@@ -50,24 +50,24 @@ class XNodeClaimer(Claimer):
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
         
-        def next_steps(self):
+    def next_steps(self):
 
-            if self.step:
-                pass
-            else:
-                self.step = "01"
-    
-            try:
-                self.launch_iframe()
-                self.increase_step()
-       
-                self.set_cookies()
-    
-            except TimeoutException:
-                self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.",1)
-    
-            except Exception as e:
-                self.output(f"Step {self.step} - An error occurred: {e}",1)
+        if self.step:
+            pass
+        else:
+            self.step = "01"
+
+        try:
+            self.launch_iframe()
+            self.increase_step()
+   
+            self.set_cookies()
+
+        except TimeoutException:
+            self.output(f"Step {self.step} - Failed to find or switch to the iframe within the timeout period.",1)
+
+        except Exception as e:
+            self.output(f"Step {self.step} - An error occurred: {e}",1)
     
     def full_claim(self):
         self.step = "100"

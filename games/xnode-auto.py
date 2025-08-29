@@ -65,33 +65,31 @@ class XNodeAUClaimer(XNodeClaimer):
         return True
         
     def upgrade_all(self, max_passes=2, per_row_wait=4):
-        """Click all upgrade rows that are actionable. 
-           Skips rows that are disabled/unaffordable and only counts effective clicks."""
+        """Prefer upgrading lowest-level rows first.
+           Click rows that are actionable; count only effective upgrades."""
         from selenium.webdriver.common.by import By
         from selenium.webdriver.common.action_chains import ActionChains
         from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException
-    
+
         def class_has_token(el, token: str) -> bool:
             try:
                 cls = (el.get_attribute("class") or "")
                 return f" {token} " in f" {cls.strip()} "
             except StaleElementReferenceException:
                 return True
-    
+
         def aria_disabled(el) -> bool:
             try:
                 v = (el.get_attribute("aria-disabled") or "").strip().lower()
                 return v in ("1", "true", "yes")
             except StaleElementReferenceException:
                 return True
-    
+
         def style_blocks_click(el) -> bool:
             try:
                 style = (el.get_attribute("style") or "").lower()
-                # crude but useful: skip “pointer-events:none” or very low opacity
                 if "pointer-events" in style and "none" in style:
                     return True
-                # extract opacity value if present (opacity: 0.3; or inline opaque styles)
                 import re
                 m = re.search(r"opacity\s*:\s*([0-9.]+)", style)
                 if m:
@@ -102,19 +100,19 @@ class XNodeAUClaimer(XNodeClaimer):
                 return False
             except StaleElementReferenceException:
                 return True
-    
+
         def find_one(root, rel_xpaths):
             for xp in rel_xpaths:
                 try:
                     el = root.find_element(By.XPATH, xp)
-                    if el: 
+                    if el:
                         return el
                 except NoSuchElementException:
                     continue
                 except StaleElementReferenceException:
                     return None
             return None
-    
+
         def get_level_num(row):
             """Extract integer from 'Level: 21'."""
             try:
@@ -125,21 +123,27 @@ class XNodeAUClaimer(XNodeClaimer):
                 return int(m.group(1)) if m else None
             except Exception:
                 return None
-    
+
+        def get_title(row):
+            try:
+                t = row.find_element(By.XPATH, ".//h2[contains(@class,'Upgrader_text-title')]")
+                return (t.text or "").strip()
+            except Exception:
+                return ""
+
         def row_is_effectively_disabled(row) -> bool:
-            """Check row + controls for disabled semantics."""
+            """Row or its right control looks disabled/unaffordable."""
             if class_has_token(row, "disable") or aria_disabled(row) or style_blocks_click(row):
                 return True
-            # check controls
             ctrl = find_one(row, [
                 ".//div[contains(@class,'Upgrader_right-wrap')]",
                 ".//div[contains(@class,'Upgrader_right')]",
                 ".//div[contains(@class,'Upgrader_right-price_text')]",
             ])
             if ctrl is None:
-                return True  # no control means nothing to click
+                return True
             return class_has_token(ctrl, "disable") or aria_disabled(ctrl) or style_blocks_click(ctrl)
-    
+
         def click_ctrl(ctrl, why=""):
             try:
                 self.driver.execute_script("arguments[0].scrollIntoView({block:'center', inline:'center'});", ctrl)
@@ -148,103 +152,101 @@ class XNodeAUClaimer(XNodeClaimer):
             except Exception:
                 try:
                     self.driver.execute_script("arguments[0].click();", ctrl)
-                    # self.output(f"Step {self.step} - JS click fallback for {why}.", 3)
                     return True
                 except Exception:
                     return False
-    
+
         container_xpath = "//div[contains(@class,'UpgradesPage-items')]"
-        # exact token-safe match for NOT disabled at row-level (coarse prefilter)
         rows_xpath = (
             container_xpath +
             "//div[contains(@class,'Upgrader') and not(contains(concat(' ', normalize-space(@class), ' '), ' disable '))]"
         )
-    
+
         targets = [
             ".//div[contains(@class,'Upgrader_right')]//div[contains(@class,'Upgrader_right-wrap')]",
             ".//div[contains(@class,'Upgrader_right-price_text')]",
             ".//div[contains(@class,'Upgrader_right')]",
         ]
-    
+
         effective_clicks = 0
-        self.output(f"Step {self.step} - Scanning Upgrader rows…", 2)
-    
+        self.output(f"Step {self.step} - Scanning Upgrader rows (lowest level first)…", 2)
+
         for p in range(max_passes):
             acted = False
-    
-            # get snapshot; we’ll re-fetch inside the loop to avoid staleness
+
+            # Fetch fresh snapshot, build ranked list (level asc, then title asc to stabilize order)
             snapshot = self.driver.find_elements(By.XPATH, rows_xpath)
             if not snapshot:
                 self.output(f"Step {self.step} - No candidate rows found (pass {p+1}).", 3)
                 break
-    
-            for idx in range(len(snapshot)):
+
+            ranked = []
+            for row in snapshot:
                 try:
-                    # current view of this index
-                    rows_now = self.driver.find_elements(By.XPATH, rows_xpath)
-                    if idx >= len(rows_now):
-                        continue
-                    row = rows_now[idx]
-    
-                    # secondary strong disabled check
                     if row_is_effectively_disabled(row):
                         continue
-    
-                    # capture level before
+                    lvl = get_level_num(row)
+                    # None levels get pushed to the end by using a large sentinel
+                    lvl_key = lvl if isinstance(lvl, int) else 10**9
+                    ranked.append((lvl_key, get_title(row), row))
+                except StaleElementReferenceException:
+                    continue
+                except Exception:
+                    continue
+
+            # Sort by level ascending, then title as tie-breaker
+            ranked.sort(key=lambda t: (t[0], t[1]))
+
+            if not ranked:
+                self.output(f"Step {self.step} - No actionable rows this pass.", 3)
+                break
+
+            for _, _, row in ranked:
+                try:
+                    if row_is_effectively_disabled(row):
+                        continue
+
                     lvl_before = get_level_num(row)
-    
                     ctrl = find_one(row, targets)
                     if not ctrl:
                         continue
-    
-                    # first attempt
-                    clicked = click_ctrl(ctrl, why=f"row {idx}")
-                    if not clicked:
+
+                    if not click_ctrl(ctrl, why="upgrade click (1)"):
                         continue
-    
+
                     acted = True
-                    # brief settle
                     time.sleep(0.3)
-    
-                    # re-fetch row (may have moved); try to pick the same visual row again by title if needed
-                    rows_after = self.driver.find_elements(By.XPATH, rows_xpath)
-                    row2 = rows_after[idx] if idx < len(rows_after) else row
-    
-                    lvl_after = get_level_num(row2)
-                    became_disabled = row_is_effectively_disabled(row2)
-    
-                    # if no effect, try once more
+
+                    # Re-evaluate the same row handle (it might be stale but still ok)
+                    lvl_after = get_level_num(row)
+                    became_disabled = row_is_effectively_disabled(row)
+
+                    # If no effect, try one more time
                     if (lvl_after is None or lvl_before is None or lvl_after == lvl_before) and not became_disabled:
-                        ctrl2 = find_one(row2, targets)
-                        if ctrl2:
-                            click_ctrl(ctrl2, why=f"row {idx} (second)")
+                        ctrl2 = find_one(row, targets)
+                        if ctrl2 and click_ctrl(ctrl2, why="upgrade click (2)"):
                             time.sleep(0.3)
-                            rows_after2 = self.driver.find_elements(By.XPATH, rows_xpath)
-                            row3 = rows_after2[idx] if idx < len(rows_after2) else row2
-                            lvl_after2 = get_level_num(row3)
-                            became_disabled = row_is_effectively_disabled(row3)
+                            lvl_after2 = get_level_num(row)
+                            became_disabled = row_is_effectively_disabled(row)
                             if (lvl_after2 is not None and lvl_before is not None and lvl_after2 > lvl_before) or became_disabled:
                                 effective_clicks += 1
-                            # else: no effect → don’t count
-                        # else: no control → skip
+                        # else: no control second time → skip
                     else:
-                        # we saw an effect after first click
+                        # We saw an effect after first click
                         effective_clicks += 1
-    
+
                 except StaleElementReferenceException:
                     continue
                 except Exception as e:
-                    # keep running even if one row explodes
-                    self.output(f"Step {self.step} - Upgrader row {idx} error: {e}", 3)
+                    self.output(f"Step {self.step} - Upgrader row error: {e}", 3)
                     continue
-    
+
             if not acted:
-                break  # nothing actionable this pass
-    
-            # optional: small pause between passes
+                break
+
             if per_row_wait:
                 time.sleep(0.2)
-    
+
         self.output(f"Step {self.step} - Upgrader loop finished. Effective upgrades: {effective_clicks}", 2)
         return effective_clicks
 
