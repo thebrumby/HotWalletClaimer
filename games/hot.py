@@ -84,7 +84,7 @@ class HotClaimer(Claimer):
             self.increase_step()
             
             xpath = "//h4[text()='Storage']"
-            self.move_and_click(xpath, 45, True, "click the 'storage' link", self.step, "clickable")
+            self.move_and_click(xpath, 15, True, "click the 'storage' link", self.step, "clickable")
             self.increase_step()
             
             self.set_cookies()
@@ -120,7 +120,7 @@ class HotClaimer(Claimer):
         self.increase_step()
 
         xpath = "//p[text()='Add widget']"
-        self.move_and_click(xpath, 45, True, "click the 'Add widget' (may not be present)", self.step, "clickable")
+        self.move_and_click(xpath, 15, True, "click the 'Add widget' (may not be present)", self.step, "clickable")
         self.increase_step()
 
         xpath = "//h4[text()='Storage']"
@@ -307,6 +307,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
