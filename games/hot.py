@@ -66,13 +66,18 @@ class HotClaimer(Claimer):
                 return False
 
             # Single brute-click pass on Add widget
-            self.brute_click(probe_xpath, timeout=8, action_description="click the 'Add widget' icon")
+            self.brute_click(probe_xpath, timeout=15, action_description="click the 'Add widget' icon")
             self.increase_step()
 
             # Single brute-click pass on Storage
-            storage_xpath = "//h4[normalize-space()='Storage']"
-            self.brute_click(storage_xpath, timeout=10, action_description="click the 'Storage' link (single pass)")
+            storage_xpath = "(//h4[contains(normalize-space(.), 'Storage')])[last()]"
+            self.brute_click(storage_xpath, timeout=15, action_description="click the 'Storage' link (single pass)")
             self.increase_step()
+
+            self.quit_driver()
+            self.launch_iframe()
+            self.set_cookies()
+
 
         except Exception as e:
             self.output(f"Step {self.step} - Error in Add widget + Storage sequence: {e}", 1)

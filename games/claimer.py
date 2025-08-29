@@ -1241,24 +1241,26 @@ class Claimer:
                 self.debug_information(f"ClickElem {action_description} fatal error: {str(e)}", "error")
             return False
 
-    def brute_click(self, xpath, timeout=30, action_description="", state_check=None, post_click_wait=0.4):
+    def brute_click(self, xpath, timeout=30, action_description="", state_check=None, post_click_wait=0.6):
         """
         Brute-force click:
-          - ensures element present & in view
-          - tries ActionChains click, then JS .click(), then JS synthesized center click
-          - after each attempt waits shortly for disappearance or state_check -> success
-        Returns True on likely success, False otherwise.
+          - ensure element present & in view (no click yet)
+          - try ActionChains click, then JS .click(), then synthesized center click
+          - after each attempt: wait briefly, then success if:
+              A) element disappears, or
+              B) state_check() returns True, or
+              C) element's DOM 'signature' changes (outerHTML/id)
         """
-        # 1) Make sure it's there & scroll it into view (don't click yet)
-        if not self.move_and_click(xpath, 10, False, f"locate the element to Brute Click ({action_description})", self.step, "clickable"):
+        # 1) Present & in view (no click)
+        if not self.move_and_click(xpath, 10, False,
+                                   f"locate the element to Brute Click ({action_description})",
+                                   self.step, "clickable"):
             self.output(f"Step {self.step} - Element not found or not scrollable: {xpath}", 2)
             return False
-    
+
         end = time.time() + timeout
-        last_html_sig = None  # rough signature to detect replacements when no id
-    
+
         def center_js_click(el):
-            # synthesize real pointer/mouse events at center
             self.driver.execute_script("""
                 const el = arguments[0];
                 const rect = el.getBoundingClientRect();
@@ -1271,73 +1273,69 @@ class Claimer:
                 }
                 fire('pointerdown'); fire('mousedown'); fire('pointerup'); fire('mouseup'); fire('click');
             """, el)
-    
+
         def html_sig(el):
-            # short signature when @id is empty; keeps cost low
             try:
                 outer = self.driver.execute_script("return arguments[0].outerHTML.slice(0, 200);", el) or ""
-                return outer
+                return (el.get_attribute("id") or "", outer)
             except Exception:
                 return None
-    
+
         while time.time() < end:
+            # get current element
             try:
                 el = self.driver.find_element(By.XPATH, xpath)
             except Exception:
-                # If we can't find it anymore, assume success
-                self.output(f"Step {self.step} - Click successful: element not found after attempts.", 2)
+                # If not found at loop start, we likely succeeded on prior iteration
+                self.output(f"Step {self.step} - Click successful: element not found before attempt.", 2)
                 return True
-    
-            # Scroll into view and clear overlays each loop (in case layout changed)
+
+            # Pre-click: scroll, clear overlays, capture signature
             try:
                 self.driver.execute_script("arguments[0].scrollIntoView({block:'center', inline:'center'});", el)
             except Exception:
                 pass
-    
             try:
                 self.clear_overlays(el, self.step)
             except Exception:
                 pass
-    
-            # Keep a lightweight signature for change detection
-            try:
-                el_id = el.get_attribute("id") or ""
-            except Exception:
-                el_id = ""
-            cur_sig = (el_id, html_sig(el))
-    
+
+            pre_sig = html_sig(el)
+
             # Attempt 1: native click
+            clicked = False
             try:
                 ActionChains(self.driver).move_to_element(el).pause(0.05).click(el).perform()
+                clicked = True
             except Exception:
                 # Attempt 2: JS .click()
                 try:
                     self.driver.execute_script("arguments[0].click();", el)
+                    clicked = True
                 except Exception:
-                    # Attempt 3: JS center click (synth events)
+                    # Attempt 3: synthesized center click
                     try:
                         center_js_click(el)
+                        clicked = True
                     except Exception:
-                        # couldn't click this loop; try again
+                        # try next loop
                         time.sleep(0.15)
                         continue
-    
-            # Give the UI a moment to react
+
+            # Give UI time to react
             time.sleep(post_click_wait)
-    
-            # Success conditions
-            # A) Disappeared
+
+            # A) disappeared?
             try:
                 self.driver.find_element(By.XPATH, xpath)
                 still_there = True
             except NoSuchElementException:
                 still_there = False
-    
             if not still_there:
                 self.output(f"Step {self.step} - BruteClick success: element disappeared.", 3)
                 return True
-    
-            # B) Custom success check
+
+            # B) custom success check?
             if callable(state_check):
                 try:
                     if state_check():
@@ -1345,23 +1343,23 @@ class Claimer:
                         return True
                 except Exception:
                     pass
-    
-            # C) Signature changed = likely DOM replacement (often means click worked)
+
+            # C) signature changed?
             try:
                 el2 = self.driver.find_element(By.XPATH, xpath)
-                new_sig = (el2.get_attribute("id") or "", html_sig(el2))
+                post_sig = html_sig(el2)
             except Exception:
-                self.output(f"Step {self.step} - BruteClick success: element replaced then missing.", 3)
+                self.output(f"Step {self.step} - BruteClick success: element replaced and then missing.", 3)
                 return True
-    
-            if last_html_sig and new_sig != last_html_sig:
-                # DOM mutated for this locator; count as success
+
+            if pre_sig is not None and post_sig is not None and post_sig != pre_sig:
                 self.output(f"Step {self.step} - BruteClick probable success: DOM signature changed.", 3)
                 return True
-    
-            last_html_sig = new_sig
-    
-        self.output(f"Step {self.step} - Brute click timed out without clear success.", 2)
+
+            # otherwise, loop and try again
+            time.sleep(0.1)
+
+        self.output(f"Step {self.step} - Brute click timed out without clear success. ({action_description})", 2)
         return False
 
     def clear_overlays(self, target_element, step):
