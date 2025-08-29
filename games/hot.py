@@ -74,8 +74,6 @@ class HotClaimer(Claimer):
             self.brute_click(storage_xpath, timeout=15, action_description="click the 'Storage' link (single pass)")
             self.increase_step()
 
-            self.quit_driver()
-            self.launch_iframe()
             self.set_cookies()
 
 
