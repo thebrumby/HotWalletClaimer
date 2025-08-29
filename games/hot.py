@@ -79,8 +79,13 @@ class HotClaimer(Claimer):
             self.move_and_click(xpath, 180, True, "click continue at account selection screen", self.step, "clickable")
             self.increase_step()
 
+            xpath = "//p[text()='Add widget']"
+            self.move_and_click(xpath, 45, True, "click the 'Add widget' (may not be present)", self.step, "clickable")
+            self.increase_step()
+            
             xpath = "//h4[text()='Storage']"
             self.move_and_click(xpath, 45, True, "click the 'storage' link", self.step, "clickable")
+            self.increase_step()
             
             self.set_cookies()
 
@@ -112,6 +117,10 @@ class HotClaimer(Claimer):
                 self.output(f"Step {self.step} - Conversion of Near Balance to float failed.", 3)
         else:
             self.output(f"Step {self.step} - Unable to pull your near balance.", 3)
+        self.increase_step()
+
+        xpath = "//p[text()='Add widget']"
+        self.move_and_click(xpath, 45, True, "click the 'Add widget' (may not be present)", self.step, "clickable")
         self.increase_step()
 
         xpath = "//h4[text()='Storage']"
@@ -298,6 +307,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
