@@ -267,31 +267,19 @@ class XNodeClaimer(Claimer):
         prefix = "After" if claimed else "Before"
         default_priority = 2 if claimed else 3
         priority = max(self.settings['verboseLevel'], default_priority)
-    
+
         profit_xpath = "//div[contains(@class,'ItemGrout_subChildren')]//span[contains(text(),'/sec')]"
-    
+
         try:
             text = self.monitor_element(profit_xpath, 15, "profit per sec")
             if not text or isinstance(text, bool):
                 self.output(f"Step {self.step} - Could not find profit text.", priority)
                 return False
-    
+
             raw = text.strip()
-            self.output(f"Step {self.step} - Raw profit string: '{raw}'", 3)
-    
-            # Extract number before "/sec"
-            import re
-            m = re.search(r'([+-]?\d+(?:\.\d+)?)\s*/sec', raw, flags=re.I)
-            if not m:
-                self.output(f"Step {self.step} - Profit pattern not matched in '{raw}'.", priority)
-                return False
-    
-            per_sec = float(m.group(1))
-            per_hour = round(per_sec * 3600, 2)
-    
-            self.output(f"Step {self.step} - {prefix} PROFIT/HOUR: {per_hour}", priority)
-            return per_hour
-    
+            self.output(f"Step {self.step} - {prefix} PROFIT string: '{raw}'", priority)
+            return raw
+
         except NoSuchElementException:
             self.output(f"Step {self.step} - Profit element not found.", priority)
             return False
