@@ -129,7 +129,7 @@ class SpellClaimer(Claimer):
         self.increase_step()
         
         # Brute force the claim to collect all '%' and then spin the wheel:  
-        xpath = "//button[.//p[normalize-space()='Charging...']]"
+        xpath = "//div[@role='progressbar']/ancestor::button[1]"
         if self.brute_click(xpath, 20, "click the 'Claim' button"):
             self.output(f"Step {self.step} - Claim was available and clicked.", 3)
             self.increase_step()
@@ -291,6 +291,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
