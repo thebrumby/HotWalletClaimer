@@ -123,29 +123,62 @@ class SpellClaimer(Claimer):
         # Capture the balance before the claim
         before_balance = self.get_balance(balance_xpath, False)
 
-        # Click the pre-claim button:        
-        xpath = "//button[contains(normalize-space(.), 'Tap to claim') and contains(normalize-space(.), 'MANA')]"
-        self.brute_click(xpath, 12, "click the pre 'Claim' button")
+        # Click the pre-claim button first (as you already do)
+        pre_claim = "//button[contains(normalize-space(.), 'Tap to claim') and contains(normalize-space(.), 'MANA')]"
+        self.brute_click(pre_claim, 12, "click the pre 'Claim' button")
         self.increase_step()
         
-        # Brute force the claim to collect all '%' and then spin the wheel:  
-        xpath = "//div[@role='progressbar']/ancestor::button[1]"
-        if self.brute_click(xpath, 20, "click the 'Claim' button"):
-            self.output(f"Step {self.step} - Claim was available and clicked.", 3)
+        # Now click the 'Charging…' button (several robust selectors, in order)
+        charging_candidates = [
+            # 1) Exact text on the label
+            "//button[.//p[normalize-space()='Charging...']]",
+        
+            # 2) Button that has a progressbar and a label containing 'Charging'
+            "//button[.//div[@role='progressbar'] and .//p[contains(normalize-space(),'Charging')]]",
+        
+            # 3) Button ancestor of ANY progressbar with an aria-valuenow attribute
+            "//div[@role='progressbar' and @aria-valuenow]/ancestor::button[1]",
+        
+            # 4) Button ancestor of progressbar where value is between 1 and 99
+            "//div[@role='progressbar' and number(@aria-valuenow) >= 1 and number(@aria-valuenow) < 100]/ancestor::button[1]",
+        
+            # 5) Button showing a percent label (e.g., 20%)
+            # (Note: XPath 1.0 — use contains + % pattern instead of matches())
+            "//button[.//div[@role='progressbar'] and .//div[contains(normalize-space(.), '%')]]",
+        ]
+        
+        clicked_claim = False
+        for xp in charging_candidates:
+            if self.brute_click(xp, timeout=8, action_description=f"click the 'Charging' button via {xp}"):
+                clicked_claim = True
+                break
+        
+        if clicked_claim:
+            self.output(f"Step {self.step} - Claim (Charging) button clicked.", 3)
             self.increase_step()
-            
-            # Spin the wheel
-            xpath = "//p[contains(., 'Spin the Wheel')]"
-            self.move_and_click(xpath, 10, True, "spin the wheel", self.step, "clickable")
-            self.increase_step()
-            
-            xpath = "//*[contains(text(), 'GOT IT')]"
-            self.move_and_click(xpath, 10, True, "check for 'Got it' message (may not be present)", self.step, "clickable")
-            self.increase_step()
-
+        
+            # --- Post-claim steps: spin, dismiss, and balance delta ---
+            try:
+                # Spin the wheel
+                spin_xpath = "//p[contains(normalize-space(.), 'Spin the Wheel')]"
+                self.move_and_click(spin_xpath, 10, True, "spin the wheel", self.step, "clickable")
+            except Exception as e:
+                self.output(f"Step {self.step} - Spin the wheel not available: {type(e).__name__}: {e}", 2)
+            finally:
+                self.increase_step()
+        
+            try:
+                # Dismiss 'GOT IT' if it appears
+                gotit_xpath = "//*[contains(normalize-space(text()), 'GOT IT')]"
+                self.move_and_click(gotit_xpath, 10, True, "check for 'Got it' message (may not be present)", self.step, "clickable")
+            except Exception as e:
+                self.output(f"Step {self.step} - 'GOT IT' not shown (ok): {type(e).__name__}: {e}", 3)
+            finally:
+                self.increase_step()
+        
             # Capture the balance after the claim
             after_balance = self.get_balance(balance_xpath, True)
-
+        
             # Calculate balance difference
             try:
                 if before_balance is not None and after_balance is not None:
@@ -153,8 +186,9 @@ class SpellClaimer(Claimer):
                     status_text += f"Claim submitted - balance increase {bal_diff:.2f} "
             except Exception as e:
                 self.output(f"Step {self.step} - An error occurred while calculating balance difference: {e}", 1)
+        
         else:
-            self.output(f"Step {self.step} - Claim button not present.", 3)
+            self.output(f"Step {self.step} - Claim (Charging) button not present/clickable.", 2)
 
         # Get the wait timer if present
         self.increase_step()
@@ -291,6 +325,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
