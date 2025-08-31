@@ -52,10 +52,10 @@ class SpellClaimer(Claimer):
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
 
-    def spell_accept_and_continue(self, allow_force=False):
+    def spell_accept_and_continue(self, allow_force: bool = False, debug_on_fail: bool = True) -> bool:
         """
-        Tick the Spell Wallet consent checkbox and click 'Get Started'.
-        Returns True on success. If allow_force=True, will try a last-resort
+        Tick the Spell Wallet consent checkbox (once) and click 'Get Started'.
+        Returns True on success. If allow_force=True, will attempt a last-resort
         JS enable of the button (not recommended).
         """
         checkbox_xpath = "//span[@aria-hidden='true' and contains(@class,'chakra-checkbox__control')]"
@@ -63,26 +63,31 @@ class SpellClaimer(Claimer):
                              "normalize-space()='Get Started' and not(@disabled) and not(@aria-disabled='true')]")
         btn_xpath_any = "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']"
     
+        def dbg(msg, level="error"):
+            if self.settings.get('debugIsOn') and debug_on_fail:
+                # Make the message short but specific for the filename
+                self.debug_information(f"Spell | {msg}", error_type=level)
+    
         # 1) Click the checkbox once
         if not self.move_and_click(checkbox_xpath, 10, True,
                                    "tick Spell consent checkbox", self.step, "clickable"):
             self.output(f"Step {self.step} - Checkbox not clickable.", 2)
+            dbg("Checkbox not clickable", "error")
             return False
     
-        # 2) Wait for it to latch OR for the button to enable
+        # 2) Wait for latch OR for the button to enable
         try:
             WebDriverWait(self.driver, 6).until(
                 lambda d: (
-                    # checkbox shows data-checked
                     d.find_element(By.XPATH, checkbox_xpath).get_attribute("data-checked") is not None
                 ) or (
-                    # or button becomes enabled
                     len(d.find_elements(By.XPATH, btn_xpath_enabled)) > 0
                 )
             )
             self.output(f"Step {self.step} - Checkbox latched / button enabled.", 3)
         except Exception:
-            self.output(f"Step {self.step} - Checkbox didn’t latch and button not enabled yet.", 2)
+            self.output(f"Step {self.step} - Checkbox didn’t latch and button not enabled (yet).", 2)
+            dbg("Checkbox didn’t latch; button still disabled", "error")
     
         self.increase_step()
     
@@ -91,7 +96,7 @@ class SpellClaimer(Claimer):
             self.output(f"Step {self.step} - 'Get Started' clicked.", 3)
             return True
     
-        # 4) Optional: force-enable (last resort; may bypass app validation)
+        # 4) Optional: force-enable (last resort)
         if allow_force:
             try:
                 btn = self.driver.find_element(By.XPATH, btn_xpath_any)
@@ -102,10 +107,11 @@ class SpellClaimer(Claimer):
                 if self.move_and_click(btn_xpath_any, 5, True, "force-click 'Get Started'", self.step, "clickable"):
                     self.output(f"Step {self.step} - Forced 'Get Started' click.", 2)
                     return True
-            except Exception:
-                pass
+            except Exception as e:
+                dbg(f"Force-enable failed: {e}", "error")
     
         self.output(f"Step {self.step} - 'Get Started' not clickable.", 2)
+        dbg("'Get Started' not clickable after checkbox", "error")
         return False
 
     def next_steps(self):
@@ -309,6 +315,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
