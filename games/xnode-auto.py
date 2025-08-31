@@ -272,7 +272,7 @@ class XNodeAUClaimer(XNodeClaimer):
                             lvl_print = "?"
             
                         title_print = title_before or get_title(row_fresh) or "Unknown upgrade"
-                        self.output(f"Step {self.step} - Upgraded {title_print} at level {lvl_print}", 2)
+                        self.output(f"Step {self.step} - Upgraded {title_print} at level {lvl_print}", 3)
             
                 except StaleElementReferenceException:
                     continue
@@ -296,6 +296,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
