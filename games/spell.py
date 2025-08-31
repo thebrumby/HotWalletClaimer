@@ -125,6 +125,7 @@ class SpellClaimer(Claimer):
 
         # Brute force the claim to collect all '%' and then spin the wheel:        
         xpath = "//button[contains(normalize-space(.), 'Tap to claim') and contains(normalize-space(.), 'MANA')]"
+        self.increase_step()
         self.brute_click(xpath, 12, "click the pre 'Claim' button")
         xpath = "//button[.//p[normalize-space()='Tap to claim']]"
         if self.brute_click(xpath, 12, "click the 'Claim' button"):
@@ -287,6 +288,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
