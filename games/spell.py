@@ -44,6 +44,84 @@ class SpellClaimer(Claimer):
         self.start_app_xpath = "//div[@class='reply-markup-row']//span[contains(text(),'Open Spell')]"
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Spell Wallet']]"
 
+    def charge_until_complete(self, max_seconds: float = 10.0, pause: float = 0.25) -> bool:
+        """
+        Repeatedly click the 'Charging…' claim button for up to max_seconds.
+        Stops early if progress hits 100% or the 'Spin the Wheel' UI appears.
+        Returns True if we likely completed the charge, else False.
+        """
+        start = time.time()
+    
+        # robust selectors for the same button/state
+        charging_xpaths = [
+            # Button with explicit "Charging..."
+            "//button[.//p[normalize-space()='Charging...']]",
+    
+            # Button that has a progressbar + a 'Charging' label
+            "//button[.//div[@role='progressbar'] and .//p[contains(normalize-space(),'Charging')]]",
+    
+            # Button that owns a progressbar with a numeric value (1..99)
+            "//div[@role='progressbar' and number(@aria-valuenow) >= 1 and number(@aria-valuenow) < 100]/ancestor::button[1]",
+    
+            # Button showing a percent label (e.g. 20%)
+            "//button[.//div[@role='progressbar'] and .//div[contains(normalize-space(.), '%')]]",
+        ]
+    
+        # quick checks for "done" states
+        spin_xpath   = "//p[contains(normalize-space(.), 'Spin the Wheel')]"
+        percent_node = "//div[@role='progressbar' and @aria-valuenow]"
+    
+        def read_progress() -> float | None:
+            try:
+                el = self.driver.find_element(By.XPATH, percent_node)
+                val = el.get_attribute("aria-valuenow")
+                return float(val) if val is not None else None
+            except Exception:
+                return None
+    
+        while time.time() - start < max_seconds:
+            # finished already?
+            try:
+                if self.driver.find_elements(By.XPATH, spin_xpath):
+                    self.output(f"Step {self.step} - Wheel appeared; charging complete.", 3)
+                    return True
+            except Exception:
+                pass
+    
+            prog = read_progress()
+            if prog is not None and prog >= 100:
+                self.output(f"Step {self.step} - Progress {prog:.0f}% reached; charging complete.", 3)
+                return True
+    
+            # try each selector and click once
+            clicked_this_cycle = False
+            for xp in charging_xpaths:
+                try:
+                    btn = self.driver.find_element(By.XPATH, xp)
+                    # keep it simple & fast: try native, then JS
+                    try:
+                        ActionChains(self.driver).move_to_element(btn).pause(0.02).click(btn).perform()
+                        clicked_this_cycle = True
+                        break
+                    except Exception:
+                        try:
+                            self.driver.execute_script("arguments[0].click();", btn)
+                            clicked_this_cycle = True
+                            break
+                        except Exception:
+                            continue
+                except Exception:
+                    continue
+    
+            if not clicked_this_cycle:
+                # small diagnostic (low noise)
+                if self.settings.get('debugIsOn'):
+                    self.debug_information("Charging button not found this tick", "warning")
+            time.sleep(pause)
+    
+        self.output(f"Step {self.step} - Charging loop ended after {max_seconds}s without clear completion.", 2)
+        return False
+
     def spell_accept_and_continue(self):
         try:
             checkbox_xpath = "//span[@aria-hidden='true' and contains(@class,'chakra-checkbox__control')]"
@@ -126,43 +204,18 @@ class SpellClaimer(Claimer):
         # Capture the balance before the claim
         before_balance = self.get_balance(balance_xpath, False)
 
-        # Click the pre-claim button first (as you already do)
+        # Pre-claim
         pre_claim = "//button[contains(normalize-space(.), 'Tap to claim') and contains(normalize-space(.), 'MANA')]"
         self.brute_click(pre_claim, 12, "click the pre 'Claim' button")
         self.increase_step()
         
-        # Now click the 'Charging…' button (several robust selectors, in order)
-        charging_candidates = [
-            # 1) Exact text on the label
-            "//button[.//p[normalize-space()='Charging...']]",
-        
-            # 2) Button that has a progressbar and a label containing 'Charging'
-            "//button[.//div[@role='progressbar'] and .//p[contains(normalize-space(),'Charging')]]",
-        
-            # 3) Button ancestor of ANY progressbar with an aria-valuenow attribute
-            "//div[@role='progressbar' and @aria-valuenow]/ancestor::button[1]",
-        
-            # 4) Button ancestor of progressbar where value is between 1 and 99
-            "//div[@role='progressbar' and number(@aria-valuenow) >= 1 and number(@aria-valuenow) < 100]/ancestor::button[1]",
-        
-            # 5) Button showing a percent label (e.g., 20%)
-            # (Note: XPath 1.0 — use contains + % pattern instead of matches())
-            "//button[.//div[@role='progressbar'] and .//div[contains(normalize-space(.), '%')]]",
-        ]
-        
-        clicked_claim = False
-        for xp in charging_candidates:
-            if self.brute_click(xp, timeout=8, action_description=f"click the 'Charging' button via {xp}"):
-                clicked_claim = True
-                break
-        
-        if clicked_claim:
-            self.output(f"Step {self.step} - Claim (Charging) button clicked.", 3)
+        # Rapid-charge for ~10s (clicks ~4 times per second)
+        if self.charge_until_complete(max_seconds=10, pause=0.25):
+            self.output(f"Step {self.step} - Claim (Charging) sequence completed.", 3)
             self.increase_step()
         
-            # --- Post-claim steps: spin, dismiss, and balance delta ---
+            # Post-claim flow
             try:
-                # Spin the wheel
                 spin_xpath = "//p[contains(normalize-space(.), 'Spin the Wheel')]"
                 self.move_and_click(spin_xpath, 10, True, "spin the wheel", self.step, "clickable")
             except Exception as e:
@@ -171,7 +224,6 @@ class SpellClaimer(Claimer):
                 self.increase_step()
         
             try:
-                # Dismiss 'GOT IT' if it appears
                 gotit_xpath = "//*[contains(normalize-space(text()), 'GOT IT')]"
                 self.move_and_click(gotit_xpath, 10, True, "check for 'Got it' message (may not be present)", self.step, "clickable")
             except Exception as e:
@@ -179,19 +231,16 @@ class SpellClaimer(Claimer):
             finally:
                 self.increase_step()
         
-            # Capture the balance after the claim
+            # Balance delta as you already do…
             after_balance = self.get_balance(balance_xpath, True)
-        
-            # Calculate balance difference
             try:
                 if before_balance is not None and after_balance is not None:
                     bal_diff = after_balance - before_balance
                     status_text += f"Claim submitted - balance increase {bal_diff:.2f} "
             except Exception as e:
-                self.output(f"Step {self.step} - An error occurred while calculating balance difference: {e}", 1)
-        
+                self.output(f"Step {self.step} - Error calculating balance difference: {e}", 1)
         else:
-            self.output(f"Step {self.step} - Claim (Charging) button not present/clickable.", 2)
+            self.output(f"Step {self.step} - Claim (Charging) did not complete in time.", 2)
 
         # Get the wait timer if present
         self.increase_step()
@@ -328,6 +377,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
