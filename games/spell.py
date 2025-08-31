@@ -44,45 +44,79 @@ class SpellClaimer(Claimer):
         self.start_app_xpath = "//div[@class='reply-markup-row']//span[contains(text(),'Open Spell')]"
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Spell Wallet']]"
 
-    def __init__(self):
-        self.settings_file = "variables.txt"
-        self.status_file_path = "status.txt"
-        self.wallet_id = ""
-        self.load_settings()
-        self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-        super().__init__()
-
-    def handle_checkbox_and_continue(self):
+    def spell_accept_and_continue(self):
         """
-        Try to tick the Spell 'Get Started' checkbox and then press the continue button.
-        If the checkbox is already gone or not found, just log and continue gracefully.
+        Tick the consent checkbox once, verify it latched (data-checked=""),
+        then click the 'Get Started' button. Returns True on success.
         """
-        try:
-            checkbox_xpath = "//span[@aria-hidden='true' and contains(@class,'chakra-checkbox__control')]"
-            cont_xpath = "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']"
+        # 1) Try a few robust locators for the visual control
+        checkbox_xpaths = [
+            # exact + generic
+            "//span[contains(@class,'chakra-checkbox__control')]",
+            # via label container if present
+            "//label[contains(@class,'chakra-checkbox')]//span[contains(@class,'chakra-checkbox__control')]",
+            # last resort: any span with the right class inside the modal
+            "(.//div[@role='dialog'] | .//div[@id='root'])//span[contains(@class,'chakra-checkbox__control')]"
+        ]
     
-            try:
-                # Try to locate the checkbox (once only)
-                checkbox = self.driver.find_element(By.XPATH, checkbox_xpath)
-                self.driver.execute_script("arguments[0].click();", checkbox)
-                self.output(f"Step {self.step} - Checkbox clicked.", 3)
-                self.increase_step()
-            except NoSuchElementException:
-                self.output(f"Step {self.step} - Checkbox not present, proceeding with flow.", 2)
-                return True  # carry on without failing
+        box = None
+        for xp in checkbox_xpaths:
+            els = self.driver.find_elements(By.XPATH, xp)
+            if els:
+                # pick a visible one
+                for el in els:
+                    try:
+                        if el.is_displayed():
+                            box = el
+                            checkbox_xpath = xp  # remember which worked
+                            break
+                    except Exception:
+                        continue
+            if box:
+                break
     
-            # Now click the "Get Started" button
-            if self.brute_click(cont_xpath, timeout=10, action_description="click 'Get Started'"):
-                self.output(f"Step {self.step} - 'Get Started' clicked successfully.", 3)
-                self.increase_step()
-                return True
-            else:
-                self.output(f"Step {self.step} - 'Get Started' not clickable.", 2)
-                return False
-    
-        except Exception as e:
-            self.output(f"Step {self.step} - Error during checkbox + continue sequence: {e}", 1)
+        if not box:
+            self.output(f"Step {self.step} - Spell checkbox not found/visible; skipping.", 2)
             return False
+    
+        # 2) Single click (no brute), scroll into view first
+        try:
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", box)
+        except Exception:
+            pass
+    
+        if not self.move_and_click(checkbox_xpath, 8, True,
+                                   "tick Spell consent checkbox", self.step, "clickable"):
+            self.output(f"Step {self.step} - Could not click Spell checkbox.", 2)
+            return False
+    
+        # 3) Verify the tick latched: Chakra sets data-checked="" on the control span
+        try:
+            WebDriverWait(self.driver, 5).until(
+                lambda d: (box.get_attribute("data-checked") is not None) or
+                          d.find_element(By.XPATH, f"{checkbox_xpath}[@data-checked]")
+            )
+            self.output(f"Step {self.step} - Checkbox is checked.", 3)
+        except Exception:
+            self.output(f"Step {self.step} - Checkbox did not latch (no data-checked); aborting continue.", 2)
+            return False
+    
+        self.increase_step()
+    
+        # 4) Click the green 'Get Started' button (enabled when box is checked)
+        btn_xpaths = [
+            "//button[contains(@class,'chakra-button') and normalize-space()='Get Started' and not(@disabled) and not(@aria-disabled='true')]",
+            # fallback without disabled guards
+            "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']",
+        ]
+    
+        for bx in btn_xpaths:
+            if self.move_and_click(bx, 10, True, "click 'Get Started'", self.step, "clickable"):
+                self.output(f"Step {self.step} - 'Get Started' clicked.", 3)
+                return True
+    
+        self.output(f"Step {self.step} - 'Get Started' not clickable.", 2)
+        return False
 
     def next_steps(self):
         if self.step:
@@ -325,6 +359,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
