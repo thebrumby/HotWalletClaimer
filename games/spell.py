@@ -217,6 +217,14 @@ class SpellClaimer(Claimer):
         # Capture the balance before the claim
         before_balance = self.get_balance(balance_xpath, False)
 
+        # Get the wait timer if present
+        self.increase_step()
+        remaining_wait_time = self.get_wait_time(self.step, "post-claim")
+            
+        if remaining_wait_time > 0:
+            remaining_time = self.apply_random_offset(remaining_wait_time)
+            return max(remaining_time)
+
         # Pre-claim
         pre_claim = "//button[contains(normalize-space(.), 'Tap to claim') and contains(normalize-space(.), 'MANA')]"
         self.brute_click(pre_claim, 12, "click the pre 'Claim' button")
@@ -246,7 +254,7 @@ class SpellClaimer(Claimer):
                 self.output(f"Step {self.step} - Error calculating balance difference: {e}", 1)
         else:
             self.output(f"Step {self.step} - Claim (Charging) did not complete in time.", 2)
-
+        
         # Get the wait timer if present
         self.increase_step()
         remaining_wait_time = self.get_wait_time(self.step, "post-claim")
@@ -367,14 +375,14 @@ class SpellClaimer(Claimer):
                 else:
                     # If the pattern doesn't match, return False
                     self.output(f"Step {self.step} - Wait time pattern not matched in text: '{wait_time_text}'", 3)
-                    return False
+                    return 0
             else:
                 # No text found in the element
                 self.output(f"Step {self.step} - No wait time text found.", 3)
-                return False
+                return 0
         except Exception as e:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
-            return False
+            return 0
 
 def main():
     claimer = SpellClaimer()
@@ -382,6 +390,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
