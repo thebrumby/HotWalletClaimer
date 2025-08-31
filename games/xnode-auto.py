@@ -113,24 +113,41 @@ class XNodeAUClaimer(XNodeClaimer):
                     return None
             return None
 
+        def get_title(row):
+            """Robust read of the upgrade title."""
+            try:
+                t = row.find_element(By.XPATH, ".//h2[contains(@class,'Upgrader_text-title')]")
+                txt = (t.text or "").strip()
+                if not txt:
+                    # JS fallback
+                    txt = (self.driver.execute_script("return arguments[0].textContent;", t) or "").strip()
+                return txt
+            except Exception:
+                return ""
+        
         def get_level_num(row):
-            """Extract integer from 'Level: 21'."""
+            """Extract integer from 'Level: 21' with JS fallback."""
             try:
                 lvl_el = row.find_element(By.XPATH, ".//h3[contains(@class,'Upgrader_text-lvl')]")
                 txt = (lvl_el.text or "").strip()
-                import re
+                if not txt:
+                    txt = (self.driver.execute_script("return arguments[0].textContent;", lvl_el) or "").strip()
                 m = re.search(r"(\d+)", txt)
                 return int(m.group(1)) if m else None
             except Exception:
                 return None
-
-        def get_title(row):
+        
+        def find_row_by_title_exact(title):
+            """Fresh row lookup by exact title match."""
             try:
-                t = row.find_element(By.XPATH, ".//h2[contains(@class,'Upgrader_text-title')]")
-                return (t.text or "").strip()
+                xp = ("//div[contains(@class,'Upgrader')]"
+                      "[.//h2[contains(@class,'Upgrader_text-title') and normalize-space()=$t]]")
+                # Selenium doesn't support $ vars; inline the title safely:
+                xp = xp.replace("$t", f"'{title.replace(\"'\",\"\\'\")}'")
+                return self.driver.find_element(By.XPATH, xp)
             except Exception:
-                return ""
-
+                return None
+                                          
         def row_is_effectively_disabled(row) -> bool:
             """Row or its right control looks disabled/unaffordable."""
             if class_has_token(row, "disable") or aria_disabled(row) or style_blocks_click(row):
@@ -279,4 +296,5 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
