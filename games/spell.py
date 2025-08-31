@@ -358,31 +358,36 @@ class SpellClaimer(Claimer):
         """
         try:
             self.output(f"Step {self.step} - Get the wait time ({before_after})...", 3)
-    
-            # Be a bit flexible with class matching
+
+            # coerce timeout safely
+            try:
+                to = float(timeout)
+            except Exception:
+                to = 10.0  # sensible default
+
             xpath = "//div[contains(@class,'css-lwfv40')]"
-            wait_time_text = self.monitor_element(xpath, timeout, "claim timer")
-    
+            wait_time_text = self.monitor_element(xpath, to, "claim timer")
+
             if not wait_time_text or isinstance(wait_time_text, bool):
-                self.output(f"Step {self.step} - No wait time element/text found; assuming 0m.", 3)
+                self.output("Step {self.step} - No wait time element/text found; assuming 0m.", 3)
                 return 0
-    
+
             raw = str(wait_time_text).strip()
             self.output(f"Step {self.step} - Extracted wait time text: '{raw}'", 3)
-    
+
             # Accept '5h 47m', '5h', '47m', allowing extra spaces/case
             m = re.fullmatch(r'\s*(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?\s*', raw, flags=re.I)
             if not m:
                 self.output(f"Step {self.step} - Wait time pattern not matched in text: '{raw}'. Assuming 0m.", 3)
                 return 0
-    
+
             hours = int(m.group(1) or 0)
             minutes = int(m.group(2) or 0)
             total_minutes = hours * 60 + minutes
-    
+
             self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
             return total_minutes
-    
+
         except Exception as e:
             self.output(f"Step {self.step} - Error while parsing wait time: {e}. Assuming 0m.", 3)
             return 0
