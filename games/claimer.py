@@ -1064,15 +1064,18 @@ class Claimer:
 
     def move_and_click(self, xpath, wait_time, click, action_description, old_step, expectedCondition):
         def timer():
-            return random.randint(1, 3) / 10
+            return random.randint(1, 3) / 10.0
     
         self.output(f"Step {self.step} - Attempting to {action_description}...", 2)
     
-        wait = WebDriverWait(self.driver, wait_time)
         target_element = None
     
         for attempt in range(5):
             try:
+                # Recreate the waiter each loop so the timeout budget is per-attempt
+                wait = WebDriverWait(self.driver, wait_time)
+    
+                # Primary wait strategy
                 if expectedCondition == "visible":
                     target_element = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
                 elif expectedCondition == "present":
@@ -1083,7 +1086,14 @@ class Claimer:
                         self.debug_information(f"{action_description} was found to be invisible", "check")
                     return None
                 elif expectedCondition == "clickable":
-                    target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                    # Try clickable → fallback to visible → fallback to presence
+                    try:
+                        target_element = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                    except TimeoutException:
+                        try:
+                            target_element = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
+                        except TimeoutException:
+                            target_element = wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
                 else:
                     target_element = wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
     
@@ -1093,34 +1103,43 @@ class Claimer:
                         self.debug_information(f"{action_description} not found", "error")
                     return None
     
-                # Scroll into view (and log when it wasn't in view)
+                # Ensure it’s in view; log if we actually had to scroll
                 is_in_viewport = self.driver.execute_script("""
                     var elem = arguments[0], box = elem.getBoundingClientRect();
                     if (!(box.top >= 0 && box.left >= 0 &&
-                        box.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                        box.right <= (window.innerWidth || document.documentElement.clientWidth))) {
-                        elem.scrollIntoView({block: 'center'});
+                          box.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                          box.right  <= (window.innerWidth  || document.documentElement.clientWidth))) {
+                        elem.scrollIntoView({block: 'center', inline: 'center'});
                         return false;
                     }
                     return true;
                 """, target_element)
-    
                 if not is_in_viewport:
                     self.output(f"Step {self.step} - Element was out of bounds but has been scrolled into view.", 3)
                     if self.settings['debugIsOn']:
                         self.debug_information(f"{action_description} was out of bounds and scrolled into view", "info")
     
-                if click or expectedCondition in ["visible", "clickable"]:
+                # Quick staleness guard: re-locate once if needed
+                try:
+                    _ = target_element.tag_name  # touch it
+                except StaleElementReferenceException:
+                    try:
+                        target_element = self.driver.find_element(By.XPATH, xpath)
+                    except Exception:
+                        self.output(f"Step {self.step} - Element went stale and could not be re-located for {action_description}.", 2)
+                        return None
+    
+                # Only clear overlays if we plan to click
+                if click:
                     self.clear_overlays(target_element, self.step)
     
                 if click:
-                    # ⬇️  Use the element we already waited for (keeps your debug trail)
                     result = self._safe_click_webelement(target_element, action_description=action_description)
                     if result is not None:
                         if self.settings['debugIsOn']:
                             self.debug_information(f"Moved & clicked {action_description}", "success")
                         return target_element
-                    # If click failed, loop to retry (with small backoff)
+                    # If click failed, retry with small backoff
                     time.sleep(0.2 + timer())
                 else:
                     if self.settings['debugIsOn']:
@@ -1129,26 +1148,27 @@ class Claimer:
     
             except StaleElementReferenceException:
                 self.output(f"Step {self.step} - Element reference is stale. Retrying ({attempt + 1}/5) for {action_description}.", 2)
+                time.sleep(0.15 + timer())
             except TimeoutException:
                 self.output(f"Step {self.step} - Timeout while attempting to {action_description}.", 3)
                 if self.settings['debugIsOn']:
                     self.debug_information(f"Timeout during {action_description}", "error")
-                break
+                return None
             except Exception as e:
                 if "has no size and location" in str(e):
                     error_message = f"Step {self.step} - Element issue during {action_description}: Element not properly located or sized."
                     self.output(error_message, 1)
                     if self.settings['debugIsOn']:
                         self.debug_information(f"Fatal error during {action_description}: {str(e)}", "error")
-                    return False
+                    return None
                 else:
                     error_message = f"Step {self.step} - Error during {action_description}: {str(e)}"
                     self.output(error_message, 1)
                     if self.settings['debugIsOn']:
                         self.debug_information(f"Fatal error during {action_description}: {str(e)}", "error")
-                    break
+                    return None
     
-        return target_element
+        return target_element  # may be None
     
     def _safe_click_webelement(self, elem, action_description=""):
         try:
@@ -1962,3 +1982,4 @@ class Claimer:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
 
             return False
+
