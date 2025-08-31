@@ -78,7 +78,7 @@ class SpellClaimer(Claimer):
     def full_claim(self):
         # Initialize status_text
         status_text = ""
-        balance_xpath = "//h2[contains(@class, 'chakra-heading css-1ougcld')]"
+        balance_xpath = "//div[contains(@class, 'css-6e4jug')]"
 
         # Launch iframe
         self.step = "100"
@@ -249,3 +249,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
