@@ -52,46 +52,36 @@ class SpellClaimer(Claimer):
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
 
-    def click_spell_checkbox_and_continue(self):
+    def handle_checkbox_and_continue(self):
+        """
+        Try to tick the Spell 'Get Started' checkbox and then press the continue button.
+        If the checkbox is already gone or not found, just log and continue gracefully.
+        """
         try:
             checkbox_xpath = "//span[@aria-hidden='true' and contains(@class,'chakra-checkbox__control')]"
-            btn_xpath = "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']"
+            cont_xpath = "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']"
     
-            # Find the checkbox
-            checkbox = self.driver.find_element(By.XPATH, checkbox_xpath)
+            try:
+                # Try to locate the checkbox (once only)
+                checkbox = self.driver.find_element(By.XPATH, checkbox_xpath)
+                self.driver.execute_script("arguments[0].click();", checkbox)
+                self.output(f"Step {self.step} - Checkbox clicked.", 3)
+                self.increase_step()
+            except NoSuchElementException:
+                self.output(f"Step {self.step} - Checkbox not present, proceeding with flow.", 2)
+                return True  # carry on without failing
     
-            # Scroll into view and synthesize a real click
-            self.driver.execute_script("""
-                const el = arguments[0];
-                el.scrollIntoView({block:'center', inline:'center'});
-                const rect = el.getBoundingClientRect();
-                const x = rect.left + rect.width / 2;
-                const y = rect.top + rect.height / 2;
-                ['pointerdown','mousedown','mouseup','click'].forEach(type => {
-                  el.dispatchEvent(new MouseEvent(type, {bubbles:true, cancelable:true, clientX:x, clientY:y}));
-                });
-            """, checkbox)
-    
-            time.sleep(0.5)
-    
-            # Verify that it toggled
-            if checkbox.get_attribute("data-checked") is not None:
-                self.output(f"Step {self.step} - Checkbox ticked successfully.", 2)
-                # Now click "Get Started"
-                btn = self.driver.find_element(By.XPATH, btn_xpath)
-                self.driver.execute_script("arguments[0].click();", btn)
-                self.output(f"Step {self.step} - Clicked 'Get Started'.", 2)
+            # Now click the "Get Started" button
+            if self.brute_click(cont_xpath, timeout=10, action_description="click 'Get Started'"):
+                self.output(f"Step {self.step} - 'Get Started' clicked successfully.", 3)
+                self.increase_step()
                 return True
             else:
-                self.output(f"Step {self.step} - Checkbox not ticked after click attempt.", 1)
-                if self.settings.get('debugIsOn'):
-                    self.debug_information("Spell checkbox not ticked")
+                self.output(f"Step {self.step} - 'Get Started' not clickable.", 2)
                 return False
     
         except Exception as e:
             self.output(f"Step {self.step} - Error during checkbox + continue sequence: {e}", 1)
-            if self.settings.get('debugIsOn'):
-                self.debug_information(f"Spell checkbox sequence error: {e}")
             return False
 
     def next_steps(self):
@@ -104,7 +94,7 @@ class SpellClaimer(Claimer):
             self.launch_iframe()
             self.increase_step()
 
-            self.click_spell_checkbox_and_continue()
+            self.handle_checkbox_and_continue()
             
             # Get balance
             balance_xpath = "//h2[contains(@class, 'chakra-heading css-1ougcld')]"
@@ -128,12 +118,14 @@ class SpellClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
-        self.click_spell_checkbox_and_continue()
+        self.handle_checkbox_and_continue()
 
         # Capture the balance before the claim
         before_balance = self.get_balance(balance_xpath, False)
 
-        # Brute force the claim to collect all '%' and then spin the wheel:
+        # Brute force the claim to collect all '%' and then spin the wheel:        
+        xpath = "//button[contains(normalize-space(.), 'Tap to claim') and contains(normalize-space(.), 'MANA')]"
+        self.brute_click(xpath, 12, "click the pre 'Claim' button")
         xpath = "//button[.//p[normalize-space()='Tap to claim']]"
         if self.brute_click(xpath, 12, "click the 'Claim' button"):
             self.output(f"Step {self.step} - Claim was available and clicked.", 3)
@@ -295,6 +287,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
