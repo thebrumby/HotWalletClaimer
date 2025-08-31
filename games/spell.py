@@ -136,7 +136,7 @@ class SpellClaimer(Claimer):
             self.launch_iframe()
             self.increase_step()
 
-            self.spell_accept_terms_and_start()
+            self.spell_accept_and_continue()
             
             # Get balance
             balance_xpath = "//h2[contains(@class, 'chakra-heading css-1ougcld')]"
@@ -160,7 +160,7 @@ class SpellClaimer(Claimer):
         self.step = "100"
         self.launch_iframe()
 
-        self.spell_accept_terms_and_start()
+        self.spell_accept_and_continue()
 
         # Capture the balance before the claim
         before_balance = self.get_balance(balance_xpath, False)
@@ -327,6 +327,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
