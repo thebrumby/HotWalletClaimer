@@ -221,10 +221,15 @@ class SpellClaimer(Claimer):
         self.increase_step()
         remaining_wait_time = self.get_wait_time(self.step, "post-claim")
             
+        # Get the wait timer if present
+        self.increase_step()
+        remaining_wait_time = self.get_wait_time(before_after="post-claim")
+        
         if remaining_wait_time > 0:
             remaining_time = self.apply_random_offset(remaining_wait_time)
-            return max(remaining_time)
-
+            # if you want a floor of 60 min, use: return max(remaining_time, 60)
+            return remaining_time
+            
         # Pre-claim
         pre_claim = "//button[contains(normalize-space(.), 'Tap to claim') and contains(normalize-space(.), 'MANA')]"
         self.brute_click(pre_claim, 12, "click the pre 'Claim' button")
@@ -340,48 +345,40 @@ class SpellClaimer(Claimer):
         self.output(f"Step {self.step} - Completed daily reward sequence successfully.", 2)
         return True
 
-    def get_wait_time(self, step_number="108", beforeAfter="pre-claim"):
+    def get_wait_time(self, before_after="pre-claim", timeout=10):
+        """
+        Reads a timer like '5h 47m' from the UI and returns total minutes (int).
+        If the element is missing or text doesn't match, returns 0.
+        """
         try:
-            self.output(f"Step {self.step} - Get the wait time...", 3)
+            self.output(f"Step {self.step} - Get the wait time ({before_after})...", 3)
     
-            # XPath to find the div element with the specific class
-            xpath = "//div[@class='css-lwfv40']"
-            wait_time_text = self.monitor_element(xpath, 10, "claim timer")
+            # Be a bit flexible with class matching
+            xpath = "//div[contains(@class,'css-lwfv40')]"
+            wait_time_text = self.monitor_element(xpath, timeout, "claim timer")
     
-            # Check if wait_time_text is not empty
-            if wait_time_text:
-                wait_time_text = wait_time_text.strip()
-                self.output(f"Step {self.step} - Extracted wait time text: '{wait_time_text}'", 3)
-    
-                # Remove any spaces to standardize the format
-                wait_time_text_clean = wait_time_text.replace(" ", "")
-    
-                # Regular expression to match patterns like '5h30m', '5h', '30m'
-                pattern = r'(?:(\d+)h)?(?:(\d+)m)?'
-                match = re.match(pattern, wait_time_text_clean)
-    
-                if match:
-                    hours = match.group(1)
-                    minutes = match.group(2)
-                    total_minutes = 0
-    
-                    if hours:
-                        total_minutes += int(hours) * 60
-                    if minutes:
-                        total_minutes += int(minutes)
-    
-                    self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
-                    return total_minutes if total_minutes > 0 else False
-                else:
-                    # If the pattern doesn't match, return False
-                    self.output(f"Step {self.step} - Wait time pattern not matched in text: '{wait_time_text}'", 3)
-                    return 0
-            else:
-                # No text found in the element
-                self.output(f"Step {self.step} - No wait time text found.", 3)
+            if not wait_time_text or isinstance(wait_time_text, bool):
+                self.output(f"Step {self.step} - No wait time element/text found; assuming 0m.", 3)
                 return 0
+    
+            raw = str(wait_time_text).strip()
+            self.output(f"Step {self.step} - Extracted wait time text: '{raw}'", 3)
+    
+            # Accept '5h 47m', '5h', '47m', allowing extra spaces/case
+            m = re.fullmatch(r'\s*(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?\s*', raw, flags=re.I)
+            if not m:
+                self.output(f"Step {self.step} - Wait time pattern not matched in text: '{raw}'. Assuming 0m.", 3)
+                return 0
+    
+            hours = int(m.group(1) or 0)
+            minutes = int(m.group(2) or 0)
+            total_minutes = hours * 60 + minutes
+    
+            self.output(f"Step {self.step} - Total wait time in minutes: {total_minutes}", 3)
+            return total_minutes
+    
         except Exception as e:
-            self.output(f"Step {self.step} - An error occurred: {e}", 3)
+            self.output(f"Step {self.step} - Error while parsing wait time: {e}. Assuming 0m.", 3)
             return 0
 
 def main():
@@ -390,6 +387,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
