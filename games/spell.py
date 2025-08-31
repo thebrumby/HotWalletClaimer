@@ -46,76 +46,64 @@ class SpellClaimer(Claimer):
 
     def spell_accept_and_continue(self):
         """
-        Tick the consent checkbox once, verify it latched (data-checked=""),
-        then click the 'Get Started' button. Returns True on success.
+        Tick the Spell Wallet consent checkbox (once) and click 'Get Started'.
+        Returns True on success. If allow_force=True, will attempt a last-resort
+        JS enable of the button (not recommended).
         """
-        # 1) Try a few robust locators for the visual control
-        checkbox_xpaths = [
-            # exact + generic
-            "//span[contains(@class,'chakra-checkbox__control')]",
-            # via label container if present
-            "//label[contains(@class,'chakra-checkbox')]//span[contains(@class,'chakra-checkbox__control')]",
-            # last resort: any span with the right class inside the modal
-            "(.//div[@role='dialog'] | .//div[@id='root'])//span[contains(@class,'chakra-checkbox__control')]"
-        ]
+        checkbox_xpath = "//span[@aria-hidden='true' and contains(@class,'chakra-checkbox__control')]"
+        btn_xpath_enabled = ("//button[contains(@class,'chakra-button') and "
+                             "normalize-space()='Get Started' and not(@disabled) and not(@aria-disabled='true')]")
+        btn_xpath_any = "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']"
     
-        box = None
-        for xp in checkbox_xpaths:
-            els = self.driver.find_elements(By.XPATH, xp)
-            if els:
-                # pick a visible one
-                for el in els:
-                    try:
-                        if el.is_displayed():
-                            box = el
-                            checkbox_xpath = xp  # remember which worked
-                            break
-                    except Exception:
-                        continue
-            if box:
-                break
+        def dbg(msg, level="error"):
+            if self.settings.get('debugIsOn') and debug_on_fail:
+                # Make the message short but specific for the filename
+                self.debug_information(f"Spell | {msg}", error_type=level)
     
-        if not box:
-            self.output(f"Step {self.step} - Spell checkbox not found/visible; skipping.", 2)
-            return False
-    
-        # 2) Single click (no brute), scroll into view first
-        try:
-            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", box)
-        except Exception:
-            pass
-    
-        if not self.move_and_click(checkbox_xpath, 8, True,
+        # 1) Click the checkbox once
+        if not self.move_and_click(checkbox_xpath, 10, True,
                                    "tick Spell consent checkbox", self.step, "clickable"):
-            self.output(f"Step {self.step} - Could not click Spell checkbox.", 2)
+            self.output(f"Step {self.step} - Checkbox not clickable.", 2)
+            dbg("Checkbox not clickable", "error")
             return False
     
-        # 3) Verify the tick latched: Chakra sets data-checked="" on the control span
+        # 2) Wait for latch OR for the button to enable
         try:
-            WebDriverWait(self.driver, 5).until(
-                lambda d: (box.get_attribute("data-checked") is not None) or
-                          d.find_element(By.XPATH, f"{checkbox_xpath}[@data-checked]")
+            WebDriverWait(self.driver, 6).until(
+                lambda d: (
+                    d.find_element(By.XPATH, checkbox_xpath).get_attribute("data-checked") is not None
+                ) or (
+                    len(d.find_elements(By.XPATH, btn_xpath_enabled)) > 0
+                )
             )
-            self.output(f"Step {self.step} - Checkbox is checked.", 3)
+            self.output(f"Step {self.step} - Checkbox latched / button enabled.", 3)
         except Exception:
-            self.output(f"Step {self.step} - Checkbox did not latch (no data-checked); aborting continue.", 2)
-            return False
+            self.output(f"Step {self.step} - Checkbox didn’t latch and button not enabled (yet).", 2)
+            dbg("Checkbox didn’t latch; button still disabled", "error")
     
         self.increase_step()
     
-        # 4) Click the green 'Get Started' button (enabled when box is checked)
-        btn_xpaths = [
-            "//button[contains(@class,'chakra-button') and normalize-space()='Get Started' and not(@disabled) and not(@aria-disabled='true')]",
-            # fallback without disabled guards
-            "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']",
-        ]
+        # 3) Click the enabled button
+        if self.move_and_click(btn_xpath_enabled, 8, True, "click 'Get Started'", self.step, "clickable"):
+            self.output(f"Step {self.step} - 'Get Started' clicked.", 3)
+            return True
     
-        for bx in btn_xpaths:
-            if self.move_and_click(bx, 10, True, "click 'Get Started'", self.step, "clickable"):
-                self.output(f"Step {self.step} - 'Get Started' clicked.", 3)
-                return True
+        # 4) Optional: force-enable (last resort)
+        if allow_force:
+            try:
+                btn = self.driver.find_element(By.XPATH, btn_xpath_any)
+                self.driver.execute_script("""
+                    arguments[0].removeAttribute('disabled');
+                    arguments[0].setAttribute('aria-disabled','false');
+                """, btn)
+                if self.move_and_click(btn_xpath_any, 5, True, "force-click 'Get Started'", self.step, "clickable"):
+                    self.output(f"Step {self.step} - Forced 'Get Started' click.", 2)
+                    return True
+            except Exception as e:
+                dbg(f"Force-enable failed: {e}", "error")
     
         self.output(f"Step {self.step} - 'Get Started' not clickable.", 2)
+        dbg("'Get Started' not clickable after checkbox", "error")
         return False
 
     def next_steps(self):
@@ -359,6 +347,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
