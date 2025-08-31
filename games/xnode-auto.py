@@ -205,36 +205,45 @@ class XNodeAUClaimer(XNodeClaimer):
                 try:
                     if row_is_effectively_disabled(row):
                         continue
-
+            
                     lvl_before = get_level_num(row)
+                    title = get_title(row)
                     ctrl = find_one(row, targets)
                     if not ctrl:
                         continue
-
+            
                     if not click_ctrl(ctrl, why="upgrade click (1)"):
                         continue
-
+            
                     acted = True
                     time.sleep(0.3)
-
-                    # Re-evaluate the same row handle (it might be stale but still ok)
+            
+                    # Re-evaluate the row
                     lvl_after = get_level_num(row)
                     became_disabled = row_is_effectively_disabled(row)
-
-                    # If no effect, try one more time
+            
+                    success = False
+            
                     if (lvl_after is None or lvl_before is None or lvl_after == lvl_before) and not became_disabled:
+                        # Try a second click
                         ctrl2 = find_one(row, targets)
                         if ctrl2 and click_ctrl(ctrl2, why="upgrade click (2)"):
                             time.sleep(0.3)
                             lvl_after2 = get_level_num(row)
                             became_disabled = row_is_effectively_disabled(row)
                             if (lvl_after2 is not None and lvl_before is not None and lvl_after2 > lvl_before) or became_disabled:
-                                effective_clicks += 1
-                        # else: no control second time → skip
+                                success = True
                     else:
-                        # We saw an effect after first click
+                        # First click had effect
+                        success = True
+            
+                    if success:
                         effective_clicks += 1
-
+                        self.output(
+                            f"Step {self.step} - Upgraded {title} at level {lvl_after or lvl_before}+.",
+                            2
+                        )
+            
                 except StaleElementReferenceException:
                     continue
                 except Exception as e:
@@ -255,4 +264,5 @@ def main():
     claimer.run()
 
 if __name__ == "__main__":
+
     main()
