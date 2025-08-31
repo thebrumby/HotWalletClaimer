@@ -54,55 +54,42 @@ class SpellClaimer(Claimer):
 
     def spell_accept_terms_and_start(self) -> bool:
         """
-        SPELL onboarding:
-          1) If the checkbox control isn't visible/scrollable -> return False.
-          2) Click the checkbox once (brute_click), then wait until it has data-checked.
+        SPELL onboarding flow:
+          1) Locate and click the checkbox once.
+          2) Verify it's checked (data-checked present).
           3) Click the 'Get Started' button.
-        Returns True on success, False otherwise.
         """
         try:
-            # --- 1) Probe checkbox presence (do not click yet) ---
             chk_xpath = "//span[contains(@class,'chakra-checkbox__control')]"
-            present = self.move_and_click(
-                chk_xpath, 12, False,
-                "probe SPELL checkbox presence",
+    
+            # Step 1: Try to click checkbox once
+            clicked = self.move_and_click(
+                chk_xpath, 10, True,
+                "click the SPELL checkbox",
                 self.step, "clickable"
             )
             self.increase_step()
     
-            if not present:
-                self.output(f"Step {self.step} - SPELL checkbox not visible; skipping.", 3)
+            if not clicked:
+                self.output(f"Step {self.step} - Checkbox not clickable; skipping.", 2)
                 return False
     
-            # --- 2) Click the checkbox once, then verify data-checked appears ---
-            if not self.brute_click(
-                chk_xpath, timeout=8,
-                action_description="toggle SPELL checkbox"
-            ):
-                self.output(f"Step {self.step} - Could not click SPELL checkbox.", 2)
-                return False
-    
-            self.increase_step()
-    
-            # Wait until the toggled element has data-checked=""
+            # Step 2: Verify checked state (data-checked now present)
             try:
-                WebDriverWait(self.driver, 8).until(
+                WebDriverWait(self.driver, 5).until(
                     lambda d: d.find_element(By.XPATH, chk_xpath).get_attribute("data-checked") is not None
                 )
-                self.output(f"Step {self.step} - Checkbox is now checked (data-checked present).", 3)
+                self.output(f"Step {self.step} - Checkbox successfully ticked.", 3)
             except TimeoutException:
-                self.output(f"Step {self.step} - Checkbox did not set data-checked; not proceeding.", 2)
+                self.output(f"Step {self.step} - Checkbox did not become ticked; aborting.", 2)
                 return False
     
-            # --- 3) Click the 'Get Started' button ---
-            btn_xpath = "//button[contains(@class,'chakra-button') and normalize-space(.)='Get Started' and not(@disabled)]"
-            ok = self.brute_click(
-                btn_xpath, timeout=10,
-                action_description="click SPELL 'Get Started'"
-            )
+            # Step 3: Click 'Get Started'
+            btn_xpath = "//button[contains(@class,'chakra-button') and normalize-space(.)='Get Started']"
+            started = self.brute_click(btn_xpath, timeout=8, action_description="click SPELL 'Get Started'")
             self.increase_step()
     
-            if ok:
+            if started:
                 self.output(f"Step {self.step} - 'Get Started' clicked.", 2)
                 return True
             else:
@@ -314,5 +301,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
