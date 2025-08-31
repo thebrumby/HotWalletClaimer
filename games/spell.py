@@ -229,21 +229,13 @@ class SpellClaimer(Claimer):
         
             # Post-claim flow
             try:
-                spin_xpath = "//p[contains(normalize-space(.), 'Spin the Wheel')]"
-                self.move_and_click(spin_xpath, 10, True, "spin the wheel", self.step, "clickable")
+                spin_xpath = "//p[contains(normalize-space(.), 'Home')]"
+                self.move_and_click(spin_xpath, 10, True, "move back to the home tab", self.step, "clickable")
             except Exception as e:
-                self.output(f"Step {self.step} - Spin the wheel not available: {type(e).__name__}: {e}", 2)
+                self.output(f"Step {self.step} - Unable to move to the home tab.", 2)
             finally:
                 self.increase_step()
-        
-            try:
-                gotit_xpath = "//*[contains(normalize-space(text()), 'GOT IT')]"
-                self.move_and_click(gotit_xpath, 10, True, "check for 'Got it' message (may not be present)", self.step, "clickable")
-            except Exception as e:
-                self.output(f"Step {self.step} - 'GOT IT' not shown (ok): {type(e).__name__}: {e}", 3)
-            finally:
-                self.increase_step()
-        
+            
             # Balance delta as you already do…
             after_balance = self.get_balance(balance_xpath, True)
             try:
@@ -390,6 +382,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
