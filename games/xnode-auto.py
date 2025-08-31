@@ -206,8 +206,10 @@ class XNodeAUClaimer(XNodeClaimer):
                     if row_is_effectively_disabled(row):
                         continue
             
-                    lvl_before = get_level_num(row)
-                    title = get_title(row)
+                    # Capture BEFORE values (stable for logging)
+                    title_before = get_title(row)
+                    lvl_before   = get_level_num(row)
+            
                     ctrl = find_one(row, targets)
                     if not ctrl:
                         continue
@@ -218,31 +220,42 @@ class XNodeAUClaimer(XNodeClaimer):
                     acted = True
                     time.sleep(0.3)
             
-                    # Re-evaluate the row
-                    lvl_after = get_level_num(row)
-                    became_disabled = row_is_effectively_disabled(row)
+                    # Assess effect; prefer fresh row lookup by title to avoid staleness
+                    row_fresh = find_row_by_title_exact(title_before) or row
+                    lvl_after = get_level_num(row_fresh)
+                    became_disabled = row_is_effectively_disabled(row_fresh)
             
                     success = False
-            
                     if (lvl_after is None or lvl_before is None or lvl_after == lvl_before) and not became_disabled:
-                        # Try a second click
-                        ctrl2 = find_one(row, targets)
+                        # Try one more click
+                        ctrl2 = find_one(row_fresh, targets) or find_one(row, targets)
                         if ctrl2 and click_ctrl(ctrl2, why="upgrade click (2)"):
                             time.sleep(0.3)
-                            lvl_after2 = get_level_num(row)
-                            became_disabled = row_is_effectively_disabled(row)
-                            if (lvl_after2 is not None and lvl_before is not None and lvl_after2 > lvl_before) or became_disabled:
-                                success = True
+                            row_fresh2 = find_row_by_title_exact(title_before) or row_fresh
+                            lvl_after2 = get_level_num(row_fresh2)
+                            became_disabled = row_is_effectively_disabled(row_fresh2)
+                            success = ((lvl_after2 is not None and lvl_before is not None and lvl_after2 > lvl_before)
+                                       or became_disabled)
+                            if success:
+                                lvl_after = lvl_after2
                     else:
-                        # First click had effect
                         success = True
             
                     if success:
                         effective_clicks += 1
-                        self.output(
-                            f"Step {self.step} - Upgraded {title} at level {lvl_after or lvl_before}+.",
-                            2
-                        )
+                        # Compute a friendly level to print
+                        if lvl_after is None and isinstance(lvl_before, int):
+                            # Best guess: +1 if it upgraded but we couldn't read the new level
+                            lvl_print = f"{lvl_before + 1}"
+                        elif isinstance(lvl_after, int):
+                            lvl_print = f"{lvl_after}"
+                        elif isinstance(lvl_before, int):
+                            lvl_print = f"{lvl_before}"
+                        else:
+                            lvl_print = "?"
+            
+                        title_print = title_before or get_title(row_fresh) or "Unknown upgrade"
+                        self.output(f"Step {self.step} - Upgraded {title_print} at level {lvl_print}", 2)
             
                 except StaleElementReferenceException:
                     continue
@@ -266,3 +279,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+
