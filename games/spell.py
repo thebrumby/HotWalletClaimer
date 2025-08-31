@@ -337,7 +337,7 @@ class SpellClaimer(Claimer):
             self.output(f"Step {self.step} - Get the wait time...", 3)
     
             # XPath to find the div element with the specific class
-            xpath = "//div[@class='css-t9vhi1']"
+            xpath = "//div[@class='css-lwfv40']"
             wait_time_text = self.monitor_element(xpath, 10, "claim timer")
     
             # Check if wait_time_text is not empty
@@ -382,6 +382,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
