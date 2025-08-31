@@ -123,47 +123,60 @@ class SpellClaimer(Claimer):
         return False
 
     def spell_accept_and_continue(self):
-        try:
-            checkbox_xpath = "//span[@aria-hidden='true' and contains(@class,'chakra-checkbox__control')]"
-            btn_xpath = "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']"
+        checkbox_xpath = "//span[@aria-hidden='true' and contains(@class,'chakra-checkbox__control')]"
+        btn_xpath      = "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']"
     
-            # Find the checkbox
-            checkbox = self.driver.find_element(By.XPATH, checkbox_xpath)
+        try:
+            # Look for checkbox without throwing (0/1 elements)
+            boxes = self.driver.find_elements(By.XPATH, checkbox_xpath)
+            if not boxes:
+                # Checkbox already gone → proceed
+                self.output(f"Step {self.step} - Checkbox not present; assuming already accepted. Proceeding.", 2)
+                try:
+                    btns = self.driver.find_elements(By.XPATH, btn_xpath)
+                    if btns:
+                        self.driver.execute_script("arguments[0].click();", btns[0])
+                        self.output(f"Step {self.step} - Clicked 'Get Started'.", 2)
+                except Exception:
+                    pass
+                return True
+    
+            checkbox = boxes[0]
     
             # Scroll into view and synthesize a real click
             self.driver.execute_script("""
                 const el = arguments[0];
                 el.scrollIntoView({block:'center', inline:'center'});
-                const rect = el.getBoundingClientRect();
-                const x = rect.left + rect.width / 2;
-                const y = rect.top + rect.height / 2;
-                ['pointerdown','mousedown','mouseup','click'].forEach(type => {
-                  el.dispatchEvent(new MouseEvent(type, {bubbles:true, cancelable:true, clientX:x, clientY:y}));
-                });
+                const r = el.getBoundingClientRect();
+                const x = r.left + r.width/2, y = r.top + r.height/2;
+                for (const t of ['pointerdown','mousedown','mouseup','click']) {
+                  el.dispatchEvent(new MouseEvent(t, {bubbles:true, cancelable:true, clientX:x, clientY:y}));
+                }
             """, checkbox)
-    
             time.sleep(0.5)
     
-            # Verify that it toggled
+            # Verify toggle (or just continue if button becomes enabled)
             if checkbox.get_attribute("data-checked") is not None:
                 self.output(f"Step {self.step} - Checkbox ticked successfully.", 2)
-    
-                # Now click "Get Started"
-                btn = self.driver.find_element(By.XPATH, btn_xpath)
-                self.driver.execute_script("arguments[0].click();", btn)
-                self.output(f"Step {self.step} - Clicked 'Get Started'.", 2)
-                return True
             else:
-                self.output(f"Step {self.step} - Checkbox not ticked after click attempt.", 1)
-                if self.settings.get('debugIsOn'):
-                    self.debug_information("Spell checkbox not ticked")
-                return False
+                self.output(f"Step {self.step} - Checkbox did not report data-checked; proceeding anyway.", 2)
+    
+            # Try to click "Get Started" if present
+            btns = self.driver.find_elements(By.XPATH, btn_xpath)
+            if btns:
+                self.driver.execute_script("arguments[0].click();", btns[0])
+                self.output(f"Step {self.step} - Clicked 'Get Started'.", 2)
+            else:
+                self.output(f"Step {self.step} - 'Get Started' button not present (ok).", 3)
+    
+            return True
     
         except Exception as e:
-            self.output(f"Step {self.step} - Error during checkbox + continue sequence: {e}", 1)
+            # Graceful fallback: don't fail the flow if this UI already passed
+            self.output(f"Step {self.step} - Checkbox/continue sequence: {type(e).__name__}: {e}. Proceeding.", 2)
             if self.settings.get('debugIsOn'):
-                self.debug_information(f"Spell checkbox sequence error: {e}")
-            return False
+                self.debug_information(f"Spell checkbox sequence (non-fatal): {e}")
+            return True
 
     def next_steps(self):
         if self.step:
@@ -377,6 +390,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
