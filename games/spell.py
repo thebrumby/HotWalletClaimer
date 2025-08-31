@@ -45,7 +45,7 @@ class SpellClaimer(Claimer):
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Spell Wallet']]"
 
     def spell_accept_and_continue(self):
-       try:
+        try:
             checkbox_xpath = "//span[@aria-hidden='true' and contains(@class,'chakra-checkbox__control')]"
             btn_xpath = "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']"
     
@@ -69,6 +69,7 @@ class SpellClaimer(Claimer):
             # Verify that it toggled
             if checkbox.get_attribute("data-checked") is not None:
                 self.output(f"Step {self.step} - Checkbox ticked successfully.", 2)
+    
                 # Now click "Get Started"
                 btn = self.driver.find_element(By.XPATH, btn_xpath)
                 self.driver.execute_script("arguments[0].click();", btn)
@@ -327,6 +328,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
