@@ -157,6 +157,7 @@ class SpellClaimer(Claimer):
             self.output(f"Step {self.step} - Claim button not present.", 3)
 
         # Get the wait timer if present
+        self.increase_step()
         remaining_wait_time = self.get_wait_time(self.step, "post-claim")
             
         # Do the Daily Puzzle from GitHub
@@ -290,6 +291,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
