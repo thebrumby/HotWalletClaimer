@@ -45,66 +45,46 @@ class SpellClaimer(Claimer):
         self.start_app_menu_item = "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='Spell Wallet']]"
 
     def spell_accept_and_continue(self):
-        """
-        Tick the Spell Wallet consent checkbox (once) and click 'Get Started'.
-        Returns True on success. If allow_force=True, will attempt a last-resort
-        JS enable of the button (not recommended).
-        """
-        checkbox_xpath = "//span[@aria-hidden='true' and contains(@class,'chakra-checkbox__control')]"
-        btn_xpath_enabled = ("//button[contains(@class,'chakra-button') and "
-                             "normalize-space()='Get Started' and not(@disabled) and not(@aria-disabled='true')]")
-        btn_xpath_any = "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']"
+       try:
+            checkbox_xpath = "//span[@aria-hidden='true' and contains(@class,'chakra-checkbox__control')]"
+            btn_xpath = "//button[contains(@class,'chakra-button') and normalize-space()='Get Started']"
     
-        def dbg(msg, level="error"):
-            if self.settings.get('debugIsOn') and debug_on_fail:
-                # Make the message short but specific for the filename
-                self.debug_information(f"Spell | {msg}", error_type=level)
+            # Find the checkbox
+            checkbox = self.driver.find_element(By.XPATH, checkbox_xpath)
     
-        # 1) Click the checkbox once
-        if not self.move_and_click(checkbox_xpath, 10, True,
-                                   "tick Spell consent checkbox", self.step, "clickable"):
-            self.output(f"Step {self.step} - Checkbox not clickable.", 2)
-            dbg("Checkbox not clickable", "error")
+            # Scroll into view and synthesize a real click
+            self.driver.execute_script("""
+                const el = arguments[0];
+                el.scrollIntoView({block:'center', inline:'center'});
+                const rect = el.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                ['pointerdown','mousedown','mouseup','click'].forEach(type => {
+                  el.dispatchEvent(new MouseEvent(type, {bubbles:true, cancelable:true, clientX:x, clientY:y}));
+                });
+            """, checkbox)
+    
+            time.sleep(0.5)
+    
+            # Verify that it toggled
+            if checkbox.get_attribute("data-checked") is not None:
+                self.output(f"Step {self.step} - Checkbox ticked successfully.", 2)
+                # Now click "Get Started"
+                btn = self.driver.find_element(By.XPATH, btn_xpath)
+                self.driver.execute_script("arguments[0].click();", btn)
+                self.output(f"Step {self.step} - Clicked 'Get Started'.", 2)
+                return True
+            else:
+                self.output(f"Step {self.step} - Checkbox not ticked after click attempt.", 1)
+                if self.settings.get('debugIsOn'):
+                    self.debug_information("Spell checkbox not ticked")
+                return False
+    
+        except Exception as e:
+            self.output(f"Step {self.step} - Error during checkbox + continue sequence: {e}", 1)
+            if self.settings.get('debugIsOn'):
+                self.debug_information(f"Spell checkbox sequence error: {e}")
             return False
-    
-        # 2) Wait for latch OR for the button to enable
-        try:
-            WebDriverWait(self.driver, 6).until(
-                lambda d: (
-                    d.find_element(By.XPATH, checkbox_xpath).get_attribute("data-checked") is not None
-                ) or (
-                    len(d.find_elements(By.XPATH, btn_xpath_enabled)) > 0
-                )
-            )
-            self.output(f"Step {self.step} - Checkbox latched / button enabled.", 3)
-        except Exception:
-            self.output(f"Step {self.step} - Checkbox didn’t latch and button not enabled (yet).", 2)
-            dbg("Checkbox didn’t latch; button still disabled", "error")
-    
-        self.increase_step()
-    
-        # 3) Click the enabled button
-        if self.move_and_click(btn_xpath_enabled, 8, True, "click 'Get Started'", self.step, "clickable"):
-            self.output(f"Step {self.step} - 'Get Started' clicked.", 3)
-            return True
-    
-        # 4) Optional: force-enable (last resort)
-        if allow_force:
-            try:
-                btn = self.driver.find_element(By.XPATH, btn_xpath_any)
-                self.driver.execute_script("""
-                    arguments[0].removeAttribute('disabled');
-                    arguments[0].setAttribute('aria-disabled','false');
-                """, btn)
-                if self.move_and_click(btn_xpath_any, 5, True, "force-click 'Get Started'", self.step, "clickable"):
-                    self.output(f"Step {self.step} - Forced 'Get Started' click.", 2)
-                    return True
-            except Exception as e:
-                dbg(f"Force-enable failed: {e}", "error")
-    
-        self.output(f"Step {self.step} - 'Get Started' not clickable.", 2)
-        dbg("'Get Started' not clickable after checkbox", "error")
-        return False
 
     def next_steps(self):
         if self.step:
@@ -347,6 +327,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
