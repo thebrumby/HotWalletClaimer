@@ -123,11 +123,13 @@ class SpellClaimer(Claimer):
         # Capture the balance before the claim
         before_balance = self.get_balance(balance_xpath, False)
 
-        # Brute force the claim to collect all '%' and then spin the wheel:        
+        # Click the pre-claim button:        
         xpath = "//button[contains(normalize-space(.), 'Tap to claim') and contains(normalize-space(.), 'MANA')]"
-        self.increase_step()
         self.brute_click(xpath, 12, "click the pre 'Claim' button")
-        xpath = "//button[.//p[normalize-space()='Tap to claim']]"
+        self.increase_step()
+        
+        # Brute force the claim to collect all '%' and then spin the wheel:  
+        xpath = "//div[contains(text(), '%')]"
         if self.brute_click(xpath, 12, "click the 'Claim' button"):
             self.output(f"Step {self.step} - Claim was available and clicked.", 3)
             self.increase_step()
@@ -288,6 +290,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
