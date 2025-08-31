@@ -223,12 +223,16 @@ class SpellClaimer(Claimer):
             
         # Get the wait timer if present
         self.increase_step()
-        remaining_wait_time = self.get_wait_time(before_after="post-claim")
-        
-        if remaining_wait_time > 0:
-            remaining_time = self.apply_random_offset(remaining_wait_time)
-            # if you want a floor of 60 min, use: return max(remaining_time, 60)
-            return remaining_time
+        pre_wait_min = self.get_wait_time(before_after="pre-claim")
+
+        if pre_wait_min > 0:
+            # Respect the timer and bail early
+            wait_with_jitter = self.apply_random_offset(pre_wait_min)
+            self.output(
+                f"STATUS: Original wait time {pre_wait_min} minutes, we'll sleep for "
+                f"{wait_with_jitter} minutes after random offset.", 1
+            )
+            return max(wait_with_jitter, 60)
             
         # Pre-claim
         pre_claim = "//button[contains(normalize-space(.), 'Tap to claim') and contains(normalize-space(.), 'MANA')]"
@@ -262,28 +266,30 @@ class SpellClaimer(Claimer):
         
         # Get the wait timer if present
         self.increase_step()
-        remaining_wait_time = self.get_wait_time(self.step, "post-claim")
-            
-        # Do the Daily Puzzle from GitHub
+        post_wait_min = self.get_wait_time(before_after="post-claim")  # correct call
+
+        # Daily puzzle (optional)
         if self.daily_reward():
             status_text += "Daily Puzzle submitted"
 
-        if not remaining_wait_time:
-            self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
-            self.output(f"Step {self.step} - This means either the claim failed, or there is lag in the game.", 1)
-            self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
+        # If timer missing or zero, assume lag / retry later
+        if not post_wait_min:
+            self.output("STATUS: The wait timer is still showing: Filled.", 1)
+            self.output("Step {self.step} - This means either the claim failed, or there is lag in the game.", 1)
+            self.output("Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not try again.", 2)
             return 60
 
-        remaining_time = self.apply_random_offset(remaining_wait_time)
-        
-        # Output final status
+        wait_with_jitter = self.apply_random_offset(post_wait_min)
         if status_text == "":
             self.output("STATUS: No claim or Daily Puzzle this time", 3)
         else:
             self.output(f"STATUS: {status_text}", 3)
 
-        self.output(f"STATUS: Original wait time {remaining_wait_time} minutes, we'll sleep for {remaining_time} minutes after random offset.", 1)
-        return max(remaining_time,60)
+        self.output(
+            f"STATUS: Original wait time {post_wait_min} minutes, we'll sleep for "
+            f"{wait_with_jitter} minutes after random offset.", 1
+        )
+        return max(wait_with_jitter, 60)
 
     def daily_reward(self):
         return
