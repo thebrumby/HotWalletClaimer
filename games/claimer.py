@@ -1528,24 +1528,84 @@ class Claimer:
         except Exception:
             pass
     
-        # 2) MouseEvent (bubbling) – closer to a real user click
+        # 2) MouseEvent (bubbling + composed) – closer to real user click
         try:
             self.driver.execute_script("""
-              const e = new MouseEvent('click', {bubbles:true, cancelable:true, view:window});
+              const e = new MouseEvent('click', {
+                bubbles: true, cancelable: true, composed: true, view: window
+              });
               arguments[0].dispatchEvent(e);
             """, elem)
             return True
         except Exception:
             pass
     
-        # 3) Click center point (some libs listen for coords)
+        # 3) Pointer + mouse sequence on element (with composed)
         try:
             self.driver.execute_script("""
-              const r = arguments[0].getBoundingClientRect();
-              const x = r.left + r.width/2;
-              const y = r.top + r.height/2;
-              const el = document.elementFromPoint(x, y);
-              if (el) el.click();
+              const el = arguments[0];
+              const hasPE = typeof window.PointerEvent === 'function';
+              function fireMouse(type, tgt){
+                tgt.dispatchEvent(new MouseEvent(type, {
+                  bubbles: true, cancelable: true, composed: true, view: window
+                }));
+              }
+              if (hasPE) el.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true, cancelable:true, composed:true}));
+              fireMouse('mousedown', el);
+              if (hasPE) el.dispatchEvent(new PointerEvent('pointerup',   {bubbles:true, cancelable:true, composed:true}));
+              fireMouse('mouseup', el);
+              fireMouse('click', el);
+            """, elem)
+            return True
+        except Exception:
+            pass
+    
+        # 4) Click center point using elementFromPoint (some libs require coords)
+        try:
+            self.driver.execute_script("""
+              const el = arguments[0];
+              const r  = el.getBoundingClientRect();
+              const x  = r.left + r.width/2;
+              const y  = r.top  + r.height/2;
+              const t  = document.elementFromPoint(x,y);
+              if (t) {
+                const e = new MouseEvent('click', {
+                  bubbles:true, cancelable:true, composed:true, view:window, clientX:x, clientY:y
+                });
+                t.dispatchEvent(e);
+              } else if (el && el.click) {
+                el.click();
+              }
+            """, elem)
+            return True
+        except Exception:
+            pass
+    
+        # 5) If inner child is targeted, try the nearest button ancestor directly
+        try:
+            self.driver.execute_script("""
+              const el = arguments[0];
+              const b = el.closest && el.closest('button');
+              if (b) b.click();
+            """, elem)
+            return True
+        except Exception:
+            pass
+    
+        # 6) Focus + ENTER as a final nudge (some frameworks bind key handlers)
+        try:
+            self.driver.execute_script("""
+              const el = arguments[0];
+              const b = el.closest && el.closest('button');
+              const tgt = b || el;
+              if (tgt && typeof tgt.focus === 'function') {
+                tgt.setAttribute('tabindex','0');
+                tgt.focus({preventScroll:true});
+                const e = new KeyboardEvent('keydown', {key:'Enter', code:'Enter', bubbles:true});
+                tgt.dispatchEvent(e);
+                const e2 = new KeyboardEvent('keyup', {key:'Enter', code:'Enter', bubbles:true});
+                tgt.dispatchEvent(e2);
+              }
             """, elem)
             return True
         except Exception:
@@ -2075,6 +2135,7 @@ class Claimer:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
 
             return False
+
 
 
 
