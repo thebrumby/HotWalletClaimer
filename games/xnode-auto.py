@@ -140,10 +140,10 @@ class XNodeAUClaimer(XNodeClaimer):
         def find_row_by_title_exact(title):
             """Fresh row lookup by exact title match."""
             try:
+                # Safely escape single quotes in the title for XPath literal
+                safe_title = title.replace("'", "\\'")
                 xp = ("//div[contains(@class,'Upgrader')]"
-                      "[.//h2[contains(@class,'Upgrader_text-title') and normalize-space()=$t]]")
-                # Selenium doesn't support $ vars; inline the title safely:
-                xp = xp.replace("$t", f"'{title.replace(\"'\",\"\\'\")}'")
+                      "[.//h2[contains(@class,'Upgrader_text-title') and normalize-space()='%s']]" % safe_title)
                 return self.driver.find_element(By.XPATH, xp)
             except Exception:
                 return None
@@ -296,5 +296,6 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
