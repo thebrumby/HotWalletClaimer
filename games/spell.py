@@ -52,6 +52,67 @@ class SpellClaimer(Claimer):
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
 
+    def spell_accept_terms_and_start(self) -> bool:
+        """
+        SPELL onboarding:
+          1) If the checkbox control isn't visible/scrollable -> return False.
+          2) Click the checkbox once (brute_click), then wait until it has data-checked.
+          3) Click the 'Get Started' button.
+        Returns True on success, False otherwise.
+        """
+        try:
+            # --- 1) Probe checkbox presence (do not click yet) ---
+            chk_xpath = "//span[contains(@class,'chakra-checkbox__control')]"
+            present = self.move_and_click(
+                chk_xpath, 12, False,
+                "probe SPELL checkbox presence",
+                self.step, "clickable"
+            )
+            self.increase_step()
+    
+            if not present:
+                self.output(f"Step {self.step} - SPELL checkbox not visible; skipping.", 3)
+                return False
+    
+            # --- 2) Click the checkbox once, then verify data-checked appears ---
+            if not self.brute_click(
+                chk_xpath, timeout=8,
+                action_description="toggle SPELL checkbox"
+            ):
+                self.output(f"Step {self.step} - Could not click SPELL checkbox.", 2)
+                return False
+    
+            self.increase_step()
+    
+            # Wait until the toggled element has data-checked=""
+            try:
+                WebDriverWait(self.driver, 8).until(
+                    lambda d: d.find_element(By.XPATH, chk_xpath).get_attribute("data-checked") is not None
+                )
+                self.output(f"Step {self.step} - Checkbox is now checked (data-checked present).", 3)
+            except TimeoutException:
+                self.output(f"Step {self.step} - Checkbox did not set data-checked; not proceeding.", 2)
+                return False
+    
+            # --- 3) Click the 'Get Started' button ---
+            btn_xpath = "//button[contains(@class,'chakra-button') and normalize-space(.)='Get Started' and not(@disabled)]"
+            ok = self.brute_click(
+                btn_xpath, timeout=10,
+                action_description="click SPELL 'Get Started'"
+            )
+            self.increase_step()
+    
+            if ok:
+                self.output(f"Step {self.step} - 'Get Started' clicked.", 2)
+                return True
+            else:
+                self.output(f"Step {self.step} - 'Get Started' not clickable.", 2)
+                return False
+    
+        except Exception as e:
+            self.output(f"Step {self.step} - SPELL accept/start error: {e}", 1)
+            return False
+
     def next_steps(self):
         if self.step:
             pass
@@ -61,6 +122,8 @@ class SpellClaimer(Claimer):
         try:
             self.launch_iframe()
             self.increase_step()
+
+            self.spell_accept_terms_and_start()
             
             # Get balance
             balance_xpath = "//h2[contains(@class, 'chakra-heading css-1ougcld')]"
@@ -83,6 +146,8 @@ class SpellClaimer(Claimer):
         # Launch iframe
         self.step = "100"
         self.launch_iframe()
+
+        self.spell_accept_terms_and_start()
 
         # Capture the balance before the claim
         before_balance = self.get_balance(balance_xpath, False)
@@ -249,4 +314,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
