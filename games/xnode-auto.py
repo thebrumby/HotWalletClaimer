@@ -72,9 +72,14 @@ class XNodeAUClaimer(XNodeClaimer):
         return True
         
     def upgrade_all(self, max_passes=2, per_row_wait=4):
-        """Prefer upgrading lowest-ROI rows first; count only effective upgrades.
-           Includes full per-row debug of cost/gain/ROI & skip reasons.
+        """Prefer upgrading by shortest ROI or (optionally) by shortest ETA = time_to_afford + ROI.
+           Adds per-row debug: cost, gain, ROI, time_to_afford (if disabled), ETA.
         """
+    
+        # ---------- Tunables for "quant" planning ----------
+        USE_ETA_PLANNING = True           # set False to keep pure ROI-first behaviour
+        ETA_DECISION_MARGIN_SEC = 0       # require disabled best ETA to beat best affordable ROI by this much to "wait"
+        # ---------------------------------------------------
     
         # --- tiny helpers local to this method ---
     
@@ -183,8 +188,15 @@ class XNodeAUClaimer(XNodeClaimer):
         def _norm(s: str) -> str:
             return (s or "").replace("\xa0", " ").strip()
     
+        # --- 0) Ensure we're inside the game iframe (if applicable) ---
+        try:
+            # Safe to call even if already inside; no-op if your implementation guards.
+            self.launch_iframe()
+        except Exception:
+            pass
+    
         # --- 1) Wait & collect rows (lenient, with fallbacks) ---
-        # Wait for either the container OR at least one Upgrader row to exist
+    
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((
                 By.XPATH,
@@ -192,19 +204,14 @@ class XNodeAUClaimer(XNodeClaimer):
                 " | //div[contains(@class,'Upgrader') and .//h2[contains(@class,'Upgrader_text-title')]]"
             ))
         )
-        
-        # Try to find containers, but don't hard-require visibility.
+    
         all_containers = self.driver.find_elements(By.XPATH, "//div[contains(@class,'UpgradesPage-items')]")
-        
-        # Prefer displayed ones if present, else fall back to any containers, else fall back to the whole document.
         containers = [c for c in all_containers if getattr(c, 'is_displayed', lambda: True)()]
         if not containers:
-            containers = all_containers[:]  # may be non-displayed but present
+            containers = all_containers[:]
         if not containers:
-            # No containers at all? Search the whole document (some builds render rows at root).
-            containers = [self.driver]
-        
-        # (optional) nudge scroll so virtualized lists lay out first rows
+            containers = [self.driver]  # search whole document
+    
         try:
             self.driver.execute_script("window.scrollTo(0, 0);")
         except Exception:
@@ -214,58 +221,88 @@ class XNodeAUClaimer(XNodeClaimer):
                 self.driver.execute_script("if (arguments[0].scrollTop !== undefined) arguments[0].scrollTop = 0;", cont)
             except Exception:
                 pass
-        
-        # Primary row pattern: visible “Upgrader” with a title and a price box
+    
         row_xpath_core = (
             ".//div[contains(@class,'Upgrader') and "
             " .//h2[contains(@class,'Upgrader_text-title')] and "
             " .//div[contains(@class,'Upgrader_right-price_text')] ]"
         )
-        
-        # Fallback row pattern: accept rows missing the price box (some DOMs structure it differently)
         row_xpath_fallback = (
             ".//div[contains(@class,'Upgrader') and "
             " .//h2[contains(@class,'Upgrader_text-title')] ]"
         )
-        
+    
         rows = []
         for cont in containers:
             try:
-                found = cont.find_elements(By.XPATH, row_xpath_core)
-                rows.extend(found)
+                rows.extend(cont.find_elements(By.XPATH, row_xpath_core))
             except Exception:
                 pass
-        
-        # If nothing matched the strict pattern, use the fallback
         if not rows:
             for cont in containers:
                 try:
-                    found = cont.find_elements(By.XPATH, row_xpath_fallback)
-                    rows.extend(found)
+                    rows.extend(cont.find_elements(By.XPATH, row_xpath_fallback))
                 except Exception:
                     pass
-        
+    
         snapshot = rows
-        
-        # Helpful debug so we can see counts instead of just bailing
+    
         self.output(
             f"Step {self.step} - containers(all/displayed): {len(all_containers)}/{sum(1 for c in all_containers if getattr(c,'is_displayed',lambda:True)())} | rows: {len(snapshot)}",
             3
         )
-        
+    
         if not snapshot:
             self.output(f"Step {self.step} - No Upgrader rows found in document (after fallbacks).", 2)
             return 0
     
-        # --- 2) Scan rows → metrics, de-dupe, filter by ROI ---
+        # --- 1a) Get current balance & profit/sec (for time_to_afford) ---
+    
+        def _parse_profit_per_sec():
+            # Prefer cached if you stored it during "Step 114" parsing.
+            try:
+                if getattr(self, "profit_per_sec", None):
+                    return float(self.profit_per_sec)
+            except Exception:
+                pass
+            # Try to read from a known profit element (adjust selectors to your UI):
+            try:
+                el = self.driver.find_element(By.XPATH, "//*[contains(text(),'SEC') or contains(text(),'/SEC')]")
+                raw = _norm(el.text or self.driver.execute_script("return arguments[0].textContent;", el) or "")
+                # e.g. "+1.4M/SEC" -> "1.4M"
+                m = re.search(r'([+-]?\d+(?:\.\d+)?\s*[KMBTP]?)\s*/\s*SEC', raw, re.I)
+                if m:
+                    return self._parse_qty(m.group(1))
+            except Exception:
+                pass
+            return 0.0
+    
+        def _parse_current_balance():
+            # Adjust to your balance element if available; fallback to 0.
+            try:
+                el = self.driver.find_element(By.XPATH, "//*[contains(@class,'balance') or contains(text(),'tflops')]")
+                raw = _norm(el.text or self.driver.execute_script("return arguments[0].textContent;", el) or "")
+                # Try to pick the first big number with magnitude
+                m = re.search(r'([+-]?\d+(?:\.\d+)?\s*[KMBTP]?)\s*(?:tflops|TFLOPS)?', raw, re.I)
+                if m:
+                    return self._parse_qty(m.group(1))
+            except Exception:
+                pass
+            return 0.0
+    
+        profit_per_sec = _parse_profit_per_sec()
+        current_balance = _parse_current_balance()
+    
+        # --- 2) Scan rows → metrics, de-dupe, ROI, time_to_afford, ETA ---
     
         seen = set()
         all_rows_metrics = []
-        actionable = []
+        actionable_now = []     # affordable & within ROI cap
+        disabled_considered = []  # disabled but we compute time_to_afford & ETA
+        import math
     
         for row in snapshot:
             try:
-                # gentle scroll can stabilize textContent and later clicks
                 try:
                     self.driver.execute_script(
                         "arguments[0].scrollIntoView({block:'center', inline:'nearest'});", row
@@ -285,7 +322,6 @@ class XNodeAUClaimer(XNodeClaimer):
                 lvl = get_level_num(row)
                 disabled = row_is_effectively_disabled(row)
     
-                # include current price text in de-dupe key (helps kill clones/templates)
                 try:
                     price_box = row.find_element(By.XPATH, ".//div[contains(@class,'Upgrader_right-price_text')]")
                     price_raw = _norm(price_box.text or self.driver.execute_script(
@@ -295,7 +331,6 @@ class XNodeAUClaimer(XNodeClaimer):
     
                 key = (title, lvl, price_raw)
                 if key in seen:
-                    # compact trace for dupes to keep logs readable
                     all_rows_metrics.append({
                         "title": title, "level": lvl, "disabled": True,
                         "cost": 0.0, "gain": 0.0, "roi_sec": float("inf"),
@@ -323,6 +358,16 @@ class XNodeAUClaimer(XNodeClaimer):
                     parse_ok = False
                     reason = f"parse-failed: {type(e).__name__}"
     
+                # time to afford & ETA
+                if disabled:
+                    # if disabled, we assume not enough balance for cost
+                    deficit = max(cost - current_balance, 0.0)
+                    tta = (deficit / profit_per_sec) if profit_per_sec > 0 else float("inf")
+                else:
+                    # already affordable: zero wait
+                    tta = 0.0
+                eta_sec = (tta + roi_sec) if (parse_ok and math.isfinite(roi_sec)) else float("inf")
+    
                 m = {
                     "title": title,
                     "level": lvl,
@@ -330,19 +375,25 @@ class XNodeAUClaimer(XNodeClaimer):
                     "cost": cost,
                     "gain": gain,
                     "roi_sec": roi_sec,
+                    "time_to_afford": tta,
+                    "eta_sec": eta_sec,
                     "parse_ok": parse_ok,
                     "skip_reason": reason
                 }
     
-                # filter to actionable
+                # filter per original ROI cap for "actionable now"
                 if disabled:
                     m["skip_reason"] = m["skip_reason"] or "disabled"
+                    disabled_considered.append(m)
                 elif not parse_ok:
                     pass
                 elif roi_sec > MAX_ROI_SEC:
                     m["skip_reason"] = f"roi>{MAX_ROI_DAYS}d"
+                    all_rows_metrics.append(m)
                 else:
-                    actionable.append(m)
+                    actionable_now.append(m)
+                    all_rows_metrics.append(m)
+                    continue
     
                 all_rows_metrics.append(m)
     
@@ -354,52 +405,91 @@ class XNodeAUClaimer(XNodeClaimer):
                     "cost": 0.0,
                     "gain": 0.0,
                     "roi_sec": float("inf"),
+                    "time_to_afford": float("inf"),
+                    "eta_sec": float("inf"),
                     "parse_ok": False,
                     "skip_reason": f"loop-failed: {type(e).__name__}"
                 })
                 continue
     
-        # --- 3) Debug print & sort by best ROI ---
+        # --- 3) Debug print & sort ---
     
-        import math
+        def _hrs(x):
+            return (x / 3600.0) if math.isfinite(x) else float("inf")
     
-        actionable.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
+        # Sort affordable by ROI-first (current behaviour)
+        actionable_now.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
     
+        # Sort disabled by ETA-first (soonest benefit)
+        disabled_considered.sort(key=lambda m: (m["eta_sec"], m["cost"], -m["gain"], m["title"] or ""))
+    
+        # Emit metrics (now includes TTA & ETA)
         for m in all_rows_metrics:
-            roi_sec = m.get("roi_sec", float("inf"))
-            hrs_txt = f"{roi_sec/3600.0:.2f}h" if math.isfinite(roi_sec) else "infh"
+            roi = m.get("roi_sec", float("inf"))
+            tta = m.get("time_to_afford", float("inf"))
+            eta = m.get("eta_sec", float("inf"))
             flags = []
             if not m.get("parse_ok", True):
                 flags.append(m.get("skip_reason") or "parse-failed")
             if m.get("disabled"):
                 flags.append("disabled")
-            if math.isfinite(roi_sec) and roi_sec > MAX_ROI_SEC:
+            if math.isfinite(roi) and roi > MAX_ROI_SEC:
                 flags.append(f"roi>{MAX_ROI_DAYS}d")
             sr = m.get("skip_reason")
             if sr and sr not in flags:
                 flags.append(sr)
             flag_txt = f" [{', '.join(flags)}]" if flags else ""
-            title = m.get("title") or "Unknown"
-            level = m.get("level")
-            level_txt = "None" if level is None else str(level)
-            cost = float(m.get("cost") or 0.0)
-            gain = float(m.get("gain") or 0.0)
+    
             self.output(
-                f"Step {self.step} - ROI check: {title} (Lvl {level_txt}) → "
-                f"Δ/sec={gain:.3g}, Cost={cost:.3g}, ROI≈{hrs_txt}{flag_txt}",
+                f"Step {self.step} - ROI check: {m.get('title') or 'Unknown'} (Lvl {m.get('level')}) → "
+                f"Δ/sec={m.get('gain',0.0):.3g}, Cost={m.get('cost',0.0):.3g}, "
+                f"ROI≈{_hrs(roi):.2f}h, TTA≈{_hrs(tta):.2f}h, ETA≈{_hrs(eta):.2f}h{flag_txt}",
                 3
             )
     
-        # --- 4) Build ranked list & attempt upgrades ---
+        # --- 4) Decide: buy now (ROI-first) or wait (ETA-first)? ---
     
-        ranked = []
-        for m in actionable:
-            lvl_key = m["level"] if isinstance(m["level"], int) else 10**9
-            ranked.append((m["roi_sec"], m["cost"], lvl_key, m["title"]))
-        if not ranked:
-            self.output(f"Step {self.step} - No actionable rows after ROI & state checks.", 2)
+        if not actionable_now and not disabled_considered:
+            self.output(f"Step {self.step} - No actionable or considered rows.", 2)
             return 0
     
+        buy_now = True
+        chosen_title = None
+    
+        if USE_ETA_PLANNING:
+            best_disabled = disabled_considered[0] if disabled_considered else None
+            best_aff_now = actionable_now[0] if actionable_now else None
+    
+            if best_disabled and best_aff_now:
+                # Compare disabled ETA vs affordable pure ROI
+                if best_disabled["eta_sec"] + ETA_DECISION_MARGIN_SEC < best_aff_now["roi_sec"]:
+                    buy_now = False
+                    chosen_title = best_disabled["title"]
+            elif best_disabled and not best_aff_now:
+                buy_now = False
+                chosen_title = best_disabled["title"]
+            else:
+                buy_now = True
+                chosen_title = best_aff_now["title"] if best_aff_now else None
+        else:
+            buy_now = True
+            chosen_title = actionable_now[0]["title"] if actionable_now else None
+    
+        if not buy_now:
+            # We wait—log the reason clearly.
+            bd = disabled_considered[0]
+            self.output(
+                f"Step {self.step} - Strategy: WAIT. Best disabled '{bd['title']}' ETA≈{_hrs(bd['eta_sec']):.2f}h "
+                f"beats best affordable ROI≈{_hrs(actionable_now[0]['roi_sec']) if actionable_now else float('inf'):.2f}h.",
+                2
+            )
+            return 0
+    
+        # If we’re here, we’ll proceed to buy in best-first order (affordable list)
+        ranked = []
+        for m in actionable_now:
+            lvl_key = m["level"] if isinstance(m["level"], int) else 10**9
+            ranked.append((m["roi_sec"], m["cost"], lvl_key, m["title"]))
         ranked.sort(key=lambda x: (x[0], x[1], x[2], x[3]))
     
         # target click areas (ordered fallbacks)
@@ -413,6 +503,10 @@ class XNodeAUClaimer(XNodeClaimer):
     
         effective_clicks = 0
     
+        def _get_level_by_title(ttl):
+            r = find_row_by_title_exact(ttl)
+            return get_level_num(r) if r else None
+    
         for p in range(max_passes):
             acted = False
             for _, _, _, title in ranked:
@@ -423,7 +517,6 @@ class XNodeAUClaimer(XNodeClaimer):
                     if row_is_effectively_disabled(row):
                         continue
     
-                    # locate a clickable control
                     ctrl = find_one(row, targets)
                     if not ctrl:
                         continue
@@ -506,7 +599,7 @@ class XNodeAUClaimer(XNodeClaimer):
         if not price_txt:
             price_txt = (self.driver.execute_script("return arguments[0].textContent;", price_el) or "").strip()
         # helpful debug
-        # self.output(f"Step {self.step} - raw cost text: '{price_txt}'", 3)
+        self.output(f"Step {self.step} - raw cost text: '{price_txt}'", 3)
         cost = self._parse_qty(price_txt)
     
         # ----- GAIN (Income delta per sec) -----
@@ -514,7 +607,7 @@ class XNodeAUClaimer(XNodeClaimer):
         gain_txt = (gain_el.text or "").strip()
         if not gain_txt:
             gain_txt = (self.driver.execute_script("return arguments[0].textContent;", gain_el) or "").strip()
-        # self.output(f"Step {self.step} - raw gain text: '{gain_txt}'", 3)
+        self.output(f"Step {self.step} - raw gain text: '{gain_txt}'", 3)
         gain = self._parse_qty(gain_txt)
     
         return cost, gain
@@ -531,7 +624,6 @@ def main():
 if __name__ == "__main__":
 
     main()
-
 
 
 
