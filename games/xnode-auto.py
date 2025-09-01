@@ -71,17 +71,79 @@ class XNodeAUClaimer(XNodeClaimer):
             return False
         return True
         
+    # ---- tiny helpers (put these inside your class, above upgrade_all) ----
+    def _in_game_dom(self) -> bool:
+        try:
+            if self.driver.find_elements(By.XPATH, "//div[contains(@class,'Upgrader')]"):
+                return True
+            if self.driver.find_elements(By.XPATH, "//div[contains(@class,'UpgradesPage')]"):
+                return True
+            return False
+        except Exception:
+            return False
+    
+    def _hrs_str(self, seconds):
+        import math
+        return "∞h" if not math.isfinite(seconds) else f"{seconds/3600.0:.2f}h"
+    
+    # ---- drop-in replacement for upgrade_all ----
     def upgrade_all(self, max_passes=2, per_row_wait=4):
-        """Prefer upgrading by shortest ROI or (optionally) by shortest ETA = time_to_afford + ROI.
-           Adds per-row debug: cost, gain, ROI, time_to_afford (if disabled), ETA.
+        """Scan upgrades, compute ROI/TTA/ETA, and upgrade in best-first order.
+           Uses persisted self.profit_per_sec from Step 114 when available.
         """
     
-        # ---------- Tunables for "quant" planning ----------
-        USE_ETA_PLANNING = True           # set False to keep pure ROI-first behaviour
-        ETA_DECISION_MARGIN_SEC = 0       # require disabled best ETA to beat best affordable ROI by this much to "wait"
-        # ---------------------------------------------------
+        # ---------- Tunables ----------
+        USE_ETA_PLANNING = True           # True = choose best ETA (wait allowed); False = pure ROI-first now
+        ETA_DECISION_MARGIN_SEC = 0       # Require disabled best ETA to beat best affordable ROI by this many seconds
+        # -------------------------------
     
-        # --- tiny helpers local to this method ---
+        import math, re, time
+        from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+    
+        # --- 0) Enter iframe only if not already in game DOM ---
+        if not self._in_game_dom():
+            self.output(f"Step {self.step} - Not in game DOM; attempting to enter iframe…", 3)
+            try:
+                self.launch_iframe()
+            except Exception as e:
+                self.output(f"Step {self.step} - launch_iframe() failed: {e}", 2)
+    
+        # --- helpers local to this method ---
+        def _norm(s: str) -> str:
+            return (s or "").replace("\xa0", " ").strip()
+    
+        def find_one(root, rel_xpaths):
+            for xp in rel_xpaths:
+                try:
+                    el = root.find_element(By.XPATH, xp)
+                    if el:
+                        return el
+                except NoSuchElementException:
+                    continue
+                except StaleElementReferenceException:
+                    return None
+            return None
+    
+        def get_title(row):
+            try:
+                t = row.find_element(By.XPATH, ".//h2[contains(@class,'Upgrader_text-title')]")
+                txt = (t.text or "").strip()
+                if not txt:
+                    txt = (self.driver.execute_script("return arguments[0].textContent;", t) or "").strip()
+                return txt
+            except Exception:
+                return ""
+    
+        def get_level_num(row):
+            try:
+                lvl_el = row.find_element(By.XPATH, ".//h3[contains(@class,'Upgrader_text-lvl')]")
+                txt = (lvl_el.text or "").strip()
+                if not txt:
+                    txt = (self.driver.execute_script("return arguments[0].textContent;", lvl_el) or "").strip()
+                m = re.search(r"(\d+)", txt)
+                return int(m.group(1)) if m else None
+            except Exception:
+                return None
     
         def class_has_token(el, token: str) -> bool:
             try:
@@ -104,62 +166,10 @@ class XNodeAUClaimer(XNodeClaimer):
                     return True
                 m = re.search(r"opacity\s*:\s*([0-9.]+)", style)
                 if m:
-                    try:
-                        return float(m.group(1)) < 0.5
-                    except Exception:
-                        return False
+                    return float(m.group(1)) < 0.5
                 return False
             except StaleElementReferenceException:
                 return True
-    
-        def find_one(root, rel_xpaths):
-            for xp in rel_xpaths:
-                try:
-                    el = root.find_element(By.XPATH, xp)
-                    if el:
-                        return el
-                except NoSuchElementException:
-                    continue
-                except StaleElementReferenceException:
-                    return None
-            return None
-             
-        def get_title(row):
-            try:
-                t = row.find_element(By.XPATH, ".//h2[contains(@class,'Upgrader_text-title')]")
-                txt = (t.text or "").strip()
-                if not txt:
-                    txt = (self.driver.execute_script("return arguments[0].textContent;", t) or "").strip()
-                return txt
-            except Exception:
-                return ""
-    
-        def get_level_num(row):
-            try:
-                lvl_el = row.find_element(By.XPATH, ".//h3[contains(@class,'Upgrader_text-lvl')]")
-                txt = (lvl_el.text or "").strip()
-                if not txt:
-                    txt = (self.driver.execute_script("return arguments[0].textContent;", lvl_el) or "").strip()
-                m = re.search(r"(\d+)", txt)
-                return int(m.group(1)) if m else None
-            except Exception:
-                return None
-    
-        def find_row_by_title_exact(title):
-            try:
-                # Safe literal for XPath
-                if "'" in title and '"' in title:
-                    parts = title.split("'")
-                    xp_lit = "concat(" + ", \"'\", ".join([f"'{p}'" for p in parts]) + ")"
-                elif "'" in title:
-                    xp_lit = f'"{title}"'
-                else:
-                    xp_lit = f"'{title}'"
-                xp = ("//div[contains(@class,'Upgrader')]"
-                      f"[.//h2[contains(@class,'Upgrader_text-title') and normalize-space()={xp_lit}]]")
-                return self.driver.find_element(By.XPATH, xp)
-            except Exception:
-                return None
     
         def row_is_effectively_disabled(row) -> bool:
             if class_has_token(row, "disable") or aria_disabled(row) or style_blocks_click(row):
@@ -185,19 +195,23 @@ class XNodeAUClaimer(XNodeClaimer):
                 except Exception:
                     return False
     
-        def _norm(s: str) -> str:
-            return (s or "").replace("\xa0", " ").strip()
-    
-        # --- 0) Enter iframe only if we're not already in the game ---
-        if not self._in_game_dom():
-            self.output(f"Step {self.step} - Not in game DOM; attempting to enter iframe…", 3)
+        def find_row_by_title_exact(title):
             try:
-                self.launch_iframe()
-            except Exception as e:
-                self.output(f"Step {self.step} - launch_iframe() failed: {e}", 2)
+                # Safe literal for XPath
+                if "'" in title and '"' in title:
+                    parts = title.split("'")
+                    xp_lit = "concat(" + ", \"'\", ".join([f"'{p}'" for p in parts]) + ")"
+                elif "'" in title:
+                    xp_lit = f'"{title}"'
+                else:
+                    xp_lit = f"'{title}'"
+                xp = ("//div[contains(@class,'Upgrader')]"
+                      f"[.//h2[contains(@class,'Upgrader_text-title') and normalize-space()={xp_lit}]]")
+                return self.driver.find_element(By.XPATH, xp)
+            except Exception:
+                return None
     
         # --- 1) Wait & collect rows (lenient, with fallbacks) ---
-    
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((
                 By.XPATH,
@@ -212,16 +226,6 @@ class XNodeAUClaimer(XNodeClaimer):
             containers = all_containers[:]
         if not containers:
             containers = [self.driver]  # search whole document
-    
-        try:
-            self.driver.execute_script("window.scrollTo(0, 0);")
-        except Exception:
-            pass
-        for cont in containers:
-            try:
-                self.driver.execute_script("if (arguments[0].scrollTop !== undefined) arguments[0].scrollTop = 0;", cont)
-            except Exception:
-                pass
     
         row_xpath_core = (
             ".//div[contains(@class,'Upgrader') and "
@@ -247,30 +251,42 @@ class XNodeAUClaimer(XNodeClaimer):
                     pass
     
         snapshot = rows
-    
         self.output(
             f"Step {self.step} - containers(all/displayed): {len(all_containers)}/{sum(1 for c in all_containers if getattr(c,'is_displayed',lambda:True)())} | rows: {len(snapshot)}",
             3
         )
     
         if not snapshot:
-            self.output(f"Step {self.step} - No Upgrader rows found in document (after fallbacks).", 2)
+            time.sleep(0.6)  # one-shot tiny retry
+            rows = []
+            for cont in containers:
+                try:
+                    rows.extend(cont.find_elements(By.XPATH, row_xpath_core))
+                except Exception:
+                    pass
+            if not rows:
+                for cont in containers:
+                    try:
+                        rows.extend(cont.find_elements(By.XPATH, row_xpath_fallback))
+                    except Exception:
+                        pass
+            snapshot = rows
+    
+        if not snapshot:
+            self.output(f"Step {self.step} - No Upgrader rows found (after fallback retry). Holding.", 2)
             return 0
     
-        # --- 1a) Get current balance & profit/sec (for time_to_afford) ---
+        # --- 1a) Get profit/sec and balance ---
+        # Prefer persisted profit/sec from Step 114
+        try:
+            profit_per_sec = float(getattr(self, "profit_per_sec", 0.0))
+        except Exception:
+            profit_per_sec = 0.0
     
-        def _parse_profit_per_sec():
-            # Prefer cached if you stored it during "Step 114" parsing.
+        def _parse_profit_per_sec_fallback():
             try:
-                if getattr(self, "profit_per_sec", None):
-                    return float(self.profit_per_sec)
-            except Exception:
-                pass
-            # Try to read from a known profit element (adjust selectors to your UI):
-            try:
-                el = self.driver.find_element(By.XPATH, "//*[contains(text(),'SEC') or contains(text(),'/SEC')]")
+                el = self.driver.find_element(By.XPATH, "//*[contains(text(),'/SEC') or contains(text(),'/sec')]")
                 raw = _norm(el.text or self.driver.execute_script("return arguments[0].textContent;", el) or "")
-                # e.g. "+1.4M/SEC" -> "1.4M"
                 m = re.search(r'([+-]?\d+(?:\.\d+)?\s*[KMBTP]?)\s*/\s*SEC', raw, re.I)
                 if m:
                     return self._parse_qty(m.group(1))
@@ -278,12 +294,13 @@ class XNodeAUClaimer(XNodeClaimer):
                 pass
             return 0.0
     
+        if profit_per_sec <= 0:
+            profit_per_sec = _parse_profit_per_sec_fallback()
+    
         def _parse_current_balance():
-            # Adjust to your balance element if available; fallback to 0.
             try:
                 el = self.driver.find_element(By.XPATH, "//*[contains(@class,'balance') or contains(text(),'tflops')]")
                 raw = _norm(el.text or self.driver.execute_script("return arguments[0].textContent;", el) or "")
-                # Try to pick the first big number with magnitude
                 m = re.search(r'([+-]?\d+(?:\.\d+)?\s*[KMBTP]?)\s*(?:tflops|TFLOPS)?', raw, re.I)
                 if m:
                     return self._parse_qty(m.group(1))
@@ -291,18 +308,16 @@ class XNodeAUClaimer(XNodeClaimer):
                 pass
             return 0.0
     
-        profit_per_sec = _parse_profit_per_sec()
         current_balance = _parse_current_balance()
     
-        # --- 2) Scan rows → metrics, de-dupe, ROI, time_to_afford, ETA ---
-    
+        # --- 2) Scan → metrics (ROI/TTA/ETA), de-dup, partition ---
         seen = set()
         all_rows_metrics = []
-        actionable_now = []     # affordable & within ROI cap
-        disabled_considered = []  # disabled but we compute time_to_afford & ETA
-        import math
+        actionable_now = []
+        disabled_considered = []
     
         for row in snapshot:
+            title = ""
             try:
                 try:
                     self.driver.execute_script(
@@ -316,6 +331,7 @@ class XNodeAUClaimer(XNodeClaimer):
                     all_rows_metrics.append({
                         "title": "", "level": None, "disabled": True,
                         "cost": 0.0, "gain": 0.0, "roi_sec": float("inf"),
+                        "time_to_afford": float("inf"), "eta_sec": float("inf"),
                         "parse_ok": False, "skip_reason": "no-title"
                     })
                     continue
@@ -335,12 +351,14 @@ class XNodeAUClaimer(XNodeClaimer):
                     all_rows_metrics.append({
                         "title": title, "level": lvl, "disabled": True,
                         "cost": 0.0, "gain": 0.0, "roi_sec": float("inf"),
+                        "time_to_afford": float("inf"), "eta_sec": float("inf"),
                         "parse_ok": False, "skip_reason": "duplicate"
                     })
                     continue
                 seen.add(key)
     
-                # parse cost/gain
+                # parse cost/gain → ROI
+                parse_ok, reason = True, ""
                 try:
                     cost, gain = self._extract_cost_and_gain(row)
                     cost = float(cost or 0.0)
@@ -350,91 +368,63 @@ class XNodeAUClaimer(XNodeClaimer):
                     if gain <= 0:
                         raise ValueError("gain<=0")
                     roi_sec = self._roi_seconds(cost, gain)
-                    parse_ok = True
-                    reason = ""
                 except Exception as e:
-                    cost = cost if 'cost' in locals() else 0.0
-                    gain = gain if 'gain' in locals() else 0.0
+                    cost = locals().get("cost", 0.0)
+                    gain = locals().get("gain", 0.0)
                     roi_sec = float("inf")
-                    parse_ok = False
-                    reason = f"parse-failed: {type(e).__name__}"
+                    parse_ok, reason = False, f"parse-failed: {type(e).__name__}"
     
-                # time to afford & ETA
+                # TTA & ETA
                 if disabled:
-                    # if disabled, we assume not enough balance for cost
                     deficit = max(cost - current_balance, 0.0)
-                    tta = (deficit / profit_per_sec) if profit_per_sec > 0 else float("inf")
+                    if deficit <= 0:
+                        tta = 0.0
+                    else:
+                        tta = (deficit / profit_per_sec) if profit_per_sec > 0 else float("inf")
                 else:
-                    # already affordable: zero wait
                     tta = 0.0
                 eta_sec = (tta + roi_sec) if (parse_ok and math.isfinite(roi_sec)) else float("inf")
     
                 m = {
-                    "title": title,
-                    "level": lvl,
-                    "disabled": disabled,
-                    "cost": cost,
-                    "gain": gain,
-                    "roi_sec": roi_sec,
-                    "time_to_afford": tta,
-                    "eta_sec": eta_sec,
-                    "parse_ok": parse_ok,
-                    "skip_reason": reason
+                    "title": title, "level": lvl, "disabled": disabled,
+                    "cost": cost, "gain": gain,
+                    "roi_sec": roi_sec, "time_to_afford": tta, "eta_sec": eta_sec,
+                    "parse_ok": parse_ok, "skip_reason": reason
                 }
     
-                # filter per original ROI cap for "actionable now"
+                # Partition
                 if disabled:
                     m["skip_reason"] = m["skip_reason"] or "disabled"
                     disabled_considered.append(m)
                 elif not parse_ok:
-                    pass
+                    all_rows_metrics.append(m)
                 elif roi_sec > MAX_ROI_SEC:
                     m["skip_reason"] = f"roi>{MAX_ROI_DAYS}d"
                     all_rows_metrics.append(m)
                 else:
                     actionable_now.append(m)
                     all_rows_metrics.append(m)
-                    continue
-    
-                all_rows_metrics.append(m)
     
             except Exception as e:
                 all_rows_metrics.append({
-                    "title": _norm(locals().get("title", "")),
-                    "level": locals().get("lvl", None),
-                    "disabled": locals().get("disabled", None),
-                    "cost": 0.0,
-                    "gain": 0.0,
-                    "roi_sec": float("inf"),
-                    "time_to_afford": float("inf"),
-                    "eta_sec": float("inf"),
-                    "parse_ok": False,
-                    "skip_reason": f"loop-failed: {type(e).__name__}"
+                    "title": title or "Unknown", "level": None, "disabled": True,
+                    "cost": 0.0, "gain": 0.0, "roi_sec": float("inf"),
+                    "time_to_afford": float("inf"), "eta_sec": float("inf"),
+                    "parse_ok": False, "skip_reason": f"loop-failed: {type(e).__name__}"
                 })
                 continue
     
         # --- 3) Debug print & sort ---
-    
-        def _hrs(x):
-            return (x / 3600.0) if math.isfinite(x) else float("inf")
-    
-        # Sort affordable by ROI-first (current behaviour)
         actionable_now.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
-    
-        # Sort disabled by ETA-first (soonest benefit)
         disabled_considered.sort(key=lambda m: (m["eta_sec"], m["cost"], -m["gain"], m["title"] or ""))
     
-        # Emit metrics (now includes TTA & ETA)
         for m in all_rows_metrics:
-            roi = m.get("roi_sec", float("inf"))
-            tta = m.get("time_to_afford", float("inf"))
-            eta = m.get("eta_sec", float("inf"))
             flags = []
             if not m.get("parse_ok", True):
                 flags.append(m.get("skip_reason") or "parse-failed")
             if m.get("disabled"):
                 flags.append("disabled")
-            if math.isfinite(roi) and roi > MAX_ROI_SEC:
+            if math.isfinite(m.get("roi_sec", float("inf"))) and m["roi_sec"] > MAX_ROI_SEC:
                 flags.append(f"roi>{MAX_ROI_DAYS}d")
             sr = m.get("skip_reason")
             if sr and sr not in flags:
@@ -444,56 +434,47 @@ class XNodeAUClaimer(XNodeClaimer):
             self.output(
                 f"Step {self.step} - ROI check: {m.get('title') or 'Unknown'} (Lvl {m.get('level')}) → "
                 f"Δ/sec={m.get('gain',0.0):.3g}, Cost={m.get('cost',0.0):.3g}, "
-                f"ROI≈{_hrs(roi):.2f}h, TTA≈{_hrs(tta):.2f}h, ETA≈{_hrs(eta):.2f}h{flag_txt}",
+                f"ROI≈{self._hrs_str(m.get('roi_sec', float('inf')))}, "
+                f"TTA≈{self._hrs_str(m.get('time_to_afford', float('inf')))}, "
+                f"ETA≈{self._hrs_str(m.get('eta_sec', float('inf')))}{flag_txt}",
                 3
             )
     
         # --- 4) Decide: buy now (ROI-first) or wait (ETA-first)? ---
-    
         if not actionable_now and not disabled_considered:
             self.output(f"Step {self.step} - No actionable or considered rows.", 2)
             return 0
     
         buy_now = True
-        chosen_title = None
-    
         if USE_ETA_PLANNING:
             best_disabled = disabled_considered[0] if disabled_considered else None
             best_aff_now = actionable_now[0] if actionable_now else None
     
             if best_disabled and best_aff_now:
-                # Compare disabled ETA vs affordable pure ROI
                 if best_disabled["eta_sec"] + ETA_DECISION_MARGIN_SEC < best_aff_now["roi_sec"]:
                     buy_now = False
-                    chosen_title = best_disabled["title"]
             elif best_disabled and not best_aff_now:
                 buy_now = False
-                chosen_title = best_disabled["title"]
             else:
                 buy_now = True
-                chosen_title = best_aff_now["title"] if best_aff_now else None
-        else:
-            buy_now = True
-            chosen_title = actionable_now[0]["title"] if actionable_now else None
     
         if not buy_now:
-            # We wait—log the reason clearly.
             bd = disabled_considered[0]
+            best_aff_str = self._hrs_str(actionable_now[0]["roi_sec"]) if actionable_now else "∞h"
             self.output(
-                f"Step {self.step} - Strategy: WAIT. Best disabled '{bd['title']}' ETA≈{_hrs(bd['eta_sec']):.2f}h "
-                f"beats best affordable ROI≈{_hrs(actionable_now[0]['roi_sec']) if actionable_now else float('inf'):.2f}h.",
+                f"Step {self.step} - Strategy: WAIT. Best disabled '{bd['title']}' ETA≈{self._hrs_str(bd['eta_sec'])} "
+                f"beats best affordable ROI≈{best_aff_str}.",
                 2
             )
             return 0
     
-        # If we’re here, we’ll proceed to buy in best-first order (affordable list)
+        # --- 5) Click affordable in best-first order ---
         ranked = []
         for m in actionable_now:
             lvl_key = m["level"] if isinstance(m["level"], int) else 10**9
             ranked.append((m["roi_sec"], m["cost"], lvl_key, m["title"]))
         ranked.sort(key=lambda x: (x[0], x[1], x[2], x[3]))
     
-        # target click areas (ordered fallbacks)
         targets = [
             ".//div[contains(@class,'Upgrader_right-wrap')]",
             ".//div[contains(@class,'Upgrader_right-price_text')]",
@@ -504,18 +485,12 @@ class XNodeAUClaimer(XNodeClaimer):
     
         effective_clicks = 0
     
-        def _get_level_by_title(ttl):
-            r = find_row_by_title_exact(ttl)
-            return get_level_num(r) if r else None
-    
         for p in range(max_passes):
             acted = False
             for _, _, _, title in ranked:
                 try:
                     row = find_row_by_title_exact(title)
-                    if not row:
-                        continue
-                    if row_is_effectively_disabled(row):
+                    if not row or row_is_effectively_disabled(row):
                         continue
     
                     ctrl = find_one(row, targets)
@@ -618,17 +593,6 @@ class XNodeAUClaimer(XNodeClaimer):
             return float("inf")
         return cost / gain
         
-    def _in_game_dom(self) -> bool:
-        try:
-            # cheap, robust checks for xNode DOM
-            if self.driver.find_elements(By.XPATH, "//div[contains(@class,'Upgrader')]"):
-                return True
-            if self.driver.find_elements(By.XPATH, "//div[contains(@class,'UpgradesPage')]"):
-                return True
-            return False
-        except Exception:
-            return False
-
 def main():
     claimer = XNodeAUClaimer()
     claimer.run()
