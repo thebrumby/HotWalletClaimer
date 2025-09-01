@@ -187,14 +187,7 @@ class XNodeAUClaimer(XNodeClaimer):
     
         def _norm(s: str) -> str:
             return (s or "").replace("\xa0", " ").strip()
-    
-        # --- 0) Ensure we're inside the game iframe (if applicable) ---
-        try:
-            # Safe to call even if already inside; no-op if your implementation guards.
-            self.launch_iframe()
-        except Exception:
-            pass
-    
+      
         # --- 1) Wait & collect rows (lenient, with fallbacks) ---
     
         WebDriverWait(self.driver, 10).until(
