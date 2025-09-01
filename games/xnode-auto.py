@@ -126,7 +126,7 @@ class XNodeAUClaimer(XNodeClaimer):
                 return txt
             except Exception:
                 return ""
-    
+        
         def get_level_num(row):
             try:
                 lvl_el = row.find_element(By.XPATH, ".//h3[contains(@class,'Upgrader_text-lvl')]")
@@ -137,7 +137,7 @@ class XNodeAUClaimer(XNodeClaimer):
                 return int(m.group(1)) if m else None
             except Exception:
                 return None
-    
+
         def find_row_by_title_exact(title):
             try:
                 # Safe literal for XPath
@@ -178,23 +178,41 @@ class XNodeAUClaimer(XNodeClaimer):
                 except Exception:
                     return False
     
-        container_xpath = "//div[contains(@class,'UpgradesPage-items')]"
-        # NOTE: include ALL rows for debugging; we'll decide enabled/disabled per row
-        rows_xpath_all = container_xpath + "//div[contains(@class,'Upgrader')]"
-    
-        targets = [
-            ".//div[contains(@class,'Upgrader_right')]//div[contains(@class,'Upgrader_right-wrap')]",
-            ".//div[contains(@class,'Upgrader_right-price_text')]",
-            ".//div[contains(@class,'Upgrader_right')]",
-        ]
-    
-        effective_clicks = 0
-        self.output(f"Step {self.step} - Scanning Upgrader rows by ROI (best first)…", 2)
-    
-        # single compute pass builds both debug + rank
-        snapshot = self.driver.find_elements(By.XPATH, rows_xpath_all)
+        # Find all *visible* containers (some UIs keep hidden templates)
+        containers = self.driver.find_elements(
+            By.XPATH,
+            "//div[contains(@class,'UpgradesPage-items')]"
+        )
+        
+        def _is_vis(el):
+            try:
+                if not el.is_displayed():
+                    return False
+                # make sure it actually occupies space
+                rect = self.driver.execute_script(
+                    "const r=arguments[0].getBoundingClientRect(); return {w:r.width,h:r.height};", el
+                )
+                return (rect and rect.get('w', 0) > 0 and rect.get('h', 0) > 0)
+            except Exception:
+                return False
+        
+        # collect rows only from visible containers, and only rows that have a title *and* a price box
+        rows = []
+        for cont in containers:
+            if not _is_vis(cont):
+                continue
+            rows.extend(cont.find_elements(
+                By.XPATH,
+                ".//div[contains(@class,'Upgrader') and "
+                " .//h2[contains(@class,'Upgrader_text-title')] and "
+                " .//div[contains(@class,'Upgrader_right-price_text')] ]"
+            ))
+        
+        # final snapshot is only visible rows with real geometry (filters out off-screen clones/templates)
+        snapshot = [r for r in rows if _is_vis(r)]
+        
         if not snapshot:
-            self.output(f"Step {self.step} - No Upgrader rows found at all.", 2)
+            self.output(f"Step {self.step} - No *visible* Upgrader rows found.", 2)
             return 0
         
         # Local de-dupe set for this scan
@@ -209,7 +227,13 @@ class XNodeAUClaimer(XNodeClaimer):
         
         for row in snapshot:
             try:
-                title = _norm(get_title(row))
+                if not title:
+                    all_rows_metrics.append({
+                        "title": "", "level": None, "disabled": True,
+                        "cost": 0.0, "gain": 0.0, "roi_sec": float("inf"),
+                        "parse_ok": False, "skip_reason": "no-title"
+                    })
+                    continue
                 lvl   = get_level_num(row)  # assume returns int or None
                 disabled = row_is_effectively_disabled(row)
         
