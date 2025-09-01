@@ -197,19 +197,32 @@ class XNodeAUClaimer(XNodeClaimer):
                 self.output(f"Step {self.step} - No candidate rows found (pass {p+1}).", 3)
                 break
 
-            ranked = []
+            MAX_ROI_SECS = 10 * 24 * 3600
+            ranked = [t for t in ranked if t[0] <= MAX_ROI_SECS]
             for row in snapshot:
                 try:
                     if row_is_effectively_disabled(row):
                         continue
+                    # read cost/gain
+                    cost, gain = _extract_cost_and_gain(row)
+                    roi_sec = _roi_seconds(cost, gain)
                     lvl = get_level_num(row)
-                    # None levels get pushed to the end by using a large sentinel
-                    lvl_key = lvl if isinstance(lvl, int) else 10**9
-                    ranked.append((lvl_key, get_title(row), row))
+                    title = get_title(row)
+            
+                    # Keep: prefer smaller ROI; tie-break on lower cost, then lower level, then title
+                    ranked.append((roi_sec, cost, (lvl if isinstance(lvl,int) else 10**9), title, row))
+            
+                    # Optional: log a one-liner for visibility
+                    if self.settings.get('verboseLevel',2) >= 3:
+                        hrs = roi_sec/3600 if roi_sec != float('inf') else float('inf')
+                        self.output(f"Step {self.step} - ROI est: {title} → {hrs:.2f}h (Δ/sec={gain:.3g}, Cost={cost:.3g})", 3)
                 except StaleElementReferenceException:
                     continue
                 except Exception:
                     continue
+            
+            ranked.sort(key=lambda x: (x[0], x[1], x[2], x[3]))
+
 
             # Sort by level ascending, then title as tie-breaker
             ranked.sort(key=lambda t: (t[0], t[1]))
@@ -288,6 +301,54 @@ class XNodeAUClaimer(XNodeClaimer):
 
         self.output(f"Step {self.step} - Upgrader loop finished. Effective upgrades: {effective_clicks}", 2)
         return effective_clicks
+        
+    # --- helpers ---
+    UNIT = {"K":1e3,"M":1e6,"B":1e9,"T":1e12,"P":1e15}
+    
+    def _parse_qty(text: str) -> float:
+        # Accept forms like: "759.6M", "1T", "2.1P", "1 200 M" etc.
+        t = (text or "").replace("\xa0"," ").strip()
+        t = t.replace(" ", "")  # squish
+        if not t:
+            return 0.0
+        # split number + optional suffix
+        num = ""
+        suf = ""
+        for ch in t:
+            if ch.isdigit() or ch in ".-+":
+                num += ch
+            else:
+                suf += ch
+        try:
+            q = float(num)
+        except:
+            return 0.0
+        suf = (suf or "").upper()
+        # tolerate trailing words like "TFLOPS" "TFLOPS/SEC"
+        for k in ("K","M","B","T","P"):
+            if suf.startswith(k):
+                return q * UNIT[k]
+        # no recognized suffix → plain number
+        return q
+    
+    def _extract_cost_and_gain(row):
+        # cost: right price text
+        price_el = row.find_element(By.XPATH, ".//div[contains(@class,'Upgrader_right-price_text')]")
+        price_txt = price_el.text  # e.g. "759.6M tflops"
+        cost = _parse_qty(price_txt)
+    
+        # gain: “Income: +XYZ <unit> tflops/sec” -> the middle span
+        gain_el = row.find_element(By.XPATH, ".//div[contains(@class,'Upgrader_income')]/span[2]")
+        gain_txt = gain_el.text  # e.g. "+10M"
+        gain = _parse_qty(gain_txt)
+    
+        return cost, gain
+    
+    def _roi_seconds(cost, gain):
+        # Protect against zero/None
+        if not gain or gain <= 0:
+            return float("inf")
+        return cost / gain
 
 def main():
     claimer = XNodeAUClaimer()
