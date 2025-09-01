@@ -26,8 +26,12 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 from xnode import XNodeClaimer
 
-# --- put this at module level (top of file), not inside the class ---
+# ---------- module-level constants ----------
+MAX_ROI_DAYS = 31
+MAX_ROI_SEC  = MAX_ROI_DAYS * 24 * 3600
+
 UNIT = {"K":1e3, "M":1e6, "B":1e9, "T":1e12, "P":1e15}
+# -------------------------------------------
 
 class XNodeAUClaimer(XNodeClaimer):
 
@@ -192,10 +196,6 @@ class XNodeAUClaimer(XNodeClaimer):
         if not snapshot:
             self.output(f"Step {self.step} - No Upgrader rows found at all.", 2)
             return 0
-    
-        # Configurable thresholds
-        MAX_ROI_DAYS = 31
-        MAX_ROI_SEC  = MAX_ROI_DAYS * 24 * 3600
         
         # Local de-dupe set for this scan
         seen = set()
@@ -311,7 +311,7 @@ class XNodeAUClaimer(XNodeClaimer):
         
             # match the single name used earlier: MAX_ROI_SEC
             if math.isfinite(roi_sec) and roi_sec > MAX_ROI_SEC:
-                flags.append(f"roi>{MAX_ROI_SEC}s")
+                flags.append(f"roi>{MAX_ROI_DAYS}d")
         
             # Some rows may have non-filter skip reasons like "duplicate"
             # If it's not already captured above, include it.
@@ -341,7 +341,7 @@ class XNodeAUClaimer(XNodeClaimer):
                 continue
             if not m["parse_ok"]:
                 continue
-            if m["roi_sec"] > MAX_ROI_SECS:
+            if m["roi_sec"] > MAX_ROI_SEC:
                 continue
             # prefer lower ROI, then lower cost, then lower level, then title
             lvl_key = m["level"] if isinstance(m["level"], int) else 10**9
