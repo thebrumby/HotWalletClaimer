@@ -65,32 +65,30 @@ class XNodeAUClaimer(XNodeClaimer):
         return True
         
     def upgrade_all(self, max_passes=2, per_row_wait=4):
-        """Prefer upgrading lowest-level rows first.
-           Click rows that are actionable; count only effective upgrades."""
+        """Prefer upgrading lowest-ROI rows first; count only effective upgrades."""
         from selenium.webdriver.common.by import By
         from selenium.webdriver.common.action_chains import ActionChains
         from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException
-
+    
         def class_has_token(el, token: str) -> bool:
             try:
                 cls = (el.get_attribute("class") or "")
                 return f" {token} " in f" {cls.strip()} "
             except StaleElementReferenceException:
                 return True
-
+    
         def aria_disabled(el) -> bool:
             try:
                 v = (el.get_attribute("aria-disabled") or "").strip().lower()
                 return v in ("1", "true", "yes")
             except StaleElementReferenceException:
                 return True
-
+    
         def style_blocks_click(el) -> bool:
             try:
                 style = (el.get_attribute("style") or "").lower()
                 if "pointer-events" in style and "none" in style:
                     return True
-                import re
                 m = re.search(r"opacity\s*:\s*([0-9.]+)", style)
                 if m:
                     try:
@@ -100,7 +98,7 @@ class XNodeAUClaimer(XNodeClaimer):
                 return False
             except StaleElementReferenceException:
                 return True
-
+    
         def find_one(root, rel_xpaths):
             for xp in rel_xpaths:
                 try:
@@ -112,21 +110,18 @@ class XNodeAUClaimer(XNodeClaimer):
                 except StaleElementReferenceException:
                     return None
             return None
-
+    
         def get_title(row):
-            """Robust read of the upgrade title."""
             try:
                 t = row.find_element(By.XPATH, ".//h2[contains(@class,'Upgrader_text-title')]")
                 txt = (t.text or "").strip()
                 if not txt:
-                    # JS fallback
                     txt = (self.driver.execute_script("return arguments[0].textContent;", t) or "").strip()
                 return txt
             except Exception:
                 return ""
-        
+    
         def get_level_num(row):
-            """Extract integer from 'Level: 21' with JS fallback."""
             try:
                 lvl_el = row.find_element(By.XPATH, ".//h3[contains(@class,'Upgrader_text-lvl')]")
                 txt = (lvl_el.text or "").strip()
@@ -136,20 +131,24 @@ class XNodeAUClaimer(XNodeClaimer):
                 return int(m.group(1)) if m else None
             except Exception:
                 return None
-        
+    
         def find_row_by_title_exact(title):
-            """Fresh row lookup by exact title match."""
             try:
-                # Safely escape single quotes in the title for XPath literal
-                safe_title = title.replace("'", "\\'")
+                # Safe literal for XPath
+                if "'" in title and '"' in title:
+                    parts = title.split("'")
+                    xp_lit = "concat(" + ", \"'\", ".join([f"'{p}'" for p in parts]) + ")"
+                elif "'" in title:
+                    xp_lit = f'"{title}"'
+                else:
+                    xp_lit = f"'{title}'"
                 xp = ("//div[contains(@class,'Upgrader')]"
-                      "[.//h2[contains(@class,'Upgrader_text-title') and normalize-space()='%s']]" % safe_title)
+                      f"[.//h2[contains(@class,'Upgrader_text-title') and normalize-space()={xp_lit}]]")
                 return self.driver.find_element(By.XPATH, xp)
             except Exception:
                 return None
-                                          
+    
         def row_is_effectively_disabled(row) -> bool:
-            """Row or its right control looks disabled/unaffordable."""
             if class_has_token(row, "disable") or aria_disabled(row) or style_blocks_click(row):
                 return True
             ctrl = find_one(row, [
@@ -160,7 +159,7 @@ class XNodeAUClaimer(XNodeClaimer):
             if ctrl is None:
                 return True
             return class_has_token(ctrl, "disable") or aria_disabled(ctrl) or style_blocks_click(ctrl)
-
+    
         def click_ctrl(ctrl, why=""):
             try:
                 self.driver.execute_script("arguments[0].scrollIntoView({block:'center', inline:'center'});", ctrl)
@@ -172,92 +171,89 @@ class XNodeAUClaimer(XNodeClaimer):
                     return True
                 except Exception:
                     return False
-
+    
         container_xpath = "//div[contains(@class,'UpgradesPage-items')]"
         rows_xpath = (
             container_xpath +
             "//div[contains(@class,'Upgrader') and not(contains(concat(' ', normalize-space(@class), ' '), ' disable '))]"
         )
-
+    
         targets = [
             ".//div[contains(@class,'Upgrader_right')]//div[contains(@class,'Upgrader_right-wrap')]",
             ".//div[contains(@class,'Upgrader_right-price_text')]",
             ".//div[contains(@class,'Upgrader_right')]",
         ]
-
+    
         effective_clicks = 0
-        self.output(f"Step {self.step} - Scanning Upgrader rows (lowest level first)…", 2)
-
+        self.output(f"Step {self.step} - Scanning Upgrader rows by ROI (best first)…", 2)
+    
         for p in range(max_passes):
             acted = False
-
-            # Fetch fresh snapshot, build ranked list (level asc, then title asc to stabilize order)
+    
             snapshot = self.driver.find_elements(By.XPATH, rows_xpath)
             if not snapshot:
                 self.output(f"Step {self.step} - No candidate rows found (pass {p+1}).", 3)
                 break
-
-            MAX_ROI_SECS = 10 * 24 * 3600
-            ranked = [t for t in ranked if t[0] <= MAX_ROI_SECS]
+    
+            # Build ranking list
+            ranked = []
             for row in snapshot:
                 try:
                     if row_is_effectively_disabled(row):
                         continue
-                    # read cost/gain
-                    cost, gain = _extract_cost_and_gain(row)
-                    roi_sec = _roi_seconds(cost, gain)
+                    cost, gain = self._extract_cost_and_gain(row)   # ← use self.
+                    roi_sec = self._roi_seconds(cost, gain)
                     lvl = get_level_num(row)
                     title = get_title(row)
-            
-                    # Keep: prefer smaller ROI; tie-break on lower cost, then lower level, then title
-                    ranked.append((roi_sec, cost, (lvl if isinstance(lvl,int) else 10**9), title, row))
-            
-                    # Optional: log a one-liner for visibility
-                    if self.settings.get('verboseLevel',2) >= 3:
-                        hrs = roi_sec/3600 if roi_sec != float('inf') else float('inf')
-                        self.output(f"Step {self.step} - ROI est: {title} → {hrs:.2f}h (Δ/sec={gain:.3g}, Cost={cost:.3g})", 3)
+                    lvl_key = lvl if isinstance(lvl, int) else 10**9
+                    ranked.append((roi_sec, cost, lvl_key, title, row))
+    
+                    if self.settings.get('verboseLevel', 2) >= 3:
+                        hrs = (roi_sec / 3600.0) if roi_sec != float('inf') else float('inf')
+                        self.output(
+                            f"Step {self.step} - ROI est: {title} → {hrs:.2f}h (Δ/sec={gain:.3g}, Cost={cost:.3g})",
+                            3
+                        )
                 except StaleElementReferenceException:
                     continue
                 except Exception:
                     continue
-            
+    
+            # Optional ROI cap (e.g., ignore >10 days)
+            MAX_ROI_SECS = 10 * 24 * 3600
+            ranked = [t for t in ranked if t[0] <= MAX_ROI_SECS]
+    
+            # Sort by ROI asc, then lower cost, then lower level, then title
             ranked.sort(key=lambda x: (x[0], x[1], x[2], x[3]))
-
-
-            # Sort by level ascending, then title as tie-breaker
-            ranked.sort(key=lambda t: (t[0], t[1]))
-
+    
             if not ranked:
                 self.output(f"Step {self.step} - No actionable rows this pass.", 3)
                 break
-
-            for _, _, row in ranked:
+    
+            for _, _, _, _, row in ranked:
                 try:
                     if row_is_effectively_disabled(row):
                         continue
-            
-                    # Capture BEFORE values (stable for logging)
+    
                     title_before = get_title(row)
                     lvl_before   = get_level_num(row)
-            
+    
                     ctrl = find_one(row, targets)
                     if not ctrl:
                         continue
-            
+    
                     if not click_ctrl(ctrl, why="upgrade click (1)"):
                         continue
-            
+    
                     acted = True
                     time.sleep(0.3)
-            
-                    # Assess effect; prefer fresh row lookup by title to avoid staleness
+    
                     row_fresh = find_row_by_title_exact(title_before) or row
                     lvl_after = get_level_num(row_fresh)
                     became_disabled = row_is_effectively_disabled(row_fresh)
-            
+    
                     success = False
                     if (lvl_after is None or lvl_before is None or lvl_after == lvl_before) and not became_disabled:
-                        # Try one more click
                         ctrl2 = find_one(row_fresh, targets) or find_one(row, targets)
                         if ctrl2 and click_ctrl(ctrl2, why="upgrade click (2)"):
                             time.sleep(0.3)
@@ -270,12 +266,10 @@ class XNodeAUClaimer(XNodeClaimer):
                                 lvl_after = lvl_after2
                     else:
                         success = True
-            
+    
                     if success:
                         effective_clicks += 1
-                        # Compute a friendly level to print
                         if lvl_after is None and isinstance(lvl_before, int):
-                            # Best guess: +1 if it upgraded but we couldn't read the new level
                             lvl_print = f"{lvl_before + 1}"
                         elif isinstance(lvl_after, int):
                             lvl_print = f"{lvl_after}"
@@ -283,22 +277,20 @@ class XNodeAUClaimer(XNodeClaimer):
                             lvl_print = f"{lvl_before}"
                         else:
                             lvl_print = "?"
-            
                         title_print = title_before or get_title(row_fresh) or "Unknown upgrade"
                         self.output(f"Step {self.step} - Upgraded {title_print} at level {lvl_print}", 3)
-            
+    
                 except StaleElementReferenceException:
                     continue
                 except Exception as e:
                     self.output(f"Step {self.step} - Upgrader row error: {e}", 3)
                     continue
-
+    
             if not acted:
                 break
-
             if per_row_wait:
                 time.sleep(0.2)
-
+    
         self.output(f"Step {self.step} - Upgrader loop finished. Effective upgrades: {effective_clicks}", 2)
         return effective_clicks
         
