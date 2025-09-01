@@ -245,22 +245,12 @@ class SpellClaimer(Claimer):
             self.increase_step()
         
             # Post-claim flow
-            try:
-                spin_xpath = "//p[contains(normalize-space(.), 'Home')]"
-                self.move_and_click(spin_xpath, 10, True, "move back to the home tab", self.step, "clickable")
-            except Exception as e:
-                self.output(f"Step {self.step} - Unable to move to the home tab.", 2)
-            finally:
-                self.increase_step()
+            self.quit_driver()
+            self.launch_driver()
             
             # Balance delta as you already do…
-            after_balance = self.get_balance(balance_xpath, True)
-            try:
-                if before_balance is not None and after_balance is not None:
-                    bal_diff = after_balance - before_balance
-                    status_text += f"Claim submitted - balance increase {bal_diff:.2f} "
-            except Exception as e:
-                self.output(f"Step {self.step} - Error calculating balance difference: {e}", 1)
+            if not before_balance:
+                after_balance = self.get_balance(balance_xpath, True)
         else:
             self.output(f"Step {self.step} - Claim (Charging) did not complete in time.", 2)
         
@@ -369,7 +359,7 @@ class SpellClaimer(Claimer):
             wait_time_text = self.monitor_element(xpath, to, "claim timer")
 
             if not wait_time_text or isinstance(wait_time_text, bool):
-                self.output("Step {self.step} - No wait time element/text found; assuming 0m.", 3)
+                self.output(f"Step {self.step} - No wait time element/text found; assuming 0m.", 3)
                 return 0
 
             raw = str(wait_time_text).strip()
@@ -398,6 +388,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
