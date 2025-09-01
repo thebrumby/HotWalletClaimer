@@ -123,6 +123,17 @@ class XNodeAUClaimer(XNodeClaimer):
                 except StaleElementReferenceException:
                     return None
             return None
+            
+        def _in_game_dom(self) -> bool:
+            try:
+                # cheap, robust checks for xNode DOM
+                if self.driver.find_elements(By.XPATH, "//div[contains(@class,'Upgrader')]"):
+                    return True
+                if self.driver.find_elements(By.XPATH, "//div[contains(@class,'UpgradesPage')]"):
+                    return True
+                return False
+            except Exception:
+                return False
     
         def get_title(row):
             try:
@@ -187,7 +198,15 @@ class XNodeAUClaimer(XNodeClaimer):
     
         def _norm(s: str) -> str:
             return (s or "").replace("\xa0", " ").strip()
-      
+    
+        # --- 0) Enter iframe only if we're not already in the game ---
+        if not self._in_game_dom():
+            self.output(f"Step {self.step} - Not in game DOM; attempting to enter iframe…", 3)
+            try:
+                self.launch_iframe()
+            except Exception as e:
+                self.output(f"Step {self.step} - launch_iframe() failed: {e}", 2)
+    
         # --- 1) Wait & collect rows (lenient, with fallbacks) ---
     
         WebDriverWait(self.driver, 10).until(
@@ -592,7 +611,7 @@ class XNodeAUClaimer(XNodeClaimer):
         if not price_txt:
             price_txt = (self.driver.execute_script("return arguments[0].textContent;", price_el) or "").strip()
         # helpful debug
-        self.output(f"Step {self.step} - raw cost text: '{price_txt}'", 3)
+        # self.output(f"Step {self.step} - raw cost text: '{price_txt}'", 3)
         cost = self._parse_qty(price_txt)
     
         # ----- GAIN (Income delta per sec) -----
@@ -600,7 +619,7 @@ class XNodeAUClaimer(XNodeClaimer):
         gain_txt = (gain_el.text or "").strip()
         if not gain_txt:
             gain_txt = (self.driver.execute_script("return arguments[0].textContent;", gain_el) or "").strip()
-        self.output(f"Step {self.step} - raw gain text: '{gain_txt}'", 3)
+        # self.output(f"Step {self.step} - raw gain text: '{gain_txt}'", 3)
         gain = self._parse_qty(gain_txt)
     
         return cost, gain
