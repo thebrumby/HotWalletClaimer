@@ -506,7 +506,7 @@ class XNodeAUClaimer(XNodeClaimer):
         if not price_txt:
             price_txt = (self.driver.execute_script("return arguments[0].textContent;", price_el) or "").strip()
         # helpful debug
-        self.output(f"Step {self.step} - raw cost text: '{price_txt}'", 3)
+        # self.output(f"Step {self.step} - raw cost text: '{price_txt}'", 3)
         cost = self._parse_qty(price_txt)
     
         # ----- GAIN (Income delta per sec) -----
@@ -514,7 +514,7 @@ class XNodeAUClaimer(XNodeClaimer):
         gain_txt = (gain_el.text or "").strip()
         if not gain_txt:
             gain_txt = (self.driver.execute_script("return arguments[0].textContent;", gain_el) or "").strip()
-        self.output(f"Step {self.step} - raw gain text: '{gain_txt}'", 3)
+        # self.output(f"Step {self.step} - raw gain text: '{gain_txt}'", 3)
         gain = self._parse_qty(gain_txt)
     
         return cost, gain
@@ -531,6 +531,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
