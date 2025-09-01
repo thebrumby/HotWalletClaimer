@@ -65,7 +65,9 @@ class XNodeAUClaimer(XNodeClaimer):
         return True
         
     def upgrade_all(self, max_passes=2, per_row_wait=4):
-        """Prefer upgrading lowest-ROI rows first; count only effective upgrades."""
+        """Prefer upgrading lowest-ROI rows first; count only effective upgrades.
+           Includes full per-row debug of cost/gain/ROI & skip reasons.
+        """
     
         def class_has_token(el, token: str) -> bool:
             try:
@@ -170,10 +172,8 @@ class XNodeAUClaimer(XNodeClaimer):
                     return False
     
         container_xpath = "//div[contains(@class,'UpgradesPage-items')]"
-        rows_xpath = (
-            container_xpath +
-            "//div[contains(@class,'Upgrader') and not(contains(concat(' ', normalize-space(@class), ' '), ' disable '))]"
-        )
+        # NOTE: include ALL rows for debugging; we'll decide enabled/disabled per row
+        rows_xpath_all = container_xpath + "//div[contains(@class,'Upgrader')]"
     
         targets = [
             ".//div[contains(@class,'Upgrader_right')]//div[contains(@class,'Upgrader_right-wrap')]",
@@ -184,57 +184,94 @@ class XNodeAUClaimer(XNodeClaimer):
         effective_clicks = 0
         self.output(f"Step {self.step} - Scanning Upgrader rows by ROI (best first)…", 2)
     
+        # single compute pass builds both debug + rank
+        snapshot = self.driver.find_elements(By.XPATH, rows_xpath_all)
+        if not snapshot:
+            self.output(f"Step {self.step} - No Upgrader rows found at all.", 2)
+            return 0
+    
+        MAX_ROI_SECS = 31 * 24 * 3600  # 31 days
+    
+        # Collect metrics for *every* row for debug
+        all_rows_metrics = []
+        for row in snapshot:
+            try:
+                title = get_title(row)
+                lvl   = get_level_num(row)
+                disabled = row_is_effectively_disabled(row)
+                cost, gain = (0.0, 0.0)
+                roi_sec = float("inf")
+                parse_ok = True
+                reason = ""
+    
+                try:
+                    cost, gain = self._extract_cost_and_gain(row)
+                    roi_sec = self._roi_seconds(cost, gain)
+                except Exception as e:
+                    parse_ok = False
+                    reason = f"parse-failed: {type(e).__name__}"
+    
+                all_rows_metrics.append({
+                    "title": title,
+                    "level": lvl,
+                    "disabled": disabled,
+                    "cost": cost,
+                    "gain": gain,
+                    "roi_sec": roi_sec,
+                    "parse_ok": parse_ok,
+                    "skip_reason": reason
+                })
+            except Exception:
+                continue
+    
+        # Emit debug for every row (cost/gain/ROI and reason if skipped)
+        for m in all_rows_metrics:
+            hrs = (m["roi_sec"] / 3600.0) if m["roi_sec"] not in (float("inf"), float("nan")) else float("inf")
+            flags = []
+            if m["disabled"]:
+                flags.append("disabled")
+            if not m["parse_ok"]:
+                flags.append(m["skip_reason"] or "parse-failed")
+            if m["roi_sec"] > MAX_ROI_SECS:
+                flags.append(f"roi>{MAX_ROI_SECS}s")
+            flag_txt = f" [{', '.join(flags)}]" if flags else ""
+            self.output(
+                f"Step {self.step} - ROI check: {m['title'] or 'Unknown'} (Lvl {m['level']}) → "
+                f"Δ/sec={m['gain']:.3g}, Cost={m['cost']:.3g}, ROI≈{hrs:.2f}h{flag_txt}",
+                3
+            )
+    
+        # Build ranked list from metrics (enabled + within ROI cap + parsed ok)
+        ranked = []
+        for m in all_rows_metrics:
+            if m["disabled"]:
+                continue
+            if not m["parse_ok"]:
+                continue
+            if m["roi_sec"] > MAX_ROI_SECS:
+                continue
+            # prefer lower ROI, then lower cost, then lower level, then title
+            lvl_key = m["level"] if isinstance(m["level"], int) else 10**9
+            ranked.append((m["roi_sec"], m["cost"], lvl_key, m["title"]))
+    
+        if not ranked:
+            self.output(f"Step {self.step} - No actionable rows after ROI & state checks.", 2)
+            return 0
+    
+        ranked.sort(key=lambda x: (x[0], x[1], x[2], x[3]))
+    
+        # Try upgrading in ROI order (multiple passes for resilience)
         for p in range(max_passes):
             acted = False
-    
-            snapshot = self.driver.find_elements(By.XPATH, rows_xpath)
-            if not snapshot:
-                self.output(f"Step {self.step} - No candidate rows found (pass {p+1}).", 3)
-                break
-    
-            # Build ranking list
-            ranked = []
-            for row in snapshot:
+            for _, _, _, title in ranked:
                 try:
-                    if row_is_effectively_disabled(row):
+                    row = find_row_by_title_exact(title)
+                    if not row:
                         continue
-                    cost, gain = self._extract_cost_and_gain(row)   # ← use self.
-                    roi_sec = self._roi_seconds(cost, gain)
-                    lvl = get_level_num(row)
-                    title = get_title(row)
-                    lvl_key = lvl if isinstance(lvl, int) else 10**9
-                    ranked.append((roi_sec, cost, lvl_key, title, row))
-    
-                    if self.settings.get('verboseLevel', 2) >= 3:
-                        hrs = (roi_sec / 3600.0) if roi_sec != float('inf') else float('inf')
-                        self.output(
-                            f"Step {self.step} - ROI est: {title} → {hrs:.2f}h (Δ/sec={gain:.3g}, Cost={cost:.3g})",
-                            3
-                        )
-                except StaleElementReferenceException:
-                    continue
-                except Exception:
-                    continue
-    
-            # Optional ROI cap (e.g., ignore >10 days)
-            MAX_ROI_SECS = 31 * 24 * 3600
-            ranked = [t for t in ranked if t[0] <= MAX_ROI_SECS]
-    
-            # Sort by ROI asc, then lower cost, then lower level, then title
-            ranked.sort(key=lambda x: (x[0], x[1], x[2], x[3]))
-    
-            if not ranked:
-                self.output(f"Step {self.step} - No actionable rows this pass.", 3)
-                break
-    
-            for _, _, _, _, row in ranked:
-                try:
                     if row_is_effectively_disabled(row):
                         continue
     
-                    title_before = get_title(row)
-                    lvl_before   = get_level_num(row)
-    
+                    lvl_before = get_level_num(row)
                     ctrl = find_one(row, targets)
                     if not ctrl:
                         continue
@@ -245,7 +282,7 @@ class XNodeAUClaimer(XNodeClaimer):
                     acted = True
                     time.sleep(0.3)
     
-                    row_fresh = find_row_by_title_exact(title_before) or row
+                    row_fresh = find_row_by_title_exact(title) or row
                     lvl_after = get_level_num(row_fresh)
                     became_disabled = row_is_effectively_disabled(row_fresh)
     
@@ -254,7 +291,7 @@ class XNodeAUClaimer(XNodeClaimer):
                         ctrl2 = find_one(row_fresh, targets) or find_one(row, targets)
                         if ctrl2 and click_ctrl(ctrl2, why="upgrade click (2)"):
                             time.sleep(0.3)
-                            row_fresh2 = find_row_by_title_exact(title_before) or row_fresh
+                            row_fresh2 = find_row_by_title_exact(title) or row_fresh
                             lvl_after2 = get_level_num(row_fresh2)
                             became_disabled = row_is_effectively_disabled(row_fresh2)
                             success = ((lvl_after2 is not None and lvl_before is not None and lvl_after2 > lvl_before)
@@ -266,21 +303,17 @@ class XNodeAUClaimer(XNodeClaimer):
     
                     if success:
                         effective_clicks += 1
-                        if lvl_after is None and isinstance(lvl_before, int):
-                            lvl_print = f"{lvl_before + 1}"
-                        elif isinstance(lvl_after, int):
-                            lvl_print = f"{lvl_after}"
-                        elif isinstance(lvl_before, int):
-                            lvl_print = f"{lvl_before}"
-                        else:
-                            lvl_print = "?"
-                        title_print = title_before or get_title(row_fresh) or "Unknown upgrade"
-                        self.output(f"Step {self.step} - Upgraded {title_print} at level {lvl_print}", 3)
+                        lvl_print = (
+                            f"{(lvl_before or 0) + 1}" if (lvl_after is None and isinstance(lvl_before, int))
+                            else (f"{lvl_after}" if isinstance(lvl_after, int)
+                                  else (f"{lvl_before}" if isinstance(lvl_before, int) else "?"))
+                        )
+                        self.output(f"Step {self.step} - Upgraded {title} at level {lvl_print}", 3)
     
                 except StaleElementReferenceException:
                     continue
                 except Exception as e:
-                    self.output(f"Step {self.step} - Upgrader row error: {e}", 3)
+                    self.output(f"Step {self.step} - Upgrader row error ({title}): {e}", 3)
                     continue
     
             if not acted:
@@ -291,16 +324,17 @@ class XNodeAUClaimer(XNodeClaimer):
         self.output(f"Step {self.step} - Upgrader loop finished. Effective upgrades: {effective_clicks}", 2)
         return effective_clicks
         
-    # --- helpers ---
-    UNIT = {"K":1e3,"M":1e6,"B":1e9,"T":1e12,"P":1e15}
+    # --- helpers (fixed) ---
+    UNIT = {"K":1e3, "M":1e6, "B":1e9, "T":1e12, "P":1e15}  # module-level ok
     
-    def _parse_qty(text: str) -> float:
-        # Accept forms like: "759.6M", "1T", "2.1P", "1 200 M" etc.
-        t = (text or "").replace("\xa0"," ").strip()
+    def _parse_qty(self, text: str) -> float:
+        """
+        Accept forms like: "759.6M", "1T", "2.1P", "1 200 M", "+10M", "150B tflops/sec"
+        """
+        t = (text or "").replace("\xa0", " ").strip()
         t = t.replace(" ", "")  # squish
         if not t:
             return 0.0
-        # split number + optional suffix
         num = ""
         suf = ""
         for ch in t:
@@ -310,30 +344,33 @@ class XNodeAUClaimer(XNodeClaimer):
                 suf += ch
         try:
             q = float(num)
-        except:
+        except Exception:
             return 0.0
         suf = (suf or "").upper()
-        # tolerate trailing words like "TFLOPS" "TFLOPS/SEC"
-        for k in ("K","M","B","T","P"):
+        # tolerate trailing words after the first unit letter(s)
+        for k in ("K", "M", "B", "T", "P"):
             if suf.startswith(k):
-                return q * UNIT[k]
-        # no recognized suffix → plain number
-        return q
+                return q * UNIT[k]  # UNIT is module-level; fine to use directly
+        return q  # plain number
     
-    def _extract_cost_and_gain(row):
+    def _extract_cost_and_gain(self, row):
         # cost: right price text
         price_el = row.find_element(By.XPATH, ".//div[contains(@class,'Upgrader_right-price_text')]")
-        price_txt = price_el.text  # e.g. "759.6M tflops"
-        cost = _parse_qty(price_txt)
+        price_txt = (price_el.text or "").strip()
+        if not price_txt:
+            price_txt = (self.driver.execute_script("return arguments[0].textContent;", price_el) or "").strip()
+        cost = self._parse_qty(price_txt)
     
         # gain: “Income: +XYZ <unit> tflops/sec” -> the middle span
         gain_el = row.find_element(By.XPATH, ".//div[contains(@class,'Upgrader_income')]/span[2]")
-        gain_txt = gain_el.text  # e.g. "+10M"
-        gain = _parse_qty(gain_txt)
+        gain_txt = (gain_el.text or "").strip()
+        if not gain_txt:
+            gain_txt = (self.driver.execute_script("return arguments[0].textContent;", gain_el) or "").strip()
+        gain = self._parse_qty(gain_txt)
     
         return cost, gain
     
-    def _roi_seconds(cost, gain):
+    def _roi_seconds(self, cost, gain):
         # Protect against zero/None
         if not gain or gain <= 0:
             return float("inf")
