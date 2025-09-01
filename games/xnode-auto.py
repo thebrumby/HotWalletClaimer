@@ -26,6 +26,9 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 from xnode import XNodeClaimer
 
+# --- put this at module level (top of file), not inside the class ---
+UNIT = {"K":1e3, "M":1e6, "B":1e9, "T":1e12, "P":1e15}
+
 class XNodeAUClaimer(XNodeClaimer):
 
     def initialize_settings(self):
@@ -190,28 +193,63 @@ class XNodeAUClaimer(XNodeClaimer):
             self.output(f"Step {self.step} - No Upgrader rows found at all.", 2)
             return 0
     
-        MAX_ROI_SECS = 31 * 24 * 3600  # 31 days
-    
-        # Collect metrics for *every* row for debug
+        # Configurable thresholds
+        MAX_ROI_DAYS = 31
+        MAX_ROI_SEC  = MAX_ROI_DAYS * 24 * 3600
+        
+        # Local de-dupe set for this scan
+        seen = set()
+        
+        # Collect metrics for debug and a separate actionable list
         all_rows_metrics = []
+        actionable = []
+        
+        def _norm(s: str) -> str:
+            return (s or "").replace("\xa0", " ").strip()
+        
         for row in snapshot:
             try:
-                title = get_title(row)
-                lvl   = get_level_num(row)
+                title = _norm(get_title(row))
+                lvl   = get_level_num(row)  # assume returns int or None
                 disabled = row_is_effectively_disabled(row)
+        
+                # De-dup identical (title, level) seen in this pass
+                if (title, lvl) in seen:
+                    # Still record a debug entry so you can see the duplicate
+                    all_rows_metrics.append({
+                        "title": title, "level": lvl, "disabled": disabled,
+                        "cost": 0.0, "gain": 0.0, "roi_sec": float("inf"),
+                        "parse_ok": False, "skip_reason": "duplicate"
+                    })
+                    continue
+                seen.add((title, lvl))
+        
                 cost, gain = (0.0, 0.0)
                 roi_sec = float("inf")
                 parse_ok = True
                 reason = ""
-    
+        
+                # Parse cost/gain and compute ROI safely
                 try:
-                    cost, gain = self._extract_cost_and_gain(row)
-                    roi_sec = self._roi_seconds(cost, gain)
+                    cost, gain = self._extract_cost_and_gain(row)  # ensure this internally uses the fixed _parse_qty
+                    # Normalise cost/gain just in case
+                    cost = float(cost or 0.0)
+                    gain = float(gain or 0.0)
+        
+                    # Invalid economics?
+                    if cost <= 0:
+                        parse_ok = False
+                        reason = "cost<=0"
+                    elif gain <= 0:
+                        parse_ok = False
+                        reason = "gain<=0"
+                    else:
+                        roi_sec = self._roi_seconds(cost, gain)  # usually cost / gain
                 except Exception as e:
                     parse_ok = False
                     reason = f"parse-failed: {type(e).__name__}"
-    
-                all_rows_metrics.append({
+        
+                metrics = {
                     "title": title,
                     "level": lvl,
                     "disabled": disabled,
@@ -220,27 +258,82 @@ class XNodeAUClaimer(XNodeClaimer):
                     "roi_sec": roi_sec,
                     "parse_ok": parse_ok,
                     "skip_reason": reason
+                }
+        
+                # Decide if actionable
+                if disabled:
+                    metrics["skip_reason"] = metrics["skip_reason"] or "disabled"
+                elif not parse_ok:
+                    pass  # keep reason set above
+                elif roi_sec > MAX_ROI_SEC:
+                    metrics["skip_reason"] = f"roi>{MAX_ROI_DAYS}d"
+                else:
+                    # Good to consider
+                    actionable.append(metrics)
+        
+                all_rows_metrics.append(metrics)
+        
+            except Exception as e:
+                # If something truly unexpected happens, record it for debug
+                all_rows_metrics.append({
+                    "title": _norm(locals().get("title", "")),
+                    "level": locals().get("lvl", None),
+                    "disabled": locals().get("disabled", None),
+                    "cost": 0.0,
+                    "gain": 0.0,
+                    "roi_sec": float("inf"),
+                    "parse_ok": False,
+                    "skip_reason": f"loop-failed: {type(e).__name__}"
                 })
-            except Exception:
                 continue
-    
+        
+        import math
+        
+        # Finally, prioritise: least ROI first (then lowest cost, then highest gain, then title)
+        actionable.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
+        
         # Emit debug for every row (cost/gain/ROI and reason if skipped)
         for m in all_rows_metrics:
-            hrs = (m["roi_sec"] / 3600.0) if m["roi_sec"] not in (float("inf"), float("nan")) else float("inf")
+            roi_sec = m.get("roi_sec", float("inf"))
+            # Hours for display, handle inf/nan cleanly
+            if math.isfinite(roi_sec):
+                hrs_txt = f"{roi_sec / 3600.0:.2f}h"
+            else:
+                hrs_txt = "infh"
+        
             flags = []
-            if m["disabled"]:
+        
+            # echo the reason (if any)
+            if not m.get("parse_ok", True):
+                flags.append(m.get("skip_reason") or "parse-failed")
+            if m.get("disabled"):
                 flags.append("disabled")
-            if not m["parse_ok"]:
-                flags.append(m["skip_reason"] or "parse-failed")
-            if m["roi_sec"] > MAX_ROI_SECS:
-                flags.append(f"roi>{MAX_ROI_SECS}s")
+        
+            # match the single name used earlier: MAX_ROI_SEC
+            if math.isfinite(roi_sec) and roi_sec > MAX_ROI_SEC:
+                flags.append(f"roi>{MAX_ROI_SEC}s")
+        
+            # Some rows may have non-filter skip reasons like "duplicate"
+            # If it's not already captured above, include it.
+            sr = m.get("skip_reason")
+            if sr and sr not in flags:
+                flags.append(sr)
+        
             flag_txt = f" [{', '.join(flags)}]" if flags else ""
+        
+            title = m.get("title") or "Unknown"
+            level = m.get("level")
+            level_txt = "None" if level is None else str(level)
+        
+            cost = float(m.get("cost") or 0.0)
+            gain = float(m.get("gain") or 0.0)
+        
             self.output(
-                f"Step {self.step} - ROI check: {m['title'] or 'Unknown'} (Lvl {m['level']}) → "
-                f"Δ/sec={m['gain']:.3g}, Cost={m['cost']:.3g}, ROI≈{hrs:.2f}h{flag_txt}",
+                f"Step {self.step} - ROI check: {title} (Lvl {level_txt}) → "
+                f"Δ/sec={gain:.3g}, Cost={cost:.3g}, ROI≈{hrs_txt}{flag_txt}",
                 3
             )
-    
+
         # Build ranked list from metrics (enabled + within ROI cap + parsed ok)
         ranked = []
         for m in all_rows_metrics:
@@ -324,26 +417,22 @@ class XNodeAUClaimer(XNodeClaimer):
         self.output(f"Step {self.step} - Upgrader loop finished. Effective upgrades: {effective_clicks}", 2)
         return effective_clicks
         
-    # --- helpers (fixed) ---
-    import re
-    UNIT = {"K":1e3, "M":1e6, "B":1e9, "T":1e12, "P":1e15}
-    
+    # --- helpers (fixed) ---  
     def _parse_qty(self, text: str) -> float:
         """
-        Accept '400.6M', '1.2B', '+260', '150B tflops/sec', spaces, non-breaking spaces, etc.
-        Returns a float in base units (tflops or tflops/sec).
+        Accepts: "400.6M", "1.2B", "+260", "897.2M tflops", etc.
+        Returns base units (float).
         """
         if text is None:
             return 0.0
-        t = str(text).replace("\xa0", " ").strip()  # NBSP -> space
-        if not t:
-            return 0.0
-        t = t.replace(" ", "")                       # remove spaces entirely
-        # keep leading sign/number/decimal, capture trailing unit letters (1–2 chars)
-        # e.g. "400.6M", "1.2B", "+260", "150Btf/s"
-        m = re.match(r'^([+-]?\d+(?:\.\d+)?)([A-Za-z]{0,2}).*$', t)
+        t = str(text).replace("\xa0", " ").strip()  # normalise NBSP -> space
+    
+        # Find the first number with an optional *single-letter* magnitude right after it.
+        # Examples matched: "1.2B", "400.6M", "+260", "897.2M tflops"
+        m = re.search(r'([+-]?\d+(?:\.\d+)?)([KMBTP])?\b', t, re.IGNORECASE)
         if not m:
             return 0.0
+    
         num = float(m.group(1))
         suf = (m.group(2) or "").upper()
         if suf in UNIT:
