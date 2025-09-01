@@ -227,6 +227,8 @@ class XNodeAUClaimer(XNodeClaimer):
         
         for row in snapshot:
             try:
+                # get title first (so we can check it)
+                title = _norm(get_title(row))
                 if not title:
                     all_rows_metrics.append({
                         "title": "", "level": None, "disabled": True,
@@ -234,19 +236,26 @@ class XNodeAUClaimer(XNodeClaimer):
                         "parse_ok": False, "skip_reason": "no-title"
                     })
                     continue
-                lvl   = get_level_num(row)  # assume returns int or None
+        
+                lvl = get_level_num(row)  # int or None
                 disabled = row_is_effectively_disabled(row)
         
-                # De-dup identical (title, level) seen in this pass
-                if (title, lvl) in seen:
-                    # Still record a debug entry so you can see the duplicate
+                # (optional but recommended) include current price text in the de-dupe key
+                try:
+                    price_box = row.find_element(By.XPATH, ".//div[contains(@class,'Upgrader_right-price_text')]")
+                    price_raw = _norm(price_box.text or self.driver.execute_script("return arguments[0].textContent;", price_box) or "")
+                except Exception:
+                    price_raw = ""
+        
+                key = (title, lvl, price_raw)   # stronger than (title, lvl)
+                if key in seen:
                     all_rows_metrics.append({
                         "title": title, "level": lvl, "disabled": disabled,
                         "cost": 0.0, "gain": 0.0, "roi_sec": float("inf"),
                         "parse_ok": False, "skip_reason": "duplicate"
                     })
                     continue
-                seen.add((title, lvl))
+                seen.add(key)
         
                 cost, gain = (0.0, 0.0)
                 roi_sec = float("inf")
