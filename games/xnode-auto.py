@@ -247,10 +247,11 @@ class XNodeAUClaimer(XNodeClaimer):
                 except Exception:
                     price_raw = ""
         
-                key = (title, lvl, price_raw)   # stronger than (title, lvl)
+                key = (title, lvl)
                 if key in seen:
+                    # only a compact trace for duplicates to keep logs readable
                     all_rows_metrics.append({
-                        "title": title, "level": lvl, "disabled": disabled,
+                        "title": title, "level": lvl, "disabled": True,
                         "cost": 0.0, "gain": 0.0, "roi_sec": float("inf"),
                         "parse_ok": False, "skip_reason": "duplicate"
                     })
