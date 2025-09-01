@@ -240,19 +240,16 @@ class SpellClaimer(Claimer):
         self.increase_step()
         
         # Rapid-charge for ~10s (clicks ~4 times per second)
-        if self.charge_until_complete(max_seconds=10, pause=0.25):
-            self.output(f"Step {self.step} - Claim (Charging) sequence completed.", 3)
-            self.increase_step()
+        self.charge_until_complete(max_seconds=10, pause=0.25)
+        self.increase_step()
         
-            # Post-claim flow
-            self.quit_driver()
-            self.launch_driver()
+        # Reload the browser after claim
+        self.quit_driver()
+        self.launch_driver()
             
-            # Balance delta as you already do…
-            if not before_balance:
-                after_balance = self.get_balance(balance_xpath, True)
-        else:
-            self.output(f"Step {self.step} - Claim (Charging) did not complete in time.", 2)
+        # Balance is not already taken due to output priority
+        if not before_balance:
+            after_balance = self.get_balance(balance_xpath, True)
         
         # Get the wait timer if present
         self.increase_step()
@@ -388,6 +385,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
