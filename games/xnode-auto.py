@@ -123,18 +123,7 @@ class XNodeAUClaimer(XNodeClaimer):
                 except StaleElementReferenceException:
                     return None
             return None
-            
-        def _in_game_dom(self) -> bool:
-            try:
-                # cheap, robust checks for xNode DOM
-                if self.driver.find_elements(By.XPATH, "//div[contains(@class,'Upgrader')]"):
-                    return True
-                if self.driver.find_elements(By.XPATH, "//div[contains(@class,'UpgradesPage')]"):
-                    return True
-                return False
-            except Exception:
-                return False
-    
+             
         def get_title(row):
             try:
                 t = row.find_element(By.XPATH, ".//h2[contains(@class,'Upgrader_text-title')]")
@@ -628,6 +617,17 @@ class XNodeAUClaimer(XNodeClaimer):
         if not gain or gain <= 0:
             return float("inf")
         return cost / gain
+        
+    def _in_game_dom(self) -> bool:
+        try:
+            # cheap, robust checks for xNode DOM
+            if self.driver.find_elements(By.XPATH, "//div[contains(@class,'Upgrader')]"):
+                return True
+            if self.driver.find_elements(By.XPATH, "//div[contains(@class,'UpgradesPage')]"):
+                return True
+            return False
+        except Exception:
+            return False
 
 def main():
     claimer = XNodeAUClaimer()
