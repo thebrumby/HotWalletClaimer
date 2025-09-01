@@ -66,9 +66,6 @@ class XNodeAUClaimer(XNodeClaimer):
         
     def upgrade_all(self, max_passes=2, per_row_wait=4):
         """Prefer upgrading lowest-ROI rows first; count only effective upgrades."""
-        from selenium.webdriver.common.by import By
-        from selenium.webdriver.common.action_chains import ActionChains
-        from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException
     
         def class_has_token(el, token: str) -> bool:
             try:
@@ -220,7 +217,7 @@ class XNodeAUClaimer(XNodeClaimer):
                     continue
     
             # Optional ROI cap (e.g., ignore >10 days)
-            MAX_ROI_SECS = 10 * 24 * 3600
+            MAX_ROI_SECS = 31 * 24 * 3600
             ranked = [t for t in ranked if t[0] <= MAX_ROI_SECS]
     
             # Sort by ROI asc, then lower cost, then lower level, then title
@@ -349,6 +346,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
