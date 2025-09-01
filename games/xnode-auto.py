@@ -183,47 +183,78 @@ class XNodeAUClaimer(XNodeClaimer):
         def _norm(s: str) -> str:
             return (s or "").replace("\xa0", " ").strip()
     
-        # --- 1) Wait for the upgrades container, collect rows by structure ---
-    
+        # --- 1) Wait & collect rows (lenient, with fallbacks) ---
+        # Wait for either the container OR at least one Upgrader row to exist
         WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//div[contains(@class,'UpgradesPage-items')]"))
+            EC.presence_of_element_located((
+                By.XPATH,
+                "//div[contains(@class,'UpgradesPage-items')]"
+                " | //div[contains(@class,'Upgrader') and .//h2[contains(@class,'Upgrader_text-title')]]"
+            ))
         )
-    
-        containers = []
-        for c in self.driver.find_elements(By.XPATH, "//div[contains(@class,'UpgradesPage-items')]"):
-            try:
-                if c.is_displayed():
-                    containers.append(c)
-            except Exception:
-                continue
-    
+        
+        # Try to find containers, but don't hard-require visibility.
+        all_containers = self.driver.find_elements(By.XPATH, "//div[contains(@class,'UpgradesPage-items')]")
+        
+        # Prefer displayed ones if present, else fall back to any containers, else fall back to the whole document.
+        containers = [c for c in all_containers if getattr(c, 'is_displayed', lambda: True)()]
         if not containers:
-            self.output(f"Step {self.step} - No UpgradesPage-items containers present/visible.", 2)
-            return 0
-    
-        # Nudge each container to top so first rows have layout/text content
+            containers = all_containers[:]  # may be non-displayed but present
+        if not containers:
+            # No containers at all? Search the whole document (some builds render rows at root).
+            containers = [self.driver]
+        
+        # (optional) nudge scroll so virtualized lists lay out first rows
+        try:
+            self.driver.execute_script("window.scrollTo(0, 0);")
+        except Exception:
+            pass
         for cont in containers:
             try:
-                self.driver.execute_script("arguments[0].scrollTop = 0;", cont)
+                self.driver.execute_script("if (arguments[0].scrollTop !== undefined) arguments[0].scrollTop = 0;", cont)
             except Exception:
                 pass
-    
-        row_xpath = (
+        
+        # Primary row pattern: visible “Upgrader” with a title and a price box
+        row_xpath_core = (
             ".//div[contains(@class,'Upgrader') and "
             " .//h2[contains(@class,'Upgrader_text-title')] and "
             " .//div[contains(@class,'Upgrader_right-price_text')] ]"
         )
-    
+        
+        # Fallback row pattern: accept rows missing the price box (some DOMs structure it differently)
+        row_xpath_fallback = (
+            ".//div[contains(@class,'Upgrader') and "
+            " .//h2[contains(@class,'Upgrader_text-title')] ]"
+        )
+        
         rows = []
         for cont in containers:
             try:
-                rows.extend(cont.find_elements(By.XPATH, row_xpath))
+                found = cont.find_elements(By.XPATH, row_xpath_core)
+                rows.extend(found)
             except Exception:
-                continue
-    
+                pass
+        
+        # If nothing matched the strict pattern, use the fallback
+        if not rows:
+            for cont in containers:
+                try:
+                    found = cont.find_elements(By.XPATH, row_xpath_fallback)
+                    rows.extend(found)
+                except Exception:
+                    pass
+        
         snapshot = rows
+        
+        # Helpful debug so we can see counts instead of just bailing
+        self.output(
+            f"Step {self.step} - containers(all/displayed): {len(all_containers)}/{sum(1 for c in all_containers if getattr(c,'is_displayed',lambda:True)())} | rows: {len(snapshot)}",
+            3
+        )
+        
         if not snapshot:
-            self.output(f"Step {self.step} - No *structured* Upgrader rows found.", 2)
+            self.output(f"Step {self.step} - No Upgrader rows found in document (after fallbacks).", 2)
             return 0
     
         # --- 2) Scan rows → metrics, de-dupe, filter by ROI ---
