@@ -325,53 +325,52 @@ class XNodeAUClaimer(XNodeClaimer):
         return effective_clicks
         
     # --- helpers (fixed) ---
-    UNIT = {"K":1e3, "M":1e6, "B":1e9, "T":1e12, "P":1e15}  # module-level ok
+    import re
+    UNIT = {"K":1e3, "M":1e6, "B":1e9, "T":1e12, "P":1e15}
     
     def _parse_qty(self, text: str) -> float:
         """
-        Accept forms like: "759.6M", "1T", "2.1P", "1 200 M", "+10M", "150B tflops/sec"
+        Accept '400.6M', '1.2B', '+260', '150B tflops/sec', spaces, non-breaking spaces, etc.
+        Returns a float in base units (tflops or tflops/sec).
         """
-        t = (text or "").replace("\xa0", " ").strip()
-        t = t.replace(" ", "")  # squish
+        if text is None:
+            return 0.0
+        t = str(text).replace("\xa0", " ").strip()  # NBSP -> space
         if not t:
             return 0.0
-        num = ""
-        suf = ""
-        for ch in t:
-            if ch.isdigit() or ch in ".-+":
-                num += ch
-            else:
-                suf += ch
-        try:
-            q = float(num)
-        except Exception:
+        t = t.replace(" ", "")                       # remove spaces entirely
+        # keep leading sign/number/decimal, capture trailing unit letters (1–2 chars)
+        # e.g. "400.6M", "1.2B", "+260", "150Btf/s"
+        m = re.match(r'^([+-]?\d+(?:\.\d+)?)([A-Za-z]{0,2}).*$', t)
+        if not m:
             return 0.0
-        suf = (suf or "").upper()
-        # tolerate trailing words after the first unit letter(s)
-        for k in ("K", "M", "B", "T", "P"):
-            if suf.startswith(k):
-                return q * UNIT[k]  # UNIT is module-level; fine to use directly
-        return q  # plain number
+        num = float(m.group(1))
+        suf = (m.group(2) or "").upper()
+        if suf in UNIT:
+            return num * UNIT[suf]
+        return num
     
     def _extract_cost_and_gain(self, row):
-        # cost: right price text
+        # ----- COST -----
         price_el = row.find_element(By.XPATH, ".//div[contains(@class,'Upgrader_right-price_text')]")
         price_txt = (price_el.text or "").strip()
         if not price_txt:
             price_txt = (self.driver.execute_script("return arguments[0].textContent;", price_el) or "").strip()
+        # helpful debug
+        self.output(f"Step {self.step} - raw cost text: '{price_txt}'", 3)
         cost = self._parse_qty(price_txt)
     
-        # gain: “Income: +XYZ <unit> tflops/sec” -> the middle span
+        # ----- GAIN (Income delta per sec) -----
         gain_el = row.find_element(By.XPATH, ".//div[contains(@class,'Upgrader_income')]/span[2]")
         gain_txt = (gain_el.text or "").strip()
         if not gain_txt:
             gain_txt = (self.driver.execute_script("return arguments[0].textContent;", gain_el) or "").strip()
+        self.output(f"Step {self.step} - raw gain text: '{gain_txt}'", 3)
         gain = self._parse_qty(gain_txt)
     
         return cost, gain
     
     def _roi_seconds(self, cost, gain):
-        # Protect against zero/None
         if not gain or gain <= 0:
             return float("inf")
         return cost / gain
