@@ -315,7 +315,7 @@ class XNodeAUClaimer(XNodeClaimer):
         all_rows_metrics = []
         actionable_now = []
         disabled_considered = []
-    
+        
         for row in snapshot:
             title = ""
             try:
@@ -325,38 +325,40 @@ class XNodeAUClaimer(XNodeClaimer):
                     )
                 except Exception:
                     pass
-    
+        
                 title = _norm(get_title(row))
                 if not title:
-                    all_rows_metrics.append({
+                    m = {
                         "title": "", "level": None, "disabled": True,
                         "cost": 0.0, "gain": 0.0, "roi_sec": float("inf"),
                         "time_to_afford": float("inf"), "eta_sec": float("inf"),
                         "parse_ok": False, "skip_reason": "no-title"
-                    })
+                    }
+                    all_rows_metrics.append(m)
                     continue
-    
+        
                 lvl = get_level_num(row)
                 disabled = row_is_effectively_disabled(row)
-    
+        
                 try:
                     price_box = row.find_element(By.XPATH, ".//div[contains(@class,'Upgrader_right-price_text')]")
                     price_raw = _norm(price_box.text or self.driver.execute_script(
                         "return arguments[0].textContent;", price_box) or "")
                 except Exception:
                     price_raw = ""
-    
+        
                 key = (title, lvl, price_raw)
                 if key in seen:
-                    all_rows_metrics.append({
+                    m = {
                         "title": title, "level": lvl, "disabled": True,
                         "cost": 0.0, "gain": 0.0, "roi_sec": float("inf"),
                         "time_to_afford": float("inf"), "eta_sec": float("inf"),
                         "parse_ok": False, "skip_reason": "duplicate"
-                    })
+                    }
+                    all_rows_metrics.append(m)
                     continue
                 seen.add(key)
-    
+        
                 # parse cost/gain → ROI
                 parse_ok, reason = True, ""
                 try:
@@ -373,7 +375,7 @@ class XNodeAUClaimer(XNodeClaimer):
                     gain = locals().get("gain", 0.0)
                     roi_sec = float("inf")
                     parse_ok, reason = False, f"parse-failed: {type(e).__name__}"
-    
+        
                 # TTA & ETA
                 if disabled:
                     deficit = max(cost - current_balance, 0.0)
@@ -384,27 +386,24 @@ class XNodeAUClaimer(XNodeClaimer):
                 else:
                     tta = 0.0
                 eta_sec = (tta + roi_sec) if (parse_ok and math.isfinite(roi_sec)) else float("inf")
-    
+        
                 m = {
                     "title": title, "level": lvl, "disabled": disabled,
                     "cost": cost, "gain": gain,
                     "roi_sec": roi_sec, "time_to_afford": tta, "eta_sec": eta_sec,
                     "parse_ok": parse_ok, "skip_reason": reason
                 }
-    
-                # Partition
-                if disabled:
-                    m["skip_reason"] = m["skip_reason"] or "disabled"
-                    disabled_considered.append(m)
-                elif not parse_ok:
-                    all_rows_metrics.append(m)
-                elif roi_sec > MAX_ROI_SEC:
-                    m["skip_reason"] = f"roi>{MAX_ROI_DAYS}d"
-                    all_rows_metrics.append(m)
-                else:
+        
+                # ALWAYS record to the master list so every row is printed
+                all_rows_metrics.append(m)
+        
+                # Partition for decision-making
+                if parse_ok and not disabled and roi_sec <= MAX_ROI_SEC:
                     actionable_now.append(m)
-                    all_rows_metrics.append(m)
-    
+                elif disabled and parse_ok:
+                    disabled_considered.append(m)
+                # long-ROI or parse-failed are handled only for printing, not actionable
+        
             except Exception as e:
                 all_rows_metrics.append({
                     "title": title or "Unknown", "level": None, "disabled": True,
@@ -413,53 +412,142 @@ class XNodeAUClaimer(XNodeClaimer):
                     "parse_ok": False, "skip_reason": f"loop-failed: {type(e).__name__}"
                 })
                 continue
-    
-        # --- 3) Debug print & sort ---
-        actionable_now.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
-        disabled_considered.sort(key=lambda m: (m["eta_sec"], m["cost"], -m["gain"], m["title"] or ""))
-    
-        for m in all_rows_metrics:
+        
+        # --- 3) Group for pretty printing (priority 3) ---
+        def _row_line(m, include_eta_when_disabled=True):
+            title = m.get("title") or "Unknown"
+            level = m.get("level")
+            delta_str = self._human(m.get("gain", 0.0))
+            cost_str  = self._human(m.get("cost", 0.0))
+            roi_str   = f"ROI≈{self._hrs_str(m.get('roi_sec', float('inf')))}"
+            tta_str   = f"TTA≈{self._hrs_str(m.get('time_to_afford', float('inf')))}"
+            parts = [f"{title} (Lvl {level}) → Δ/sec={delta_str}, Cost={cost_str}, {roi_str}, {tta_str}"]
+        
+            if include_eta_when_disabled and m.get("disabled"):
+                parts[0] += f", ETA≈{self._hrs_str(m.get('eta_sec', float('inf')))}"
             flags = []
-            # flag ordering for readability
             if m.get("disabled"):
                 flags.append("disabled")
             if not m.get("parse_ok", True):
                 flags.append(m.get("skip_reason") or "parse-failed")
-            # long ROI flag (only when finite & over threshold)
-            if math.isfinite(m.get("roi_sec", float("inf"))) and m["roi_sec"] > MAX_ROI_SEC:
+            if math.isfinite(m.get("roi_sec", float('inf'))) and m["roi_sec"] > MAX_ROI_SEC:
                 flags.append(f"roi>{MAX_ROI_DAYS}d")
-            # any extra reason not already listed
             sr = m.get("skip_reason")
             if sr and sr not in flags:
                 flags.append(sr)
-            flag_txt = f" [{', '.join(flags)}]" if flags else ""
+            if flags:
+                parts[0] += f" [{', '.join(flags)}]"
+            return parts[0]
         
-            title = m.get("title") or "Unknown"
-            level = m.get("level")
+        # Split by sections
+        ignored_long = [m for m in all_rows_metrics
+                        if m.get("parse_ok", True)
+                        and math.isfinite(m.get("roi_sec", float('inf')))
+                        and m["roi_sec"] > MAX_ROI_SEC]
         
-            # Always show Δ/sec and Cost in human form
-            delta_str = self._human(m.get("gain", 0.0))
-            cost_str  = self._human(m.get("cost", 0.0))
+        available_now_print = [m for m in all_rows_metrics
+                               if m.get("parse_ok", True)
+                               and not m.get("disabled")
+                               and math.isfinite(m.get("roi_sec", float('inf')))
+                               and m["roi_sec"] <= MAX_ROI_SEC]
         
-            # Show ROI when affordable; when disabled show ETA + TTA (and you still see ROI hours too if you want)
-            if m.get("disabled"):
-                # Disabled: ROI+TTA are both informative; ETA often the headline
-                roi_str = f"ROI≈{self._hrs_str(m.get('roi_sec', float('inf')))}"
-                tta_str = f"TTA≈{self._hrs_str(m.get('time_to_afford', float('inf')))}"
-                eta_str = f"ETA≈{self._hrs_str(m.get('eta_sec', float('inf')))}"
+        not_yet_available = [m for m in all_rows_metrics
+                             if m.get("parse_ok", True)
+                             and m.get("disabled")]
+        
+        # Sort within each section for readability
+        ignored_long.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
+        available_now_print.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
+        not_yet_available.sort(key=lambda m: (m["eta_sec"], m["cost"], -m["gain"], m["title"] or ""))
+        
+        # Print sections (priority 3)
+        self.output(f"Step {self.step} - Upgrades ignored due to excessive ROI time (> {MAX_ROI_DAYS}d): {len(ignored_long)}", 3)
+        for m in ignored_long:
+            self.output(_row_line(m, include_eta_when_disabled=False), 3)
+        
+        self.output(f"Step {self.step} - Upgrades available now: {len(available_now_print)}", 3)
+        for m in available_now_print:
+            self.output(_row_line(m, include_eta_when_disabled=False), 3)
+        
+        self.output(f"Step {self.step} - Upgrades not yet available (disabled): {len(not_yet_available)}", 3)
+        for m in not_yet_available:
+            self.output(_row_line(m, include_eta_when_disabled=True), 3)
+        
+        # --- 4) Decision: WAIT vs BUY (keep at priority 2) ---
+        actionable_now.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
+        disabled_considered.sort(key=lambda m: (m["eta_sec"], m["cost"], -m["gain"], m["title"] or ""))
+        
+        buy_now = True
+        if USE_ETA_PLANNING:
+            best_disabled = disabled_considered[0] if disabled_considered else None
+            best_aff_now = actionable_now[0] if actionable_now else None
+            if best_disabled and best_aff_now:
+                if best_disabled["eta_sec"] + ETA_DECISION_MARGIN_SEC < best_aff_now["roi_sec"]:
+                    buy_now = False
+            elif best_disabled and not best_aff_now:
+                buy_now = False
+            else:
+                buy_now = True
+        
+        if not buy_now:
+            bd = disabled_considered[0]
+            bd_title = bd['title']
+            bd_eta   = self._hrs_str(bd['eta_sec'])
+            bd_cost  = self._human(bd['cost'])
+            bd_gain  = self._human(bd['gain'])
+        
+            if actionable_now:
+                aff = actionable_now[0]
+                aff_title = aff['title']
+                aff_roi   = self._hrs_str(aff['roi_sec'])
+                aff_cost  = self._human(aff['cost'])
+                aff_gain  = self._human(aff['gain'])
                 self.output(
-                    f"Step {self.step} - ROI check: {title} (Lvl {level}) → "
-                    f"Δ/sec={delta_str}, Cost={cost_str}, {roi_str}, {tta_str}, {eta_str}{flag_txt}",
-                    3
+                    f"Step {self.step} - Strategy: WAIT ⏳ "
+                    f"Disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}) "
+                    f"is better than affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}).",
+                    2
                 )
             else:
-                # Affordable: TTA is 0h, so show ROI only (cleaner)
-                roi_str = f"ROI≈{self._hrs_str(m.get('roi_sec', float('inf')))}"
                 self.output(
-                    f"Step {self.step} - ROI check: {title} (Lvl {level}) → "
-                    f"Δ/sec={delta_str}, Cost={cost_str}, {roi_str}, TTA≈0.00h{flag_txt}",
-                    3
+                    f"Step {self.step} - Strategy: WAIT ⏳ "
+                    f"Best disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}) "
+                    f"— no affordable upgrades available.",
+                    2
                 )
+            return 0
+        
+        # BUY message (priority 2) then proceed to click loop
+        if actionable_now:
+            aff = actionable_now[0]
+            aff_title = aff['title']
+            aff_roi   = self._hrs_str(aff['roi_sec'])
+            aff_cost  = self._human(aff['cost'])
+            aff_gain  = self._human(aff['gain'])
+        
+            if disabled_considered:
+                bd = disabled_considered[0]
+                bd_title = bd['title']
+                bd_eta   = self._hrs_str(bd['eta_sec'])
+                bd_cost  = self._human(bd['cost'])
+                bd_gain  = self._human(bd['gain'])
+                self.output(
+                    f"Step {self.step} - Strategy: BUY ✅ "
+                    f"Choosing affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}) "
+                    f"over disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}).",
+                    2
+                )
+            else:
+                self.output(
+                    f"Step {self.step} - Strategy: BUY ✅ "
+                    f"Best affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}).",
+                    2
+                )
+        else:
+            self.output(
+                f"Step {self.step} - Strategy: BUY ✅ but no affordable rows present (unexpected).",
+                2
+            )
     
         # --- 4) Decide: buy now (ROI-first) or wait (ETA-first)? ---
         if not actionable_now and not disabled_considered:
@@ -493,14 +581,14 @@ class XNodeAUClaimer(XNodeClaimer):
                 aff_cost  = self._human(aff['cost'])
                 aff_gain  = self._human(aff['gain'])
                 self.output(
-                    f"Step {self.step} - Strategy: WAIT ⏳ "
+                    f"Step {self.step} - Best strategy: WAIT "
                     f"Disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}) "
                     f"is better than affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}).",
                     2
                 )
             else:
                 self.output(
-                    f"Step {self.step} - Strategy: WAIT ⏳ "
+                    f"Step {self.step} - Best strategy: WAIT "
                     f"Best disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}) "
                     f"— no affordable upgrades available.",
                     2
@@ -523,7 +611,7 @@ class XNodeAUClaimer(XNodeClaimer):
                 bd_cost  = self._human(bd['cost'])
                 bd_gain  = self._human(bd['gain'])
                 self.output(
-                    f"Step {self.step} - Strategy: BUY ✅ "
+                    f"Step {self.step} - Best strategy: BUY ✅ "
                     f"Choosing affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}) "
                     f"over disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}).",
                     2
