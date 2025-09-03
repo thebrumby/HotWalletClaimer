@@ -169,26 +169,30 @@ class XNodeClaimer(Claimer):
     def decide_wait_or_claim(self, wait_xpath, label="pre-claim", respect_force=True):
         mins = self.get_wait_time(wait_xpath, timeout=12, label=label)
         self.increase_step()
-
+    
         if mins is False:
             self.output(f"Step {self.step} - Wait time unavailable; defaulting to 60 minutes.", 2)
             return ("sleep", 60)
-
+    
         remaining = float(mins)
-        threshold = abs(self.settings['lowestClaimOffset']) if self.settings['lowestClaimOffset'] < 0 else 5
-
-        # sleep only if we're allowed to ignore forceClaim or it's not set
-        if remaining > threshold and not (respect_force and self.settings.get("forceClaim")):
-            sleep_minutes = self.apply_random_offset(remaining)
-            self.output(f"STATUS: {label} wait {remaining} min (> {threshold}); "
-                        f"sleeping {sleep_minutes} min after random offset.", 1)
+    
+        # If there is still time left, always wait until it has elapsed +1 min
+        if remaining > 0 and not (respect_force and self.settings.get("forceClaim")):
+            sleep_minutes = self.apply_random_offset(remaining + 1)
+            self.output(
+                f"STATUS: {label} wait {remaining:.1f} min; "
+                f"sleeping {sleep_minutes:.1f} min (ensuring +1 min past timer).",
+                1
+            )
             return ("sleep", sleep_minutes)
-
-        # claim now
+    
+        # Timer has elapsed already → claim now
         if respect_force:
             self.settings['forceClaim'] = True
-        self.output(f"Step {self.step} - {label}: remaining {remaining}m ≤ threshold {threshold}m "
-                    f"or forceClaim set; proceeding to claim.", 3)
+        self.output(
+            f"Step {self.step} - {label}: timer already elapsed; proceeding to claim.",
+            3
+        )
         return ("claim", 0)
             
     def get_wait_time(self, wait_time_xpath, timeout=12, label="wait timer"):
@@ -299,5 +303,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
