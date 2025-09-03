@@ -496,6 +496,7 @@ class XNodeAUClaimer(XNodeClaimer):
             bd_title = bd['title']
             bd_eta   = self._hrs_str(bd['eta_sec'])
             bd_cost  = self._human(bd['cost'])
+            bd_tta   = self._time_human(bd['time_to_afford'])
             bd_gain  = self._human(bd['gain'])
         
             if actionable_now:
@@ -506,19 +507,20 @@ class XNodeAUClaimer(XNodeClaimer):
                 aff_gain  = self._human(aff['gain'])
                 self.output(
                     f"Step {self.step} - Best strategy = WAIT: "
-                    f"'{bd_title}' available to afford & repays investment in {bd_eta} total. ",
+                    f"'{bd_title}' available in {bd_tta} & repays investment in {bd_eta} total. ",
                     2
                 )
                 self.output(
-                    f"'{aff_title}' only repays investment in {aff_roi}, so waiting.",
+                    f"'{aff_title}' would only repay in {aff_roi}, so waiting.",
                     2
                 )
             else:
                 self.output(
-                    f"Step {self.step} - Best strategy = WAIT ⏳: "
-                    f"Next available option will be '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}), affordable in {bd_eta}. ",
-                    2
-                )
+                            f"Step {self.step} - Best strategy = WAIT: "
+                            f"'{bd_title}' available in {bd_tta} & repays investment in {bd_eta} total. "
+                            f"No affordable upgrades now.",
+                            2
+                        )
             return 0
         
         # --- BUY path (priority 2), then proceed to click loop ---
@@ -775,6 +777,24 @@ class XNodeAUClaimer(XNodeClaimer):
         """Nice hours formatting with ∞h for non-finite."""
         import math
         return "∞h" if not math.isfinite(seconds) else f"{seconds/3600.0:.2f}h"
+        
+    def _time_human(self, hours: float) -> str:
+        """Convert hours (float) into a human-friendly duration string."""
+        if not math.isfinite(hours) or hours == float("inf"):
+            return "∞"
+        total_minutes = int(round(hours * 60))
+        if total_minutes < 1:
+            return "0m"
+        days, rem_min = divmod(total_minutes, 1440)
+        hrs, mins = divmod(rem_min, 60)
+        parts = []
+        if days > 0:
+            parts.append(f"{days}d")
+        if hrs > 0:
+            parts.append(f"{hrs}h")
+        if mins > 0:
+            parts.append(f"{mins}m")
+        return " ".join(parts)
         
 def main():
     claimer = XNodeAUClaimer()
