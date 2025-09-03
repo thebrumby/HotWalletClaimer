@@ -459,19 +459,19 @@ class XNodeAUClaimer(XNodeClaimer):
         ignored_long.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
         available_now_print.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
         not_yet_available.sort(key=lambda m: (m["eta_sec"], m["cost"], -m["gain"], m["title"] or ""))
-        
-        # Print sections (priority 3)
-        self.output(f"Step {self.step} - Upgrades ignored due to excessive ROI time (> {MAX_ROI_DAYS}d): {len(ignored_long)}", 2)
-        for m in ignored_long:
-            self.output(_row_line(m, include_eta_when_disabled=False), 3)
-        
-        self.output(f"Step {self.step} - Upgrades available now: {len(available_now_print)}", 2)
+              
+        self.output(f"Step {self.step} - Upgrades available with sensible ROI time: {len(available_now_print)}", 2)
         for m in available_now_print:
             self.output(_row_line(m, include_eta_when_disabled=False), 3)
         
         self.output(f"Step {self.step} - Upgrades not yet available (not yet affordable): {len(not_yet_available)}", 2)
         for m in not_yet_available:
             self.output(_row_line(m, include_eta_when_disabled=True), 3)
+
+        # Print sections (priority 3)
+        self.output(f"Step {self.step} - Available upgrades ignored due to excessive time to repay investment (> {MAX_ROI_DAYS}d): {len(ignored_long)}", 2)
+        for m in ignored_long:
+            self.output(_row_line(m, include_eta_when_disabled=False), 3)
         
         # --- 4) Decision: WAIT vs BUY ---
         actionable_now.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
@@ -780,6 +780,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
