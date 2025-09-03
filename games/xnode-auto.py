@@ -11,6 +11,7 @@ from PIL import Image
 from pyzbar.pyzbar import decode
 import qrcode_terminal
 import fcntl
+import math
 from fcntl import flock, LOCK_EX, LOCK_UN, LOCK_NB
 from selenium import webdriver
 from selenium.webdriver import ActionChains
@@ -803,6 +804,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
