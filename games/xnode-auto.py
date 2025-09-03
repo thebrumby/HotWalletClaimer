@@ -497,7 +497,7 @@ class XNodeAUClaimer(XNodeClaimer):
             bd_title = bd['title']
             bd_eta   = self._hrs_str(bd['eta_sec'])
             bd_cost  = self._human(bd['cost'])
-            bd_tta   = self._time_human(bd['time_to_afford'])
+            bd_tta = self._time_human_sec(bd['time_to_afford'])
             bd_gain  = self._human(bd['gain'])
         
             if actionable_now:
@@ -778,6 +778,12 @@ class XNodeAUClaimer(XNodeClaimer):
         """Nice hours formatting with ∞h for non-finite."""
         import math
         return "∞h" if not math.isfinite(seconds) else f"{seconds/3600.0:.2f}h"
+
+    def _time_human_sec(self, seconds: float) -> str:
+        """Like _time_human but input is seconds."""
+        if not math.isfinite(seconds) or seconds == float("inf"):
+            return "∞"
+        return self._time_human(seconds / 3600.0)
         
     def _time_human(self, hours: float) -> str:
         """Convert hours (float) into a human-friendly duration string."""
@@ -804,6 +810,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
