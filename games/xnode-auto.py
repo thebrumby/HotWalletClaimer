@@ -252,10 +252,10 @@ class XNodeAUClaimer(XNodeClaimer):
     
         snapshot = rows
         self.output(
-            f"Step {self.step} - containers(all/displayed): {len(all_containers)}/{sum(1 for c in all_containers if getattr(c,'is_displayed',lambda:True)())} | rows: {len(snapshot)}",
+            f"Step {self.step} - containers: {len(all_containers)} | rows: {len(snapshot)}",
             3
         )
-    
+       
         if not snapshot:
             time.sleep(0.6)  # one-shot tiny retry
             rows = []
@@ -420,25 +420,46 @@ class XNodeAUClaimer(XNodeClaimer):
     
         for m in all_rows_metrics:
             flags = []
-            if not m.get("parse_ok", True):
-                flags.append(m.get("skip_reason") or "parse-failed")
+            # flag ordering for readability
             if m.get("disabled"):
                 flags.append("disabled")
+            if not m.get("parse_ok", True):
+                flags.append(m.get("skip_reason") or "parse-failed")
+            # long ROI flag (only when finite & over threshold)
             if math.isfinite(m.get("roi_sec", float("inf"))) and m["roi_sec"] > MAX_ROI_SEC:
                 flags.append(f"roi>{MAX_ROI_DAYS}d")
+            # any extra reason not already listed
             sr = m.get("skip_reason")
             if sr and sr not in flags:
                 flags.append(sr)
             flag_txt = f" [{', '.join(flags)}]" if flags else ""
-    
-            self.output(
-                f"Step {self.step} - ROI check: {m.get('title') or 'Unknown'} (Lvl {m.get('level')}) → "
-                f"Δ/sec={m.get('gain',0.0):.3g}, Cost={m.get('cost',0.0):.3g}, "
-                f"ROI≈{self._hrs_str(m.get('roi_sec', float('inf')))}, "
-                f"TTA≈{self._hrs_str(m.get('time_to_afford', float('inf')))}, "
-                f"ETA≈{self._hrs_str(m.get('eta_sec', float('inf')))}{flag_txt}",
-                3
-            )
+        
+            title = m.get("title") or "Unknown"
+            level = m.get("level")
+        
+            # Always show Δ/sec and Cost in human form
+            delta_str = self._human(m.get("gain", 0.0))
+            cost_str  = self._human(m.get("cost", 0.0))
+        
+            # Show ROI when affordable; when disabled show ETA + TTA (and you still see ROI hours too if you want)
+            if m.get("disabled"):
+                # Disabled: ROI+TTA are both informative; ETA often the headline
+                roi_str = f"ROI≈{self._hrs_str(m.get('roi_sec', float('inf')))}"
+                tta_str = f"TTA≈{self._hrs_str(m.get('time_to_afford', float('inf')))}"
+                eta_str = f"ETA≈{self._hrs_str(m.get('eta_sec', float('inf')))}"
+                self.output(
+                    f"Step {self.step} - ROI check: {title} (Lvl {level}) → "
+                    f"Δ/sec={delta_str}, Cost={cost_str}, {roi_str}, {tta_str}, {eta_str}{flag_txt}",
+                    3
+                )
+            else:
+                # Affordable: TTA is 0h, so show ROI only (cleaner)
+                roi_str = f"ROI≈{self._hrs_str(m.get('roi_sec', float('inf')))}"
+                self.output(
+                    f"Step {self.step} - ROI check: {title} (Lvl {level}) → "
+                    f"Δ/sec={delta_str}, Cost={cost_str}, {roi_str}, TTA≈0.00h{flag_txt}",
+                    3
+                )
     
         # --- 4) Decide: buy now (ROI-first) or wait (ETA-first)? ---
         if not actionable_now and not disabled_considered:
@@ -460,13 +481,65 @@ class XNodeAUClaimer(XNodeClaimer):
     
         if not buy_now:
             bd = disabled_considered[0]
-            best_aff_str = self._hrs_str(actionable_now[0]["roi_sec"]) if actionable_now else "∞h"
+            bd_title = bd['title']
+            bd_eta   = self._hrs_str(bd['eta_sec'])
+            bd_cost  = self._human(bd['cost'])
+            bd_gain  = self._human(bd['gain'])
+        
+            if actionable_now:
+                aff = actionable_now[0]
+                aff_title = aff['title']
+                aff_roi   = self._hrs_str(aff['roi_sec'])
+                aff_cost  = self._human(aff['cost'])
+                aff_gain  = self._human(aff['gain'])
+                self.output(
+                    f"Step {self.step} - Strategy: WAIT ⏳ "
+                    f"Disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}) "
+                    f"is better than affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}).",
+                    2
+                )
+            else:
+                self.output(
+                    f"Step {self.step} - Strategy: WAIT ⏳ "
+                    f"Best disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}) "
+                    f"— no affordable upgrades available.",
+                    2
+                )
+            return 0
+            
+        # --- BUY path (affordable ROI-first) ---
+        if actionable_now:
+            aff = actionable_now[0]
+            aff_title = aff['title']
+            aff_roi   = self._hrs_str(aff['roi_sec'])
+            aff_cost  = self._human(aff['cost'])
+            aff_gain  = self._human(aff['gain'])
+        
+            # If there is a disabled candidate, explain why we didn't wait
+            if disabled_considered:
+                bd = disabled_considered[0]
+                bd_title = bd['title']
+                bd_eta   = self._hrs_str(bd['eta_sec'])
+                bd_cost  = self._human(bd['cost'])
+                bd_gain  = self._human(bd['gain'])
+                self.output(
+                    f"Step {self.step} - Strategy: BUY ✅ "
+                    f"Choosing affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}) "
+                    f"over disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}).",
+                    2
+                )
+            else:
+                self.output(
+                    f"Step {self.step} - Strategy: BUY ✅ "
+                    f"Best affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}).",
+                    2
+                )
+        else:
+            # Shouldn't happen because buy_now implies actionable_now, but keep a guard
             self.output(
-                f"Step {self.step} - Strategy: WAIT. Best disabled '{bd['title']}' ETA≈{self._hrs_str(bd['eta_sec'])} "
-                f"beats best affordable ROI≈{best_aff_str}.",
+                f"Step {self.step} - Strategy: BUY ✅ but no affordable rows present (unexpected).",
                 2
             )
-            return 0
     
         # --- 5) Click affordable in best-first order ---
         ranked = []
@@ -592,6 +665,23 @@ class XNodeAUClaimer(XNodeClaimer):
         if not gain or gain <= 0:
             return float("inf")
         return cost / gain
+
+    def _human(self, n):
+        """Format a number with K/M/B/T/P suffix like the UI."""
+        try:
+            n = float(n)
+        except Exception:
+            return str(n)
+        absn = abs(n)
+        for suf, val in (("P", 1e15), ("T", 1e12), ("B", 1e9), ("M", 1e6), ("K", 1e3)):
+            if absn >= val:
+                return f"{n/val:.3g}{suf}"
+        return f"{n:.3g}"
+    
+    def _hrs_str(self, seconds):
+        """Nice hours formatting with ∞h for non-finite."""
+        import math
+        return "∞h" if not math.isfinite(seconds) else f"{seconds/3600.0:.2f}h"
         
 def main():
     claimer = XNodeAUClaimer()
