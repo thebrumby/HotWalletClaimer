@@ -506,8 +506,8 @@ class XNodeAUClaimer(XNodeClaimer):
                 aff_gain  = self._human(aff['gain'])
                 self.output(
                     f"Step {self.step} - Best strategy = WAIT: "
-                    f"'{bd_title}' available in {bd_eta} "
-                    f"beats already affordable '{aff_title}' which repays investment in {aff_roi}.",
+                    f"'{bd_title}' available & repays investment in {bd_eta}. "
+                    f"'{aff_title}' only repays investment in {aff_roi}.",
                     2
                 )
             else:
@@ -780,6 +780,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
