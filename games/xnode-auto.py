@@ -252,7 +252,7 @@ class XNodeAUClaimer(XNodeClaimer):
     
         snapshot = rows
         self.output(
-            f"Step {self.step} - containers: {len(all_containers)} | rows: {len(snapshot)}",
+            f"Step {self.step} - Upgrade Categories: {len(all_containers)} | Total Upgrades: {len(snapshot)}",
             3
         )
        
@@ -780,6 +780,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
