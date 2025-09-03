@@ -473,7 +473,7 @@ class XNodeAUClaimer(XNodeClaimer):
         for m in not_yet_available:
             self.output(_row_line(m, include_eta_when_disabled=True), 3)
         
-        # --- 4) Decision: WAIT vs BUY (keep at priority 2) ---
+        # --- 4) Decision: WAIT vs BUY ---
         actionable_now.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
         disabled_considered.sort(key=lambda m: (m["eta_sec"], m["cost"], -m["gain"], m["title"] or ""))
         
@@ -489,6 +489,8 @@ class XNodeAUClaimer(XNodeClaimer):
             else:
                 buy_now = True
         
+        # --- WAIT vs BUY strategy messaging (priority 2) ---
+        
         if not buy_now:
             bd = disabled_considered[0]
             bd_title = bd['title']
@@ -503,21 +505,21 @@ class XNodeAUClaimer(XNodeClaimer):
                 aff_cost  = self._human(aff['cost'])
                 aff_gain  = self._human(aff['gain'])
                 self.output(
-                    f"Step {self.step} - Strategy: WAIT ⏳ "
-                    f"Disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}) "
-                    f"is better than affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}).",
+                    f"Step {self.step} - Best strategy = WAIT ⏳: "
+                    f"Not yet available '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}) "
+                    f"beats affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}).",
                     2
                 )
             else:
                 self.output(
-                    f"Step {self.step} - Strategy: WAIT ⏳ "
-                    f"Best disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}) "
-                    f"— no affordable upgrades available.",
+                    f"Step {self.step} - Best strategy = WAIT ⏳: "
+                    f"Best option is '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}), affordable in {bd_eta}. "
+                    f"No affordable upgrades available now.",
                     2
                 )
             return 0
         
-        # BUY message (priority 2) then proceed to click loop
+        # --- BUY path (priority 2), then proceed to click loop ---
         if actionable_now:
             aff = actionable_now[0]
             aff_title = aff['title']
@@ -533,8 +535,8 @@ class XNodeAUClaimer(XNodeClaimer):
                 bd_gain  = self._human(bd['gain'])
                 self.output(
                     f"Step {self.step} - Strategy: BUY ✅ "
-                    f"Choosing affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}) "
-                    f"over disabled '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}).",
+                    f"Choosing '{aff_title}' now (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}) "
+                    f"over waiting {bd_eta} for '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}).",
                     2
                 )
             else:
@@ -544,6 +546,7 @@ class XNodeAUClaimer(XNodeClaimer):
                     2
                 )
         else:
+            # Shouldn't happen if buy_now is True, but keep a guard
             self.output(
                 f"Step {self.step} - Strategy: BUY ✅ but no affordable rows present (unexpected).",
                 2
