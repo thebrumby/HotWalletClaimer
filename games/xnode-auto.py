@@ -505,16 +505,15 @@ class XNodeAUClaimer(XNodeClaimer):
                 aff_cost  = self._human(aff['cost'])
                 aff_gain  = self._human(aff['gain'])
                 self.output(
-                    f"Step {self.step} - Best strategy = WAIT ⏳: "
-                    f"Not yet available '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}, ETA≈{bd_eta}) "
-                    f"beats affordable '{aff_title}' (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}).",
+                    f"Step {self.step} - Best strategy = WAIT: "
+                    f"'{bd_title}' available in {bd_eta} "
+                    f"beats already affordable '{aff_title}' which repays investment in {aff_roi}.",
                     2
                 )
             else:
                 self.output(
                     f"Step {self.step} - Best strategy = WAIT ⏳: "
-                    f"Best option is '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}), affordable in {bd_eta}. "
-                    f"No affordable upgrades available now.",
+                    f"Next available option will be '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}), affordable in {bd_eta}. ",
                     2
                 )
             return 0
@@ -535,8 +534,8 @@ class XNodeAUClaimer(XNodeClaimer):
                 bd_gain  = self._human(bd['gain'])
                 self.output(
                     f"Step {self.step} - Strategy: BUY ✅ "
-                    f"Choosing '{aff_title}' now (Δ/sec={aff_gain}, Cost={aff_cost}, ROI≈{aff_roi}) "
-                    f"over waiting {bd_eta} for '{bd_title}' (Δ/sec={bd_gain}, Cost={bd_cost}).",
+                    f"Choosing '{aff_title}' now "
+                    f"over waiting {bd_eta} for '{bd_title}'.",
                     2
                 )
             else:
@@ -781,6 +780,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
