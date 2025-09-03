@@ -460,11 +460,11 @@ class XNodeAUClaimer(XNodeClaimer):
         available_now_print.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
         not_yet_available.sort(key=lambda m: (m["eta_sec"], m["cost"], -m["gain"], m["title"] or ""))
               
-        self.output(f"Step {self.step} - Upgrades available with sensible ROI time: {len(available_now_print)}", 2)
+        self.output(f"Step {self.step} - Upgrades affordable now with sensible Return On Investment time: {len(available_now_print)}", 2)
         for m in available_now_print:
             self.output(_row_line(m, include_eta_when_disabled=False), 3)
         
-        self.output(f"Step {self.step} - Upgrades not yet available (not yet affordable): {len(not_yet_available)}", 2)
+        self.output(f"Step {self.step} - Upgrades not yet affordable: {len(not_yet_available)}", 2)
         for m in not_yet_available:
             self.output(_row_line(m, include_eta_when_disabled=True), 3)
 
@@ -780,6 +780,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
