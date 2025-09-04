@@ -430,7 +430,6 @@ class XNodeAUClaimer(XNodeClaimer):
         # --- Dynamic ROI cap widening (start at MAX_ROI_DAYS, grow to ULTIMATE_ROI_DAY) ---
         
         def _filter_actionable(rows, cap_sec):
-            """Return rows that are affordable *now* and within the ROI cap."""
             return [
                 m for m in rows
                 if m.get("parse_ok", True)
@@ -440,43 +439,35 @@ class XNodeAUClaimer(XNodeClaimer):
             ]
         
         roi_cap_days = MAX_ROI_DAYS
-        roi_cap_sec  = roi_cap_days * 24 * 3600
+        roi_cap_sec  = MAX_ROI_SEC
         
-        # We already have all_rows_metrics fully populated at this point.
-        actionable_now = _filter_actionable(all_rows_metrics, roi_cap_sec)
+        # If nothing affordable-now meets the base cap, gradually relax up to ULTIMATE_ROI_DAY
+        if not any(m.get("parse_ok", True)
+                   and not m.get("disabled")
+                   and math.isfinite(m.get("roi_sec", float('inf')))
+                   and m["roi_sec"] <= roi_cap_sec
+                   for m in all_rows_metrics):
+            for d in range(MAX_ROI_DAYS + 1, ULTIMATE_ROI_DAY + 1):
+                cap_sec = d * 24 * 3600
+                if any(m.get("parse_ok", True)
+                       and not m.get("disabled")
+                       and math.isfinite(m.get("roi_sec", float('inf')))
+                       and m["roi_sec"] <= cap_sec
+                       for m in all_rows_metrics):
+                    roi_cap_days = d
+                    roi_cap_sec  = cap_sec
+                    break
         
-        # If nothing is affordable under the current cap, widen the cap by 1 day each loop
-        # up to ULTIMATE_ROI_DAY. This keeps behavior sane on slow economies.
-        while not actionable_now and roi_cap_days < ULTIMATE_ROI_DAY:
-            roi_cap_days += 1
-            roi_cap_sec   = roi_cap_days * 24 * 3600
-            actionable_now = _filter_actionable(all_rows_metrics, roi_cap_sec)
+        self.output(f"Step {self.step} - ROI cap in effect: ≤ {roi_cap_days} day(s).", 3)
         
-        # Keep the disabled list as-is; we don't need an ROI cap for "not yet affordable".
-        disabled_considered = [
-            m for m in all_rows_metrics
-            if m.get("parse_ok", True) and m.get("disabled")
-        ]
-        
-        # (Optional) Print which cap we ended up using this scan, for transparency.
-        self.output(
-            f"Step {self.step} - Available upgrades ignored due to excessive time to repay investment (> {roi_cap_days}d): {len(ignored_long)}",
-            2
-        )
+        # Recompute actionable_now with the (possibly) widened cap
+        actionable_now = [m for m in all_rows_metrics
+                          if m.get("parse_ok", True)
+                          and not m.get("disabled")
+                          and math.isfinite(m.get("roi_sec", float('inf')))
+                          and m["roi_sec"] <= roi_cap_sec]
 
-        # From here on, use `roi_cap_sec` instead of `MAX_ROI_SEC` when you:
-        #   - print 'ignored_long'
-        #   - sort/decide on actionable candidates
-        # Replace checks like `m['roi_sec'] > MAX_ROI_SEC` with `m['roi_sec'] > roi_cap_sec`.
-        
-        ignored_long = [
-            m for m in all_rows_metrics
-            if m.get("parse_ok", True)
-            and math.isfinite(m.get("roi_sec", float("inf")))
-            and m["roi_sec"] > roi_cap_sec
-        ]     
-        
-        # --- 3) Group for pretty printing (priority 3) ---
+        # --- 4) Group for pretty printing (priority 3) ---
         def _row_line(m, include_eta_when_disabled=True):
             title = m.get("title") or "Unknown"
             level = m.get("level")
@@ -484,10 +475,11 @@ class XNodeAUClaimer(XNodeClaimer):
             cost_str  = self._human(m.get("cost", 0.0))
             roi_str   = f"ROI≈{self._hrs_str(m.get('roi_sec', float('inf')))}"
             tta_str   = f"TTA≈{self._hrs_str(m.get('time_to_afford', float('inf')))}"
-            parts = [f"{title} (Lvl {level}) → Δ/sec={delta_str}, Cost={cost_str}, {roi_str}, {tta_str}"]
-        
+            line = f"{title} (Lvl {level}) → Δ/sec={delta_str}, Cost={cost_str}, {roi_str}, {tta_str}"
+
             if include_eta_when_disabled and m.get("disabled"):
-                parts[0] += f", ETA≈{self._hrs_str(m.get('eta_sec', float('inf')))}"
+                line += f", ETA≈{self._hrs_str(m.get('eta_sec', float('inf')))}"
+
             flags = []
             if m.get("disabled"):
                 flags.append("disabled")
@@ -495,47 +487,50 @@ class XNodeAUClaimer(XNodeClaimer):
                 flags.append(m.get("skip_reason") or "parse-failed")
             if math.isfinite(m.get("roi_sec", float('inf'))) and m["roi_sec"] > roi_cap_sec:
                 flags.append(f"roi>{roi_cap_days}d")
-            sr = m.get("skip_reason")
-            if sr and sr not in flags:
-                flags.append(sr)
+            extra = m.get("skip_reason")
+            if extra and extra not in flags:
+                flags.append(extra)
             if flags:
-                parts[0] += f" [{', '.join(flags)}]"
-            return parts[0]
-        
-        # Split by sections
+                line += f" [{', '.join(flags)}]"
+            return line
+
+        # Build sections using the dynamic cap
         ignored_long = [m for m in all_rows_metrics
                         if m.get("parse_ok", True)
                         and math.isfinite(m.get("roi_sec", float('inf')))
-                        and m["roi_sec"] > MAX_ROI_SEC]
-        
+                        and m["roi_sec"] > roi_cap_sec]
+
         available_now_print = [m for m in all_rows_metrics
                                if m.get("parse_ok", True)
                                and not m.get("disabled")
                                and math.isfinite(m.get("roi_sec", float('inf')))
-                               and m["roi_sec"] <= MAX_ROI_SEC]
-        
+                               and m["roi_sec"] <= roi_cap_sec]
+
         not_yet_available = [m for m in all_rows_metrics
                              if m.get("parse_ok", True)
                              and m.get("disabled")]
-        
-        # Sort within each section for readability
-        ignored_long.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
+
+        # Sort inside each section (readability)
         available_now_print.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
         not_yet_available.sort(key=lambda m: (m["eta_sec"], m["cost"], -m["gain"], m["title"] or ""))
-              
+        ignored_long.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
+
+        # Print sections (priority 2 headers, priority 3 lines)
         self.output(f"Step {self.step} - Upgrades affordable now with sensible Return On Investment time: {len(available_now_print)}", 2)
         for m in available_now_print:
             self.output(_row_line(m, include_eta_when_disabled=False), 3)
-        
+
         self.output(f"Step {self.step} - Upgrades not yet affordable: {len(not_yet_available)}", 2)
         for m in not_yet_available:
             self.output(_row_line(m, include_eta_when_disabled=True), 3)
 
-        # Print sections (priority 3)
-        self.output(f"Step {self.step} - Available upgrades ignored due to excessive time to repay investment (> {MAX_ROI_DAYS}d): {len(ignored_long)}", 2)
+        self.output(
+            f"Step {self.step} - Available upgrades ignored due to excessive time to repay investment (> {roi_cap_days}d): {len(ignored_long)}",
+            2
+        )
         for m in ignored_long:
             self.output(_row_line(m, include_eta_when_disabled=False), 3)
-        
+                      
         # --- 4) Decision: WAIT vs BUY ---
         actionable_now.sort(key=lambda m: (m["roi_sec"], m["cost"], -m["gain"], m["title"] or ""))
         disabled_considered.sort(key=lambda m: (m["eta_sec"], m["cost"], -m["gain"], m["title"] or ""))
