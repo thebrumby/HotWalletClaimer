@@ -114,6 +114,11 @@ class XNodeAUClaimer(XNodeClaimer):
         import math, re, time
         from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
     
+        if ULTIMATE_ROI_DAY < MAX_ROI_DAYS:
+            self.output("Config warning: ULTIMATE_ROI_DAY < MAX_ROI_DAYS; using MAX_ROI_DAYS.", 3)
+            roi_cap_days = MAX_ROI_DAYS
+            roi_cap_sec = MAX_ROI_SEC
+        
         # --- 0) Enter iframe only if not already in game DOM ---
         if not self._in_game_dom():
             self.output(f"Step {self.step} - Not in game DOM; attempting to enter iframe…", 3)
