@@ -67,22 +67,10 @@ class XNodeAUClaimer(XNodeClaimer):
 
     def attempt_upgrade(self):
         self.output(f"Step {self.step} - Preparing to run the upgrader script - this may take some time.", 2)
-    
-        total_clicked = 0
-        max_iterations = 20          # safety cap so we don't loop forever
-        per_iter_pause = 0.6         # brief pause so the UI can settle
-    
-        for _ in range(max_iterations):
-            # one_per_pass=True means: evaluate + try to buy exactly one best upgrade
-            clicked = self.upgrade_all(one_per_pass=True, per_row_wait=6)
-            if clicked <= 0:
-                break  # either WAIT is better, or nothing affordable/sensible
-            total_clicked += clicked
-            time.sleep(per_iter_pause)  # let DOM update (levels, prices, balance)
-    
-        self.output(f"Step {self.step} - Upgrader session finished. Total upgrades this run: {total_clicked}", 2)
-        # Keep your original semantics: return False if we clicked something; True if we didn't
-        return (total_clicked == 0)
+        clicked = self.upgrade_all(max_passes=3, per_row_wait=6)
+        if clicked > 0:
+            return False
+        return True
         
     # ---- tiny helpers (put these inside your class, above upgrade_all) ----
     def _in_game_dom(self) -> bool:
@@ -100,7 +88,7 @@ class XNodeAUClaimer(XNodeClaimer):
         return "∞h" if not math.isfinite(seconds) else f"{seconds/3600.0:.2f}h"
     
     # ---- drop-in replacement for upgrade_all ----
-    def upgrade_all(self, one_per_pass=False, max_passes=2, per_row_wait=4):
+    def upgrade_all(self, max_passes=2, per_row_wait=4):
         """Scan upgrades, compute ROI/TTA/ETA, and upgrade in best-first order.
            Uses persisted self.profit_per_sec from Step 114 when available.
         """
@@ -649,63 +637,83 @@ class XNodeAUClaimer(XNodeClaimer):
                 2
             )
     
-        # If we only want a single upgrade this pass, click just this one and return.
-        if one_per_pass:
-            targets = [
-                ".//div[contains(@class,'Upgrader_right-wrap')]",
-                ".//div[contains(@class,'Upgrader_right-price_text')]",
-                ".//div[contains(@class,'Upgrader_right')]",
-                ".//button",
-                ".//*[self::div or self::span][contains(@class,'price') or contains(text(),'tflops')]",
-            ]
+        # --- 5) Click affordable in best-first order ---
+        ranked = []
+        for m in actionable_now:
+            lvl_key = m["level"] if isinstance(m["level"], int) else 10**9
+            ranked.append((m["roi_sec"], m["cost"], lvl_key, m["title"]))
+        ranked.sort(key=lambda x: (x[0], x[1], x[2], x[3]))
     
-            row = find_row_by_title_exact(aff_title)
-            if not row or row_is_effectively_disabled(row):
-                self.output(f"Step {self.step} - Chosen upgrade '{aff_title}' not clickable/visible anymore.", 2)
-                return 0
+        targets = [
+            ".//div[contains(@class,'Upgrader_right-wrap')]",
+            ".//div[contains(@class,'Upgrader_right-price_text')]",
+            ".//div[contains(@class,'Upgrader_right')]",
+            ".//button",
+            ".//*[self::div or self::span][contains(@class,'price') or contains(text(),'tflops')]",
+        ]
     
-            ctrl = find_one(row, targets)
-            if not ctrl:
-                self.output(f"Step {self.step} - Could not locate clickable control for '{aff_title}'.", 2)
-                return 0
+        effective_clicks = 0
     
-            lvl_before = get_level_num(row)
-            if not click_ctrl(ctrl, why="upgrade click (single)"):
-                self.output(f"Step {self.step} - Click failed on '{aff_title}'.", 3)
-                return 0
+        for p in range(max_passes):
+            acted = False
+            for _, _, _, title in ranked:
+                try:
+                    row = find_row_by_title_exact(title)
+                    if not row or row_is_effectively_disabled(row):
+                        continue
     
-            time.sleep(0.3)
-            row_fresh = find_row_by_title_exact(aff_title) or row
-            lvl_after = get_level_num(row_fresh)
-            became_disabled = row_is_effectively_disabled(row_fresh)
+                    ctrl = find_one(row, targets)
+                    if not ctrl:
+                        continue
     
-            success = False
-            if (lvl_after is None or lvl_before is None or lvl_after == lvl_before) and not became_disabled:
-                # 2nd nudge
-                ctrl2 = find_one(row_fresh, targets) or find_one(row, targets)
-                if ctrl2 and click_ctrl(ctrl2, why="upgrade click (single, retry)"):
+                    lvl_before = get_level_num(row)
+                    if not click_ctrl(ctrl, why="upgrade click (1)"):
+                        continue
+    
+                    acted = True
                     time.sleep(0.3)
-                    row_fresh2 = find_row_by_title_exact(aff_title) or row_fresh
-                    lvl_after2 = get_level_num(row_fresh2)
-                    became_disabled = row_is_effectively_disabled(row_fresh2)
-                    success = ((lvl_after2 is not None and lvl_before is not None and lvl_after2 > lvl_before)
-                               or became_disabled)
+    
+                    row_fresh = find_row_by_title_exact(title) or row
+                    lvl_after = get_level_num(row_fresh)
+                    became_disabled = row_is_effectively_disabled(row_fresh)
+    
+                    success = False
+                    if (lvl_after is None or lvl_before is None or lvl_after == lvl_before) and not became_disabled:
+                        ctrl2 = find_one(row_fresh, targets) or find_one(row, targets)
+                        if ctrl2 and click_ctrl(ctrl2, why="upgrade click (2)"):
+                            time.sleep(0.3)
+                            row_fresh2 = find_row_by_title_exact(title) or row_fresh
+                            lvl_after2 = get_level_num(row_fresh2)
+                            became_disabled = row_is_effectively_disabled(row_fresh2)
+                            success = ((lvl_after2 is not None and lvl_before is not None and lvl_after2 > lvl_before)
+                                       or became_disabled)
+                            if success:
+                                lvl_after = lvl_after2
+                    else:
+                        success = True
+    
                     if success:
-                        lvl_after = lvl_after2
-            else:
-                success = True
+                        effective_clicks += 1
+                        lvl_print = (
+                            f"{(lvl_before or 0) + 1}" if (lvl_after is None and isinstance(lvl_before, int))
+                            else (f"{lvl_after}" if isinstance(lvl_after, int)
+                                  else (f"{lvl_before}" if isinstance(lvl_before, int) else "?"))
+                        )
+                        self.output(f"Step {self.step} - Upgraded {title} at level {lvl_print}", 3)
     
-            if success:
-                lvl_print = (
-                    f"{(lvl_before or 0) + 1}" if (lvl_after is None and isinstance(lvl_before, int))
-                    else (f"{lvl_after}" if isinstance(lvl_after, int)
-                          else (f"{lvl_before}" if isinstance(lvl_before, int) else "?"))
-                )
-                self.output(f"Step {self.step} - Upgraded {aff_title} at level {lvl_print}", 3)
-                return 1
+                except StaleElementReferenceException:
+                    continue
+                except Exception as e:
+                    self.output(f"Step {self.step} - Upgrader row error ({title}): {e}", 3)
+                    continue
     
-            self.output(f"Step {self.step} - Upgrade for '{aff_title}' did not confirm; will reassess next pass.", 2)
-            return 0
+            if not acted:
+                break
+            if per_row_wait:
+                time.sleep(0.2)
+    
+        self.output(f"Step {self.step} - Upgrader loop finished. Effective upgrades: {effective_clicks}", 2)
+        return effective_clicks
         
     # --- helpers (fixed) ---  
     def _parse_qty(self, text: str) -> float:
