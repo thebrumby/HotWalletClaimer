@@ -28,8 +28,9 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from xnode import XNodeClaimer
 
 # ---------- module-level constants ----------
-MAX_ROI_DAYS = 31
+MAX_ROI_DAYS = 7
 MAX_ROI_SEC  = MAX_ROI_DAYS * 24 * 3600
+ULTIMATE_ROI_DAY = 21
 
 UNIT = {"K":1e3, "M":1e6, "B":1e9, "T":1e12, "P":1e15}
 # -------------------------------------------
@@ -67,10 +68,22 @@ class XNodeAUClaimer(XNodeClaimer):
 
     def attempt_upgrade(self):
         self.output(f"Step {self.step} - Preparing to run the upgrader script - this may take some time.", 2)
-        clicked = self.upgrade_all(max_passes=3, per_row_wait=6)
-        if clicked > 0:
-            return False
-        return True
+    
+        total_clicked = 0
+        max_iterations = 20          # safety cap so we don't loop forever
+        per_iter_pause = 0.6         # brief pause so the UI can settle
+    
+        for _ in range(max_iterations):
+            # one_per_pass=True means: evaluate + try to buy exactly one best upgrade
+            clicked = self.upgrade_all(one_per_pass=True, per_row_wait=6)
+            if clicked <= 0:
+                break  # either WAIT is better, or nothing affordable/sensible
+            total_clicked += clicked
+            time.sleep(per_iter_pause)  # let DOM update (levels, prices, balance)
+    
+        self.output(f"Step {self.step} - Upgrader session finished. Total upgrades this run: {total_clicked}", 2)
+        # Keep your original semantics: return False if we clicked something; True if we didn't
+        return (total_clicked == 0)
         
     # ---- tiny helpers (put these inside your class, above upgrade_all) ----
     def _in_game_dom(self) -> bool:
@@ -88,7 +101,7 @@ class XNodeAUClaimer(XNodeClaimer):
         return "∞h" if not math.isfinite(seconds) else f"{seconds/3600.0:.2f}h"
     
     # ---- drop-in replacement for upgrade_all ----
-    def upgrade_all(self, max_passes=2, per_row_wait=4):
+    def upgrade_all(self, one_per_pass=False, max_passes=2, per_row_wait=4):
         """Scan upgrades, compute ROI/TTA/ETA, and upgrade in best-first order.
            Uses persisted self.profit_per_sec from Step 114 when available.
         """
@@ -414,6 +427,55 @@ class XNodeAUClaimer(XNodeClaimer):
                 })
                 continue
         
+        # --- Dynamic ROI cap widening (start at MAX_ROI_DAYS, grow to ULTIMATE_ROI_DAY) ---
+        
+        def _filter_actionable(rows, cap_sec):
+            """Return rows that are affordable *now* and within the ROI cap."""
+            return [
+                m for m in rows
+                if m.get("parse_ok", True)
+                and not m.get("disabled")
+                and math.isfinite(m.get("roi_sec", float("inf")))
+                and m["roi_sec"] <= cap_sec
+            ]
+        
+        roi_cap_days = MAX_ROI_DAYS
+        roi_cap_sec  = roi_cap_days * 24 * 3600
+        
+        # We already have all_rows_metrics fully populated at this point.
+        actionable_now = _filter_actionable(all_rows_metrics, roi_cap_sec)
+        
+        # If nothing is affordable under the current cap, widen the cap by 1 day each loop
+        # up to ULTIMATE_ROI_DAY. This keeps behavior sane on slow economies.
+        while not actionable_now and roi_cap_days < ULTIMATE_ROI_DAY:
+            roi_cap_days += 1
+            roi_cap_sec   = roi_cap_days * 24 * 3600
+            actionable_now = _filter_actionable(all_rows_metrics, roi_cap_sec)
+        
+        # Keep the disabled list as-is; we don't need an ROI cap for "not yet affordable".
+        disabled_considered = [
+            m for m in all_rows_metrics
+            if m.get("parse_ok", True) and m.get("disabled")
+        ]
+        
+        # (Optional) Print which cap we ended up using this scan, for transparency.
+        self.output(
+            f"Step {self.step} - Available upgrades ignored due to excessive time to repay investment (> {roi_cap_days}d): {len(ignored_long)}",
+            2
+        )
+
+        # From here on, use `roi_cap_sec` instead of `MAX_ROI_SEC` when you:
+        #   - print 'ignored_long'
+        #   - sort/decide on actionable candidates
+        # Replace checks like `m['roi_sec'] > MAX_ROI_SEC` with `m['roi_sec'] > roi_cap_sec`.
+        
+        ignored_long = [
+            m for m in all_rows_metrics
+            if m.get("parse_ok", True)
+            and math.isfinite(m.get("roi_sec", float("inf")))
+            and m["roi_sec"] > roi_cap_sec
+        ]     
+        
         # --- 3) Group for pretty printing (priority 3) ---
         def _row_line(m, include_eta_when_disabled=True):
             title = m.get("title") or "Unknown"
@@ -431,8 +493,8 @@ class XNodeAUClaimer(XNodeClaimer):
                 flags.append("disabled")
             if not m.get("parse_ok", True):
                 flags.append(m.get("skip_reason") or "parse-failed")
-            if math.isfinite(m.get("roi_sec", float('inf'))) and m["roi_sec"] > MAX_ROI_SEC:
-                flags.append(f"roi>{MAX_ROI_DAYS}d")
+            if math.isfinite(m.get("roi_sec", float('inf'))) and m["roi_sec"] > roi_cap_sec:
+                flags.append(f"roi>{roi_cap_days}d")
             sr = m.get("skip_reason")
             if sr and sr not in flags:
                 flags.append(sr)
@@ -637,83 +699,63 @@ class XNodeAUClaimer(XNodeClaimer):
                 2
             )
     
-        # --- 5) Click affordable in best-first order ---
-        ranked = []
-        for m in actionable_now:
-            lvl_key = m["level"] if isinstance(m["level"], int) else 10**9
-            ranked.append((m["roi_sec"], m["cost"], lvl_key, m["title"]))
-        ranked.sort(key=lambda x: (x[0], x[1], x[2], x[3]))
+        # If we only want a single upgrade this pass, click just this one and return.
+        if one_per_pass:
+            targets = [
+                ".//div[contains(@class,'Upgrader_right-wrap')]",
+                ".//div[contains(@class,'Upgrader_right-price_text')]",
+                ".//div[contains(@class,'Upgrader_right')]",
+                ".//button",
+                ".//*[self::div or self::span][contains(@class,'price') or contains(text(),'tflops')]",
+            ]
     
-        targets = [
-            ".//div[contains(@class,'Upgrader_right-wrap')]",
-            ".//div[contains(@class,'Upgrader_right-price_text')]",
-            ".//div[contains(@class,'Upgrader_right')]",
-            ".//button",
-            ".//*[self::div or self::span][contains(@class,'price') or contains(text(),'tflops')]",
-        ]
+            row = find_row_by_title_exact(aff_title)
+            if not row or row_is_effectively_disabled(row):
+                self.output(f"Step {self.step} - Chosen upgrade '{aff_title}' not clickable/visible anymore.", 2)
+                return 0
     
-        effective_clicks = 0
+            ctrl = find_one(row, targets)
+            if not ctrl:
+                self.output(f"Step {self.step} - Could not locate clickable control for '{aff_title}'.", 2)
+                return 0
     
-        for p in range(max_passes):
-            acted = False
-            for _, _, _, title in ranked:
-                try:
-                    row = find_row_by_title_exact(title)
-                    if not row or row_is_effectively_disabled(row):
-                        continue
+            lvl_before = get_level_num(row)
+            if not click_ctrl(ctrl, why="upgrade click (single)"):
+                self.output(f"Step {self.step} - Click failed on '{aff_title}'.", 3)
+                return 0
     
-                    ctrl = find_one(row, targets)
-                    if not ctrl:
-                        continue
+            time.sleep(0.3)
+            row_fresh = find_row_by_title_exact(aff_title) or row
+            lvl_after = get_level_num(row_fresh)
+            became_disabled = row_is_effectively_disabled(row_fresh)
     
-                    lvl_before = get_level_num(row)
-                    if not click_ctrl(ctrl, why="upgrade click (1)"):
-                        continue
-    
-                    acted = True
+            success = False
+            if (lvl_after is None or lvl_before is None or lvl_after == lvl_before) and not became_disabled:
+                # 2nd nudge
+                ctrl2 = find_one(row_fresh, targets) or find_one(row, targets)
+                if ctrl2 and click_ctrl(ctrl2, why="upgrade click (single, retry)"):
                     time.sleep(0.3)
-    
-                    row_fresh = find_row_by_title_exact(title) or row
-                    lvl_after = get_level_num(row_fresh)
-                    became_disabled = row_is_effectively_disabled(row_fresh)
-    
-                    success = False
-                    if (lvl_after is None or lvl_before is None or lvl_after == lvl_before) and not became_disabled:
-                        ctrl2 = find_one(row_fresh, targets) or find_one(row, targets)
-                        if ctrl2 and click_ctrl(ctrl2, why="upgrade click (2)"):
-                            time.sleep(0.3)
-                            row_fresh2 = find_row_by_title_exact(title) or row_fresh
-                            lvl_after2 = get_level_num(row_fresh2)
-                            became_disabled = row_is_effectively_disabled(row_fresh2)
-                            success = ((lvl_after2 is not None and lvl_before is not None and lvl_after2 > lvl_before)
-                                       or became_disabled)
-                            if success:
-                                lvl_after = lvl_after2
-                    else:
-                        success = True
-    
+                    row_fresh2 = find_row_by_title_exact(aff_title) or row_fresh
+                    lvl_after2 = get_level_num(row_fresh2)
+                    became_disabled = row_is_effectively_disabled(row_fresh2)
+                    success = ((lvl_after2 is not None and lvl_before is not None and lvl_after2 > lvl_before)
+                               or became_disabled)
                     if success:
-                        effective_clicks += 1
-                        lvl_print = (
-                            f"{(lvl_before or 0) + 1}" if (lvl_after is None and isinstance(lvl_before, int))
-                            else (f"{lvl_after}" if isinstance(lvl_after, int)
-                                  else (f"{lvl_before}" if isinstance(lvl_before, int) else "?"))
-                        )
-                        self.output(f"Step {self.step} - Upgraded {title} at level {lvl_print}", 3)
+                        lvl_after = lvl_after2
+            else:
+                success = True
     
-                except StaleElementReferenceException:
-                    continue
-                except Exception as e:
-                    self.output(f"Step {self.step} - Upgrader row error ({title}): {e}", 3)
-                    continue
+            if success:
+                lvl_print = (
+                    f"{(lvl_before or 0) + 1}" if (lvl_after is None and isinstance(lvl_before, int))
+                    else (f"{lvl_after}" if isinstance(lvl_after, int)
+                          else (f"{lvl_before}" if isinstance(lvl_before, int) else "?"))
+                )
+                self.output(f"Step {self.step} - Upgraded {aff_title} at level {lvl_print}", 3)
+                return 1
     
-            if not acted:
-                break
-            if per_row_wait:
-                time.sleep(0.2)
-    
-        self.output(f"Step {self.step} - Upgrader loop finished. Effective upgrades: {effective_clicks}", 2)
-        return effective_clicks
+            self.output(f"Step {self.step} - Upgrade for '{aff_title}' did not confirm; will reassess next pass.", 2)
+            return 0
         
     # --- helpers (fixed) ---  
     def _parse_qty(self, text: str) -> float:
@@ -810,17 +852,3 @@ def main():
 if __name__ == "__main__":
 
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
