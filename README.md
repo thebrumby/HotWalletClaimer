@@ -4,7 +4,7 @@ Automate claims in popular Telegram nini-games, and track their status. For a fu
 
 ---
 
-Hello, Fellow Crypto Game Enthusiasts! Maintaining the Telegram Claim Bot takes several hours per week, and we currently receive nothing back in donations. If you find the scripts useful and want to support our ongoing development, consider becoming a [Patreon](https://www.patreon.com/TelegramClaimBot) or treat us to a [cup of coffee](https://www.buymeacoffee.com/HotWallletBot) ☕ for as little as $5. Your contribution helps keep the project actively maintained! 
+Hello, Fellow Crypto Game Enthusiasts! Maintaining the Telegram Claim Bot takes several hours per week, and we currently receive nothing back in donations. If you find the scripts useful and want to support our ongoing development, consider becoming a [Patreon](https://www.patreon.com/TelegramClaimBot) or treat us to a [cup of coffee](https://www.buymeacoffee.com/philstockdale) ☕ for as little as $5. Your contribution helps keep the project actively maintained! 
 
 You can also support us at no cost by subscribing to and watching our [YouTube channel](https://www.youtube.com/channel/UCygSGwCLIaQAZiYs1lLcRGw), where we share more content and insights. Prefer crypto? Donations are welcome of any token through any of these [30 supported chains](https://github.com/thebrumby/HotWalletClaimer/blob/main/extras/chains.md), including BSC, Polygon, or Ethereum, to:
 ```
