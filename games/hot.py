@@ -55,7 +55,7 @@ class HotClaimer(Claimer):
             # Probe presence/scrollability of "Add widget" without forcing a click
             probe_xpath = "//p[normalize-space()='Add widget']"
             present = self.move_and_click(
-                probe_xpath, 20, False,
+                probe_xpath, 10, False,
                 "test if 'Add widget' present (may not be present)",
                 self.step, "clickable"
             )
@@ -102,12 +102,20 @@ class HotClaimer(Claimer):
             self.output(f"Step {self.step} - Was successfully able to enter the seed phrase...", 3)
             self.increase_step()
 
+            xpath = "//button[.//input[@type='checkbox']]"
+            self.move_and_click(xpath, 30, True, "select the tickbox to agree to the terms", self.step, "clickable")
+            self.increase_step()
+
             xpath = "//button[contains(text(), 'Continue')]"
             self.move_and_click(xpath, 30, True, "click continue after seedphrase entry", self.step, "clickable")
             self.increase_step()
 
             xpath = "//button[contains(text(), 'Continue')]"
             self.move_and_click(xpath, 180, True, "click continue at account selection screen", self.step, "clickable")
+            self.increase_step()
+
+            xpath = "//button[contains(., 'Accept')]"
+            self.move_and_click(xpath, 180, True, "accept new terms & conditions", self.step, "clickable")
             self.increase_step()
 
             self.add_widget_and_open_storage()
@@ -148,7 +156,7 @@ class HotClaimer(Claimer):
         self.add_widget_and_open_storage()
         self.increase_step()
 
-        xpath = "//h4[normalize-space(.)='Storage']"
+        xpath = "//div[contains(@class,'sc-cMxnOw')]"
         self.move_and_click(xpath, 30, True, "click the 'storage' link", self.step, "clickable")
         self.increase_step()
 
