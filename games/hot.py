@@ -115,7 +115,7 @@ class HotClaimer(Claimer):
             self.increase_step()
 
             xpath = "//button[contains(., 'Accept')]"
-            self.move_and_click(xpath, 180, True, "accept new terms & conditions", self.step, "clickable")
+            self.move_and_click(xpath, 5, True, "accept new terms & conditions", self.step, "clickable")
             self.increase_step()
 
             self.add_widget_and_open_storage()
@@ -134,6 +134,10 @@ class HotClaimer(Claimer):
         low_near = True
         
         self.launch_iframe()
+
+        xpath = "//button[contains(., 'Accept')]"
+        self.move_and_click(xpath, 5, True, "accept new terms & conditions", self.step, "clickable")
+        self.increase_step()
 
         xpath = "(//p[normalize-space(.)='NEAR']/parent::div/following-sibling::div//p[last()])[1]"
         self.move_and_click(xpath, 30, False, "move to the 'Near' balance.", self.step, "visible")
