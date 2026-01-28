@@ -439,8 +439,9 @@ class Claimer:
         step_int = int(self.step) + 1
         self.step = f"{step_int:02}"
 
-    def get_session_id(self):
-        """Prompts the user for a session ID or determines the next sequential ID based on a 'Wallet' prefix.
+    def get_session_id(self) -> str:
+        """
+        Prompts the user for a session ID or determines the next sequential ID based on 'Wallet' prefix.
 
         Returns:
             str: The entered session ID or the automatically generated sequential ID.
@@ -448,33 +449,29 @@ class Claimer:
         self.output(f"Your session will be prefixed with: {self.prefix}", 1)
         user_input = input("Enter your unique Session Name here, or hit <enter> for the next sequential wallet: ").strip()
 
-        # Set the directory where session folders are stored
         screenshots_dir = "./screenshots/"
 
-        # Ensure the directory exists to avoid FileNotFoundError
         if not os.path.exists(screenshots_dir):
             os.makedirs(screenshots_dir)
 
-        # List contents of the directory
         try:
             dir_contents = os.listdir(screenshots_dir)
         except Exception as e:
-            self.output(f"Error accessing the directory: {e}", 1)
-            return None  # or handle the error differently
+            self.output(f"Error accessing directory: {e}", 1)
+            return f"{self.prefix}Wallet1"
 
-        # Filter directories with the 'Wallet' prefix and extract the numeric parts
-        wallet_dirs = [int(dir_name.replace(self.prefix + 'Wallet', ''))
-                    for dir_name in dir_contents
-                    if dir_name.startswith(self.prefix + 'Wallet') and dir_name[len(self.prefix) + 6:].isdigit()]
+        wallet_dirs = [
+            int(dir_name.replace(self.prefix + 'Wallet', ''))
+            for dir_name in dir_contents
+            if dir_name.startswith(self.prefix + 'Wallet') and dir_name[len(self.prefix) + 6:].isdigit()
+        ]
 
-        # Calculate the next wallet ID
         next_wallet_id = max(wallet_dirs) + 1 if wallet_dirs else 1
 
-        # Use the next sequential wallet ID if no user input was provided
         if not user_input:
-            user_input = f"Wallet{next_wallet_id}"  # Ensuring the full ID is prefixed correctly
+            user_input = f"Wallet{next_wallet_id}"
 
-        return self.prefix+user_input
+        return self.prefix + user_input
 
     def prompt_user_agent(self):
         print (f"Step {self.step} - Please enter the User-Agent string you wish to use or press enter for default.")
