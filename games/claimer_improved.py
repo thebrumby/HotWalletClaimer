@@ -20,7 +20,7 @@ DEFAULT_TIMEOUT = 30
 QR_CODE_TIMEOUT = 30
 OTP_TIMEOUT = 20
 FLOOD_WAIT_TIMEOUT = 15
-2FA_TIMEOUT = 30
+TWOFactor_TIMEOUT = 30
 STORAGE_OFFLINE_TIMEOUT = 10
 ELEMENT_CLICK_TIMEOUT = 10
 IMPLICIT_WAIT = 5
@@ -694,7 +694,7 @@ class Claimer:
         """
         try:
             self.increase_step()
-            WebDriverWait(self.driver, 2FA_TIMEOUT).until(
+            WebDriverWait(self.driver, TWOFactor_TIMEOUT).until(
                 lambda d: d.execute_script('return document.readyState') == 'complete'
             )
             xpath = "//input[@type='password' and contains(@class, 'input-field-input')]"
