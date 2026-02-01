@@ -1,0 +1,34 @@
+{
+  "selectors": {
+    "skip_button": "//button[normalize-space(text())='skip']",
+    "claim_button": "//button[normalize-space(text())='claim']",
+    "collect_button": "//button[normalize-space()='собрать']",
+    "auto_farm_checkbox": "//div[contains(@class,'AutoFarmChecker')]//div[contains(@class,'CheckBox')]",
+    "auto_farm_checkbox_wrapper": ("//div[contains(@class,'AutoFarmChecker')]"
+                                   "//div[contains(@class,'CheckBox')]/div[contains(@class,'CheckBox_wrapper')]"),
+    "time_tracker": "//div[@class='TimeTracker']//span[contains(@class,'TimeTracker_text')]",
+    "upgrades_page": ("//div[contains(@class,'UpgradesPage-items')]"
+                     "| //div[contains(@class,'Upgrader')]"
+                     "| //div[contains(@class,'UpgradesPage')]"),
+    "play_button": ("//div[contains(@class,'new-message-bot-commands-view')][contains(normalize-space(.),'Play')]")
+  },
+  "price_elements": {
+    "cost": ".//div[contains(@class,'Upgrader_right-price_text')]",
+    "income": ".//div[contains(@class,'Upgrader_income')]/span[2]"
+  },
+  "titles": {
+    "upgrader_row": ".//div[contains(@class,'Upgrader')]",
+    "upgrade_title": ".//h2[contains(@class,'Upgrader_text-title')]",
+    "upgrade_level": ".//h3[contains(@class,'Upgrader_text-lvl')]"
+  },
+  "container": {
+    "upgrades_items": "//div[contains(@class,'UpgradesPage-items')]",
+    "upgraders": "//div[contains(@class,'Upgrader')]"
+  },
+  "buttons": {
+    "upgrade_click": (".//div[contains(@class,'Upgrader_right-wrap')]"
+                      "| .//div[contains(@class,'Upgrader_right')]"),
+    "close_button": "//button[contains(@class,'btn-close')]",
+    "done_button": "//button[normalize-space(text())='Done']"
+  }
+}
