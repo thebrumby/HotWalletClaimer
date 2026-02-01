@@ -2135,7 +2135,3 @@ class Claimer:
             self.output(f"Step {self.step} - An error occurred: {e}", 3)
 
             return False
-
-
-
-
