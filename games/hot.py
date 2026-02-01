@@ -188,7 +188,7 @@ class HotClaimer(Claimer):
         self.add_widget_and_open_storage()
         self.increase_step()
 
-        xpath = "//div[contains(@class,'sc-cMxnOw')]"
+        xpath = "//h4[normalize-space(.)='HOT Balance']"
         self.move_and_click(xpath, 30, True, "click the 'storage' link", self.step, "clickable")
         self.increase_step()
 
