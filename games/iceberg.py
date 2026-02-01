@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 import requests
 
-from claimer import Claimer
+from claimer_improved import Claimer
 
 class IcebergClaimer(Claimer):
 

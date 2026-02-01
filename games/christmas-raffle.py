@@ -26,7 +26,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 import requests
 import urllib.request
-from claimer import Claimer
+from claimer_improved import Claimer
 
 class SpellClaimer(Claimer):
 

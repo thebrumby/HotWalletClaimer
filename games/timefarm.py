@@ -23,7 +23,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
-from claimer import Claimer
+from claimer_improved import Claimer
 import requests
 from datetime import date
 import urllib.request

@@ -25,7 +25,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 
-from claimer import Claimer
+from claimer_improved import Claimer
 
 class MDAOClaimer(Claimer):
 
