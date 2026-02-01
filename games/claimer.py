@@ -7,6 +7,7 @@ import json
 import getpass
 import random
 import subprocess
+from pathlib import Path
 from PIL import Image
 from pyzbar.pyzbar import decode
 import qrcode_terminal
@@ -24,14 +25,16 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 import requests
+from core.logger import GameLogger
 
 class Claimer:
 
     def __init__(self):
+        self.logger = GameLogger(__name__, self.settings['verboseLevel'])
         self.initialize_settings()
         self.load_settings()
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
-        print(f"Initialising the {self.prefix} Wallet Auto-claim Python Script - Good Luck!")
+        self.logger.info(f"Initialising the {self.prefix} Wallet Auto-claim Python Script")
 
         self.imported_seedphrase = None
 
@@ -313,16 +316,26 @@ class Claimer:
             self.output(f"{key}: {value}", 1)
         self.output("", 1)
 
-    def output(self, string, level=2):
+    def output(self, string: str, level: int = 2) -> None:
+        """
+        Log a message with configurable verbosity level.
+
+        Args:
+            string: Message to log
+            level: Verbosity level (1=warning, 2=info, 3=debug)
+        """
         if self.settings['verboseLevel'] >= level:
-            print(string)
+            self.logger.info(string)
+
+        # Fetch Telegram chat ID if not configured
         if self.settings['telegramBotToken'] and not self.settings['telegramBotChatId']:
             try:
                 self.settings['telegramBotChatId'] = self.get_telegram_bot_chat_id()
-                self.save_settings()  # Save the settings after getting the chat ID
-            except ValueError as e:
+                self.save_settings()
+            except ValueError:
                 pass
-                # print(f"Error fetching Telegram chat ID: {e}")
+
+        # Send to Telegram if configured
         if self.settings['telegramBotChatId'] and self.wallet_id and self.settings['telegramVerboseLevel'] >= level:
             self.send_message(string)
 
