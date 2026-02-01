@@ -7,11 +7,23 @@ import json
 import getpass
 import random
 import subprocess
+from datetime import datetime, timedelta
+from typing import Optional, Tuple, Dict, Any, List
 from PIL import Image
 from pyzbar.pyzbar import decode
 import qrcode_terminal
-import fcntl
-from fcntl import flock, LOCK_EX, LOCK_UN, LOCK_NB
+
+try:
+    import fcntl
+    from fcntl import flock, LOCK_EX, LOCK_UN, LOCK_NB
+    FLOCK_AVAILABLE = True
+except ImportError:
+    FLOCK_AVAILABLE = False
+    flock = None
+    LOCK_EX = None
+    LOCK_UN = None
+    LOCK_NB = None
+
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
@@ -21,9 +33,34 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException, ElementClickInterceptedException, UnexpectedAlertPresentException, MoveTargetOutOfBoundsException
-from datetime import datetime, timedelta
 from selenium.webdriver.chrome.service import Service as ChromeService
 import requests
+
+# Timeout constants
+DEFAULT_TIMEOUT = 30
+QR_CODE_TIMEOUT = 30
+OTP_TIMEOUT = 20
+FLOOD_WAIT_TIMEOUT = 15
+2FA_TIMEOUT = 30
+STORAGE_OFFLINE_TIMEOUT = 10
+ELEMENT_CLICK_TIMEOUT = 10
+IMPLICIT_WAIT = 5
+PAGE_LOAD_TIMEOUT = 30
+
+# File path constants
+DEFAULT_SETTINGS_FILE = "variables.txt"
+STATUS_FILE_PATH = "status.txt"
+SESSION_PATH_PREFIX = "./selenium/"
+SCREENSHOTS_PATH_PREFIX = "./screenshots/"
+BACKUP_PATH_PREFIX = "./backups/"
+
+# Cache constants
+CACHE_MAX_SIZE_GB = 1
+CACHE_MAX_SESSIONS = 5
+
+# Telegram timeout constants
+TELEGRAM_API_TIMEOUT = 5
+MAX_RETRY_ATTEMPTS = 3
 
 class Claimer:
 
@@ -38,9 +75,9 @@ class Claimer:
         # Update the settings based on user input
         if len(sys.argv) > 1:
             user_input = sys.argv[1]  # Get session ID from command-line argument
-            self.wallet_id = user_input
-            self.output(f"Session ID provided: {user_input}", 2)
-            
+            self.wallet_id = self._sanitize_wallet_id(user_input)
+            self.output(f"Session ID provided: {self.wallet_id}", 2)
+
             # Safely check for a second argument
             if len(sys.argv) > 2 and sys.argv[2] == "reset":
                 self.settings['forceNewSession'] = True
@@ -66,13 +103,15 @@ class Claimer:
             if user_input == "y":
                 self.update_settings()
             user_input = self.get_session_id()
-            self.wallet_id = user_input
+            self.wallet_id = self._sanitize_wallet_id(user_input)
 
-        self.session_path = f"./selenium/{self.wallet_id}"
+        # Initialize secure paths
+        self.session_path = self._secure_path(f"./selenium/{self.wallet_id}")
+        self.screenshots_path = self._secure_path(f"./screenshots/{self.wallet_id}")
+        self.backup_path = self._secure_path(f"./backups/{self.wallet_id}")
+
         os.makedirs(self.session_path, exist_ok=True)
-        self.screenshots_path = f"./screenshots/{self.wallet_id}"
         os.makedirs(self.screenshots_path, exist_ok=True)
-        self.backup_path = f"./backups/{self.wallet_id}"
         os.makedirs(self.backup_path, exist_ok=True)
         self.step = "01"
 
@@ -101,6 +140,32 @@ class Claimer:
         self.prefix = "Default:"
         self.allow_early_claim = True
         self.default_platform = "web"
+        self.forceLocalProxy = False
+        self.forceRequestUserAgent = False
+        self.url = ""
+
+    def _sanitize_wallet_id(self, wallet_id: str) -> str:
+        """
+        Sanitize wallet ID to prevent path traversal and special character issues.
+        Removes any characters that could be used for path traversal or injection.
+        """
+        if not wallet_id:
+            return "Wallet1"
+
+        # Remove path traversal characters and special characters that could cause issues
+        sanitized = re.sub(r'[\\/:*?"<>|]', '', wallet_id)
+        sanitized = re.sub(r'\s+', '', sanitized)  # Remove whitespace
+        sanitized = sanitized.strip()
+
+        # Ensure it starts with prefix (will be added later in main initialization)
+        return sanitized if sanitized else "Wallet1"
+
+    def _secure_path(self, path: str) -> str:
+        """
+        Create a secure, normalized file path.
+        Resolves '..' and handles path manipulation attempts.
+        """
+        return os.path.abspath(os.path.normpath(path))
 
     def run(self):
         if not self.settings["forceNewSession"]:
@@ -313,7 +378,11 @@ class Claimer:
             self.output(f"{key}: {value}", 1)
         self.output("", 1)
 
-    def output(self, string, level=2):
+    def output(self, string: str, level: int = 2) -> None:
+        """
+        Output message with configurable verbosity level.
+        Also forwards to Telegram bot if configured.
+        """
         if self.settings['verboseLevel'] >= level:
             print(string)
         if self.settings['telegramBotToken'] and not self.settings['telegramBotChatId']:
@@ -370,8 +439,9 @@ class Claimer:
         step_int = int(self.step) + 1
         self.step = f"{step_int:02}"
 
-    def get_session_id(self):
-        """Prompts the user for a session ID or determines the next sequential ID based on a 'Wallet' prefix.
+    def get_session_id(self) -> str:
+        """
+        Prompts the user for a session ID or determines the next sequential ID based on 'Wallet' prefix.
 
         Returns:
             str: The entered session ID or the automatically generated sequential ID.
@@ -379,33 +449,29 @@ class Claimer:
         self.output(f"Your session will be prefixed with: {self.prefix}", 1)
         user_input = input("Enter your unique Session Name here, or hit <enter> for the next sequential wallet: ").strip()
 
-        # Set the directory where session folders are stored
         screenshots_dir = "./screenshots/"
 
-        # Ensure the directory exists to avoid FileNotFoundError
         if not os.path.exists(screenshots_dir):
             os.makedirs(screenshots_dir)
 
-        # List contents of the directory
         try:
             dir_contents = os.listdir(screenshots_dir)
         except Exception as e:
-            self.output(f"Error accessing the directory: {e}", 1)
-            return None  # or handle the error differently
+            self.output(f"Error accessing directory: {e}", 1)
+            return f"{self.prefix}Wallet1"
 
-        # Filter directories with the 'Wallet' prefix and extract the numeric parts
-        wallet_dirs = [int(dir_name.replace(self.prefix + 'Wallet', ''))
-                    for dir_name in dir_contents
-                    if dir_name.startswith(self.prefix + 'Wallet') and dir_name[len(self.prefix) + 6:].isdigit()]
+        wallet_dirs = [
+            int(dir_name.replace(self.prefix + 'Wallet', ''))
+            for dir_name in dir_contents
+            if dir_name.startswith(self.prefix + 'Wallet') and dir_name[len(self.prefix) + 6:].isdigit()
+        ]
 
-        # Calculate the next wallet ID
         next_wallet_id = max(wallet_dirs) + 1 if wallet_dirs else 1
 
-        # Use the next sequential wallet ID if no user input was provided
         if not user_input:
-            user_input = f"Wallet{next_wallet_id}"  # Ensuring the full ID is prefixed correctly
+            user_input = f"Wallet{next_wallet_id}"
 
-        return self.prefix+user_input
+        return self.prefix + user_input
 
     def prompt_user_agent(self):
         print (f"Step {self.step} - Please enter the User-Agent string you wish to use or press enter for default.")

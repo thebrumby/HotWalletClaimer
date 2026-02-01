@@ -1,0 +1,54 @@
+---
+name: Create Security PR
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  create-pr:
+    if: contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check if PR already exists
+        id: check-pr
+        run: |
+          # Check if there's already a PR for security improvements
+          PR_COUNT=$(gh pr list --search "security" --state open --json number --jq '. | length')
+          if [ "$PR_COUNT" -gt 0 ]; then
+            echo "PR already exists"
+            exit 1
+          fi
+
+      - name: Run OpenCode
+        uses: anomalyco/opencode/github@latest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          model: anthropic/claude-sonnet-4-20250514
+          prompt: |
+            Please implement the following security improvements for the HotWalletClaimer project:
+
+            1. Add games/utils.py utility module with:
+               - SecurityUtils class with sanitization and validation methods
+               - Constants class for timeout values
+               - ErrorHandlingUtils class for safe JSON operations
+               - LoggingUtils class
+
+            2. Add SECURITY_ENHANCEMENTS.md documentation
+
+            3. Add ENHANCEMENTS_README.md summary
+
+            All code must be in English and backward compatible.
+
+            Create a new branch "feature/security-utilities" and create a PR with these changes.
