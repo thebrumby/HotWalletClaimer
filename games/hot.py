@@ -110,12 +110,36 @@ class HotClaimer(Claimer):
             self.move_and_click(xpath, 30, True, "click continue after seedphrase entry", self.step, "clickable")
             self.increase_step()
 
-            xpath = "//button[contains(text(), 'Continue')]"
-            self.move_and_click(xpath, 180, True, "click continue at account selection screen", self.step, "clickable")
+
+            self.output(f"Step {self.step} - Attempting to click broken Continue button.", 2)
+            self.driver.execute_script("""
+                const timeout = 180000; // 180s
+                const interval = 300;   // poll every 300ms
+                const start = Date.now();
+
+                return new Promise((resolve, reject) => {
+                    const timer = setInterval(() => {
+                        const btn = [...document.querySelectorAll('button')]
+                            .find(b => b.textContent && b.textContent.trim().includes('Continue'));
+
+                        if (btn) {
+                            btn.scrollIntoView({ block: 'center', inline: 'center' });
+                            btn.click();
+                            clearInterval(timer);
+                            resolve(true);
+                        }
+
+                        if (Date.now() - start > timeout) {
+                            clearInterval(timer);
+                            reject('Continue button not found within 180s');
+                        }
+                    }, interval);
+                });
+            """)
             self.increase_step()
 
-            xpath = "//button[contains(., 'Accept')]"
-            self.move_and_click(xpath, 5, True, "accept new terms & conditions", self.step, "clickable")
+            xpath = "//button[contains(., 'Got it')]"
+            self.move_and_click(xpath, 30, True, "accept new terms & conditions", self.step, "clickable")
             self.increase_step()
 
             self.add_widget_and_open_storage()
@@ -136,7 +160,11 @@ class HotClaimer(Claimer):
         self.launch_iframe()
 
         xpath = "//button[contains(., 'Accept')]"
-        self.move_and_click(xpath, 5, True, "accept new terms & conditions", self.step, "clickable")
+        self.move_and_click(xpath, 10, True, "accept new terms & conditions", self.step, "clickable")
+        self.increase_step()
+
+        xpath = "//button[contains(., 'Got it')]"
+        self.move_and_click(xpath, 10, True, "accept new terms & conditions", self.step, "clickable")
         self.increase_step()
 
         xpath = "(//p[normalize-space(.)='NEAR']/parent::div/following-sibling::div//p[last()])[1]"
