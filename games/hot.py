@@ -160,11 +160,11 @@ class HotClaimer(Claimer):
         self.launch_iframe()
 
         xpath = "//button[contains(., 'Accept')]"
-        self.move_and_click(xpath, 10, True, "accept new terms & conditions", self.step, "clickable")
+        self.move_and_click(xpath, 10, True, "accept terms & conditions", self.step, "clickable")
         self.increase_step()
 
         xpath = "//button[contains(., 'Got it')]"
-        self.move_and_click(xpath, 10, True, "accept new terms & conditions", self.step, "clickable")
+        self.move_and_click(xpath, 10, True, "accept the new terms & conditions!", self.step, "clickable")
         self.increase_step()
 
         xpath = "(//p[normalize-space(.)='NEAR']/parent::div/following-sibling::div//p[last()])[1]"
