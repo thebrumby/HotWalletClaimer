@@ -1,0 +1,46 @@
+{
+  "selectors": {
+    "start_app_button": "//a[@href='https://t.me/herewalletbot/app'] | //button[.//span[contains(@class,'reply-markup-button-text') and contains(normalize-space(),'Create HOT Wallet')]]",
+    "start_app_menu_item": "//a[.//span[contains(@class, 'peer-title') and normalize-space(text())='HOT Wallet']]",
+    "add_widget": "//p[normalize-space()='Add widget']",
+    "storage_link": "(//h4[contains(normalize-space(.), 'Storage')])[last()]",
+    "import_account_button": "//button[.//p[normalize-space()='Import account']]",
+    "seed_phrase_input": "//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea",
+    "terms_checkbox": "//button[.//input[@type='checkbox']]",
+    "continue_button": "//button[contains(text(), 'Continue')]",
+    "got_it_button": "//button[contains(., 'Got it')]",
+    "accept_button": "//button[contains(., 'Accept')]",
+    "near_balance": "//p[normalize-space(.)='NEAR']/parent::div/following-sibling::div//p[last()]",
+    "storage_element": "//div[contains(@class,'sc-cMxnOw')]",
+    "check_news_button": "//button[contains(text(), 'Check NEWS')]",
+    "claim_button": "//button[contains(text(), 'Claim HOT')]",
+    "spinner": "//*[contains(@class, 'spinner')]",
+    "storage_xpath": "//h4[text()='Storage']",
+    "wait_time": "//div[contains(., 'Storage')]//p[contains(., 'Filled') or contains(., 'to fill')]",
+    "storage_profit": "//div[div[p[text()='Storage']]]//p[last()]",
+    "balance": "//p[contains(text(), 'HOT')]/following-sibling::img/following-sibling::p"
+  },
+  "xpaths": {
+    "extract": {
+      "start_app_button": "//a[@href='https://t.me/herewalletbot/app'] | //button[.//span[contains(@class,'reply-markup-button-text') and contains(normalize-space(),'Create HOT Wallet')]]",
+      "add_widget": "//p[normalize-space()='Add widget']",
+      "import_account": "//button[.//p[normalize-space()='Import account']]"
+    },
+    "buttons": {
+      "continue": "//button[contains(text(), 'Continue')]",
+      "got_it": "//button[contains(., 'Got it')]",
+      "accept": "//button[contains(., 'Accept')]",
+      "check_news": "//button[contains(text(), 'Check NEWS')]",
+      "claim": "//button[contains(text(), 'Claim HOT')]"
+    },
+    "inputs": {
+      "seed_phrase": "//p[contains(text(), 'Seed or private key')]/ancestor-or-self::*/textarea",
+      "terms": "//button[.//input[@type='checkbox']]"
+    },
+    "elements": {
+      "near_balance": "//p[normalize-space(.)='NEAR']/parent::div/following-sibling::div//p[last()]",
+      "storage": "//div[contains(@class,'sc-cMxnOw')]",
+      "storage_link": "(//h4[contains(normalize-space(.), 'Storage')])[last()]"
+    }
+  }
+}
