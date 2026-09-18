@@ -16,15 +16,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
 
 
-# Telegram Web K uses generated CSS-module suffixes in its current login UI.
-# Keep the legacy class supported, and avoid matching decorative canvases.
-QR_CODE_XPATH = "//canvas[contains(@class, 'qr-canvas') or contains(@class, 'qrCanvas')]"
-PHONE_LOGIN_XPATH = (
-    "//button[contains(translate(normalize-space(.), "
-    "'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'log in by phone number')]"
-)
-
-
 class TelegramMixin:
     """Telegram login and two-factor authentication. Uses the shared state on Claimer."""
 
@@ -53,7 +44,7 @@ class TelegramMixin:
             attempt_count = 0
             last_url = "not a url"  # Placeholder for the last detected QR code URL
 
-            xpath = QR_CODE_XPATH
+            xpath = "//canvas[@class='qr-canvas']"
             self.driver.get(self.url)
             wait = WebDriverWait(self.driver, 20)
             QR_code = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
@@ -115,13 +106,13 @@ class TelegramMixin:
                         break
 
             except TimeoutException:
-                self.output(f"Step {self.step} - Telegram QR code not found within the timeout. Switching to the OTP method.", 1)
+                self.output(f"Step {self.step} - Canvas not found: Restart the script and retry the QR Code or switch to the OTP method.", 1)
 
-        # OTP Login Method
+        # OTP Login Me,thod
         self.increase_step()
         self.output(f"Step {self.step} - Initiating the One-Time Password (OTP) method...\n",1)
         self.driver.get(self.url)
-        xpath = PHONE_LOGIN_XPATH
+        xpath = "//button[contains(@class, 'btn-primary') and contains(., 'Log in by phone Number')]"
         self.move_and_click(xpath, 30, True, "switch to log in by phone number", self.step, "visible")
         self.increase_step()
 

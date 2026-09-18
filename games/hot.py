@@ -50,37 +50,6 @@ class HotClaimer(Claimer):
         self.random_offset = random.randint(self.settings['lowestClaimOffset'], self.settings['highestClaimOffset'])
         super().__init__()
         
-    def add_widget_and_open_storage(self):
-        try:
-            # Probe presence/scrollability of "Add widget" without forcing a click
-            probe_xpath = "//p[normalize-space()='Add widget']"
-            present = self.move_and_click(
-                probe_xpath, 10, False,
-                "test if 'Add widget' present (may not be present)",
-                self.step, "clickable"
-            )
-            self.increase_step()
-
-            if not present:
-                self.output(f"Step {self.step} - 'Add widget' not present/visible. Skipping.", 3)
-                return False
-
-            # Single brute-click pass on Add widget
-            self.brute_click(probe_xpath, timeout=15, action_description="click the 'Add widget' icon")
-            self.increase_step()
-
-            # Single brute-click pass on Storage
-            storage_xpath = "(//h4[contains(normalize-space(.), 'Storage')])[last()]"
-            self.brute_click(storage_xpath, timeout=15, action_description="click the 'Storage' link (single pass)")
-            self.increase_step()
-
-            self.set_cookies()
-
-
-        except Exception as e:
-            self.output(f"Step {self.step} - Error in Add widget + Storage sequence: {e}", 1)
-            return False
-
     def next_steps(self):
         try:
             self.launch_iframe()
@@ -142,8 +111,6 @@ class HotClaimer(Claimer):
             self.move_and_click(xpath, 30, True, "accept new terms & conditions", self.step, "clickable")
             self.increase_step()
 
-            self.add_widget_and_open_storage()
-            self.increase_step()
             
             self.set_cookies()
 
@@ -155,41 +122,35 @@ class HotClaimer(Claimer):
 
     def full_claim(self):
         self.step = "100"
-        low_near = True
         
         self.launch_iframe()
 
-        xpath = "//button[contains(., 'Accept')]"
-        self.move_and_click(xpath, 10, True, "accept terms & conditions", self.step, "clickable")
+        # Onboarding is optional; existing sessions may already be past it.
+        xpath = "//button[@aria-label='Next']"
+        onboarding_started = self.move_and_click(
+            xpath, 10, True, "click the first onboarding Next button", self.step, "clickable"
+        )
         self.increase_step()
 
-        xpath = "//button[contains(., 'Got it')]"
-        self.move_and_click(xpath, 10, True, "accept the new terms & conditions!", self.step, "clickable")
-        self.increase_step()
+        if onboarding_started:
+            self.move_and_click(
+                xpath, 10, True, "click the second onboarding Next button", self.step, "clickable"
+            )
+            self.increase_step()
 
-        xpath = "(//p[normalize-space(.)='NEAR']/parent::div/following-sibling::div//p[last()])[1]"
-        self.move_and_click(xpath, 30, False, "move to the 'Near' balance.", self.step, "visible")
-        near = self.monitor_element(xpath, 20, "obtain your 'Near' Balance")
-        if near:
-            try:
-                last_value_float = float(near)
-                if last_value_float > 0.2:
-                    low_near = False
-                    self.output(f"Step {self.step} - Cleared the low 'Near' balance flag as current balance is: {last_value_float}", 3)
-                else:
-                    self.output(f"Step {self.step} - The low 'Near' balance flag reamins in place, as current balance is: {last_value_float}", 3)
-                
-            except ValueError:
-                self.output(f"Step {self.step} - Conversion of Near Balance to float failed.", 3)
-        else:
-            self.output(f"Step {self.step} - Unable to pull your near balance.", 3)
-        self.increase_step()
+            xpath = "//button[contains(normalize-space(.), 'Got it')]"
+            self.move_and_click(
+                xpath, 10, True, "finish onboarding with Got it", self.step, "clickable"
+            )
+            self.increase_step()
 
-        self.add_widget_and_open_storage()
-        self.increase_step()
-
-        xpath = "//h4[normalize-space(.)='HOT Balance']"
-        self.move_and_click(xpath, 30, True, "click the 'storage' link", self.step, "clickable")
+        # Click the HOT card rather than its nested heading.
+        xpath = "//h4[normalize-space(.)='HOT Balance']/following-sibling::p[1]"
+        self.brute_click(
+            xpath,
+            timeout=15,
+            action_description="open HOT mining screen"
+        )
         self.increase_step()
 
         self.get_balance(False)
@@ -261,15 +222,9 @@ class HotClaimer(Claimer):
                     self.get_balance(True)
 
                     if wait_time_text == "Filled":
-                        if low_near:
-                            self.output(f"STATUS: The wait timer is still showing: Filled.", 1)
-                            self.output(f"STATUS: We could not confirm you have >0.2 Near, which may have caused the claim to fail.", 1)
-                            self.output(f"STATUS: Kindly check in the GUI if you can claim manually, and consider topping up your NEAR balance.", 1)
-                            self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not, try again.", 2)
-                        else:
-                            self.output(f"STATUS: The wait timer is still showing: Filled - claim failed.", 1)
-                            self.output(f"Step {self.step} - This means either the claim failed, or there is >4 minutes lag in the game.", 1)
-                            self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not, try again.", 2)
+                        self.output("STATUS: The wait timer is still showing: Filled - claim not confirmed.", 1)
+                        self.output(f"Step {self.step} - The claim may have failed or the game may be delayed.", 1)
+                        self.output(f"Step {self.step} - We'll check back in 1 hour to see if the claim processed and if not, try again.", 2)
                     else:
                         self.output(f"STATUS: Successful Claim: Next claim {wait_time_text} / {total_wait_time} minutes.", 1)
 
