@@ -107,11 +107,25 @@ class HotClaimer(Claimer):
             """)
             self.increase_step()
 
-            xpath = "//button[contains(., 'Got it')]"
-            self.move_and_click(xpath, 30, True, "accept new terms & conditions", self.step, "clickable")
+            # Onboarding is optional; existing sessions may already be past it.
+            xpath = "//button[@aria-label='Next']"
+            onboarding_started = self.move_and_click(
+                xpath, 10, True, "click the first onboarding Next button", self.step, "clickable"
+            )
             self.increase_step()
 
-            
+            if onboarding_started:
+                self.move_and_click(
+                    xpath, 10, True, "click the second onboarding Next button", self.step, "clickable"
+                )
+                self.increase_step()
+
+                xpath = "//button[contains(normalize-space(.), 'Got it')]"
+                self.move_and_click(
+                    xpath, 10, True, "finish onboarding with Got it", self.step, "clickable"
+                )
+                self.increase_step()
+
             self.set_cookies()
 
         except TimeoutException:
@@ -125,27 +139,8 @@ class HotClaimer(Claimer):
         
         self.launch_iframe()
 
-        # Onboarding is optional; existing sessions may already be past it.
-        xpath = "//button[@aria-label='Next']"
-        onboarding_started = self.move_and_click(
-            xpath, 10, True, "click the first onboarding Next button", self.step, "clickable"
-        )
-        self.increase_step()
-
-        if onboarding_started:
-            self.move_and_click(
-                xpath, 10, True, "click the second onboarding Next button", self.step, "clickable"
-            )
-            self.increase_step()
-
-            xpath = "//button[contains(normalize-space(.), 'Got it')]"
-            self.move_and_click(
-                xpath, 10, True, "finish onboarding with Got it", self.step, "clickable"
-            )
-            self.increase_step()
-
         # Click the HOT card rather than its nested heading.
-        xpath = "//h4[normalize-space(.)='HOT Balance']/following-sibling::p[1]"
+        xpath = "//h4[normalize-space(.)='HOT Balance' or normalize-space(.)='Storage']/following-sibling::p[1]"
         self.brute_click(
             xpath,
             timeout=15,
