@@ -140,7 +140,10 @@ class HotClaimer(Claimer):
         self.launch_iframe()
 
         # Click the HOT card rather than its nested heading.
-        xpath = "//h4[normalize-space(.)='HOT Balance' or normalize-space(.)='Storage']/following-sibling::p[1]"
+        xpath = (
+            "//h4[normalize-space(.)='HOT Balance']/following-sibling::p[1]"
+            " | //*[normalize-space(.)='Storage' and not(*[normalize-space(.)='Storage'])]"
+        )
         self.brute_click(
             xpath,
             timeout=15,
